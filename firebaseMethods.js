@@ -307,21 +307,20 @@ export async function displayProducts(path, filters = {}) {
  * @param {Object} productData - Product data
  * @returns {Promise<Object>} JSON with create result
  */
-export async function createProduct(shopId, productData) {
+export async function createData(dataPath, shopId, productData) {
     try {
-        const productId = generate18CharID();
-        const productPath = `smartfit_AR_Database/shoe/${shopId}/${productId}_${productData.shoeCode}`;
-        const productRef = ref(db, productPath);
+        const dataId = generate18CharID();
+        const dataRef = ref(db, dataPath);
         
-        await set(productRef, {
+        await set(dataRef, {
             ...productData,
-            id: productId,
+            id: dataId,
             shopLoggedin: shopId,
             dateAdded: new Date().toISOString(),
             lastUpdated: new Date().toISOString()
         });
         
-        return { success: true, productId, message: "Product created successfully" };
+        return { success: true, dataId: dataId, message: "Data created successfully" }; // Fixed typo: pdataId to dataId
     } catch (error) {
         return { success: false, error: error.message };
     }
@@ -333,14 +332,14 @@ export async function createProduct(shopId, productData) {
  * @param {string} productId - Product ID
  * @returns {Promise<Object>} JSON with product data
  */
-export async function readProduct(productPath) {
+export async function readData(dataPath) {
     try {
-        let productPathRef = productPath;
-        const productRef = ref(db, productPathRef);
-        const snapshot = await get(productRef);
+        let dataPathRef = dataPath;
+        const dataRef = ref(db, dataPathRef);
+        const snapshot = await get(dataRef);
         
         if (!snapshot.exists()) {
-            return { success: false, error: "Product not found" };
+            return { success: false, error: "Data not found" };
         }
         
         return { success: true, data: snapshot.val() };
@@ -356,16 +355,16 @@ export async function readProduct(productPath) {
  * @param {Object} updates - Product updates
  * @returns {Promise<Object>} JSON with update result
  */
-export async function updateProduct(shopId, productId, updates) {
+export async function updateData(dataPath, updates) {
     try {
-        const productRef = ref(db, `smartfit_AR_Database/shoe/${shopId}/${productId}`);
+        const dataRef = ref(db, dataPath);
         
-        await update(productRef, {
+        await update(dataRef, {
             ...updates,
             lastUpdated: new Date().toISOString()
         });
         
-        return { success: true, message: "Product updated successfully" };
+        return { success: true, message: "Data updated successfully" };
     } catch (error) {
         return { success: false, error: error.message };
     }
@@ -377,12 +376,11 @@ export async function updateProduct(shopId, productId, updates) {
  * @param {string} productId - Product ID
  * @returns {Promise<Object>} JSON with delete result
  */
-export async function deleteProduct(shopId, productId) {
+export async function deleteData(dataPath) {
     try {
-        const productRef = ref(db, `smartfit_AR_Database/shoe/${shopId}/${productId}`);
-        await remove(productRef);
-        
-        return { success: true, message: "Product deleted successfully" };
+        const dataRef = ref(db, dataPath);
+        await remove(dataRef);
+        return { success: true, message: "Data deleted successfully" };
     } catch (error) {
         return { success: false, error: error.message };
     }
@@ -562,12 +560,12 @@ export default {
     readImageFromFirebase,
     updateImageInFirebase,
     deleteImageFromFirebase,
-    // CRUD for products
+    // CRUD for Data
     displayProducts,
-    createProduct,
-    readProduct,
-    updateProduct,
-    deleteProduct,
+    createData,
+    readData,
+    updateData,
+    deleteData,
     // CRUD for orders
     getOrders,
     updateOrderStatus,

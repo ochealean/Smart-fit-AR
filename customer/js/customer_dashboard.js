@@ -1,7 +1,7 @@
 import {
     createImageToFirebase,
     updateProfileMethod,
-    readProduct,
+    readData,
     checkUserAuth,
     viewProfile,
     app,
@@ -22,6 +22,7 @@ function fixedDescription(description) {
     return description.length > 100 ? description.substring(0, 100) + '...' : description;
 }
 
+// this is the HTML container where shoes will be displayed
 const shoeContainer = getElement('shoesContainer');
 
 const authStatus = await checkUserAuth();
@@ -31,7 +32,7 @@ if (authStatus.authenticated) {
     getElement('userName_display2').textContent = authStatus.userData.firstName + " " + authStatus.userData.lastName;
     getElement('imageProfile').src = authStatus.userData.profilePhoto || "https://cdn-icons-png.flaticon.com/512/11542/11542598.png";
     document.body.style.display = '';
-    const prod = await readProduct(`AR_shoe_users/shoe`);
+    const prod = await readData(`AR_shoe_users/shoe`);
     await loadAllShoes(prod);
 } else {
     window.location.href = "/login.html";

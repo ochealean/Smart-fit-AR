@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Browse Shoes - Customer</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="../css/browse.css">
+</head>
+
+<body>
+
+
+    <div class="dashboard">
+        <!-- Sidebar - Purple Theme -->
+        <div class="sidebar">
+            <div class="logo">
+                <div class="logo-icon">
+                    <i class="fas fa-shoe-prints"></i>
+                </div>
+                <span>SHOE PORTAL</span>
+            </div>
+            <div class="nav-items">
+                <a href="/customer/html/customer_dashboard.html" class="nav-item">
+                    <i class="fas fa-home"></i> Dashboard
+                </a>
+                <a href="/customer/html/browse.html" class="nav-item active">
+                    <i class="fas fa-shopping-bag"></i> Browse Shoes
+                </a>
+                <a href="/customer/html/shoevalidator.html" class="nav-item">
+                    <i class="fas fa-check-circle"></i> Shoe Validation
+                </a>
+                <a href="/customer/html/pickshoe.html" class="nav-item">
+                    <i class="fas fa-shoe-prints"></i> Customize Shoes
+                </a>
+                <a href="/customer/html/customization_pendingOrders.html" class="nav-item">
+                    <i class="fas fa-tools"></i> My Custom Orders
+                </a>
+                <a href="/customer/html/orders.html" class="nav-item">
+                    <i class="fas fa-receipt"></i> My Orders
+                </a>
+                <a href="/customer/html/add_to_cart.html" class="nav-item">
+                    <i class="fas fa-shopping-cart"></i> My Cart
+                </a>
+                <a href="/customer/html/history.html" class="nav-item">
+                    <i class="fas fa-history"></i> Order History
+                </a>
+                <a href="/customer/html/issue_response.html" class="nav-item">
+                    <i class="fas fa-reply"></i> Issue Response
+                </a>
+                <a href="/customer/html/wishlist.html" class="nav-item">
+                    <i class="fas fa-heart"></i> Wishlist
+                </a>
+                <a href="/chatbot/html/chatbot.html" class="nav-item">
+                    <i class="fas fa-comment"></i> Chatbot
+                </a>
+                <a href="/customer/html/customerprofile.html" class="nav-item">
+                    <i class="fas fa-cog"></i> Settings
+                </a>
+                <a id="logout_btn" class="nav-item">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </a>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="loading-overlay">
+        <div class="loader">
+            <canvas id="shoe" width="300" height="200"></canvas>
+            <p>Loading your Browse Shoe...</p>
+        </div>
+    </div>
+            <div class="header">
+                <div class="mobile-menu-toggle">
+                    <i class="fas fa-bars"></i>
+                </div>
+            </div>
+
+            <!-- Search Section -->
+            <div class="search-container">
+                <div class="search-bar">
+                    <input type="text" class="search-input" placeholder="Search for shoes..." id="searchInput">
+                    <button class="search-btn" id="searchButton">
+                        <i class="fas fa-search"></i>
+                    </button>
+                    <button class="clear-btn" id="clearSearchButton">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="search-tags">
+
+                    <!-- Shoe Types -->
+                    <div class="tag">Running</div>
+                    <div class="tag">Basketball</div>
+                    <div class="tag">Casual</div>
+                    <div class="tag">Sneakers</div>
+                    <div class="tag">Boots</div>
+                    <div class="tag">Sandals</div>
+                    <div class="tag">Slippers</div>
+                    <div class="tag">High Heels</div>
+                    <div class="tag">Flats</div>
+                    <div class="tag">Male</div>
+                    <div class="tag">Female</div>
+                    <div class="tag">Unisex</div>
+
+                    <!-- Brands -->
+                    <div class="tag">Nike</div>
+                    <div class="tag">Adidas</div>
+                    <div class="tag">Puma</div>
+                    <div class="tag">Reebok</div>
+                    <div class="tag">New Balance</div>
+                    <div class="tag">ASICS</div>
+                    <div class="tag">Under Armour</div>
+                    <div class="tag">Vans</div>
+                    <div class="tag">Converse</div>
+                    <div class="tag">Fila</div>
+                    <div class="tag">Skechers</div>
+                    <div class="tag">Brooks</div>
+                    <div class="tag">Air Jordan</div>
+                    <div class="tag">Timberland</div>
+                    <div class="tag">Merrell</div>
+
+                </div>
+            </div>
+
+            <!-- Products Section -->
+            <div class="products-section">
+                <div class="products-header">
+                    <h2 class="section-title">
+                        <i class="fas fa-shoe-prints"></i> All Shoes
+                    </h2>
+                    <select class="sort-options" id="sortOptions">
+                        <option value="newest">Sort by: Newest</option>
+                        <option value="price-low">Sort by: Price Low to High</option>
+                        <option value="price-high">Sort by: Price High to Low</option>
+                    </select>
+                </div>
+
+                <div class="products-grid" id="productsGrid">
+                    <!-- Products will be loaded here -->
+                    <div class="empty-state">
+                        <i class="fas fa-shoe-prints"></i>
+                        <h3>No Shoes Found</h3>
+                        <p>Try adjusting your search or filters</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sidebar Overlay -->
+    <div class="sidebar-overlay"></div>
+
+    <script>
+        // Mobile sidebar toggle
+        document.addEventListener('DOMContentLoaded', function () {
+            const mobileToggle = document.querySelector('.mobile-menu-toggle');
+            const sidebar = document.querySelector('.sidebar');
+            const overlay = document.querySelector('.sidebar-overlay');
+
+            if (mobileToggle && sidebar && overlay) {
+                mobileToggle.addEventListener('click', () => {
+                    sidebar.classList.toggle('active');
+                    overlay.classList.toggle('active');
+                });
+
+                overlay.addEventListener('click', () => {
+                    sidebar.classList.remove('active');
+                    overlay.classList.remove('active');
+                });
+            }
+
+            // Show loader immediately
+            const mainContent = document.querySelector('.main-content');
+        });
+
+    </script>
+    <script src="/shoe_loader.js"></script>
+    <script src="/customer/js/browse.js" type="module"></script>
+</body>
+
+</html>
