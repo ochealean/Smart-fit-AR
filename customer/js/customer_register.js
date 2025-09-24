@@ -1,13 +1,8 @@
-// CORRECTED IMPORTS - Add the missing Firebase imports
 import {
     createImageToFirebase,
     updateProfileMethod,
     createUserWithEmailAndPasswordWrapper,
-    sendEmailVerificationWrapper,
-    app,
-    auth,
-    db,
-    storage
+    sendEmailVerificationWrapper
 } from "../../firebaseMethods.js";
 
 // Helper function to get DOM elements
