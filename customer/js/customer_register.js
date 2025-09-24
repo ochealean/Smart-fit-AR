@@ -2,7 +2,11 @@ import {
     createImageToFirebase,
     updateProfileMethod,
     createUserWithEmailAndPasswordWrapper,
-    sendEmailVerificationWrapper
+    sendEmailVerificationWrapper,
+    app,
+    auth,
+    db,
+    storage
 } from "../../firebaseMethods.js";
 
 // Helper function to get DOM elements

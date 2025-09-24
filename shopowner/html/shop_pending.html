@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shop Application Pending | Shoe Shop Portal</title>
+    <link rel="stylesheet" href="/shopowner/css/shop_pending.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <div class="shape shape-1"></div>
+    <div class="shape shape-2"></div>
+    <div class="shape shape-3"></div>
+    
+    <div class="container">
+        <div class="logo">
+            <i class="fas fa-shoe-prints"></i>
+            <span>Shoe Shop Portal</span>
+        </div>
+        
+        <div class="status-icon">
+            <i class="fas fa-hourglass-half"></i>
+        </div>
+        
+        <h1>Application Under Review</h1>
+        <p>Thank you for registering your shop with SmartFit! Our team is currently reviewing your application.</p>
+        <p>We appreciate your patience and will notify you via email once your shop has been approved.</p>
+        
+        <div class="progress-container">
+            <div class="progress-bar"></div>
+        </div>
+        <div class="status">
+            <span>Review Progress</span>
+            <span>60% Complete</span>
+        </div>
+        
+        <a href="/user_login.html#shop" class="btn">Return to Login</a>
+    </div>
+
+    <script>
+        // Simple animation for the progress bar
+        document.addEventListener("DOMContentLoaded", function() {
+            const progressBar = document.querySelector('.progress-bar');
+            let width = 0;
+            const targetWidth = 60;
+            const interval = setInterval(() => {
+                if (width >= targetWidth) {
+                    clearInterval(interval);
+                } else {
+                    width++;
+                    progressBar.style.width = width + '%';
+                }
+            }, 30);
+        });
+    </script>
+    <script src="../js/shop_pending.js" type="module"></script>
+</body>
+</html>

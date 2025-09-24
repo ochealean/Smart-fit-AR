@@ -87,6 +87,11 @@ export async function checkUserAuth() {
                     return;
                 }
 
+                if (user.uid === "c4k5tKvqfWgctmQdiILdB59WbOp1") { // Admin UID
+                    resolve({ authenticated: true, role: "admin", userData: "Admin", userId: user.uid });
+                    return;
+                }
+
                 resolve({ authenticated: false, role: null, userData: null });
             } catch (error) {
                 reject({ error: error.message });
@@ -349,6 +354,34 @@ export async function readData(dataPath) {
 }
 
 /**
+ * Read data with real-time updates using onValue
+ * @param {string} dataPath - Database path
+ * @param {function} callback - Callback function to handle real-time updates
+ * @returns {function} Unsubscribe function to stop listening
+ */
+export function readDataRealtime(dataPath, callback) {
+    try {
+        const dataRef = ref(db, dataPath);
+        
+        const unsubscribe = onValue(dataRef, (snapshot) => {
+            if (!snapshot.exists()) {
+                callback({ success: false, error: "Data not found" });
+                return;
+            }
+            
+            callback({ success: true, data: snapshot.val() });
+        }, (error) => {
+            callback({ success: false, error: error.message });
+        });
+        
+        return unsubscribe;
+    } catch (error) {
+        callback({ success: false, error: error.message });
+        return () => {}; // Return empty function if error
+    }
+}
+
+/**
  * Update product
  * @param {string} shopId - Shop ID
  * @param {string} productId - Product ID
@@ -570,6 +603,7 @@ export default {
     getOrders,
     updateOrderStatus,
     updateStock,
+    readDataRealtime,
     generate6DigitCode,
     generate18CharID,
     validateFileType,

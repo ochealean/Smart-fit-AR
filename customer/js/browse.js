@@ -259,7 +259,7 @@ async function loadShoes() {
         }
 
         // Now get all shoes using readData()
-        const shoesResult = await readData('AR_shoe_users/shoe');
+        const shoesResult = await readData('smartfit_AR_Database/shoe');
         
         // Reset allShoes array
         allShoes = [];

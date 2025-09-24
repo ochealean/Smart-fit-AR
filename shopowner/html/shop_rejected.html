@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shop Registration Rejected</title>
+    <link rel="stylesheet" href="/shopowner/css/shop_rejected.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <!-- Background shapes -->
+    <div class="shape shape-1"></div>
+    <div class="shape shape-2"></div>
+    <div class="shape shape-3"></div>
+    
+    <div class="rejection-container">
+        <div class="logo">
+            <i class="fas fa-shoe-prints"></i>
+            <span>Shoe Shop Portal</span>
+        </div>
+        
+        <div class="rejection-icon">
+            <i class="fas fa-times-circle"></i>
+        </div>
+        
+        <h1>Shop Registration Rejected</h1>
+        <p>We regret to inform you that your shop registration could not be approved at this time.</p>
+        
+        <div class="rejection-reasons">
+            <p>Your application was rejected due to the following reasons:</p>
+            <ul id="rejectionReasonsList">
+                <!-- Reasons will be populated by JavaScript -->
+            </ul>
+        </div>
+        
+        <p>Please review the issues above and correct them before reapplying.</p>
+        
+        <div class="action-buttons">
+            <button id="reapplyBtn" class="btn btn-primary">
+                <i class="fas fa-redo"></i> Reapply Now
+            </button>
+            <button id="logout_btn" class="btn btn-secondary">
+                <i class="fas fa-sign-out-alt"></i> Logout
+            </button>
+        </div>
+    </div>
+
+    <script src="/shopowner/js/shop_rejected.js" type="module"></script>
+</body>
+</html>
