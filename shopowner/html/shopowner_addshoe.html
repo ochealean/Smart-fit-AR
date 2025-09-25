@@ -1,0 +1,719 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Shoe - Shop Owner</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        /* Reuse the exact same variables and base styles from dashboard */
+        :root {
+            --primary: #4361ee;
+            --primary-dark: #3a56d4;
+            --secondary: #3f37c9;
+            --accent: #f72585;
+            --success: #4cc9f0;
+            --warning: #f8961e;
+            --error: #ef233c;
+            --light: #f8f9fa;
+            --dark: #212529;
+            --gray: #adb5bd;
+            --gray-light: #e9ecef;
+            --gray-dark: #495057;
+            --text-primary: #212529;
+            --text-secondary: #343a40;
+            --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08);
+            --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
+            --transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            --radius-sm: 6px;
+            --radius-md: 10px;
+            --radius-lg: 14px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+
+        body {
+            background-color: #f5f7fa;
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+
+        /* Dashboard Layout - Same as template */
+        .dashboard {
+            display: grid;
+            grid-template-columns: 280px 1fr;
+            min-height: 100vh;
+        }
+
+        /* Sidebar - Exact same styling as template */
+        .sidebar {
+            background: linear-gradient(180deg, var(--secondary) 0%, var(--primary) 100%);
+            color: white;
+            padding: 1.5rem 1rem;
+            position: sticky;
+            top: 0;
+            height: 100vh;
+            box-shadow: var(--shadow-lg);
+            z-index: 10;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.5rem 1rem;
+            margin-bottom: 2rem;
+            font-size: 1.25rem;
+            font-weight: 700;
+        }
+
+        .logo-icon {
+            background: rgba(255, 255, 255, 0.2);
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .nav-items {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .nav-item {
+            padding: 0.75rem 1rem;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            color: rgba(255, 255, 255, 0.9);
+            text-decoration: none;
+            font-size: 0.95rem;
+            font-weight: 500;
+        }
+
+        .nav-item:hover {
+            background: rgba(255, 255, 255, 0.15);
+            color: white;
+            transform: translateX(4px);
+        }
+
+        .nav-item.active {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            font-weight: 600;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .nav-item i {
+            width: 24px;
+            text-align: center;
+            font-size: 1.1rem;
+        }
+
+        /* Main Content Area */
+        .main-content {
+            padding: 2rem;
+            overflow-x: auto;
+        }
+
+        /* Header - Same as template */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .header h1 {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: var(--dark);
+        }
+
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .user-avatar {
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid var(--primary);
+            box-shadow: var(--shadow-sm);
+        }
+
+        /* Form Container - Adapted from original but matching new design */
+        .form-container {
+            background: white;
+            border-radius: var(--radius-md);
+            padding: 2rem;
+            box-shadow: var(--shadow-sm);
+            margin-bottom: 2rem;
+            border: 1px solid var(--gray-light);
+            max-width: 1200px;
+        }
+
+        .form-container h1 {
+            color: var(--dark);
+            margin-bottom: 1.5rem;
+            font-size: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .form-container h1 i {
+            color: var(--primary);
+        }
+
+        .form-container h3 {
+            color: var(--dark);
+            margin: 1.5rem 0 1rem;
+            font-size: 1.2rem;
+        }
+
+        /* Form Elements - Styled to match dashboard */
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+        }
+
+        .form-group input[type="text"],
+        .form-group input[type="number"],
+        .form-group input[type="file"],
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 0.8rem 1rem;
+            border: 1px solid var(--gray-light);
+            border-radius: var(--radius-sm);
+            font-size: 0.95rem;
+            transition: var(--transition);
+            background-color: white;
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 120px;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.2);
+        }
+
+        /* Variant Group - Styled to match */
+        .variant-group {
+            border: 1px solid var(--gray-light);
+            padding: 1.25rem;
+            margin-bottom: 1.25rem;
+            border-radius: var(--radius-sm);
+            background: var(--light);
+        }
+
+        /* Buttons - Matching dashboard style */
+        .btn {
+            padding: 0.65rem 1.25rem;
+            border-radius: var(--radius-sm);
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            cursor: pointer;
+            transition: var(--transition);
+            border: none;
+        }
+
+        .btn i {
+            font-size: 0.9rem;
+        }
+
+        .btn-primary {
+            background-color: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .btn-secondary {
+            padding: 8px 16px;
+            background-color: var(--light);
+            color: var(--primary);
+            border: 1px solid var(--primary);
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: var(--transition);
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 25px;
+        }
+
+        .btn-secondary:hover {
+            background-color: var(--primary);
+            color: white;
+            border-color: var(--primary-dark);
+        }
+
+        .btn-secondary i {
+            font-size: 12px;
+        }
+
+        /* Remove Button - Delete Variant */
+        .btn-remove {
+            padding: 8px 16px;
+            background-color: var(--light);
+            color: var(--error);
+            border: 1px solid var(--error);
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: var(--transition);
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            margin: 5px 0;
+        }
+
+        .btn-remove:hover {
+            background-color: var(--error);
+            color: white;
+            border-color: var(--error);
+        }
+
+        .btn-remove i {
+            font-size: 12px;
+        }
+
+        /* Button focus states */
+        .btn-secondary:focus,
+        .btn-remove:focus {
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.3);
+        }
+
+        /* Button active states */
+        .btn-secondary:active {
+            background-color: var(--primary-dark);
+            transform: translateY(1px);
+        }
+
+        .btn-remove:active {
+            background-color: #a52828;
+            transform: translateY(1px);
+        }
+
+        .btn-remove-small {
+            background: transparent;
+            border: none;
+            color: var(--error);
+            cursor: pointer;
+            margin-left: 5px;
+            font-size: 0.9rem;
+        }
+
+        /* Size Stock Container */
+        .size-stock-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+            margin-top: 0.75rem;
+        }
+
+        .size-stock-item {
+            display: flex;
+            align-items: center;
+            background: white;
+            padding: 0.5rem 0.75rem;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--gray-light);
+        }
+
+        .size-stock-item input {
+            width: 60px;
+            margin-left: 0.5rem;
+            padding: 0.35rem 0.5rem;
+            border: 1px solid var(--gray-light);
+            border-radius: var(--radius-sm);
+        }
+
+        .btn-remove-small {
+            padding: 8px 16px;
+            background-color: var(--light);
+            color: var(--error);
+            border: 1px solid var(--error);
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: var(--transition);
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            margin-left: 0.75rem;
+        }
+
+        .btn-remove-small:hover {
+            background-color: var(--error);
+            color: white;
+            border-color: var(--error);
+        }
+
+        /* Navigation Links */
+        .navigation {
+            margin-top: 1.5rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--gray-light);
+        }
+
+        .navigation a {
+            text-decoration: none;
+        }
+
+        /* Loading Modal - Matching style */
+        .loading-modal {
+            display: none;
+            position: fixed;
+            z-index: 9999;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(4px);
+        }
+
+        .loading-content {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 2rem 3rem;
+            border-radius: var(--radius-md);
+            text-align: center;
+            box-shadow: var(--shadow-lg);
+        }
+
+        .loading-content i {
+            font-size: 2rem;
+            color: var(--primary);
+            margin-bottom: 1rem;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        .mobile-menu-toggle {
+            display: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 0.5rem;
+        }
+
+        /* Mobile Responsiveness - Same as template */
+        @media (max-width: 1200px) {
+            .dashboard {
+                grid-template-columns: 240px 1fr;
+            }
+        }
+
+        @media (max-width: 992px) {
+            .dashboard {
+                grid-template-columns: 220px 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .dashboard {
+                grid-template-columns: 1fr;
+            }
+
+            .sidebar {
+                position: fixed;
+                left: -350px;
+                height: 100vh;
+                transition: var(--transition);
+                z-index: 100;
+            }
+
+            .sidebar.active {
+                left: 0;
+            }
+
+            .mobile-menu-toggle {
+                display: block;
+                font-size: 1.5rem;
+                cursor: pointer;
+                padding: 0.5rem;
+            }
+
+            .sidebar-overlay {
+                display: none;
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba(0, 0, 0, 0.5);
+                z-index: 99;
+            }
+
+            .sidebar-overlay.active {
+                display: block;
+            }
+
+            .form-container {
+                padding: 1.5rem;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .main-content {
+                padding: 1rem;
+            }
+
+            .form-container {
+                padding: 1.25rem;
+            }
+
+            .btn {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="dashboard">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="logo">
+                <div class="logo-icon">
+                    <i class="fas fa-store"></i>
+                </div>
+                <span>SHOP DASHBOARD</span>
+            </div>
+            <div class="nav-items">
+                <a href="/shopowner/html/shop_dashboard.html" class="nav-item">
+                    <i class="fas fa-home"></i> Dashboard
+                </a>
+                <a href="/shopowner/html/shopowner_addshoe.html" class="nav-item active">
+                    <i class="fas fa-shoe-prints"></i> Add Shoe
+                </a>
+                <a href="/shopowner/html/shoeverification.html" class="nav-item">
+                    <i class="fas fa-check-circle"></i> Shoe Verification
+                </a>
+                <a id="addemployeebtn" href="/shopowner/html/shopowner_addemployee.html" class="nav-item shopowner">
+                    <i class="fas fa-users"></i> Add Employee
+                </a>
+                <a href="/shopowner/html/shop_inventory.html" class="nav-item">
+                    <i class="fas fa-boxes"></i> Inventory
+                </a>
+                <a href="/shopowner/html/shop_order.html" class="nav-item">
+                    <i class="fas fa-shopping-cart"></i> Orders
+                </a>
+                <a id="issuereport" href="/shopowner/html/issue_report.html" class="nav-item manager">
+                    <i class="fas fa-exclamation-circle"></i> Issue Report
+                </a>
+                <a id="analyticsbtn" href="/shopowner/html/analytics.html" class="nav-item manager">
+                    <i class="fas fa-chart-line"></i> Analytics
+                </a>
+                <a href="/shopowner/html/shopprofile.html" class="nav-item">
+                    <i class="fas fa-cog"></i> Settings
+                </a>
+                <a id="logout_btn" class="nav-item">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </a>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <div class="header">
+                <div class="mobile-menu-toggle">
+                    <i class="fas fa-bars"></i>
+                </div>
+                <h1>Add New Shoe</h1>
+                <div class="user-profile">
+                    <img id="profilePicture" src="https://randomuser.me/api/portraits/women/45.jpg" alt="User"
+                        class="user-avatar">
+                    <span id="userFullname">Shop Owner</span>
+                </div>
+            </div>
+
+            <div class="form-container">
+                <h1><i class="fas fa-shoe-prints"></i> Add New Shoe</h1>
+                <form id="addShoeForm">
+                    <div class="form-group">
+                        <label for="shoeName">General Shoe Name</label>
+                        <input type="text" id="shoeName" required placeholder="e.g., Curry 3, Jordan 1">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="shoeCode">Shoe Code (Numbers Only)</label>
+                        <input type="text" id="shoeCode" pattern="[0-9]+" required placeholder="e.g., 003, 101"
+                            readonly>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="shoeType">Shoe type</label>
+                        <select id="shoeType" required>
+                            <option value="" disabled selected>Select shoe type</option>
+                            <option value="sneaker">Running</option>
+                            <option value="boot">Basketball</option>
+                            <option value="formal">Casual</option>
+                            <option value="sneakers">Sneakers</option>
+                            <option value="boots">Boots</option>
+                            <option value="sandals">Sandals</option>
+                            <option value="slippers">Slippers</option>
+                            <option value="high-heels">High Heels</option>
+                            <option value="flats">Flats</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="shoeBrand">Shoe Brand</label>
+                        <select id="shoeBrand" required>
+                            <option value="" disabled selected>Select shoe brand</option>
+                            <option value="nike">Nike</option>
+                            <option value="adidas">Adidas</option>
+                            <option value="puma">Puma</option>
+                            <option value="reebok">Reebok</option>
+                            <option value="new-balance">New Balance</option>
+                            <option value="asics">ASICS</option>
+                            <option value="under-armour">Under Armour</option>
+                            <option value="vans">Vans</option>
+                            <option value="converse">Converse</option>
+                            <option value="fila">Fila</option>
+                            <option value="skechers">Skechers</option>
+                            <option value="brooks">Brooks</option>
+                            <option value="jordan">Air Jordan</option>
+                            <option value="timberland">Timberland</option>
+                            <option value="merrell">Merrell</option>
+                        </select>
+                    </div>
+
+                    <!-- Add this gender selection field -->
+                    <div class="form-group">
+                        <label for="shoeGender">Gender</label>
+                        <select id="shoeGender" required>
+                            <option value="" disabled selected>Select gender</option>
+                            <option value="male">Male</option>
+                            <option value="female">Female</option>
+                            <option value="unisex">Unisex (Both)</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="shoeDescription">General Description</label>
+                        <textarea id="shoeDescription" rows="4" required></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="shoeImage">Default Shoe Image</label>
+                        <input type="file" id="shoeImage" accept="image/*">
+                    </div>
+
+                    <hr>
+
+                    <h3>Color Variants</h3>
+                    <div id="colorVariants"></div>
+
+                    <button type="button" class="btn btn-secondary" onclick="addColorVariant()">
+                        <i class="fas fa-plus"></i> Add Color Variant
+                    </button>
+
+                    <br><br>
+
+                    <button id="addShoeBtn" type="submit" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> Add Shoe
+                    </button>
+                </form>
+
+                <div class="navigation">
+                    <a href="/shopowner/html/shop_dashboard.html" class="btn btn-secondary">
+                        <i class="fas fa-tachometer-alt"></i> Back to Dashboard
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Modal -->
+    <div id="loadingModal" class="loading-modal">
+        <div class="loading-content">
+            <i class="fas fa-spinner fa-spin"></i>
+            <p>Uploading shoe data...</p>
+        </div>
+    </div>
+
+    <!-- Mobile Overlay (dynamically added via JS) -->
+    <div class="sidebar-overlay"></div>
+
+    <!-- JavaScript -->
+    <script>
+        // sidebar toggle for mobile view
+        document.addEventListener('DOMContentLoaded', function () {
+            const mobileToggle = document.querySelector('.mobile-menu-toggle');
+            const sidebar = document.querySelector('.sidebar');
+            const overlay = document.querySelector('.sidebar-overlay');
+
+            mobileToggle.addEventListener('click', () => {
+                sidebar.classList.toggle('active');
+                overlay.classList.toggle('active');
+            });
+
+            overlay.addEventListener('click', () => {
+                sidebar.classList.remove('active');
+                overlay.classList.remove('active');
+            });
+        });
+    </script>
+    <script src="/shopowner/js/shopowner_addshoe.js" type="module"></script>
+</body>
+
+</html>
