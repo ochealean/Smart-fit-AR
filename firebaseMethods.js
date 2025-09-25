@@ -1,8 +1,16 @@
 // firebaseMethods.js - Firebase Utility Library for Shoe Shop
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-app.js";
-import { getDatabase, ref, onValue, update, set, get, push, remove} from "https://www.gstatic.com/firebasejs/11.4.0/firebase-database.js";
-import { getStorage, ref as storageRef, uploadBytesResumable, getDownloadURL, deleteObject} from "https://www.gstatic.com/firebasejs/11.4.0/firebase-storage.js";
-import { getAuth, onAuthStateChanged, signOut, createUserWithEmailAndPassword, sendEmailVerification } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-auth.js";
+import { getDatabase, ref, onValue, update, set, get, push, remove } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-database.js";
+import { getStorage, ref as storageRef, uploadBytesResumable, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-storage.js";
+import { 
+  getAuth, 
+  onAuthStateChanged, 
+  signOut, 
+  createUserWithEmailAndPassword, 
+  signInWithEmailAndPassword, 
+  sendEmailVerification,
+  sendPasswordResetEmail
+} from "https://www.gstatic.com/firebasejs/11.4.0/firebase-auth.js";
 
 // Firebase configuration
 const firebaseConfig = {
@@ -43,7 +51,7 @@ export async function checkUserAuth() {
                 // Check if user is employee
                 const employeeRef = ref(db, `smartfit_AR_Database/employees/${user.uid}`);
                 const employeeSnap = await get(employeeRef);
-                
+
                 if (employeeSnap.exists()) {
                     const employeeData = employeeSnap.val();
                     resolve({
@@ -59,7 +67,7 @@ export async function checkUserAuth() {
                 // Check if user is shop owner
                 const shopRef = ref(db, `smartfit_AR_Database/shop/${user.uid}`);
                 const shopSnap = await get(shopRef);
-                
+
                 if (shopSnap.exists()) {
                     const shopData = shopSnap.val();
                     resolve({
@@ -75,7 +83,7 @@ export async function checkUserAuth() {
                 // Check if user is customer
                 const customerRef = ref(db, `smartfit_AR_Database/customers/${user.uid}`);
                 const customerSnap = await get(customerRef);
-                
+
                 if (customerSnap.exists()) {
                     const customerData = customerSnap.val();
                     resolve({
@@ -126,11 +134,11 @@ export async function viewProfile(userId, path = null) {
         const profilePath = path || `smartfit_AR_Database/${await getUserRolePath(userId)}/${userId}`;
         const profileRef = ref(db, profilePath);
         const snapshot = await get(profileRef);
-        
+
         if (!snapshot.exists()) {
             return { success: false, error: "Profile not found" };
         }
-        
+
         return { success: true, data: snapshot.val() };
     } catch (error) {
         return { success: false, error: error.message };
@@ -148,12 +156,12 @@ export async function updateProfileMethod(userId, profileData, path = null) {
     try {
         const profilePath = path || `smartfit_AR_Database/${await getUserRolePath(userId)}/${userId}`;
         const profileRef = ref(db, profilePath);
-        
+
         await update(profileRef, {
             ...profileData,
             lastUpdated: new Date().toISOString()
         });
-        
+
         return { success: true, message: "Profile updated successfully" };
     } catch (error) {
         return { success: false, error: error.message };
@@ -169,7 +177,7 @@ export async function deleteProfile(userId) {
     try {
         const profilePath = `smartfit_AR_Database/${await getUserRolePath(userId)}/${userId}`;
         const profileRef = ref(db, profilePath);
-        
+
         await remove(profileRef);
         return { success: true, message: "Profile deleted successfully" };
     } catch (error) {
@@ -194,13 +202,13 @@ export async function createImageToFirebase(file, storagePath) {
 
         const fileRef = storageRef(storage, storagePath);
         const uploadTask = uploadBytesResumable(fileRef, file);
-        
+
         await uploadTask;
         const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-        
-        return { 
-            success: true, 
-            url: downloadURL, 
+
+        return {
+            success: true,
+            url: downloadURL,
             path: storagePath,
             filename: file.name
         };
@@ -218,7 +226,7 @@ export async function readImageFromFirebase(storagePath) {
     try {
         const fileRef = storageRef(storage, storagePath);
         const downloadURL = await getDownloadURL(fileRef);
-        
+
         return { success: true, url: downloadURL, path: storagePath };
     } catch (error) {
         return { success: false, error: error.message };
@@ -239,7 +247,7 @@ export async function updateImageInFirebase(newFile, newStoragePath, oldStorageP
         if (!deleteResult.success) {
             console.warn("Could not delete old image:", deleteResult.error);
         }
-        
+
         // Upload new image
         return await createImageToFirebase(newFile, newStoragePath);
     } catch (error) {
@@ -256,7 +264,7 @@ export async function deleteImageFromFirebase(storagePath) {
     try {
         const fileRef = storageRef(storage, storagePath);
         await deleteObject(fileRef);
-        
+
         return { success: true, message: "Image deleted successfully" };
     } catch (error) {
         return { success: false, error: error.message };
@@ -275,31 +283,31 @@ export async function displayProducts(path, filters = {}) {
     try {
         const productsRef = ref(db, path);
         const snapshot = await get(productsRef);
-        
+
         if (!snapshot.exists()) {
             return { success: true, data: [] };
         }
-        
+
         let products = [];
         snapshot.forEach((childSnapshot) => {
             const product = childSnapshot.val();
             product.id = childSnapshot.key;
             products.push(product);
         });
-        
+
         // Apply filters
         if (filters.shopId) {
             products = products.filter(product => product.shopLoggedin === filters.shopId);
         }
-        
+
         if (filters.searchTerm) {
             const term = filters.searchTerm.toLowerCase();
-            products = products.filter(product => 
+            products = products.filter(product =>
                 product.shoeName?.toLowerCase().includes(term) ||
                 product.shoeCode?.toLowerCase().includes(term)
             );
         }
-        
+
         return { success: true, data: products };
     } catch (error) {
         return { success: false, error: error.message };
@@ -308,6 +316,7 @@ export async function displayProducts(path, filters = {}) {
 
 /**
  * Create new product
+ * @param {string} dataPath - Database path
  * @param {string} shopId - Shop ID
  * @param {Object} productData - Product data
  * @returns {Promise<Object>} JSON with create result
@@ -316,7 +325,7 @@ export async function createData(dataPath, shopId, productData) {
     try {
         const dataId = generate18CharID();
         const dataRef = ref(db, dataPath);
-        
+
         await set(dataRef, {
             ...productData,
             id: dataId,
@@ -324,8 +333,8 @@ export async function createData(dataPath, shopId, productData) {
             dateAdded: new Date().toISOString(),
             lastUpdated: new Date().toISOString()
         });
-        
-        return { success: true, dataId: dataId, message: "Data created successfully" }; // Fixed typo: pdataId to dataId
+
+        return { success: true, dataId: dataId, message: "Data created successfully" };
     } catch (error) {
         return { success: false, error: error.message };
     }
@@ -333,20 +342,18 @@ export async function createData(dataPath, shopId, productData) {
 
 /**
  * Read product details
- * @param {string} shopId - Shop ID
- * @param {string} productId - Product ID
+ * @param {string} dataPath - Database path
  * @returns {Promise<Object>} JSON with product data
  */
 export async function readData(dataPath) {
     try {
-        let dataPathRef = dataPath;
-        const dataRef = ref(db, dataPathRef);
+        const dataRef = ref(db, dataPath);
         const snapshot = await get(dataRef);
-        
+
         if (!snapshot.exists()) {
             return { success: false, error: "Data not found" };
         }
-        
+
         return { success: true, data: snapshot.val() };
     } catch (error) {
         return { success: false, error: error.message };
@@ -362,41 +369,40 @@ export async function readData(dataPath) {
 export function readDataRealtime(dataPath, callback) {
     try {
         const dataRef = ref(db, dataPath);
-        
+
         const unsubscribe = onValue(dataRef, (snapshot) => {
             if (!snapshot.exists()) {
                 callback({ success: false, error: "Data not found" });
                 return;
             }
-            
+
             callback({ success: true, data: snapshot.val() });
         }, (error) => {
             callback({ success: false, error: error.message });
         });
-        
+
         return unsubscribe;
     } catch (error) {
         callback({ success: false, error: error.message });
-        return () => {}; // Return empty function if error
+        return () => { };
     }
 }
 
 /**
  * Update product
- * @param {string} shopId - Shop ID
- * @param {string} productId - Product ID
+ * @param {string} dataPath - Database path
  * @param {Object} updates - Product updates
  * @returns {Promise<Object>} JSON with update result
  */
 export async function updateData(dataPath, updates) {
     try {
         const dataRef = ref(db, dataPath);
-        
+
         await update(dataRef, {
             ...updates,
             lastUpdated: new Date().toISOString()
         });
-        
+
         return { success: true, message: "Data updated successfully" };
     } catch (error) {
         return { success: false, error: error.message };
@@ -405,8 +411,7 @@ export async function updateData(dataPath, updates) {
 
 /**
  * Delete product
- * @param {string} shopId - Shop ID
- * @param {string} productId - Product ID
+ * @param {string} dataPath - Database path
  * @returns {Promise<Object>} JSON with delete result
  */
 export async function deleteData(dataPath) {
@@ -431,11 +436,11 @@ export async function getOrders(shopId, filters = {}) {
     try {
         const ordersRef = ref(db, 'smartfit_AR_Database/transactions');
         const snapshot = await get(ordersRef);
-        
+
         if (!snapshot.exists()) {
             return { success: true, data: [] };
         }
-        
+
         const orders = [];
         snapshot.forEach((userSnapshot) => {
             const userOrders = userSnapshot.val();
@@ -455,10 +460,10 @@ export async function getOrders(shopId, filters = {}) {
                 }
             }
         });
-        
+
         // Sort by date (newest first)
         orders.sort((a, b) => new Date(b.date) - new Date(a.date));
-        
+
         return { success: true, data: orders };
     } catch (error) {
         return { success: false, error: error.message };
@@ -476,13 +481,13 @@ export async function getOrders(shopId, filters = {}) {
 export async function updateOrderStatus(userId, orderId, status, additionalData = {}) {
     try {
         const orderRef = ref(db, `smartfit_AR_Database/transactions/${userId}/${orderId}`);
-        
+
         await update(orderRef, {
             status: status,
             updatedAt: new Date().toISOString(),
             ...additionalData
         });
-        
+
         return { success: true, message: `Order ${status} successfully` };
     } catch (error) {
         return { success: false, error: error.message };
@@ -505,7 +510,7 @@ export async function updateStock(shopId, shoeId, variantKey, size, newStock, up
     try {
         const stockPath = `smartfit_AR_Database/shoe/${shopId}/${shoeId}/variants/${variantKey}/sizes/size_${size}`;
         const stockRef = ref(db, stockPath);
-        
+
         await update(stockRef, {
             [size]: {
                 stock: newStock,
@@ -513,7 +518,7 @@ export async function updateStock(shopId, shoeId, variantKey, size, newStock, up
                 LastUpdatedAt: new Date().toISOString()
             }
         });
-        
+
         return { success: true, message: "Stock updated successfully" };
     } catch (error) {
         return { success: false, error: error.message };
@@ -570,12 +575,79 @@ export function validateFileType(file) {
     return ALLOWED_FILE_TYPES.includes(file.type) || file.name.toLowerCase().endsWith('.heic');
 }
 
+/**
+ * Create user with email and password wrapper
+ */
 export function createUserWithEmailAndPasswordWrapper(email, password) {
     return createUserWithEmailAndPassword(auth, email, password);
 }
 
+/**
+ * Send password reset email wrapper
+ */
+export async function sendPasswordResetEmailWrapper(email) {
+    try {
+        await sendPasswordResetEmail(auth, email);
+        return { success: true, message: "Password reset email sent successfully" };
+    } catch (error) {
+        return { success: false, error: error.message };
+    }
+}
+
+/**
+ * Sign in with email and password wrapper
+ */
+export async function signInWithEmailAndPasswordWrapper(email, password) {
+    try {
+        const userCredential = await signInWithEmailAndPassword(auth, email, password);
+        return { success: true, user: userCredential.user };
+    } catch (error) {
+        return { success: false, error: error.message };
+    }
+}
+
+/**
+ * Send email verification wrapper
+ */
 export function sendEmailVerificationWrapper(user) {
     return sendEmailVerification(user);
+}
+
+/**
+ * Send email using EmailJS
+ */
+export function sendEmail(email, reason, shopname, publickey, serviceID, templatekey) {
+    if (typeof emailjs === 'undefined') {
+        console.error('EmailJS not loaded');
+        return Promise.resolve({ 
+            success: false, 
+            error: 'EmailJS library not loaded. Please refresh the page.' 
+        });
+    }
+
+    try {
+        emailjs.init(publickey);
+
+        const templateParams = {
+            to_email: email,
+            message: reason,
+            shop_name: shopname,
+            reply_to: 'noreply@smartfit.com'
+        };
+
+        return emailjs.send(serviceID, templatekey, templateParams)
+            .then(function (response) {
+                console.log('Email sent successfully!', response.status, response.text);
+                return { success: true, message: "Email sent successfully" };
+            })
+            .catch(function (error) {
+                console.error('Failed to send email:', error);
+                return { success: false, error: error.text || error.message };
+            });
+    } catch (error) {
+        console.error('EmailJS initialization error:', error);
+        return Promise.resolve({ success: false, error: error.message });
+    }
 }
 
 // Export Firebase instances for advanced usage
@@ -584,28 +656,28 @@ export { app, auth, db, storage };
 export default {
     checkUserAuth,
     logoutUser,
-    // CRUD for profiles
+    readDataRealtime,
+    generate18CharID,
+    generate6DigitCode,
+    validateFileType,
+    createUserWithEmailAndPasswordWrapper,
+    sendEmailVerificationWrapper,
+    sendPasswordResetEmailWrapper,
+    sendEmail,
     viewProfile,
     updateProfileMethod,
     deleteProfile,
-    // CRUD for Image management
     createImageToFirebase,
     readImageFromFirebase,
     updateImageInFirebase,
     deleteImageFromFirebase,
-    // CRUD for Data
     displayProducts,
     createData,
     readData,
     updateData,
     deleteData,
-    // CRUD for orders
     getOrders,
     updateOrderStatus,
     updateStock,
-    readDataRealtime,
-    generate6DigitCode,
-    generate18CharID,
-    validateFileType,
     app, auth, db, storage
 };

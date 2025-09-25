@@ -25,9 +25,9 @@
     --error: #f44336;
     --text-primary: #333;
     --text-secondary: #666;
-    --shadow-sm: 0 1px 3px rgba(0,0,0,0.12);
-    --shadow-md: 0 4px 6px rgba(0,0,0,0.1);
-    --shadow-lg: 0 10px 25px rgba(0,0,0,0.1);
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.12);
+    --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
+    --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.1);
     --transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
 }
 
@@ -71,13 +71,25 @@ body {
 }
 
 @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(20px); }
-    to { opacity: 1; transform: translateY(0); }
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 @keyframes slideIn {
-    from { transform: translateX(-100%); }
-    to { transform: translateX(0); }
+    from {
+        transform: translateX(-100%);
+    }
+
+    to {
+        transform: translateX(0);
+    }
 }
 
 .login-header {
@@ -204,7 +216,7 @@ body {
     transform: translateY(-2px);
 }
 
-.form-group input:focus + label {
+.form-group input:focus+label {
     color: var(--primary);
 }
 
@@ -216,12 +228,14 @@ body {
 
 .password-input-container input {
     width: 100%;
-    padding-right: 3rem !important; /* Space for the eye icon on the right */
+    padding-right: 3rem !important;
+    /* Space for the eye icon on the right */
 }
 
 .toggle-password {
     position: absolute;
-    right: 0.8rem; /* Position on the right instead of left */
+    right: 0.8rem;
+    /* Position on the right instead of left */
     background: none;
     border: none;
     color: var(--text-secondary);
@@ -322,7 +336,7 @@ body {
     left: -100%;
     width: 100%;
     height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
     transition: var(--transition);
 }
 
@@ -430,16 +444,16 @@ body {
         padding: 1.8rem;
         border-radius: 12px;
     }
-    
+
     .login-header h1 {
         font-size: 1.8rem;
     }
-    
+
     .login-type-btn {
         font-size: 0.9rem;
         padding: 0.8rem;
     }
-    
+
     .submit-btn {
         padding: 1rem;
     }
@@ -449,13 +463,31 @@ body {
     .login-type-selector {
         flex-direction: column;
     }
-    
+
     .login-type-btn {
         padding: 0.9rem;
     }
-    
+
     .login-header h1 {
         flex-direction: column;
         gap: 0.5rem;
     }
+}
+
+.loader {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(151, 151, 151, 0.8);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+}
+
+#shoe {
+    width: 15%;
+    height: 15%;
 }

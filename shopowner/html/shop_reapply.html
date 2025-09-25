@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shop Reapplication - Shoe Shop Portal</title>
+    <link rel="stylesheet" href="/shopowner/css/shop_register.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body style="padding: 0;">
+
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="overlay">
+        <div class="overlay-content">
+            <div class="spinner"></div>
+            <h2>Processing Reapplication...</h2>
+            <p>Please wait while we submit your application</p>
+        </div>
+    </div>
+
+    <!-- Success Overlay -->
+    <div id="successOverlay" class="overlay">
+        <div class="overlay-content">
+            <div class="success-icon">
+                <i class="fas fa-check-circle"></i>
+            </div>
+            <h2>Reapplication Submitted!</h2>
+            <h4>We've received your shop reapplication.</h4>
+            <p>Our team will review your application and contact you shortly.</p>
+            <button id="closeOverlay" class="overlay-btn">Continue</button>
+        </div>
+    </div>
+
+    <!-- Error Overlay -->
+    <div id="errorOverlay" class="overlay">
+        <div class="overlay-content">
+            <div class="error-icon">
+                <i class="fas fa-exclamation-circle"></i>
+            </div>
+            <h2>Application Issues</h2>
+            <div class="error-container">
+                <div id="errorMessages" class="error-list">
+                    <!-- Errors will be inserted here -->
+                </div>
+            </div>
+            <button id="closeErrorOverlay" class="overlay-btn">Back to Form</button>
+        </div>
+    </div>
+
+    <header class="register-header">
+        <div class="header-content">
+            <h1>Reapply for Shop Registration</h1>
+            <p>Update your shop information and resubmit your application</p>
+            <div class="navigation-links">
+                <a href="/index.html" class="back-link"><i class="fas fa-arrow-left"></i> Back to Landing Page</a>
+                <span>or</span>
+                <a href="/shopowner/html/shop_register.html" class="customer-link">New Shop Registration</a>
+            </div>
+        </div>
+    </header>
+
+    <div class="registration-container">
+        <div class="registration-form">
+            <form id="shopReapplicationForm">
+                <div class="form-section">
+                    <h2><i class="fas fa-store"></i> Shop Information</h2>
+                    <div class="form-group">
+                        <label for="shopName">Shop Name*</label>
+                        <input type="text" id="shopName" name="shopName" required placeholder="e.g. Urban Sneakers" readonly>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="shopCategory">Shop Category*</label>
+                        <select id="shopCategory" name="shopCategory" required>
+                            <option value="">Select category</option>
+                            <option value="sneakers" selected>Sneakers</option>
+                            <option value="formal">Formal Shoes</option>
+                            <option value="boots">Boots</option>
+                            <option value="sports">Sports Shoes</option>
+                            <option value="sandals">Sandals</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="shopDescription">Shop Description*</label>
+                        <textarea id="shopDescription" name="shopDescription" required placeholder="Tell us about your shop (50-200 words)"></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="yearsInBusiness">Years in Business</label>
+                        <input type="number" id="yearsInBusiness" name="yearsInBusiness" min="0" placeholder="e.g. 5">
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <h2><i class="fas fa-user"></i> Owner Information</h2>
+                    <div class="form-group">
+                        <label for="ownerName">Full Name*</label>
+                        <input type="text" id="ownerName" name="ownerName" required placeholder="Your full name">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="ownerEmail">Email*</label>
+                        <input type="email" id="ownerEmail" name="ownerEmail" required placeholder="your@email.com">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="ownerPhone">Phone Number*</label>
+                        <div class="phone-input-container">
+                            <span class="country-code">+63</span>
+                            <input type="tel" id="ownerPhone" name="ownerPhone" required placeholder="9123456789" maxlength="10">
+                        </div>
+                        <small>Enter your 10-digit Philippine mobile number (without +63)</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Government ID Verification*</label>
+                        <small class="instruction">Please upload clear photos/scans of both sides of your valid government-issued ID</small>
+                        
+                        <div class="id-upload-container">
+                            <div class="id-upload-section">
+                                <label for="ownerIdFront" class="upload-label">
+                                    <div class="upload-preview" id="frontPreview">
+                                        <i class="fas fa-id-card"></i>
+                                        <span>Front Side</span>
+                                    </div>
+                                </label>
+                                <input type="file" id="ownerIdFront" name="ownerIdFront" accept="image/*,.pdf">
+                                <small class="file-requirements">(JPEG, PNG, or PDF - Max 5MB)</small>
+                            </div>
+                            
+                            <div class="id-upload-section">
+                                <label for="ownerIdBack" class="upload-label">
+                                    <div class="upload-preview" id="backPreview">
+                                        <i class="fas fa-id-card"></i>
+                                        <span>Back Side</span>
+                                    </div>
+                                </label>
+                                <input type="file" id="ownerIdBack" name="ownerIdBack" accept="image/*,.pdf">
+                                <small class="file-requirements">(JPEG, PNG, or PDF - Max 5MB)</small>
+                            </div>
+                        </div>
+                        <small>Note: Only upload if you need to update your ID documents</small>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <h2><i class="fas fa-map-marker-alt"></i> Location Information</h2>
+                    <div class="form-group">
+                        <label for="shopAddress">Shop Address*</label>
+                        <input type="text" id="shopAddress" name="shopAddress" required placeholder="Street address">
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="shopCity">City*</label>
+                            <input type="text" id="shopCity" name="shopCity" required placeholder="City">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="shopState">State/Province*</label>
+                            <input type="text" id="shopState" name="shopState" required placeholder="State">
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="shopZip">ZIP/Postal Code*</label>
+                            <input type="text" id="shopZip" name="shopZip" required placeholder="ZIP code">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="shopCountry">Country*</label>
+                            <select id="shopCountry" name="shopCountry" required>
+                                <option value="Philippines" selected>Philippines</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <h2><i class="fas fa-file-alt"></i> Business Documentation</h2>
+                    <div class="form-group">
+                        <label for="businessLicense">Mayor's Permit / Business License*</label>
+                        <div class="file-upload-container">
+                            <label for="businessLicense" class="upload-label">
+                                <div class="upload-preview" id="licensePreview">
+                                    <i class="fas fa-file-upload"></i>
+                                    <span>Upload File</span>
+                                </div>
+                            </label>
+                            <input type="file" id="businessLicense" name="businessLicense" accept="image/*,.pdf">
+                        </div>
+                        <small class="file-requirements">(JPEG, PNG, or PDF - Max 5MB)</small>
+                        <small>Only upload if you need to update your license</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="taxId">Tax Identification Number*</label>
+                        <input type="text" id="taxId" name="taxId" required placeholder="Tax ID or EIN">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="permitDocument">Business Permit*</label>
+                        <div class="file-upload-container">
+                            <label for="permitDocument" class="upload-label">
+                                <div class="upload-preview" id="permitPreview">
+                                    <i class="fas fa-file-upload"></i>
+                                    <span>Upload File</span>
+                                </div>
+                            </label>
+                            <input type="file" id="permitDocument" name="permitDocument" accept="image/*,.pdf">
+                        </div>
+                        <small class="file-requirements">(JPEG, PNG, or PDF - Max 5MB)</small>
+                        <small>Only upload if you need to update your permit</small>
+                    </div>
+                </div>
+
+                <div class="form-section terms-section">
+                    <div class="form-group checkbox-group">
+                        <input type="checkbox" id="agreeTerms" name="agreeTerms" required>
+                        <label for="agreeTerms">I agree to the <a href="#" target="_blank">Terms of Service</a> and <a href="#" target="_blank">Privacy Policy</a>*</label>
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <button id="reapplyButton" class="submit-btn">Submit Reapplication</button>
+                    <p class="form-note">* Required fields. Your application will be reviewed within 3-5 business days.</p>
+                </div>
+            </form>
+        </div>
+
+        <div class="registration-benefits">
+            <h2>Reapplication Process</h2>
+            <div class="benefit-card">
+                <i class="fas fa-info-circle"></i>
+                <h3>What to Expect</h3>
+                <p>Our team will review your updated information and get back to you within 3-5 business days.</p>
+            </div>
+            
+            <div class="benefit-card">
+                <i class="fas fa-check-circle"></i>
+                <h3>Required Updates</h3>
+                <p>Please ensure all expired documents are updated before submitting.</p>
+            </div>
+            
+            <div class="benefit-card">
+                <i class="fas fa-question-circle"></i>
+                <h3>Need Help?</h3>
+                <p>Contact our support team if you have questions about the reapplication process.</p>
+            </div>
+            
+            <div class="already-member">
+                <p>Changed your mind?</p>
+                <a href="/index.html" class="login-link">Return to Landing page</a>
+            </div>
+        </div>
+    </div>
+
+    <footer class="register-footer">
+        <div class="footer-content">
+            <p>&copy; 2025 Shoe Shop Portal. All rights reserved.</p>
+            <nav>
+                <a href="/">Home</a>
+                <a href="/extras/privacypolicy.html">Privacy Policy</a>
+                <a href="/extras/termsofservice.html">Terms of Service</a>
+                <a href="/extras/contactus.html">Contact Us</a>
+            </nav>
+        </div>
+    </footer>
+
+    <script>
+        // Basic initialization that needs to run immediately
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize file previews
+            function initializeAllFilePreviews() {
+                setupFilePreview('ownerIdFront', 'frontPreview', 'Front Side');
+                setupFilePreview('ownerIdBack', 'backPreview', 'Back Side');
+                setupFilePreview('businessLicense', 'licensePreview', 'Business License');
+                setupFilePreview('permitDocument', 'permitPreview', 'Business Permit');
+            }
+
+            // File preview setup function
+            function setupFilePreview(inputId, previewId, defaultText) {
+                const input = document.getElementById(inputId);
+                const preview = document.getElementById(previewId);
+                
+                input.addEventListener('change', function() {
+                    const file = this.files[0];
+                    if (!file) return;
+                    
+                    // Check file size (5MB max)
+                    if (file.size > 5 * 1024 * 1024) {
+                        alert('File size exceeds 5MB limit');
+                        this.value = '';
+                        return;
+                    }
+                    
+                    // Check file type
+                    const validTypes = ['image/jpeg', 'image/png', 'application/pdf'];
+                    if (!validTypes.includes(file.type)) {
+                        alert('Only JPEG, PNG, or PDF files are allowed');
+                        this.value = '';
+                        return;
+                    }
+                    
+                    // For PDF files
+                    if (file.type === 'application/pdf') {
+                        preview.innerHTML = `
+                            <i class="fas fa-file-pdf"></i>
+                            <span class="file-name">${file.name}</span>
+                            <button class="remove-preview" type="button">&times;</button>
+                        `;
+                        preview.classList.add('has-preview');
+                        return;
+                    }
+                    
+                    // For image files
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        preview.innerHTML = `
+                            <img src="${e.target.result}" alt="Preview">
+                            <button class="remove-preview" type="button">&times;</button>
+                        `;
+                        preview.classList.add('has-preview');
+                    }
+                    reader.readAsDataURL(file);
+                });
+                
+                preview.addEventListener('click', function(e) {
+                    if (e.target.classList.contains('remove-preview')) {
+                        e.stopPropagation();
+                        input.value = '';
+                        preview.innerHTML = `
+                            <i class="fas ${inputId.includes('Id') ? 'fa-id-card' : 'fa-file-upload'}"></i>
+                            <span>${defaultText}</span>
+                        `;
+                        preview.classList.remove('has-preview');
+                    }
+                });
+            }
+
+            // Initialize previews
+            initializeAllFilePreviews();
+        });
+
+        // Global overlay functions that might be called from external JS
+        function showLoader() {
+            document.getElementById('loadingOverlay').classList.add('active');
+        }
+
+        function hideLoader() {
+            document.getElementById('loadingOverlay').classList.remove('active');
+        }
+
+        function showSuccessOverlay() {
+            document.getElementById('successOverlay').classList.add('active');
+        }
+
+        function showErrorOverlay(errors) {
+            const errorContainer = document.getElementById('errorMessages');
+            errorContainer.innerHTML = '';
+            
+            errors.forEach(error => {
+                const errorElement = document.createElement('p');
+                errorElement.textContent = error;
+                errorContainer.appendChild(errorElement);
+            });
+            
+            document.getElementById('errorOverlay').classList.add('active');
+        }
+
+        function closeOverlays() {
+            document.getElementById('successOverlay').classList.remove('active');
+            document.getElementById('errorOverlay').classList.remove('active');
+        }
+
+        // Initialize overlay close buttons
+        document.getElementById('closeOverlay')?.addEventListener('click', closeOverlays);
+        document.getElementById('closeErrorOverlay')?.addEventListener('click', closeOverlays);
+    </script>
+    <script src="/shopowner/js/shop_reapply.js" type="module"></script>
+</body>
+</html>

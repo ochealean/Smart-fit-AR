@@ -1,25 +1,32 @@
-import { initializeApp } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-app.js";
-import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-auth.js";
+import { signInWithEmailAndPasswordWrapper, checkUserAuth } from "../../firebaseMethods.js";
 
-const firebaseConfig = {
-    apiKey: "AIzaSyAuPALylh11cTArigeGJZmLwrFwoAsNPSI",
-    authDomain: "opportunity-9d3bf.firebaseapp.com",
-    databaseURL: "https://opportunity-9d3bf-default-rtdb.firebaseio.com",
-    projectId: "opportunity-9d3bf",
-    storageBucket: "opportunity-9d3bf.firebasestorage.app",
-    messagingSenderId: "57906230058",
-    appId: "1:57906230058:web:2d7cd9cc68354722536453",
-    measurementId: "G-QC2JSR1FJW"
-};
+// Helper function to get DOM elements
+function getElement(id) {
+    return document.getElementById(id);
+}
 
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
+function redirectToDashboard(role) {
+    switch (role) {
+        case 'customer': window.location.href = "customer/html/customer_dashboard.html"; break;
+        case 'shopowner': window.location.href = "shopowner/html/shop_dashboard.html"; break;
+        case 'employee': window.location.href = "shopowner/html/shop_dashboard.html"; break;
+        default: window.location.href = "admin_dashboard.html"; break;
+    }
+}
 
-const auth = getAuth(app);
+// Check if user is already logged in
+checkUserAuth().then(user => {
+    if (user.authenticated) {
+        console.log("User is already logged in:", user);
+        redirectToDashboard(user.role);
+    }
+}).catch(error => {
+    console.error("Error checking user auth:", error);
+});
 
 // pag meron nang html file for landing page, uncomment this
 const loginButton_customer = document.getElementById('loginButton_customer');
-loginButton_customer.addEventListener('click', (event) => {
+loginButton_customer.addEventListener('click', async (event) => {
 const usernameInput = document.getElementById('username');
 const emailInput = document.getElementById('email');
 const passwordInput = document.getElementById('password');
@@ -28,12 +35,18 @@ const passwordInput = document.getElementById('password');
     const email = emailInput.value;
     const password = passwordInput.value;
 
-    signInWithEmailAndPassword(auth, email, password)
-        .then((userCredential) => {
-                alert("Login successful");
-                window.location.href = "/admin/html/admin_dashboard.html"; 
-        })
-        .catch((error) => {
-            alert("Error logging in: " + error.message);
-        });
+    const loginResult = await signInWithEmailAndPasswordWrapper(email, password);
+    
+        if (loginResult.success) {
+            const userLoggedIn = await checkUserAuth();
+            if (userLoggedIn.authenticated) {
+                redirectToDashboard(userLoggedIn.role);
+            } else {
+                console.error("User authentication failed after login");
+                alert("Login failed. Please try again.");
+            }
+        } else {
+            console.error("Login failed:", loginResult.error);
+            alert("Wrong email or password. Please try again.");
+        }
 });

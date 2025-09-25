@@ -1,69 +1,99 @@
-import { checkUserAuth, logoutUser } from "../../firebaseMethods.js";
-
-const user = await checkUserAuth();
-if (user.userData.status == 'pending') {
-    window.location.href = "/shopowner/html/shop_pending.html";
-} else if (user.userData.status == 'active') {
-    window.location.href = "/shopowner/html/shop_dashboard.html";
-}
-
-getElement('logout_btn').addEventListener('click', async () => {
-    await logoutUser();
-    window.location.href = "/login.html";
-});
+import { checkUserAuth, logoutUser, readDataRealtime } from "../../firebaseMethods.js";
 
 // Helper function to get DOM elements
 function getElement(id) {
     return document.getElementById(id);
 }
-console.log(user);
 
-// all inside the dom will only load after the dom is fully loaded
-document.addEventListener('DOMContentLoaded', () => {
-    console.log(user);
-    const userId = localStorage.getItem('userId');
-    const shopId = localStorage.getItem('shopId');
-    const reapplyBtn = document.getElementById('reapplyBtn');
-    const logoutBtn = document.getElementById('logoutBtn');
-    const reasonsList = document.getElementById('rejectionReasonsList');
+document.addEventListener('DOMContentLoaded', async () => {
+    try {
+        // Check user authentication
+        const user = await checkUserAuth();
+        console.log('User auth result:', user);
 
-    const params = new URLSearchParams(window.location.search);
-    const shop_ID = params.get("shopID"); // di mo na need local storage
-
-    // if (!userId || !shopId) {
-    //     window.location.href = '/user_login.html';
-    //     // walang ganyan
-    //     // window.location.href = '/shopowner/html/shopowner_login.html';
-    //     return;
-    // }
-
-    // Load rejection reasons
-
-    // try mong balik sa shopId na local storage mo yung shop_ID na nilagay ko para makita mo difference
-    const shopRef = ref(db, `AR_shoe_users/shop/${shop_ID}`);
-    onValue(shopRef, (snapshot) => {
-        if (snapshot.exists()) {
-            const shop = snapshot.val();
-            const rejectionReason = shop.rejectionReason || "Your shop application did not meet our requirements";
-
-            // Split reasons by newlines or bullet points
-            const reasons = rejectionReason.split('\n').filter(r => r.trim() !== '');
-
-            if (reasons.length === 0) {
-                reasons.push("Your shop application did not meet our requirements");
+        // Redirect based on status
+        if (user.authenticated && user.userData) {
+            if (user.userData.status === 'pending') {
+                window.location.href = "/shopowner/html/shop_pending.html";
+                return;
+            } else if (user.userData.status === 'active') {
+                window.location.href = "/shopowner/html/shop_dashboard.html";
+                return;
             }
-
-            reasonsList.innerHTML = reasons.map(reason =>
-                `<li>${reason.trim()}</li>`
-            ).join('');
+        } else {
+            // User not authenticated, redirect to login
+            window.location.href = "/login.html";
+            return;
         }
-    });
 
-    // Reapply button
-    reapplyBtn.addEventListener('click', () => {
-        // Redirect to registration page with shop ID for editing
-        // window.location.href = `/shopowner/html/shop_reapply.html?shopId=${shopId}&reapply=true`;
-        window.location.href = `/shopowner/html/shop_reapply.html?shopID=${shop_ID}`;
-    });
+        // If we get here, user is authenticated and status is 'rejected'
+        const reasonsList = getElement('rejectionReasonsList');
+        const reapplyBtn = getElement('reapplyBtn');
+        const logoutBtn = getElement('logout_btn');
 
+        // Function to display rejection reasons
+        function displayRejectionReasons(rejectionReason) {
+            if (rejectionReason) {
+                if (Array.isArray(rejectionReason)) {
+                    reasonsList.innerHTML = rejectionReason.map(reason => 
+                        `<li>${reason}</li>`
+                    ).join('');
+                } else if (typeof rejectionReason === 'string') {
+                    const reasons = rejectionReason.split('\n').filter(r => r.trim() !== '');
+                    if (reasons.length > 0) {
+                        reasonsList.innerHTML = reasons.map(reason => 
+                            `<li>${reason.trim()}</li>`
+                        ).join('');
+                    } else {
+                        reasonsList.innerHTML = '<li>Your shop application did not meet our requirements</li>';
+                    }
+                } else {
+                    reasonsList.innerHTML = '<li>Your shop application did not meet our requirements</li>';
+                }
+            } else {
+                reasonsList.innerHTML = '<li>Your shop application did not meet our requirements</li>';
+            }
+        }
+
+        // Display initial rejection reasons
+        displayRejectionReasons(user.userData.rejectionReason);
+
+        // Set up real-time listener for shop data updates
+        const shopPath = `smartfit_AR_Database/shop/${user.userId}`;
+        const unsubscribe = readDataRealtime(shopPath, (result) => {
+            if (result.success && result.data) {
+                displayRejectionReasons(result.data.rejectionReason);
+                
+                // Check if status changed
+                if (result.data.status === 'pending') {
+                    window.location.href = "/shopowner/html/shop_pending.html";
+                } else if (result.data.status === 'active') {
+                    window.location.href = "/shopowner/html/shop_dashboard.html";
+                }
+            }
+        });
+
+        // Reapply button event listener
+        reapplyBtn.addEventListener('click', () => {
+            // Clean up the real-time listener before redirecting
+            unsubscribe();
+            window.location.href = `/shopowner/html/shop_reapply.html?shopID=${user.userId}`;
+        });
+
+        // Logout button event listener
+        logoutBtn.addEventListener('click', async () => {
+            // Clean up the real-time listener before logging out
+            unsubscribe();
+            const result = await logoutUser();
+            if (result.success) {
+                window.location.href = "/login.html";
+            } else {
+                console.error('Logout failed:', result.error);
+            }
+        });
+
+    } catch (error) {
+        console.error('Error initializing page:', error);
+        window.location.href = "/login.html";
+    }
 });

@@ -1,16 +1,44 @@
-import { checkUserAuth } from "../../firebaseMethods.js";
+import { checkUserAuth, logoutUser } from "../../firebaseMethods.js";
+
+
+// Helper function to get DOM elements
+function getElement(id) {
+    return document.getElementById(id);
+}
 
 const user = await checkUserAuth();
-if (user.userData.status == 'rejected') {
-    window.location.href = "/shopowner/html/shop_rejected.html";
-}else if (user.userData.status == 'pending') {
-    window.location.href = "/shopowner/html/shop_pending.html";
+function isLoggedIn() {
+    if (!user.authenticated) {
+        window.location.href = "/login.html";
+    }else if (user.userData.status == 'rejected') {
+        window.location.href = "/shopowner/html/shop_rejected.html";
+    }else if (user.userData.status == 'pending') {
+        window.location.href = "/shopowner/html/shop_pending.html";
+    } 
 }
+isLoggedIn();
+
+const authStatus = await checkUserAuth();
+if (authStatus.authenticated) {
+    console.log(`User is ${authStatus.role}`, authStatus.userData);
+    getElement('userFullname').textContent = authStatus.userData.ownerName;
+    // getElement('userName_display2').textContent = authStatus.userData.firstName + " " + authStatus.userData.lastName;
+    // getElement('imageProfile').src = authStatus.userData.profilePhoto || "https://cdn-icons-png.flaticon.com/512/11542/11542598.png";
+    // document.body.style.display = '';
+    // const prod = await readData(`smartfit_AR_Database/shoe`);
+    // await loadAllShoes(prod);
+} else {
+    window.location.href = "/login.html";
+}
+
+getElement('logout_btn').addEventListener('click', async () => {
+    await logoutUser();
+    window.location.href = "/login.html";
+});
 
 let shopLoggedin;
 let currentOrderId = null;
 let currentUserId = null;
-
 // // Expose functions to global scope
 // window.viewOrderDetails = viewOrderDetails;
 // window.viewShoeDetails = viewShoeDetails;
