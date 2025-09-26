@@ -1,14 +1,9 @@
 import {
-    createImageToFirebase,
-    updateProfileMethod,
     readData,
     updateData,
     checkUserAuth,
-    viewProfile,
-    app,
     auth,
     db,
-    storage,
     logoutUser
 } from "../../firebaseMethods.js";
 
@@ -143,7 +138,7 @@ window.viewShoeDetails = async function(shopId, shoeId) {
         selectedSizeKey = null;
 
         updateProductModalContent();
-        document.getElementById('productDetailsModal').classList.add('show');
+        getElement('productDetailsModal').classList.add('show');
         document.body.classList.add('modal-open');
 
     } catch (error) {
@@ -206,8 +201,8 @@ function updateProductModalContent() {
     }
 
     // Set modal content
-    document.getElementById('productModalTitle').textContent = shoe.shoeName || 'Product Details';
-    document.getElementById('productModalBody').innerHTML = `
+    getElement('productModalTitle').textContent = shoe.shoeName || 'Product Details';
+    getElement('productModalBody').innerHTML = `
         <div class="product-details-container">
             <div class="product-main-image">
                 <img src="${variant.imageUrl || shoe.defaultImage || 'https://cdn-icons-png.flaticon.com/512/11542/11542598.png'}" alt="${shoe.shoeName || 'Shoe'}">
@@ -251,8 +246,8 @@ function updateProductModalContent() {
 }
 
 function updateButtonStates() {
-    const addToCartBtn = document.getElementById('addToCartBtn');
-    const buyNowBtn = document.getElementById('buyNowBtn');
+    const addToCartBtn = getElement('addToCartBtn');
+    const buyNowBtn = getElement('buyNowBtn');
 
     if (selectedSizeKey === null) {
         addToCartBtn.disabled = true;
@@ -291,7 +286,7 @@ window.selectSize = function (variantKey, sizeKey) {
                 const quantitySelector = document.querySelector('.quantity-selector');
                 if (quantitySelector) {
                     quantitySelector.style.display = 'block';
-                    const quantityInput = document.getElementById('quantity');
+                    const quantityInput = getElement('quantity');
                     if (quantityInput) {
                         quantityInput.max = stock;
                         quantityInput.value = Math.min(parseInt(quantityInput.value) || 1, stock);
@@ -303,13 +298,13 @@ window.selectSize = function (variantKey, sizeKey) {
 };
 
 window.closeProductModal = function () {
-    document.getElementById('productDetailsModal').classList.remove('show');
+    getElement('productDetailsModal').classList.remove('show');
     document.body.classList.remove('modal-open');
 };
 
 // Quantity control functions
 window.adjustQuantity = function (change) {
-    const quantityInput = document.getElementById('quantity');
+    const quantityInput = getElement('quantity');
     if (!quantityInput) return;
     
     let newValue = parseInt(quantityInput.value) + change;
@@ -322,7 +317,7 @@ window.adjustQuantity = function (change) {
 };
 
 window.validateQuantity = function () {
-    const quantityInput = document.getElementById('quantity');
+    const quantityInput = getElement('quantity');
     if (!quantityInput) return;
     
     let value = parseInt(quantityInput.value);
@@ -380,7 +375,7 @@ window.addToCart = async function (cartItem) {
 };
 
 // Event listeners for modal buttons
-document.getElementById('addToCartBtn').addEventListener('click', async function () {
+getElement('addToCartBtn').addEventListener('click', async function () {
     if (!currentShoeData || !selectedVariantKey) {
         alert('Please select a variant first');
         return;
@@ -400,7 +395,7 @@ document.getElementById('addToCartBtn').addEventListener('click', async function
     const sizeObj = variant.sizes[selectedSizeKey];
     const sizeValue = Object.keys(sizeObj)[0];
     const stock = sizeObj[sizeValue]?.stock || 0;
-    const quantity = parseInt(document.getElementById('quantity').value) || 1;
+    const quantity = parseInt(getElement('quantity').value) || 1;
 
     if (stock > 0 && quantity > 0 && quantity <= stock) {
         const cartItem = {
@@ -427,7 +422,7 @@ document.getElementById('addToCartBtn').addEventListener('click', async function
     }
 });
 
-document.getElementById('buyNowBtn').addEventListener('click', function () {
+getElement('buyNowBtn').addEventListener('click', function () {
     if (!currentShoeData || !selectedVariantKey) {
         alert('Please select a variant first');
         return;
@@ -446,7 +441,7 @@ document.getElementById('buyNowBtn').addEventListener('click', function () {
 
     const sizeObj = variant.sizes[selectedSizeKey];
     const sizeValue = Object.keys(sizeObj)[0];
-    const quantity = parseInt(document.getElementById('quantity').value) || 1;
+    const quantity = parseInt(getElement('quantity').value) || 1;
 
     // Create URL parameters
     const params = new URLSearchParams();
@@ -470,7 +465,7 @@ document.getElementById('buyNowBtn').addEventListener('click', function () {
 
 // Close modal when clicking outside
 window.onclick = function (event) {
-    const modal = document.getElementById('productDetailsModal');
+    const modal = getElement('productDetailsModal');
     if (event.target == modal) {
         closeProductModal();
     }

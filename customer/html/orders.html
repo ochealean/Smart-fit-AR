@@ -4,21 +4,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Browse Shoes - Customer</title>
+    <title>My Orders - Customer</title>
     <link rel="icon" href="../../images/smartfitImages/smartfitAR-logo.png" type="image/x-icon">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <link rel="stylesheet" href="../css/browse.css">
+    <link rel="stylesheet" href="../css/orders.css">
 </head>
 
 <body>
-
-
     <div class="dashboard">
-        <!-- Sidebar - Purple Theme -->
+        <!-- Sidebar -->
         <div class="sidebar">
             <div class="logo">
                 <div class="logo-icon">
-                    <i class="fas fa-shoe-prints"></i>
+                    <i class="fas fa-store"></i>
                 </div>
                 <span>SHOE PORTAL</span>
             </div>
@@ -26,7 +24,7 @@
                 <a href="/customer/html/customer_dashboard.html" class="nav-item">
                     <i class="fas fa-home"></i> Dashboard
                 </a>
-                <a href="/customer/html/browse.html" class="nav-item active">
+                <a href="/customer/html/browse.html" class="nav-item">
                     <i class="fas fa-shopping-bag"></i> Browse Shoes
                 </a>
                 <a href="/customer/html/shoevalidator.html" class="nav-item">
@@ -38,7 +36,7 @@
                 <a href="/customer/html/customization_pendingOrders.html" class="nav-item">
                     <i class="fas fa-tools"></i> My Custom Orders
                 </a>
-                <a href="/customer/html/orders.html" class="nav-item">
+                <a href="/customer/html/orders.html" class="nav-item active">
                     <i class="fas fa-receipt"></i> My Orders
                 </a>
                 <a href="/customer/html/add_to_cart.html" class="nav-item">
@@ -67,87 +65,44 @@
 
         <!-- Main Content -->
         <div class="main-content">
-            
-    <!-- Loading Overlay -->
-    <div id="loadingOverlay" class="loading-overlay">
-        <div class="loader">
-            <canvas id="shoe" width="300" height="200"></canvas>
-            <p>Loading your Browse Shoe...</p>
-        </div>
-    </div>
             <div class="header">
+                <!-- Mobile Menu Toggle -->
                 <div class="mobile-menu-toggle">
                     <i class="fas fa-bars"></i>
                 </div>
-            </div>
-
-            <!-- Search Section -->
-            <div class="search-container">
-                <div class="search-bar">
-                    <input type="text" class="search-input" placeholder="Search for shoes..." id="searchInput">
-                    <button class="search-btn" id="searchButton">
-                        <i class="fas fa-search"></i>
-                    </button>
-                    <button class="clear-btn" id="clearSearchButton">
-                        <i class="fas fa-times"></i>
-                    </button>
-                </div>
-                <div class="search-tags">
-
-                    <!-- Shoe Types -->
-                    <div class="tag">Running</div>
-                    <div class="tag">Basketball</div>
-                    <div class="tag">Casual</div>
-                    <div class="tag">Sneakers</div>
-                    <div class="tag">Boots</div>
-                    <div class="tag">Sandals</div>
-                    <div class="tag">Slippers</div>
-                    <div class="tag">High Heels</div>
-                    <div class="tag">Flats</div>
-                    <div class="tag">Male</div>
-                    <div class="tag">Female</div>
-                    <div class="tag">Unisex</div>
-
-                    <!-- Brands -->
-                    <div class="tag">Nike</div>
-                    <div class="tag">Adidas</div>
-                    <div class="tag">Puma</div>
-                    <div class="tag">Reebok</div>
-                    <div class="tag">New Balance</div>
-                    <div class="tag">ASICS</div>
-                    <div class="tag">Under Armour</div>
-                    <div class="tag">Vans</div>
-                    <div class="tag">Converse</div>
-                    <div class="tag">Fila</div>
-                    <div class="tag">Skechers</div>
-                    <div class="tag">Brooks</div>
-                    <div class="tag">Air Jordan</div>
-                    <div class="tag">Timberland</div>
-                    <div class="tag">Merrell</div>
-
+                <h1><i class="fas fa-receipt"></i> My Orders</h1>
+                <div class="user-profile">
+                    <img id="imageProfile" src="#" alt="Profile" class="user-avatar" onerror="this.onerror=null; this.src='https://cdn-icons-png.flaticon.com/512/11542/11542598.png';">
+                    <span id="userName_display2">Loading...</span>
                 </div>
             </div>
 
-            <!-- Products Section -->
-            <div class="products-section">
-                <div class="products-header">
-                    <h2 class="section-title">
-                        <i class="fas fa-shoe-prints"></i> All Shoes
-                    </h2>
-                    <select class="sort-options" id="sortOptions">
-                        <option value="newest">Sort by: Newest</option>
-                        <option value="price-low">Sort by: Price Low to High</option>
-                        <option value="price-high">Sort by: Price High to Low</option>
+            <!-- Active Orders Filter -->
+            <div class="history-filters">
+                <div class="filter-group">
+                    <span class="filter-label">Show:</span>
+                    <select id="activeFilter" class="form-select">
+                        <option value="all">All Orders</option>
+                        <option value="pending">Pending</option>
+                        <option value="accepted">Accepted</option>
+                        <option value="order processed">Processed</option>
+                        <option value="shipped">Shipped</option>
+                        <option value="in transit">In Transit</option>
+                        <option value="arrived at facility">At Facility</option>
+                        <option value="out for delivery">Out for Delivery</option>
+                        <option value="delivered">Delivered</option>
                     </select>
                 </div>
+                <input type="text" class="search-orders" placeholder="Search active orders...">
+            </div>
 
-                <div class="products-grid" id="productsGrid">
-                    <!-- Products will be loaded here -->
-                    <div class="empty-state">
-                        <i class="fas fa-shoe-prints"></i>
-                        <h3>No Shoes Found</h3>
-                        <p>Try adjusting your search or filters</p>
-                    </div>
+            <!-- Active Orders Content -->
+            <div class="purchase-history" id="ordersContainer">
+                <!-- Orders will be dynamically loaded here by JavaScript -->
+                <div class="no-orders">
+                    <i class="fas fa-box-open"></i>
+                    <h3>Loading Orders...</h3>
+                    <p>Please wait while we load your orders</p>
                 </div>
             </div>
         </div>
@@ -174,14 +129,9 @@
                     overlay.classList.remove('active');
                 });
             }
-
-            // Show loader immediately
-            const mainContent = document.querySelector('.main-content');
         });
-
     </script>
-    <script src="/shoe_loader.js"></script>
-    <script src="/customer/js/browse.js" type="module"></script>
+    <script src="/customer/js/orders.js" type="module"></script>
 </body>
 
 </html>

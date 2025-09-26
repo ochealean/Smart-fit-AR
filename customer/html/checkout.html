@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Checkout</title>
+    <link rel="icon" href="../../images/smartfitImages/smartfitAR-logo.png" type="image/x-icon">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="/customer/css/checkout.css">
+</head>
+
+<body>
+    <div class="dashboard">
+        <!-- Sidebar Navigation -->
+        <div class="sidebar">
+            <div class="logo">
+                <div class="logo-icon">
+                    <i class="fas fa-store"></i>
+                </div>
+                <span>SHOE PORTAL</span>
+            </div>
+            <div class="nav-items">
+                <a href="/customer/html/customer_dashboard.html" class="nav-item">
+                    <i class="fas fa-home"></i> Dashboard
+                </a>
+                <a href="/customer/html/browse.html" class="nav-item">
+                    <i class="fas fa-shopping-bag"></i> Browse Shoes
+                </a>
+                <a href="/customer/html/shoevalidator.html" class="nav-item">
+                    <i class="fas fa-check-circle"></i> Shoe Validation
+                </a>
+                <a href="/customer/html/pickshoe.html" class="nav-item">
+                    <i class="fas fa-shoe-prints"></i> Customize Shoes
+                </a>
+                <a href="/customer/html/customization_pendingOrders.html" class="nav-item">
+                    <i class="fas fa-tools"></i> My Custom Orders
+                </a>
+                <a href="/customer/html/orders.html" class="nav-item">
+                    <i class="fas fa-receipt"></i> My Orders
+                </a>
+                <a href="/customer/html/add_to_cart.html" class="nav-item active">
+                    <i class="fas fa-shopping-cart"></i> My Cart
+                </a>
+                <a href="/customer/html/history.html" class="nav-item">
+                    <i class="fas fa-history"></i> Order History
+                </a>
+                <a href="/customer/html/issue_response.html" class="nav-item">
+                    <i class="fas fa-reply"></i> Issue Response
+                </a>
+                <a href="/customer/html/wishlist.html" class="nav-item">
+                    <i class="fas fa-heart"></i> Wishlist
+                </a>
+                <a href="/chatbot/html/chatbot.html" class="nav-item">
+                    <i class="fas fa-comment"></i> Chatbot
+                </a>
+                <a href="/customer/html/customerprofile.html" class="nav-item">
+                    <i class="fas fa-cog"></i> Settings
+                </a>
+                <a id="logout_btn" class="nav-item">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </a>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <div class="container">
+                <div class="mobile-menu-toggle">
+                    <i class="fas fa-bars"></i>
+                </div>
+                <h1 class="checkout-title">Checkout</h1>
+
+                <div class="checkout-section">
+                    <h2 class="section-title">Shipping Information</h2>
+                    <form id="shippingForm">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="firstName">First Name</label>
+                                <input type="text" id="firstName" class="form-control" required readonly>
+                            </div>
+                            <div class="form-group">
+                                <label for="lastName">Last Name</label>
+                                <input type="text" id="lastName" class="form-control" required readonly>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="address">Address</label>
+                            <input type="text" id="address" class="form-control" required>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="city">City</label>
+                                <input type="text" id="city" class="form-control" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="zip">ZIP Code</label>
+                                <input type="text" id="zip" class="form-control" required>
+                            </div>
+
+                        </div>
+                        <div class="form-group">
+                            <div class="form-group">
+                                <label for="state">Province</label>
+                                <input type="text" id="state" class="form-control" required readonly>
+                            </div>
+                            <label for="country">Country</label>
+                            <select id="country" class="form-control" required readonly>
+                                <option value="">Select Country</option>
+                                <option value="Philippines">Philippines</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="phone">Phone Number</label>
+                            <input type="tel" id="phone" class="form-control" required readonly>
+                        </div>
+                        <div class="form-group">
+                            <label for="email">Email</label>
+                            <input type="email" id="email" class="form-control" required readonly>
+                        </div>
+                    </form>
+                </div>
+
+
+                <div class="checkout-section">
+
+                    <h2 class="section-title">Order Summary</h2>
+
+                    <div id="orderItems">
+                        <!-- Order items will be loaded here -->
+                    </div>
+
+                    <div id="orderSummary">
+                        <!-- Order summary will be loaded here -->
+                    </div>
+
+                    <h2 class="section-title">Payment Method</h2>
+
+                    <div class="payment-methods">
+                        <label class="payment-method" for="gcash">
+                            <input type="radio" id="gcash" name="paymentMethod" value="gcash" checked>
+                            <div class="payment-method-icon">
+                                <i class="fas fa-mobile-alt"></i>
+                            </div>
+                            <div class="payment-method-details" for="gcash">
+                                <div class="payment-method-name">GCash</div>
+                                <div class="payment-method-desc">Pay instantly via GCash mobile wallet</div>
+                            </div>
+                        </label>
+
+                        <label class="payment-method" for="cod">
+                            <input type="radio" id="cod" name="paymentMethod" value="cod">
+                            <div class="payment-method-icon">
+                                <i class="fas fa-money-bill-wave"></i>
+                            </div>
+                            <div class="payment-method-details" for="cod">
+                                <div class="payment-method-name">Cash on Delivery</div>
+                                <div class="payment-method-desc">Pay when you receive your order</div>
+                            </div>
+                        </label>
+                    </div>
+
+                    <button class="btn btn-primary" id="placeOrderBtn">Place Order</button>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Order Confirmation Modal -->
+    <div id="orderConfirmationModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <div class="modal-header">
+                <h2>Order Confirmation</h2>
+            </div>
+            <div class="modal-body">
+                <div class="confirmation-icon">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+                <h3>Thank you for your order!</h3>
+                <p>Your order <strong id="orderIdDisplay"></strong> has been placed successfully.</p>
+                <!-- <p>We've sent a confirmation email to <strong id="orderEmailDisplay"></strong>.</p> -->
+                <div class="order-details">
+                    <h4>Order Summary</h4>
+                    <div id="modalOrderSummary"></div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="continueShoppingBtn" class="btn btn-primary">Continue Shopping</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sidebar Overlay -->
+    <div class="sidebar-overlay"></div>
+
+    <script>
+        // Mobile sidebar toggle
+        document.addEventListener('DOMContentLoaded', function () {
+            const mobileToggle = document.querySelector('.mobile-menu-toggle');
+            const sidebar = document.querySelector('.sidebar');
+            const overlay = document.querySelector('.sidebar-overlay');
+
+            if (mobileToggle && sidebar && overlay) {
+                mobileToggle.addEventListener('click', () => {
+                    sidebar.classList.toggle('active');
+                    overlay.classList.toggle('active');
+                });
+
+                overlay.addEventListener('click', () => {
+                    sidebar.classList.remove('active');
+                    overlay.classList.remove('active');
+                });
+            }
+
+            // selecting payment option via div
+            document.querySelectorAll(".payment-method").forEach(div => {
+                div.addEventListener("click", function () {
+                    const radio = this.querySelector("input[type='radio']");
+                    radio.checked = true;
+                });
+            });
+
+            // Modal functionality
+            const modal = document.getElementById('orderConfirmationModal');
+            const closeBtn = document.querySelector('.close-btn');
+            const continueBtn = document.getElementById('continueShoppingBtn');
+
+            function closeModal() {
+                modal.classList.remove('show');
+            }
+
+            function openModal() {
+                modal.classList.add('show');
+            }
+
+            closeBtn.addEventListener('click', closeModal);
+            continueBtn.addEventListener('click', function () {
+                window.location.href = '/customer/html/customer_dashboard.html';
+            });
+
+            window.onclick = function (event) {
+                if (event.target == modal) {
+                    closeModal();
+                }
+            }
+        });
+    </script>
+
+    <script src="/customer/js/checkout.js" type="module"></script>
+</body>
+
+</html>

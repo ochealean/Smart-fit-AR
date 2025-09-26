@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order Management</title>
+    <link rel="icon" href="../../images/smartfitImages/smartfitAR-logo.png" type="image/x-icon">
+    <!-- <link rel="stylesheet" href="/shopowner/css/shop_order.css"> For sidebar styling -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="/shopowner/css/shop_order.css">
+</head>
+
+<body>
+    <div class="dashboard">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="logo">
+                <div class="logo-icon">
+                    <i class="fas fa-store"></i>
+                </div>
+                <span>SHOP DASHBOARD</span>
+            </div>
+            <div class="nav-items">
+                <a href="/shopowner/html/shop_dashboard.html" class="nav-item">
+                    <i class="fas fa-home"></i> Dashboard
+                </a>
+                <a href="/shopowner/html/shopowner_addshoe.html" class="nav-item">
+                    <i class="fas fa-shoe-prints"></i> Add Shoe
+                </a>
+                <a href="/shopowner/html/shoeverification.html" class="nav-item">
+                    <i class="fas fa-check-circle"></i> Shoe Verification
+                </a>
+                <a id="addemployeebtn" href="/shopowner/html/shopowner_addemployee.html" class="nav-item shopowner">
+                    <i class="fas fa-users"></i> Add Employee
+                </a>
+                <a href="/shopowner/html/shop_inventory.html" class="nav-item">
+                    <i class="fas fa-boxes"></i> Inventory
+                </a>
+                <a href="/shopowner/html/shop_order.html" class="nav-item active">
+                    <i class="fas fa-shopping-cart"></i> Orders
+                </a>
+                <a id="issuereport" href="/shopowner/html/issue_report.html" class="nav-item manager">
+                    <i class="fas fa-exclamation-circle"></i> Issue Report
+                </a>
+                <a id="analyticsbtn" href="/shopowner/html/analytics.html" class="nav-item manager">
+                    <i class="fas fa-chart-line"></i> Analytics
+                </a>
+                <a href="/shopowner/html/shopprofile.html" class="nav-item">
+                    <i class="fas fa-cog"></i> Settings
+                </a>
+                <a id="logout_btn" class="nav-item">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </a>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <div class="header">
+                <div class="mobile-menu-toggle">
+                    <i class="fas fa-bars"></i>
+                </div>
+                <h1>Order Management</h1>
+                <div class="user-profile">
+                    <img id="profilePicture" src="https://randomuser.me/api/portraits/women/45.jpg" alt="User" class="user-avatar">
+                    <span id="userFullname">Shop Owner</span>
+                </div>
+            </div>
+
+            <div class="container">
+                <!-- Status Filter -->
+                <div class="filter-section">
+                    <label for="statusFilter">Filter by Status:</label>
+                    <select id="statusFilter">
+                        <option value="all">All Orders</option>
+                        <option value="pending">Pending</option>
+                        <option value="accepted">Accepted</option>
+                        <option value="rejected">Rejected</option>
+                    </select>
+                </div>
+
+                <!-- Orders Table -->
+                <table class="order-table">
+                    <thead>
+                        <tr>
+                            <th>Order ID</th>
+                            <th>Customer</th>
+                            <th>Date</th>
+                            <th>Amount</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="ordersTableBody">
+                        <!-- Orders will be inserted here by JavaScript -->
+                        <!-- empty state -->
+                        <tr id="emptyState" style="display: none;">
+                            <td colspan="6" class="empty-state">
+                                <div class="empty-state-content">
+                                    <i class="fas fa-shopping-basket"></i>
+                                    <h3>No Orders Found</h3>
+                                    <p>When customers place orders, they'll appear here</p>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <!-- Rejection Modal -->
+                <div id="rejectModal" class="modal">
+                    <div class="modal-content">
+                        <span class="close-modal">&times;</span>
+                        <h3>Reason for Rejection</h3>
+                        <textarea id="rejectionReason" placeholder="Enter reason for rejection..."></textarea>
+                        <div class="modal-actions">
+                            <button id="confirmRejectBtn" class="btn btn-reject">
+                                <i class="fas fa-times"></i> Confirm Rejection
+                            </button>
+                            <button id="cancelRejectBtn" class="btn btn-cancel">
+                                <i class="fas fa-arrow-left"></i> Cancel
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Acceptance Modal -->
+                <div id="acceptModal" class="modal">
+                    <div class="modal-content">
+                        <span class="close-modal-accept">&times;</span>
+                        <h3>Accept Order</h3>
+                        <div class="form-group">
+                            <label for="serialNumber">Shoe Serial Number:</label>
+                            <input type="text" id="serialNumber" placeholder="Enter serial number (e.g., SN12345678)"
+                                class="form-input">
+                        </div>
+                        <div class="modal-actions">
+                            <button id="confirmAcceptBtn" class="btn btn-accept">
+                                <i class="fas fa-check"></i> Confirm Acceptance
+                            </button>
+                            <button id="cancelAcceptBtn" class="btn btn-cancel">
+                                <i class="fas fa-arrow-left"></i> Cancel
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mobile Overlay (dynamically added via JS) -->
+    <div class="sidebar-overlay"></div>
+
+    <script>
+        // Mobile sidebar toggle
+        document.addEventListener('DOMContentLoaded', function () {
+            const mobileToggle = document.querySelector('.mobile-menu-toggle');
+            const sidebar = document.querySelector('.sidebar');
+            const overlay = document.querySelector('.sidebar-overlay');
+
+            mobileToggle.addEventListener('click', () => {
+                sidebar.classList.toggle('active');
+                overlay.classList.toggle('active');
+            });
+
+            overlay.addEventListener('click', () => {
+                sidebar.classList.remove('active');
+                overlay.classList.remove('active');
+            });
+        });
+    </script>
+
+    <script type="module" src="/shopowner/js/shop_order.js"></script>
+</body>
+
+</html>
