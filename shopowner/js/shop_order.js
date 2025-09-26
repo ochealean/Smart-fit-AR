@@ -7,9 +7,13 @@ import {
     getOrders
 } from "../../firebaseMethods.js";
 
-// Helper function to get DOM elements
+// Helper function to get DOM elements with null check
 function getElement(id) {
-    return document.getElementById(id);
+    const element = document.getElementById(id);
+    if (!element) {
+        console.warn(`Element with id '${id}' not found`);
+    }
+    return element;
 }
 
 let shopLoggedin;
@@ -38,73 +42,118 @@ async function initializeDashboard() {
     console.log(`User is ${user.role}`, user.userData);
     
     // Set user information
-    getElement('userFullname').textContent = user.userData.ownerName || user.userData.name || 'Shop Owner';
+    const userFullname = getElement('userFullname');
+    if (userFullname) {
+        userFullname.textContent = user.userData.ownerName || user.userData.name || 'Shop Owner';
+    }
     
     // Set shop ID based on user role
     shopLoggedin = user.shopId || user.userId;
     
     // Set profile picture
     const profilePicture = getElement('profilePicture');
-    if (user.userData.profilePhoto && user.userData.profilePhoto.url) {
-        profilePicture.src = user.userData.profilePhoto.url;
-    } else if (user.userData.uploads && user.userData.uploads.shopLogo && user.userData.uploads.shopLogo.url) {
-        profilePicture.src = user.userData.uploads.shopLogo.url;
-    } else {
-        profilePicture.src = "https://cdn-icons-png.flaticon.com/512/11542/11542598.png";
+    if (profilePicture) {
+        if (user.userData.profilePhoto && user.userData.profilePhoto.url) {
+            profilePicture.src = user.userData.profilePhoto.url;
+        } else if (user.userData.uploads && user.userData.uploads.shopLogo && user.userData.uploads.shopLogo.url) {
+            profilePicture.src = user.userData.uploads.shopLogo.url;
+        } else {
+            profilePicture.src = "https://cdn-icons-png.flaticon.com/512/11542/11542598.png";
+        }
     }
 
     // Hide/show menu items based on role
     if (user.role === 'employee') {
-        if (user.userData.role.toLowerCase() === "manager") {
-            getElement("addemployeebtn").style.display = "none";
+        const addEmployeeBtn = getElement('addemployeebtn');
+        const analyticsBtn = getElement('analyticsbtn');
+        const issueReport = getElement('issuereport');
+
+        if (user.userData.role.toLowerCase() === "manager" && addEmployeeBtn) {
+            addEmployeeBtn.style.display = "none";
         } else if (user.userData.role.toLowerCase() === "salesperson") {
-            getElement("addemployeebtn").style.display = "none";
-            getElement("analyticsbtn").style.display = "none";
-            getElement("issuereport").style.display = "none";
+            if (addEmployeeBtn) addEmployeeBtn.style.display = "none";
+            if (analyticsBtn) analyticsBtn.style.display = "none";
+            if (issueReport) issueReport.style.display = "none";
         }
     }
-
-    // Load orders
-    loadOrders();
 }
 
 // Load orders with filtering
 async function loadOrders() {
     try {
-        const statusFilter = getElement('statusFilter').value;
-        const filters = statusFilter !== 'all' ? { status: statusFilter } : {};
+        const statusFilter = getElement('statusFilter');
+        const filterValue = statusFilter ? statusFilter.value : 'all';
+        const filters = filterValue !== 'all' ? { status: filterValue } : {};
         
         const ordersResult = await getOrders(shopLoggedin, filters);
         
         if (!ordersResult.success) {
             console.error("Error loading orders:", ordersResult.error);
+            showErrorState("Failed to load orders. Please try again.");
             return;
         }
 
-        console.log("Orders loaded:", ordersResult.data);
-        displayOrders(ordersResult.data);
+        displayOrders(ordersResult.data || []);
     } catch (error) {
         console.error("Error loading orders:", error);
+        showErrorState("Error loading orders. Please try again.");
     }
 }
 
 // Display orders in the table
 function displayOrders(orders) {
     const tbody = getElement('ordersTableBody');
-    const emptyState = getElement('emptyState');
+    const emptyState = document.getElementById('emptyState'); // safer direct call
     
+    if (!tbody) return;
+
+    tbody.innerHTML = '';
+
     if (orders.length === 0) {
-        tbody.innerHTML = '';
-        emptyState.style.display = 'table-row';
+        if (emptyState) {
+            emptyState.style.display = 'table-row';
+        } else {
+            console.error("Empty state row not found in DOM");
+        }
         return;
     }
-    
-    emptyState.style.display = 'none';
-    tbody.innerHTML = orders.map(order => createOrderRow(order)).join('');
+
+    if (emptyState) {
+        emptyState.style.display = 'none';
+    }
+
+    orders.forEach(order => {
+        const row = createOrderRow(order);
+        if (row) tbody.appendChild(row);
+    });
+}
+
+
+// Show error state
+function showErrorState(message) {
+    const tbody = getElement('ordersTableBody');
+    if (tbody) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="6" class="error-state">
+                    <div class="error-state-content">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <h3>Error Loading Orders</h3>
+                        <p>${message}</p>
+                        <button onclick="loadOrders()" class="btn btn-retry">
+                            <i class="fas fa-redo"></i> Try Again
+                        </button>
+                    </div>
+                </td>
+            </tr>
+        `;
+    }
 }
 
 // Create order row HTML
 function createOrderRow(order) {
+    if (!order) return null;
+
     const customerName = order.shippingInfo ?
         `${order.shippingInfo.firstName} ${order.shippingInfo.lastName}` :
         'Unknown Customer';
@@ -119,47 +168,62 @@ function createOrderRow(order) {
         `₱${order.totalAmount.toFixed(2)}` : '₱0.00';
 
     const status = order.status || 'pending';
-    const statusClass = status === 'completed' ? 'shipped' :
-        status === 'processing' ? 'pending' :
-            status === 'cancelled' ? 'cancelled' : 'pending';
+    const statusClass = getStatusClass(status);
 
     // Action buttons based on status
-    let actionButtons = '';
+    const actionButtons = generateActionButtons(status, order.orderId, order.userId);
+
+    const row = document.createElement('tr');
+    row.innerHTML = `
+        <td>#${order.orderId || 'N/A'}</td>
+        <td>${customerName}</td>
+        <td>${orderDate}</td>
+        <td>${amount}</td>
+        <td><span class="status ${statusClass}">${status}</span></td>
+        <td class="actions">${actionButtons}</td>
+    `;
+
+    return row;
+}
+
+// Get status class based on status
+function getStatusClass(status) {
+    const statusMap = {
+        'completed': 'shipped',
+        'processing': 'pending',
+        'cancelled': 'cancelled',
+        'delivered': 'shipped',
+        'accepted': 'shipped'
+    };
+    return statusMap[status] || 'pending';
+}
+
+// Generate action buttons based on status
+function generateActionButtons(status, orderId, userId) {
     if (status === 'pending') {
-        actionButtons = `
-            <button class="btn btn-accept" onclick="showAcceptModal('${order.orderId}', '${order.userId}')">
+        return `
+            <button class="btn btn-accept" onclick="showAcceptModal('${orderId}', '${userId}')">
                 <i class="fas fa-check"></i> Accept
             </button>
-            <button class="btn btn-reject" onclick="showRejectModal('${order.orderId}', '${order.userId}')">
+            <button class="btn btn-reject" onclick="showRejectModal('${orderId}', '${userId}')">
                 <i class="fas fa-times"></i> Reject
             </button>
         `;
     } else if (status === 'rejected' || status === 'cancelled') {
-        actionButtons = `<span class="no-actions">No actions available</span>`;
+        return `<span class="no-actions">No actions available</span>`;
     } else if (status === 'completed' || status === 'delivered') {
-        actionButtons = `
-            <button class="btn btn-track" onclick="trackOrder('${order.orderId}', '${order.userId}')">
+        return `
+            <button class="btn btn-track" onclick="trackOrder('${orderId}', '${userId}')">
                 <i class="fas fa-eye"></i> View Details
             </button>
         `;
     } else {
-        actionButtons = `
-            <button class="btn btn-track" onclick="trackOrder('${order.orderId}', '${order.userId}')">
+        return `
+            <button class="btn btn-track" onclick="trackOrder('${orderId}', '${userId}')">
                 <i class="fas fa-plus"></i> Add Track Status
             </button>
         `;
     }
-
-    return `
-        <tr>
-            <td>#${order.orderId}</td>
-            <td>${customerName}</td>
-            <td>${orderDate}</td>
-            <td>${amount}</td>
-            <td><span class="status ${statusClass}">${status}</span></td>
-            <td class="actions">${actionButtons}</td>
-        </tr>
-    `;
 }
 
 // Show accept modal
@@ -171,13 +235,20 @@ window.showAcceptModal = function(orderId, userId) {
     currentUserId = userId;
 
     // Clear previous input
-    getElement('serialNumber').value = '';
+    const serialNumberInput = getElement('serialNumber');
+    if (serialNumberInput) {
+        serialNumberInput.value = '';
+    }
+
     modal.style.display = 'block';
 };
 
 // Accept order function with serial number
 window.acceptOrder = async function() {
-    const serialNumber = getElement('serialNumber').value.trim();
+    const serialNumberInput = getElement('serialNumber');
+    if (!serialNumberInput) return;
+
+    const serialNumber = serialNumberInput.value.trim();
 
     if (!serialNumber) {
         alert('Please enter a serial number');
@@ -190,7 +261,8 @@ window.acceptOrder = async function() {
         });
 
         if (result.success) {
-            getElement('acceptModal').style.display = 'none';
+            const modal = getElement('acceptModal');
+            if (modal) modal.style.display = 'none';
             alert('Order accepted successfully with serial number: ' + serialNumber);
             loadOrders(); // Refresh the orders list
         } else {
@@ -219,7 +291,10 @@ window.trackOrder = function(orderId, userId) {
 
 // Reject order function
 window.rejectOrder = async function() {
-    const reason = getElement('rejectionReason').value.trim();
+    const rejectionReasonInput = getElement('rejectionReason');
+    if (!rejectionReasonInput) return;
+
+    const reason = rejectionReasonInput.value.trim();
     if (!reason) {
         alert('Please provide a reason for rejection');
         return;
@@ -231,8 +306,9 @@ window.rejectOrder = async function() {
         });
 
         if (result.success) {
-            getElement('rejectionReason').value = '';
-            getElement('rejectModal').style.display = 'none';
+            rejectionReasonInput.value = '';
+            const modal = getElement('rejectModal');
+            if (modal) modal.style.display = 'none';
             alert('Order rejected successfully');
             loadOrders(); // Refresh the orders list
         } else {
@@ -245,24 +321,27 @@ window.rejectOrder = async function() {
 };
 
 // Event listeners and initialization
-document.addEventListener('DOMContentLoaded', function() {
-    // Initialize dashboard
-    initializeDashboard();
+document.addEventListener('DOMContentLoaded', async function() {
+    await initializeDashboard();
+    loadOrders(); 
+
 
     // Mobile sidebar toggle
     const mobileToggle = document.querySelector('.mobile-menu-toggle');
     const sidebar = document.querySelector('.sidebar');
     const overlay = document.querySelector('.sidebar-overlay');
 
-    mobileToggle.addEventListener('click', () => {
-        sidebar.classList.toggle('active');
-        overlay.classList.toggle('active');
-    });
+    if (mobileToggle && sidebar && overlay) {
+        mobileToggle.addEventListener('click', () => {
+            sidebar.classList.toggle('active');
+            overlay.classList.toggle('active');
+        });
 
-    overlay.addEventListener('click', () => {
-        sidebar.classList.remove('active');
-        overlay.classList.remove('active');
-    });
+        overlay.addEventListener('click', () => {
+            sidebar.classList.remove('active');
+            overlay.classList.remove('active');
+        });
+    }
 
     // Status filter change
     const statusFilter = getElement('statusFilter');
@@ -282,11 +361,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
     if (cancelRejectBtn) {
         cancelRejectBtn.addEventListener('click', () => {
-            rejectModal.style.display = 'none';
+            if (rejectModal) rejectModal.style.display = 'none';
         });
     }
 
-    if (closeRejectModalBtn) {
+    if (closeRejectModalBtn && rejectModal) {
         closeRejectModalBtn.addEventListener('click', () => {
             rejectModal.style.display = 'none';
         });
@@ -302,13 +381,13 @@ document.addEventListener('DOMContentLoaded', function() {
         confirmAcceptBtn.addEventListener('click', acceptOrder);
     }
 
-    if (cancelAcceptBtn) {
+    if (cancelAcceptBtn && acceptModal) {
         cancelAcceptBtn.addEventListener('click', () => {
             acceptModal.style.display = 'none';
         });
     }
 
-    if (closeAcceptModalBtn) {
+    if (closeAcceptModalBtn && acceptModal) {
         closeAcceptModalBtn.addEventListener('click', () => {
             acceptModal.style.display = 'none';
         });
@@ -316,23 +395,29 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Close modals when clicking outside of them
     window.addEventListener('click', (event) => {
-        if (event.target === rejectModal) {
+        const rejectModal = getElement('rejectModal');
+        const acceptModal = getElement('acceptModal');
+
+        if (rejectModal && event.target === rejectModal) {
             rejectModal.style.display = 'none';
         }
-        if (event.target === acceptModal) {
+        if (acceptModal && event.target === acceptModal) {
             acceptModal.style.display = 'none';
         }
     });
 
     // Logout functionality
-    getElement('logout_btn').addEventListener('click', async function() {
-        if (confirm('Are you sure you want to logout?')) {
-            const result = await logoutUser();
-            if (result.success) {
-                window.location.href = '/login.html';
-            } else {
-                console.error('Error signing out:', result.error);
+    const logoutBtn = getElement('logout_btn');
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', async function() {
+            if (confirm('Are you sure you want to logout?')) {
+                const result = await logoutUser();
+                if (result.success) {
+                    window.location.href = '/login.html';
+                } else {
+                    console.error('Error signing out:', result.error);
+                }
             }
-        }
-    });
+        });
+    }
 });

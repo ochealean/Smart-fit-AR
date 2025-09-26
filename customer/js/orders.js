@@ -1,102 +1,156 @@
-import { initializeApp } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-app.js";
-import { getDatabase, ref, get, onValue, query, orderByChild, set } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-database.js";
-import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-auth.js";
+import { 
+    checkUserAuth, 
+    logoutUser,
+    readData,
+    updateData,
+    readDataRealtime
+} from "../../firebaseMethods.js";
 
-const firebaseConfig = {
-    apiKey: "AIzaSyAuPALylh11cTArigeGJZmLwrFwoAsNPSI",
-    authDomain: "opportunity-9d3bf.firebaseapp.com",
-    databaseURL: "https://opportunity-9d3bf-default-rtdb.firebaseio.com",
-    projectId: "opportunity-9d3bf",
-    storageBucket: "opportunity-9d3bf.appspot.com",
-    messagingSenderId: "57906230058",
-    appId: "1:57906230058:web:2d7cd9cc68354722536453",
-    measurementId: "G-QC2JSR1FJW"
-};
+// Helper function to get DOM elements
+function getElement(id) {
+    return document.getElementById(id);
+}
 
-const app = initializeApp(firebaseConfig);
-const auth = getAuth();
-const db = getDatabase(app);
+let userID;
+let userData;
 
-// Initialize the page when auth state changes
-onAuthStateChanged(auth, (user) => {
-    if (user) {
-        loadUserProfile(user);
-        loadOrders(user.uid);
-    } else {
-        window.location.href = "/user_login.html";
+// Initialize the page
+async function initializeOrders() {
+    const authResult = await checkUserAuth();
+    
+    if (!authResult.authenticated) {
+        window.location.href = "/login.html";
+        return;
     }
-});
 
-function loadUserProfile(user) {
-    get(ref(db, `AR_shoe_users/customer/${user.uid}`))
-        .then((snapshot) => {
-            if (snapshot.exists()) {
-                const userData = snapshot.val();
-                document.getElementById('userName_display2').textContent =
-                    `${userData.firstName} ${userData.lastName}`;
-                document.getElementById('imageProfile').src =
-                    userData.profilePhoto?.profilePhoto?.url || "https://firebasestorage.googleapis.com/v0/b/opportunity-9d3bf.appspot.com/o/profile%2Fdefault_profile.png?alt=media&token=5f1a4b8c-7e6b-4f1c-8a2d-0e5f3b7c4a2e";
-                document.body.style.display = '';
-            } else {
-                alert("Account does not exist");
-                auth.signOut();
+    if (authResult.role !== 'customer') {
+        window.location.href = "/customer/html/customer_dashboard.html";
+        return;
+    }
+
+    console.log("User authenticated:", authResult);
+    userID = authResult.userId;
+    userData = authResult.userData;
+
+    // Load user profile
+    loadUserProfile();
+    
+    // Load orders with real-time updates
+    loadOrders();
+    
+    // Set up event listeners
+    setupEventListeners();
+}
+
+// Load user profile
+function loadUserProfile() {
+    const userNameElement = getElement('userName_display2');
+    const imageProfileElement = getElement('imageProfile');
+    
+    if (userNameElement) {
+        userNameElement.textContent = `${userData.firstName || ''} ${userData.lastName || ''}`.trim() || 'Customer';
+    }
+    
+    if (imageProfileElement) {
+        imageProfileElement.src = userData.profilePhoto?.profilePhoto?.url || 
+            "https://firebasestorage.googleapis.com/v0/b/opportunity-9d3bf.appspot.com/o/profile%2Fdefault_profile.png?alt=media&token=5f1a4b8c-7e6b-4f1c-8a2d-0e5f3b7c4a2e";
+    }
+    
+    document.body.style.display = '';
+}
+
+// Load orders with real-time updates
+function loadOrders() {
+    const ordersContainer = document.querySelector('.purchase-history');
+    if (!ordersContainer) return;
+
+    // Show loading state
+    ordersContainer.innerHTML = `
+        <div class="no-orders">
+            <i class="fas fa-box-open"></i>
+            <h3>Loading Orders...</h3>
+            <p>Please wait while we load your orders</p>
+        </div>
+    `;
+
+    // Use real-time data reading
+    const unsubscribe = readDataRealtime(
+        `smartfit_AR_Database/transactions/${userID}`,
+        async (result) => {
+            if (!result.success) {
+                ordersContainer.innerHTML = `
+                    <div class="no-orders">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <h3>Error Loading Orders</h3>
+                        <p>Failed to load your orders. Please try again.</p>
+                    </div>
+                `;
+                return;
             }
-        })
-        .catch((error) => {
-            console.error("Error loading user profile:", error);
-        });
-}
 
-function loadOrders(userId) {
-    const ordersRef = ref(db, `AR_shoe_users/transactions/${userId}`);
-    const orderedQuery = query(ordersRef, orderByChild('date'));
+            if (!result.data) {
+                ordersContainer.innerHTML = `
+                    <div class="no-orders">
+                        <i class="fas fa-box-open"></i>
+                        <h3>No Orders Found</h3>
+                        <p>You haven't placed any orders yet.</p>
+                        <a href="/customer/html/browse.html" class="btn btn-shop">Browse Shoes</a>
+                    </div>
+                `;
+                return;
+            }
 
-    onValue(orderedQuery, (snapshot) => {
-        const ordersContainer = document.querySelector('.purchase-history');
-        ordersContainer.innerHTML = '';
+            // Process orders
+            const orders = [];
+            for (const [orderId, orderData] of Object.entries(result.data)) {
+                if (orderData) {
+                    orders.unshift({
+                        id: orderId,
+                        ...orderData
+                    });
+                }
+            }
 
-        if (!snapshot.exists()) {
-            ordersContainer.innerHTML = `
-                <div class="no-orders">
-                    <i class="fas fa-box-open"></i>
-                    <h3>No Orders Found</h3>
-                    <p>You haven't placed any orders yet.</p>
-                    <a href="/customer/html/browse.html" class="btn btn-shop">Browse Shoes</a>
-                </div>
-            `;
-            return;
+            // Display orders
+            await displayOrders(orders, ordersContainer);
         }
+    );
 
-        // Process orders directly from snapshot
-        const orders = [];
-        snapshot.forEach((orderSnapshot) => {
-            const orderData = orderSnapshot.val();
-            orderData.id = orderSnapshot.key;
-            orders.unshift(orderData); // Add to beginning to show newest first
-        });
-
-        // Load orders with serial numbers
-        loadOrdersWithSerialNumbers(orders, ordersContainer);
-        setupOrderFilters();
-    }, (error) => {
-        console.error("Error loading orders:", error);
-        alert("Failed to load orders. Please try again.");
-    });
+    // Return unsubscribe function for cleanup (optional)
+    return unsubscribe;
 }
 
-async function loadOrdersWithSerialNumbers(orders, ordersContainer) {
+// Display orders in the container
+async function displayOrders(orders, ordersContainer) {
+    ordersContainer.innerHTML = '';
+
+    if (orders.length === 0) {
+        ordersContainer.innerHTML = `
+            <div class="no-orders">
+                <i class="fas fa-box-open"></i>
+                <h3>No Orders Found</h3>
+                <p>You haven't placed any orders yet.</p>
+                <a href="/customer/html/browse.html" class="btn btn-shop">Browse Shoes</a>
+            </div>
+        `;
+        return;
+    }
+
     for (const order of orders) {
         const orderCard = await createOrderCard(order);
         if (orderCard) {
             ordersContainer.appendChild(orderCard);
         }
     }
+
+    setupOrderFilters();
 }
 
+// Create order card element
 async function createOrderCard(order) {
     if (!order) return null;
 
-    const status = order.status.toLowerCase();
+    const status = order.status?.toLowerCase() || 'pending';
 
     // Only show these statuses
     const allowedStatuses = [
@@ -107,8 +161,7 @@ async function createOrderCard(order) {
         'in transit', 
         'arrived at facility', 
         'out for delivery', 
-        'delivered',
-        'other'
+        'delivered'
     ];
     
     // Skip if status is not in allowed list
@@ -125,7 +178,7 @@ async function createOrderCard(order) {
                 serialNumber = serialNumberData.serialNumber;
             }
         } catch (error) {
-            console.log("No serial number found in verification collection:", error);
+            console.log("No serial number found in verification collection");
         }
     }
 
@@ -146,49 +199,8 @@ async function createOrderCard(order) {
         minute: '2-digit'
     });
 
-    let statusClass = '';
-    let statusText = '';
-    
-    switch (status) {
-        case 'pending':
-            statusClass = 'status-pending';
-            statusText = 'Pending';
-            break;
-        case 'accepted':
-            statusClass = 'status-accepted';
-            statusText = 'Accepted';
-            break;
-        case 'order processed':
-            statusClass = 'status-processed';
-            statusText = 'Order Processed';
-            break;
-        case 'shipped':
-            statusClass = 'status-shipped';
-            statusText = 'Shipped';
-            break;
-        case 'in transit':
-            statusClass = 'status-transit';
-            statusText = 'In Transit';
-            break;
-        case 'arrived at facility':
-            statusClass = 'status-arrived';
-            statusText = 'Arrived at Facility';
-            break;
-        case 'out for delivery':
-            statusClass = 'status-out-for-delivery';
-            statusText = 'Out for Delivery';
-            break;
-        case 'delivered':
-            statusClass = 'status-delivered';
-            statusText = 'Delivered';
-            break;
-        case 'other':
-            statusClass = 'status-other';
-            statusText = 'Other';
-            break;
-        default:
-            return null;
-    }
+    const { class: statusClass, text: statusText } = getStatusInfo(status);
+    console.log("Order status:", statusClass, statusText);
 
     let orderItemHTML = '';
     if (order.item) {
@@ -213,81 +225,7 @@ async function createOrderCard(order) {
     `;
     }
 
-    let actionButtons = '';
-
-    if (status === 'delivered') {
-        actionButtons = `
-            <button class="btn btn-received" onclick="markAsReceived('${order.id}')">
-                <i class="fas fa-check"></i> Order Received
-            </button>
-            <button class="btn btn-issue" onclick="reportIssue('${order.id}')">
-                <i class="fas fa-exclamation"></i> Report Issue
-            </button>
-            <button class="btn btn-track" onclick="trackOrder('${order.id}')">
-                <i class="fas fa-truck"></i> Track Package
-            </button>
-        `;
-        
-        // Add validate button if serial number exists
-        if (serialNumber) {
-            actionButtons += `
-                <button class="btn btn-verify" onclick="validateShoe('${serialNumber}')">
-                    <i class="fas fa-check-circle"></i> Validate Shoe
-                </button>
-            `;
-        }
-    } else if (status === 'pending') {
-        actionButtons = `
-            <button class="btn btn-track" onclick="trackOrder('${order.id}')">
-                <i class="fas fa-truck"></i> Track Package
-            </button>
-            <button class="btn btn-cancel" onclick="cancelOrder('${order.id}')">
-                <i class="fas fa-times"></i> Cancel Order
-            </button>
-        `;
-        
-        // Add validate button if serial number exists (even for pending orders)
-        if (serialNumber) {
-            actionButtons += `
-                <button class="btn btn-verify" onclick="validateShoe('${serialNumber}')">
-                    <i class="fas fa-check-circle"></i> Validate Shoe
-                </button>
-            `;
-        }
-    } else if (status === 'shipped' || status === 'in transit' || status === 'arrived at facility' || status === 'out for delivery' || status === 'accepted') { // tanggalin lang yung status accepted pag gusto i cancel
-        actionButtons = `
-            <button class="btn btn-track" onclick="trackOrder('${order.id}')">
-                <i class="fas fa-truck"></i> Track Package
-            </button>
-        `;
-        
-        // Add validate button if serial number exists (even for pending orders)
-        if (serialNumber) {
-            actionButtons += `
-                <button class="btn btn-verify" onclick="validateShoe('${serialNumber}')">
-                    <i class="fas fa-check-circle"></i> Validate Shoe
-                </button>
-            `;
-        }
-    } else {
-        actionButtons = `
-            <button class="btn btn-track" onclick="trackOrder('${order.id}')">
-                <i class="fas fa-truck"></i> Track Package
-            </button>
-            <button class="btn btn-cancel" onclick="cancelOrder('${order.id}')">
-                <i class="fas fa-times"></i> Cancel Order
-            </button>
-        `;
-        
-        // Add validate button if serial number exists
-        if (serialNumber) {
-            actionButtons += `
-                <button class="btn btn-verify" onclick="validateShoe('${serialNumber}')">
-                    <i class="fas fa-check-circle"></i> Validate Shoe
-                </button>
-            `;
-        }
-    }
+    const actionButtons = generateActionButtons(status, order.id, serialNumber);
 
     orderCard.innerHTML = `
         <div class="order-header">
@@ -313,14 +251,87 @@ async function createOrderCard(order) {
     return orderCard;
 }
 
+// Get status information
+function getStatusInfo(status) {
+    console.log("Getting status info for:", status);
+    const statusMap = {
+        'pending': { class: 'status-pending', text: 'Pending' },
+        'accepted': { class: 'status-accepted', text: 'Accepted' },
+        'order processed': { class: 'status-processed', text: 'Order Processed' },
+        'shipped': { class: 'status-shipped', text: 'Shipped' },
+        'in transit': { class: 'status-transit', text: 'In Transit' },
+        'arrived at facility': { class: 'status-arrived', text: 'Arrived at Facility' },
+        'out for delivery': { class: 'status-out-for-delivery', text: 'Out for Delivery' },
+        'delivered': { class: 'status-delivered', text: 'Delivered' }
+    };
+
+    return statusMap[status] || { class: 'status-pending', text: 'Pending' };
+}
+
+// Generate action buttons based on order status
+function generateActionButtons(status, orderId, serialNumber) {
+    let buttons = '';
+
+    if (status === 'delivered') {
+        buttons = `
+            <button class="btn btn-received" onclick="markAsReceived('${orderId}')">
+                <i class="fas fa-check"></i> Order Received
+            </button>
+            <button class="btn btn-issue" onclick="reportIssue('${orderId}')">
+                <i class="fas fa-exclamation"></i> Report Issue
+            </button>
+            <button class="btn btn-track" onclick="trackOrder('${orderId}')">
+                <i class="fas fa-truck"></i> Track Package
+            </button>
+        `;
+    } else if (status === 'pending') {
+        buttons = `
+            <button class="btn btn-track" onclick="trackOrder('${orderId}')">
+                <i class="fas fa-truck"></i> Track Package
+            </button>
+            <button class="btn btn-cancel" onclick="cancelOrder('${orderId}')">
+                <i class="fas fa-times"></i> Cancel Order
+            </button>
+        `;
+    } else if (['shipped', 'in transit', 'arrived at facility', 'out for delivery', 'accepted'].includes(status)) {
+        buttons = `
+            <button class="btn btn-track" onclick="trackOrder('${orderId}')">
+                <i class="fas fa-truck"></i> Track Package
+            </button>
+        `;
+    } else {
+        buttons = `
+            <button class="btn btn-track" onclick="trackOrder('${orderId}')">
+                <i class="fas fa-truck"></i> Track Package
+            </button>
+            <button class="btn btn-cancel" onclick="cancelOrder('${orderId}')">
+                <i class="fas fa-times"></i> Cancel Order
+            </button>
+        `;
+    }
+    
+    // Add validate button if serial number exists
+    if (serialNumber) {
+        buttons += `
+            <button class="btn btn-verify" onclick="validateShoe('${serialNumber}')">
+                <i class="fas fa-check-circle"></i> Validate Shoe
+            </button>
+        `;
+    }
+
+    return buttons;
+}
+
+// Get serial number from verification collection
 async function getSerialNumberFromVerification(orderId) {
     try {
-        const verificationRef = ref(db, 'AR_shoe_users/shoeVerification');
-        const snapshot = await get(verificationRef);
+        const verificationResult = await readData('smartfit_AR_Database/shoeVerification');
         
-        if (!snapshot.exists()) return null;
+        if (!verificationResult.success || !verificationResult.data) {
+            return null;
+        }
         
-        const allVerifications = snapshot.val();
+        const allVerifications = verificationResult.data;
         
         // Search for verification record with matching orderId
         for (const key in allVerifications) {
@@ -337,8 +348,9 @@ async function getSerialNumberFromVerification(orderId) {
     }
 }
 
+// Set up order filters and search
 function setupOrderFilters() {
-    const filterSelect = document.getElementById('activeFilter');
+    const filterSelect = getElement('activeFilter');
     const searchInput = document.querySelector('.search-orders');
 
     if (filterSelect) {
@@ -349,8 +361,9 @@ function setupOrderFilters() {
     }
 }
 
+// Filter orders by status
 function filterOrders() {
-    const filterValue = document.getElementById('activeFilter')?.value;
+    const filterValue = getElement('activeFilter')?.value;
     if (!filterValue) return;
 
     const orderCards = document.querySelectorAll('.order-card');
@@ -364,6 +377,7 @@ function filterOrders() {
     });
 }
 
+// Search orders
 function searchOrders() {
     const searchInput = document.querySelector('.search-orders');
     if (!searchInput) return;
@@ -381,46 +395,35 @@ function searchOrders() {
     });
 }
 
-window.cancelOrder = async function (orderId) {
+// Cancel order function
+window.cancelOrder = async function(orderId) {
     if (!confirm('Are you sure you want to cancel this order?')) return;
-
-    const user = auth.currentUser;
-    if (!user) return;
 
     try {
         // First get the order details
-        const orderRef = ref(db, `AR_shoe_users/transactions/${user.uid}/${orderId}`);
-        const orderSnapshot = await get(orderRef);
-
-        if (!orderSnapshot.exists()) {
+        const orderResult = await readData(`smartfit_AR_Database/transactions/${userID}/${orderId}`);
+        
+        if (!orderResult.success || !orderResult.data) {
             alert('Order not found');
             return;
         }
 
-        const order = orderSnapshot.val();
+        const order = orderResult.data;
 
         // Update order status to cancelled
-        await set(ref(db, `AR_shoe_users/transactions/${user.uid}/${orderId}/status`), 'cancelled');
+        const updateResult = await updateData(
+            `smartfit_AR_Database/transactions/${userID}/${orderId}`,
+            { status: 'cancelled' }
+        );
+
+        if (!updateResult.success) {
+            alert('Failed to cancel order: ' + updateResult.error);
+            return;
+        }
 
         // Restore stock quantity if the order is not already cancelled
         if (order.status !== 'cancelled' && order.item) {
-            const { shopId, shoeId, variantKey, sizeKey, quantity } = order.item;
-
-            if (shopId && shoeId && variantKey && sizeKey && quantity) {
-                // Get current stock
-                const stockRef = ref(db, `AR_shoe_users/shoe/${shopId}/${shoeId}/variants/${variantKey}/sizes/${sizeKey}`);
-                const stockSnapshot = await get(stockRef);
-
-                if (stockSnapshot.exists()) {
-                    const sizeData = stockSnapshot.val();
-                    const sizeValue = Object.keys(sizeData)[0]; // Get the size value (e.g., "7")
-                    const currentStock = sizeData[sizeValue].stock;
-                    const newStock = currentStock + quantity;
-
-                    // Update stock in database
-                    await set(ref(db, `AR_shoe_users/shoe/${shopId}/${shoeId}/variants/${variantKey}/sizes/${sizeKey}/${sizeValue}/stock`), newStock);
-                }
-            }
+            await restoreStock(order.item);
         }
 
         alert('Order has been cancelled successfully and stock has been restored.');
@@ -430,55 +433,66 @@ window.cancelOrder = async function (orderId) {
     }
 };
 
-window.contactSeller = function (shopId) {
-    alert(`Redirecting to chat with shop ID: ${shopId}`);
-};
+// Restore stock when order is cancelled
+async function restoreStock(item) {
+    const { shopId, shoeId, variantKey, sizeKey, quantity } = item;
 
-window.trackOrder = function(orderId) {
-    const user = auth.currentUser;
-    if (!user) {
-        window.location.href = "/user_login.html";
+    if (!shopId || !shoeId || !variantKey || !sizeKey || !quantity) {
+        console.warn('Incomplete item data for stock restoration');
         return;
     }
-    window.location.href = `/customer/html/track.html?orderId=${orderId}&userId=${user.uid}`;
-};
-
-window.startReturn = function (orderId) {
-    alert(`Starting return for order: ${orderId}`);
-};
-
-window.leaveReview = function (shopId, productId) {
-    alert(`Leaving review for product: ${productId} from shop: ${shopId}`);
-};
-
-// Validate shoe function - redirects to shoe validator with serial number
-window.validateShoe = function(serialNumber) {
-    window.location.href = `http://april22.vercel.app/customer/html/shoevalidator.html?ShoeSerialNumber=${encodeURIComponent(serialNumber)}`;
-};
-
-// Logout functionality
-document.getElementById('logout_btn').addEventListener('click', function() {
-    if (confirm('Are you sure you want to logout?')) {
-        auth.signOut().then(() => {
-            window.location.href = '/user_login.html';
-        }).catch((error) => {
-            console.error('Error signing out:', error);
-        });
-    }
-});
-
-// Mark order as received (completed)
-window.markAsReceived = async function(orderId) {
-    if (!confirm('Confirm you have received this order in good condition?')) return;
-    
-    const user = auth.currentUser;
-    if (!user) return;
 
     try {
-        await set(ref(db, `AR_shoe_users/transactions/${user.uid}/${orderId}/status`), 'completed');
-        alert('Order marked as received successfully!');
-        // Refresh the orders list
-        loadOrders(user.uid);
+        // Get current stock
+        const stockResult = await readData(`smartfit_AR_Database/shoe/${shopId}/${shoeId}/variants/${variantKey}/sizes/${sizeKey}`);
+        
+        if (!stockResult.success || !stockResult.data) {
+            console.warn('Stock data not found');
+            return;
+        }
+
+        const sizeData = stockResult.data;
+        const sizeValue = Object.keys(sizeData)[0];
+        const currentStock = sizeData[sizeValue]?.stock || 0;
+        const newStock = currentStock + quantity;
+
+        // Update stock in database
+        await updateData(
+            `smartfit_AR_Database/shoe/${shopId}/${shoeId}/variants/${variantKey}/sizes/${sizeKey}/${sizeValue}`,
+            { stock: newStock }
+        );
+
+        console.log(`Stock restored for ${shoeId} size ${sizeValue}: ${currentStock} -> ${newStock}`);
+    } catch (error) {
+        console.error('Error restoring stock:', error);
+    }
+}
+
+// Track order function
+window.trackOrder = function(orderId) {
+    window.location.href = `/customer/html/track.html?orderId=${orderId}&userId=${userID}`;
+};
+
+// Validate shoe function
+window.validateShoe = function(serialNumber) {
+    window.location.href = `/customer/html/shoevalidator.html?ShoeSerialNumber=${encodeURIComponent(serialNumber)}`;
+};
+
+// Mark order as received
+window.markAsReceived = async function(orderId) {
+    if (!confirm('Confirm you have received this order in good condition?')) return;
+
+    try {
+        const updateResult = await updateData(
+            `smartfit_AR_Database/transactions/${userID}/${orderId}`,
+            { status: 'completed' }
+        );
+
+        if (updateResult.success) {
+            alert('Order marked as received successfully!');
+        } else {
+            alert('Failed to update order status: ' + updateResult.error);
+        }
     } catch (error) {
         console.error('Error marking order as received:', error);
         alert('Failed to update order status. Please try again.');
@@ -487,10 +501,46 @@ window.markAsReceived = async function(orderId) {
 
 // Report issue with order
 window.reportIssue = function(orderId) {
-    const user = auth.currentUser;
-    if (!user) {
-        window.location.href = "/user_login.html";
-        return;
-    }
-    window.location.href = `/customer/html/reportIssue.html?orderID=${orderId}&userID=${user.uid}`;
+    window.location.href = `/customer/html/reportIssue.html?orderID=${orderId}&userID=${userID}`;
 };
+
+// Set up event listeners
+function setupEventListeners() {
+    // Logout functionality
+    const logoutBtn = getElement('logout_btn');
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', async function() {
+            if (confirm('Are you sure you want to logout?')) {
+                const result = await logoutUser();
+                if (result.success) {
+                    window.location.href = '/login.html';
+                } else {
+                    console.error('Error signing out:', result.error);
+                }
+            }
+        });
+    }
+}
+
+// Initialize when DOM is loaded
+document.addEventListener('DOMContentLoaded', function() {
+    // Mobile sidebar toggle
+    const mobileToggle = document.querySelector('.mobile-menu-toggle');
+    const sidebar = document.querySelector('.sidebar');
+    const overlay = document.querySelector('.sidebar-overlay');
+
+    if (mobileToggle && sidebar && overlay) {
+        mobileToggle.addEventListener('click', () => {
+            sidebar.classList.toggle('active');
+            overlay.classList.toggle('active');
+        });
+
+        overlay.addEventListener('click', () => {
+            sidebar.classList.remove('active');
+            overlay.classList.remove('active');
+        });
+    }
+
+    // Initialize orders page
+    initializeOrders();
+});
