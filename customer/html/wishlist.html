@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Wishlist - Customer</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #a777e3;
+            --primary-dark: #8e5fd5;
+            --secondary: #8a4fff;
+            --accent: #ff6b6b;
+            --success: #48cfad;
+            --warning: #ffaa00;
+            --error: #ff6b6b;
+            --light: #f8f9fa;
+            --dark: #2c3e50;
+            --gray: #bdc3c7;
+            --gray-light: #ecf0f1;
+            --gray-dark: #7f8c8d;
+            --text-primary: #2c3e50;
+            --text-secondary: #34495e;
+            --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08);
+            --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
+            --transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            --radius-sm: 6px;
+            --radius-md: 10px;
+            --radius-lg: 14px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+
+        body {
+            background-color: #f5f7fa;
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+
+        .dashboard {
+            display: grid;
+            grid-template-columns: 280px 1fr;
+            min-height: 100vh;
+        }
+
+        /* Sidebar - Purple Theme */
+        .sidebar {
+            background: linear-gradient(180deg, var(--secondary) 0%, var(--primary-dark) 100%);
+            color: white;
+            padding: 1.5rem 1rem;
+            position: sticky;
+            top: 0;
+            height: 100vh;
+            box-shadow: var(--shadow-lg);
+            z-index: 10;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.5rem 1rem;
+            margin-bottom: 2rem;
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: white;
+        }
+
+        .logo-icon {
+            background: rgba(255, 255, 255, 0.2);
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .nav-items {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .nav-item {
+            padding: 0.75rem 1rem;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            color: rgba(255, 255, 255, 0.9);
+            text-decoration: none;
+            font-size: 0.95rem;
+            font-weight: 500;
+        }
+
+        .nav-item:hover {
+            background: rgba(255, 255, 255, 0.15);
+            color: white;
+            transform: translateX(4px);
+        }
+
+        .nav-item.active {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            font-weight: 600;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .nav-item i {
+            width: 24px;
+            text-align: center;
+            font-size: 1.1rem;
+        }
+
+        /* Main Content */
+        .main-content {
+            padding: 2rem;
+            overflow-x: auto;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .header h1 {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: var(--dark);
+        }
+
+        .search-bar {
+            padding: 0.8rem 1.5rem;
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--gray-light);
+            width: 100%;
+            max-width: 400px;
+            transition: var(--transition);
+            font-size: 0.95rem;
+            background-color: white;
+        }
+
+        .search-bar:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(167, 119, 227, 0.2);
+        }
+
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .user-avatar {
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid var(--primary);
+            box-shadow: var(--shadow-sm);
+        }
+
+        /* Wishlist Section */
+        .wishlist-section {
+            padding: 20px;
+            margin-top: 30px;
+        }
+
+        .section-title {
+            margin-bottom: 20px;
+            color: var(--dark);
+            font-size: 1.4rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .section-title i {
+            color: var(--primary);
+        }
+
+        .wishlist-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .sort-options {
+            padding: 0.75rem 1rem;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--gray-light);
+            background-color: white;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .sort-options:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(167, 119, 227, 0.2);
+        }
+
+        .wishlist-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .shoe-card {
+            background: white;
+            border: 1px solid var(--gray-light);
+            border-radius: 8px;
+            overflow: hidden;
+            transition: var(--transition);
+            box-shadow: var(--shadow-sm);
+            position: relative;
+        }
+
+        .shoe-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .remove-wishlist {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(255, 255, 255, 0.9);
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: var(--error);
+            z-index: 2;
+            transition: var(--transition);
+        }
+
+        .remove-wishlist:hover {
+            background: var(--error);
+            color: white;
+            transform: scale(1.1);
+        }
+
+        .shoe-image img {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+        }
+
+        .shoe-details {
+            padding: 1.25rem;
+        }
+
+        .shoe-details h3 {
+            margin: 0 0 10px 0;
+            font-size: 1.2rem;
+            color: var(--dark);
+        }
+
+        .shoe-code {
+            color: var(--gray-dark);
+            font-size: 0.9rem;
+            margin: 5px 0;
+        }
+
+        .product-meta {
+            display: flex;
+            justify-content: start;
+            align-items: center;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin-top: 0.5rem;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+        }
+
+        .product-brand,
+        .product-type {
+            background-color: var(--gray-light);
+            color: var(--text-secondary);
+            padding: 0.3rem 0.6rem;
+            border-radius: var(--radius-sm);
+            font-weight: 500;
+            white-space: nowrap;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .product-gender {
+            background-color: var(--gray-light);
+            color: var(--text-secondary);
+            padding: 0.3rem 0.6rem;
+            border-radius: var(--radius-sm);
+            font-weight: 500;
+            white-space: nowrap;
+            box-shadow: var(--shadow-sm);
+            text-transform: capitalize;
+        }
+
+        .shoe-description {
+            color: var(--gray-dark);
+            height: 50px;
+            font-size: 0.95rem;
+            margin: 10px 0;
+            display: -webkit-box;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .shoe-price {
+            font-weight: bold;
+            color: var(--primary);
+            margin: 10px 0;
+            font-size: 1.2rem;
+        }
+
+        .shoe-variants {
+            font-size: 0.9rem;
+            color: var(--gray-dark);
+            margin: 10px 0;
+        }
+
+        .shoe-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .btn-view {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 0.75rem 1rem;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            transition: var(--transition);
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            flex: 1;
+        }
+
+        .btn-view:hover {
+            background-color: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .btn-cart {
+            background-color: var(--success);
+            color: white;
+            border: none;
+            padding: 0.75rem;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 46px;
+        }
+
+        .btn-cart:hover {
+            background-color: #3ab795;
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .no-items {
+            text-align: center;
+            color: var(--gray-dark);
+            font-style: italic;
+            grid-column: 1 / -1;
+            padding: 2rem;
+            background: white;
+            border-radius: var(--radius-md);
+            box-shadow: var(--shadow-sm);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .no-items-icon {
+            font-size: 3rem;
+            color: var(--gray);
+        }
+
+        .browse-btn {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 0.8rem 1.5rem;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            transition: var(--transition);
+            text-decoration: none;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .browse-btn:hover {
+            background-color: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-sm);
+        }
+
+        /* Empty State */
+        .empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 4rem 2rem;
+            background-color: white;
+            border-radius: var(--radius-md);
+            box-shadow: var(--shadow-sm);
+            grid-column: 1 / -1;
+        }
+
+        .empty-icon {
+            font-size: 4rem;
+            color: var(--gray);
+            margin-bottom: 1.5rem;
+        }
+
+        .empty-title {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            color: var(--text-primary);
+        }
+
+        .empty-description {
+            color: var(--gray-dark);
+            margin-bottom: 2rem;
+            max-width: 500px;
+        }
+
+        /* mobile navigation */
+        .mobile-menu-toggle {
+            display: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 0.5rem;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 1200px) {
+            .dashboard {
+                grid-template-columns: 240px 1fr;
+            }
+        }
+
+        @media (max-width: 992px) {
+            .dashboard {
+                grid-template-columns: 220px 1fr;
+            }
+
+            .wishlist-container {
+                grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+            }
+        }
+
+        @media (max-width: 768px) {
+            .dashboard {
+                grid-template-columns: 1fr;
+            }
+
+            .sidebar {
+                position: fixed;
+                left: -350px;
+                transition: var(--transition);
+                z-index: 100;
+                height: 100vh;
+            }
+
+            .sidebar.active {
+                left: 0;
+            }
+
+            .mobile-menu-toggle {
+                display: block;
+                font-size: 1.5rem;
+                cursor: pointer;
+                padding: 0.5rem;
+                color: var(--dark);
+            }
+
+            .sidebar-overlay {
+                display: none;
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba(0, 0, 0, 0.5);
+                z-index: 99;
+            }
+
+            .sidebar-overlay.active {
+                display: block;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .search-bar {
+                max-width: 100%;
+            }
+
+            .wishlist-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .shoe-actions {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="dashboard">
+        <!-- Sidebar - Purple Theme -->
+        <div class="sidebar">
+            <div class="logo">
+                <div class="logo-icon">
+                    <i class="fas fa-store"></i>
+                </div>
+                <span>SHOE PORTAL</span>
+            </div>
+            <div class="nav-items">
+                <a href="/customer/html/customer_dashboard.html" class="nav-item">
+                    <i class="fas fa-home"></i> Dashboard
+                </a>
+                <a href="/customer/html/browse.html" class="nav-item">
+                    <i class="fas fa-shopping-bag"></i> Browse Shoes
+                </a>
+                <a href="/customer/html/shoevalidator.html" class="nav-item">
+                    <i class="fas fa-check-circle"></i> Shoe Validation
+                </a>
+                <a href="/customer/html/pickshoe.html" class="nav-item">
+                    <i class="fas fa-shoe-prints"></i> Customize Shoes
+                </a>
+                <a href="/customer/html/customization_pendingOrders.html" class="nav-item">
+                    <i class="fas fa-tools"></i> My Custom Orders
+                </a>
+                <a href="/customer/html/orders.html" class="nav-item">
+                    <i class="fas fa-receipt"></i> My Orders
+                </a>
+                <a href="/customer/html/add_to_cart.html" class="nav-item">
+                    <i class="fas fa-shopping-cart"></i> My Cart
+                </a>
+                <a href="/customer/html/history.html" class="nav-item">
+                    <i class="fas fa-history"></i> Order History
+                </a>
+                <a href="/customer/html/issue_response.html" class="nav-item">
+                    <i class="fas fa-reply"></i> Issue Response
+                </a>
+                <a href="/customer/html/wishlist.html" class="nav-item active">
+                    <i class="fas fa-heart"></i> Wishlist
+                </a>
+                <a href="/chatbot/html/chatbot.html" class="nav-item">
+                    <i class="fas fa-comment"></i> Chatbot
+                </a>
+                <a href="/customer/html/customerprofile.html" class="nav-item">
+                    <i class="fas fa-cog"></i> Settings
+                </a>
+                <a id="logout_btn" class="nav-item">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </a>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <div class="header">
+                <div class="mobile-menu-toggle">
+                    <i class="fas fa-bars"></i>
+                </div>
+                <h1>My Wishlist</h1>
+                <div class="user-profile">
+                    <img id="imageProfile" src="https://randomuser.me/api/portraits/men/32.jpg" alt="Profile"
+                        class="user-avatar">
+                    <span id="userName_display2">Customer Name</span>
+                </div>
+            </div>
+
+            <!-- Wishlist Section -->
+            <div class="wishlist-section">
+                <div class="wishlist-header">
+                    <h2 class="section-title">
+                        <i class="fas fa-heart"></i> Saved Items
+                    </h2>
+                    <select class="sort-options">
+                        <option>Sort by: Recently Added</option>
+                        <option>Sort by: Price Low to High</option>
+                        <option>Sort by: Price High to Low</option>
+                    </select>
+                </div>
+
+                <input type="text" class="search-bar" placeholder="Search wishlist items...">
+
+                <div class="wishlist-container" id="wishlistContainer">
+                    <!-- Wishlist items will be dynamically loaded here -->
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sidebar Overlay -->
+    <div class="sidebar-overlay"></div>
+
+    <!-- <script>
+        // Mobile sidebar toggle
+        document.addEventListener('DOMContentLoaded', function () {
+            const mobileToggle = document.querySelector('.mobile-menu-toggle');
+            const sidebar = document.querySelector('.sidebar');
+            const overlay = document.querySelector('.sidebar-overlay');
+
+            if (mobileToggle && sidebar && overlay) {
+                mobileToggle.addEventListener('click', () => {
+                    sidebar.classList.toggle('active');
+                    overlay.classList.toggle('active');
+                });
+
+                overlay.addEventListener('click', () => {
+                    sidebar.classList.remove('active');
+                    overlay.classList.remove('active');
+                });
+            }
+        });
+
+    </script> -->
+    <script src="/customer/js/wishlist.js" type="module"></script>
+</body>
+
+</html>

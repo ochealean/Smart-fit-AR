@@ -1,9 +1,9 @@
 // Import only from firebaseMethods
-import { 
-    checkUserAuth, 
-    logoutUser, 
-    readDataRealtime, 
-    readData, 
+import {
+    checkUserAuth,
+    logoutUser,
+    readDataRealtime,
+    readData,
     updateData,
     deleteData
 } from '../../firebaseMethods.js';
@@ -15,6 +15,7 @@ let unsubscribeCartListener = null;
 checkUserAuth().then((authResult) => {
     if (authResult.authenticated && authResult.role === 'customer') {
         loadCart(authResult.userId);
+        console.log("User ID:", authResult);
         loadUserProfile(authResult.userId);
     } else {
         window.location.href = "/user_login.html";
@@ -26,9 +27,8 @@ checkUserAuth().then((authResult) => {
 
 // Load cart from Firebase using firebaseMethods
 async function loadCart(userId) {
-    const cartPath = `AR_shoe_users/carts/${userId}`;
+    const cartPath = `smartfit_AR_Database/carts/${userId}`;
     
-    // Clean up previous listener if exists
     if (unsubscribeCartListener) {
         unsubscribeCartListener();
     }
@@ -41,27 +41,31 @@ async function loadCart(userId) {
         }
 
         const cartData = result.data;
-        console.log("Cart data:", cartData);
+        
+        // Only re-process if cart data actually changed
+        const cartDataString = JSON.stringify(cartData);
+        if (window.lastCartData === cartDataString) return;
+        window.lastCartData = cartDataString;
         
         cartItems = await Promise.all(Object.entries(cartData).map(async ([cartId, item]) => {
             try {
-                const shoePath = `AR_shoe_users/shoe/${item.shopId}/${item.shoeId}`;
+                const shoePath = `smartfit_AR_Database/shoe/${item.shopId}/${item.shoeId}`;
                 const shoeResult = await readData(shoePath);
-                
+
                 if (!shoeResult.success || !shoeResult.data) return null;
-                
+
                 const shoeData = shoeResult.data;
                 const variant = shoeData.variants?.[item.variantKey];
                 if (!variant) return null;
-                
+
                 const sizeObj = variant.sizes?.[item.sizeKey];
                 if (!sizeObj) return null;
-                
+
                 const sizeValue = Object.keys(sizeObj)[0];
                 if (!sizeValue) return null;
-                
+
                 const stock = sizeObj[sizeValue]?.stock || 0;
-                
+
                 return {
                     cartId,
                     shopId: item.shopId,
@@ -84,7 +88,6 @@ async function loadCart(userId) {
         }));
 
         cartItems = cartItems.filter(item => item !== null);
-        console.log("Cart items:", cartItems);
         renderCart();
     });
 }
@@ -157,14 +160,14 @@ function setupCartEventListeners() {
             const cartId = e.target.closest('.delete-btn').dataset.cartid;
             const confirmDelete = confirm("Are you sure you want to delete this item?");
             if (!confirmDelete) return;
-    
+
             try {
                 const authResult = await checkUserAuth();
                 if (!authResult.authenticated) return;
-                
-                const deletePath = `AR_shoe_users/carts/${authResult.userId}/${cartId}`;
+
+                const deletePath = `smartfit_AR_Database/carts/${authResult.userId}/${cartId}`;
                 const deleteResult = await deleteData(deletePath);
-                
+
                 if (deleteResult.success) {
                     cartItems = cartItems.filter(item => item.cartId !== cartId);
                     renderCart();
@@ -190,10 +193,11 @@ function setupCartEventListeners() {
                 try {
                     const authResult = await checkUserAuth();
                     if (!authResult.authenticated) return;
-                    
-                    const updatePath = `AR_shoe_users/carts/${authResult.userId}/${cartId}/quantity`;
-                    const updateResult = await updateData(updatePath, newQty);
-                    
+
+                    // Update only the quantity field using direct Firebase update
+                    const updatePath = `smartfit_AR_Database/carts/${authResult.userId}/${cartId}`;
+                    const updateResult = await updateData(updatePath, { quantity: newQty });
+
                     if (updateResult.success) {
                         item.quantity = newQty;
                         renderCart();
@@ -217,10 +221,11 @@ function setupCartEventListeners() {
                 try {
                     const authResult = await checkUserAuth();
                     if (!authResult.authenticated) return;
-                    
-                    const updatePath = `AR_shoe_users/carts/${authResult.userId}/${cartId}/quantity`;
-                    const updateResult = await updateData(updatePath, value);
-                    
+
+                    // Update only the quantity field using direct Firebase update
+                    const updatePath = `smartfit_AR_Database/carts/${authResult.userId}/${cartId}`;
+                    const updateResult = await updateData(updatePath, { quantity: value });
+
                     if (updateResult.success) {
                         item.quantity = value;
                         renderCart();
@@ -302,7 +307,7 @@ function createCartSummary() {
         // Prepare checkout URL with all selected items
         const params = new URLSearchParams();
         params.append("method", "cartOrder");
-        
+
         checkedItems.forEach((item, index) => {
             params.append(`cartOrder_${index + 1}`, item.cartId);
         });
@@ -346,9 +351,10 @@ function showEmptyCart() {
 // Load and display user profile using firebaseMethods
 async function loadUserProfile(userId) {
     try {
-        const profilePath = `AR_shoe_users/customer/${userId}`;
+        const profilePath = `smartfit_AR_Database/customers/${userId}`;
         const profileResult = await readData(profilePath);
-        
+        console.log("User profile data:", profileResult);
+
         if (profileResult.success && profileResult.data) {
             displayUserProfile(profileResult.data);
         } else {
@@ -363,13 +369,13 @@ async function loadUserProfile(userId) {
 function displayUserProfile(userData) {
     const userNameDisplay = document.getElementById("userName_display");
     const imageProfile = document.getElementById("imageProfile");
-    
+
     console.log("User data:", userData);
 
     if (userNameDisplay) {
         userNameDisplay.textContent = `${userData.firstName || ''} ${userData.lastName || ''}`.trim() || 'Customer';
     }
-    
+
     if (imageProfile) {
         // Handle different profile photo structures
         let profilePhotoUrl = '';
@@ -380,7 +386,7 @@ function displayUserProfile(userData) {
         } else if (userData.profilePhotoPath) {
             profilePhotoUrl = userData.profilePhotoPath;
         }
-        
+
         imageProfile.src = profilePhotoUrl || 'https://via.placeholder.com/150';
         imageProfile.onerror = () => {
             imageProfile.src = 'https://via.placeholder.com/150';
@@ -389,7 +395,7 @@ function displayUserProfile(userData) {
 }
 
 // Logout functionality using firebaseMethods
-document.getElementById('logout_btn')?.addEventListener('click', async function() {
+document.getElementById('logout_btn')?.addEventListener('click', async function () {
     if (confirm('Are you sure you want to logout?')) {
         const logoutResult = await logoutUser();
         if (logoutResult.success) {

@@ -1,10 +1,9 @@
 import {
     readData,
-    updateData,
     checkUserAuth,
     createData,
     auth,
-    db,
+    generate18CharID,
     logoutUser
 } from "../../firebaseMethods.js";
 
@@ -361,12 +360,18 @@ window.addToCart = async function (cartItem) {
             addedAt: new Date().toISOString()
         };
 
-        // Save to Firebase
-        const cartRef = ref(db, `smartfit_AR_Database/carts/${user.uid}/${cartItemId}`);
-        await createData(cartRef, cartItemData);
+        // Use createData function instead of direct Firebase reference
+        const cartPath = `smartfit_AR_Database/carts/${user.uid}/${cartItemId}`;
+        const result = await createData(cartPath, user.uid, cartItemData);
 
-        console.log("Item added to cart successfully");
-        return true;
+        if (result.success) {
+            console.log("Item added to cart successfully");
+            return true;
+        } else {
+            console.error("Failed to add item to cart:", result.error);
+            alert("Failed to add item to cart");
+            return false;
+        }
 
     } catch (error) {
         console.error("Error adding to cart:", error);
@@ -478,13 +483,3 @@ document.addEventListener('keydown', function (e) {
         closeProductModal();
     }
 });
-
-// Utility function to generate IDs
-function generate18CharID() {
-    const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-    let result = '';
-    for (let i = 0; i < 18; i++) {
-        result += characters.charAt(Math.floor(Math.random() * characters.length));
-    }
-    return result;
-}
