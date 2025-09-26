@@ -2,6 +2,7 @@ import {
     readData,
     updateData,
     checkUserAuth,
+    createData,
     auth,
     db,
     logoutUser
@@ -362,7 +363,7 @@ window.addToCart = async function (cartItem) {
 
         // Save to Firebase
         const cartRef = ref(db, `smartfit_AR_Database/carts/${user.uid}/${cartItemId}`);
-        await updateData(cartRef, cartItemData);
+        await createData(cartRef, cartItemData);
 
         console.log("Item added to cart successfully");
         return true;
