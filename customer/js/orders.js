@@ -173,7 +173,7 @@ async function createOrderCard(order) {
     // If not found in order, check shoeVerification collection
     if (!serialNumber) {
         try {
-            const serialNumberData = await getSerialNumberFromVerification(order.id);
+            const serialNumberData = await getSerialNumberFromVerification(order.orderId);
             if (serialNumberData) {
                 serialNumber = serialNumberData.serialNumber;
             }
@@ -185,7 +185,7 @@ async function createOrderCard(order) {
     const orderCard = document.createElement('div');
     orderCard.className = 'order-card';
     orderCard.dataset.status = status;
-    orderCard.dataset.orderId = order.id;
+    orderCard.dataset.orderId = order.orderId;
     if (serialNumber) {
         orderCard.dataset.serialNumber = serialNumber;
     }
@@ -225,12 +225,12 @@ async function createOrderCard(order) {
     `;
     }
 
-    const actionButtons = generateActionButtons(status, order.id, serialNumber);
+    const actionButtons = generateActionButtons(status, order.orderId, serialNumber);
 
     orderCard.innerHTML = `
         <div class="order-header">
             <div>
-                <span class="order-id">Order #${(order.id || '').substring(0, 8).toUpperCase()}</span>
+                <span class="order-id">Order #${(order.orderId || '').substring(0, 8).toUpperCase()}</span>
                 <span class="order-date"> - ${formattedDate}</span>
             </div>
             <span class="order-status ${statusClass}">${statusText}</span>

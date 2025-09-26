@@ -206,6 +206,7 @@ function setupEventListeners() {
 
 // Load order data from Firebase with real-time updates
 function loadOrderData() {
+    const orderCancelContainer = document.querySelector('.order-cancelled');
     const unsubscribe = readDataRealtime(
         `smartfit_AR_Database/transactions/${userID}/${orderID}`,
         (result) => {
@@ -215,13 +216,25 @@ function loadOrderData() {
             }
 
             const data = result.data;
+
+            console.log(data);
+            if (data.status && data.status.toLowerCase() === "cancelled") {
+                if (orderCancelContainer) {
+                    orderCancelContainer.style.display = "grid";
+                    const goBackBtn = orderCancelContainer.querySelector('button');
+                    if (goBackBtn) {
+                        goBackBtn.addEventListener('click', () => {
+                            window.location.href = '/shopowner/html/shop_order.html';
+                        });
+                    }
+                }
+            }
             updateOrderInfo(data);
             updateShippingInfo(data);
             console.log("Order data:", data.statusUpdates);
             renderStatusUpdates(data.statusUpdates || {});
         }
     );
-
     // Return unsubscribe function for cleanup (optional)
     return unsubscribe;
 }
@@ -287,7 +300,6 @@ function renderStatusUpdates(updates) {
     if (!hasUpdates) return;
 
     // Convert updates object to array and sort by timestamp (newest first)
-    const updateIDs = Object.keys(updates);
     const sortedEntries = Object.entries(updates)
         .sort(([, a], [, b]) => b.timestamp - a.timestamp); // Sort by timestamp descending
 

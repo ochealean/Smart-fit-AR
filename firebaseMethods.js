@@ -656,26 +656,36 @@ export { app, auth, db, storage };
 export default {
     checkUserAuth,
     logoutUser,
-    readDataRealtime,
     generate18CharID,
     generate6DigitCode,
-    validateFileType,
+    displayProducts,
+
+    // Profile Management
+    viewProfile,
+    deleteProfile,
+    updateProfileMethod,
+
+    // Authentication
     createUserWithEmailAndPasswordWrapper,
     sendEmailVerificationWrapper,
     sendPasswordResetEmailWrapper,
     sendEmail,
-    viewProfile,
-    updateProfileMethod,
-    deleteProfile,
+
+    // Image Management
     createImageToFirebase,
     readImageFromFirebase,
     updateImageInFirebase,
     deleteImageFromFirebase,
-    displayProducts,
+    validateFileType,
+
+    // Data Management
     createData,
     readData,
     updateData,
     deleteData,
+    readDataRealtime,
+
+    // Orders Management
     getOrders,
     updateOrderStatus,
     updateStock,

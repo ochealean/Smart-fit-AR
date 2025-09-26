@@ -1,51 +1,28 @@
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
-import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-database.js";
-
-const firebaseConfig = {
-    apiKey: "AIzaSyAuPALylh11cTArigeGJZmLwrFwoAsNPSI",
-    authDomain: "opportunity-9d3bf.firebaseapp.com",
-    databaseURL: "https://opportunity-9d3bf-default-rtdb.firebaseio.com",
-    projectId: "opportunity-9d3bf",
-    storageBucket: "opportunity-9d3bf.appspot.com",
-    messagingSenderId: "57906230058",
-    appId: "1:57906230058:web:2d7cd9cc68354722536453",
-    measurementId: "G-QC2JSR1FJW"
-};
-
-const app = initializeApp(firebaseConfig);
-const db = getDatabase(app);
-
-// Get orderId and userId from URL
-const urlParams = new URLSearchParams(window.location.search);
-const orderId = urlParams.get("orderId");
-const userId = urlParams.get("userId");
-
-if (!orderId || !userId) {
-    alert("Missing orderId or userId in URL");
-    throw new Error("No orderId or userId provided");
-}
+import { 
+    checkUserAuth, 
+    logoutUser, 
+    readDataRealtime,
+    readData
+} from '../../firebaseMethods.js';
 
 // DOM elements
 const domElements = {
+    mainContent: document.querySelector(".main-content"),
     packageTitle: document.querySelector(".package-title"),
     packageShop: document.querySelector(".package-shop"),
     shoeBrand: document.getElementById("shoeBrand"),
     shoeType: document.getElementById("shoeType"),
     shoeGender: document.getElementById("shoeGender"),
-    // Fixed meta-value selectors
     orderNumber: document.querySelector(".meta-item:nth-child(1) .meta-value"),
     orderPrice: document.querySelector(".meta-item:nth-child(2) .meta-value"),
     orderQuantity: document.querySelector(".meta-item:nth-child(3) .meta-value"),
     orderSize: document.querySelector(".meta-item:nth-child(4) .meta-value"),
     orderColor: document.querySelector(".meta-item:nth-child(5) .meta-value"),
-
     statusIcon: document.querySelector(".status-icon"),
     statusTitle: document.querySelector(".status-text h4"),
     statusSubtitle: document.querySelector(".status-text p"),
     trackingNumber: document.querySelector(".tracking-number"),
     timelineContainer: document.querySelector(".timeline"),
-
-    // Fixed delivery-info selectors
     recipientName: document.querySelector(".info-card:nth-of-type(1) .info-item:nth-of-type(1) .info-value"),
     recipientAddress: document.querySelector(".info-card:nth-of-type(1) .info-item:nth-of-type(2) .info-value"),
     recipientContact: document.querySelector(".info-card:nth-of-type(1) .info-item:nth-of-type(3) .info-value"),
@@ -57,45 +34,86 @@ const domElements = {
     estDelivery: document.querySelector(".info-card:nth-of-type(3) .info-item:nth-of-type(3) .info-value")
 };
 
+// Get orderId and userId from URL
+const urlParams = new URLSearchParams(window.location.search);
+const orderId = urlParams.get("orderId");
+const userId = urlParams.get("userId");
+
+if (!orderId || !userId) {
+    alert("Missing orderId or userId in URL");
+    throw new Error("No orderId or userId provided");
+}
+
 // Initialize the application
-function init() {
-    loadOrderData();
-    // initMap();
+async function init() {
+    await loadUserProfile();
+    await loadOrderData();
 }
 
-// Load order data from Firebase
-function loadOrderData() {
-    const orderRef = ref(db, `AR_shoe_users/transactions/${userId}/${orderId}`);
+// Load user profile data
+async function loadUserProfile() {
+    try {
+        const authResult = await checkUserAuth();
+        if (authResult.authenticated && authResult.userData) {
+            // Update user profile in header
+            const imageProfile = document.getElementById('imageProfile');
+            const userNameDisplay = document.getElementById('userName_display2');
+            
+            if (userNameDisplay && authResult.userData.firstName) {
+                userNameDisplay.textContent = authResult.userData.firstName;
+            }
+            
+            if (imageProfile && authResult.userData.profilePhoto) {
+                imageProfile.src = authResult.userData.profilePhoto;
+            }
 
-    onValue(orderRef, (snapshot) => {
-        const data = snapshot.val();
-        if (!data) {
-            alert("Order not found");
-            return;
+            domElements.mainContent.style.opacity = "1";
         }
-
-        updateOrderInfo(data);
-        updateShippingInfo(data);
-        updateStatusUpdates(data.statusUpdates || {});
-        updateDeliveryInfo(data);
-    }, {
-        onlyOnce: false
-    });
+    } catch (error) {
+        console.error('Error loading user profile:', error);
+    }
 }
 
-function getShopDetailsByID(shopID) {
-    return new Promise((resolve) => {
-        const ShoporderRef = ref(db, `AR_shoe_users/shop/${shopID}`);
-        onValue(ShoporderRef, (snapshot) => {
-            const data = snapshot.val();
-            resolve(data || null);
-        }, { onlyOnce: true });
+// Load order data from Firebase using firebaseMethods
+async function loadOrderData() {
+    const orderPath = `smartfit_AR_Database/transactions/${userId}/${orderId}`;
+    
+    // Use real-time listener for order data
+    console.log('Listening to order path:', orderPath);
+    console.log(orderId);
+    const unsubscribe = readDataRealtime(orderPath, (result) => {
+        if (result.success) {
+            const data = result.data;
+            updateOrderInfo(data);
+            updateShippingInfo(data);
+            updateStatusUpdates(data.statusUpdates || {});
+            updateDeliveryInfo(data);
+        } else {
+            alert("Order not found");
+            console.error("Error loading order:", result.error);
+        }
     });
+
+    // Return unsubscribe function for cleanup if needed
+    return unsubscribe;
+}
+
+// Get shop details using firebaseMethods
+async function getShopDetailsByID(shopID) {
+    try {
+        const shopPath = `smartfit_AR_Database/shop/${shopID}`;
+        const result = await readData(shopPath);
+        return result.success ? result.data : null;
+    } catch (error) {
+        console.error('Error fetching shop details:', error);
+        return null;
+    }
 }
 
 // Update order information display
 function updateOrderInfo(data) {
-    console.log(data);
+    console.log('Order data:', data);
+    
     if (domElements.packageTitle) {
         domElements.packageTitle.textContent = data.item?.name || "N/A";
     }
@@ -104,18 +122,15 @@ function updateOrderInfo(data) {
         domElements.packageShop.textContent = `From: ${data.item?.shopName || "Unknown Seller"}`;
     }
 
-    // Add this section to update the package image
+    // Update package image
     const packageImage = document.getElementById('packageImage');
     if (packageImage && data.item?.imageUrl) {
         packageImage.src = data.item.imageUrl;
         packageImage.alt = data.item?.name || "Product Image";
-        
-        // Add error handling in case the image fails to load
         packageImage.onerror = function() {
-            this.src = "https://cdn-icons-png.flaticon.com/512/11542/11542598.png"; // Fallback image
+            this.src = "https://cdn-icons-png.flaticon.com/512/11542/11542598.png";
         };
     } else if (packageImage) {
-        // Set a default image if no image URL is provided
         packageImage.src = "https://cdn-icons-png.flaticon.com/512/11542/11542598.png";
     }
 
@@ -139,20 +154,21 @@ function updateOrderInfo(data) {
         domElements.orderColor.textContent = data.item.color;
     }
     
-    // Fetch and display shoe details (brand, type, gender)
-    fetchShoeDetails(data.item?.shoeId, data.item?.shopId);
+    // Fetch and display shoe details
+    if (data.item?.shoeId && data.item?.shopId) {
+        fetchShoeDetails(data.item.shoeId, data.item.shopId);
+    }
 }
 
-// New function to fetch shoe details
-function fetchShoeDetails(shoeId, shopId) {
-    if (!shoeId || !shopId) return;
-    
-    const shoeRef = ref(db, `AR_shoe_users/shoe/${shopId}/${shoeId}`);
-    
-    onValue(shoeRef, (snapshot) => {
-        const shoeData = snapshot.val();
-        if (shoeData) {
-            // Update the shoe details in the UI
+// Fetch shoe details using firebaseMethods
+async function fetchShoeDetails(shoeId, shopId) {
+    try {
+        const shoePath = `smartfit_AR_Database/shoe/${shopId}/${shoeId}`;
+        const result = await readData(shoePath);
+        
+        if (result.success && result.data) {
+            const shoeData = result.data;
+            
             if (domElements.shoeBrand) {
                 domElements.shoeBrand.textContent = shoeData.shoeBrand || "N/A";
             }
@@ -165,9 +181,9 @@ function fetchShoeDetails(shoeId, shopId) {
                 domElements.shoeGender.textContent = shoeData.shoeGender || "N/A";
             }
         }
-    }, {
-        onlyOnce: true
-    });
+    } catch (error) {
+        console.error('Error fetching shoe details:', error);
+    }
 }
 
 // Update shipping information
@@ -191,7 +207,7 @@ function updateShippingInfo(data) {
 
 // Update delivery information
 async function updateDeliveryInfo(data) {
-    console.log(data);
+    console.log('Delivery data:', data);
     if (!data.shippingInfo) return;
 
     // Recipient info
@@ -206,7 +222,7 @@ async function updateDeliveryInfo(data) {
             data.shippingInfo.address || '',
             data.shippingInfo.city || '',
             data.shippingInfo.state || '',
-            data.shippingInfo.zipCode || ''
+            data.shippingInfo.zip || ''
         ].filter(Boolean).join(", ");
         domElements.recipientAddress.innerHTML = address || "N/A";
     }
@@ -219,31 +235,32 @@ async function updateDeliveryInfo(data) {
         domElements.recipientContact.innerHTML = contact || "N/A";
     }
 
-
     // Get seller info asynchronously
-    const sellerInfo = await getShopDetailsByID(data.item?.shopId);
-    console.log(data.item?.shopId);
-    console.log(data.item?.shopName);
+    if (data.item?.shopId) {
+        const sellerInfo = await getShopDetailsByID(data.item.shopId);
+        
+        // Seller info
+        if (domElements.shopName) {
+            domElements.shopName.textContent = data.item?.shopName || "N/A";
+        }
 
-    // Seller info
-    if (domElements.shopName) {
-        domElements.shopName.textContent = data.item?.shopName || "N/A";
-    }
+        if (domElements.shopAddress && sellerInfo) {
+            const shopAddress = [
+                sellerInfo.shopAddress || '',
+                sellerInfo.shopCity || '',
+                sellerInfo.shopState || '',
+                sellerInfo.shopZip || ''
+            ].filter(Boolean).join(", ");
+            domElements.shopAddress.innerHTML = shopAddress || "N/A";
+        }
 
-    if (domElements.shopAddress && sellerInfo) {
-        const shopAddress = [
-            sellerInfo.shopCity || '',
-            ` ${sellerInfo.shopState}` || ''
-        ];
-        domElements.shopAddress.innerHTML = shopAddress || "N/A";
-    }
-
-    if (domElements.shopContact && sellerInfo) {
-        const shopContact = [
-            sellerInfo.ownerPhone ? formatPhoneNumber(sellerInfo.ownerPhone) : '',
-            sellerInfo.email || ''
-        ].filter(Boolean).join("<br>");
-        domElements.shopContact.innerHTML = shopContact || "N/A";
+        if (domElements.shopContact && sellerInfo) {
+            const shopContact = [
+                sellerInfo.ownerPhone ? formatPhoneNumber(sellerInfo.ownerPhone) : '',
+                sellerInfo.email || ''
+            ].filter(Boolean).join("<br>");
+            domElements.shopContact.innerHTML = shopContact || "N/A";
+        }
     }
 }
 
@@ -254,11 +271,9 @@ function formatPhoneNumber(phone) {
     const digits = phone.replace(/\D/g, '');
 
     if (digits.length === 10) {
-        // Format: 0XXX XXX XXXX
         return `0${digits.slice(0, 3)} ${digits.slice(3, 6)} ${digits.slice(6, 10)}`;
     }
 
-    // Return unformatted if it doesn't match expected pattern
     return phone;
 }
 
@@ -271,7 +286,7 @@ function updateStatusUpdates(updates) {
 
     // Convert updates object to array and sort by timestamp (newest first)
     const sortedUpdates = Object.values(updates)
-        .sort((a, b) => b.timestamp - a.timestamp);
+        .sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
 
     if (sortedUpdates.length === 0) {
         // No updates available
@@ -359,6 +374,8 @@ function updateStatusHeader(status) {
 
 // Format timestamp for display
 function formatDateTime(timestamp) {
+    if (!timestamp) return "Date not available";
+    
     const date = new Date(timestamp);
     return date.toLocaleString('en-US', {
         month: 'long',
@@ -371,23 +388,25 @@ function formatDateTime(timestamp) {
 
 // Format date for display (for estimated delivery)
 function formatDateForDisplay(dateString) {
+    if (!dateString) return "Not available";
+    
     const date = new Date(dateString);
     return date.toLocaleString('en-US', {
         month: 'long',
         day: 'numeric',
-        year: 'numeric',
-        hour: 'numeric',
-        minute: '2-digit'
+        year: 'numeric'
     });
 }
 
-// Initialize the application
-init();
+// Initialize the application when DOM is loaded
+document.addEventListener('DOMContentLoaded', function() {
+    init();
+});
 
-// Logout functionality
+// Logout functionality using firebaseMethods
 document.getElementById('logout_btn').addEventListener('click', function() {
     if (confirm('Are you sure you want to logout?')) {
-        auth.signOut().then(() => {
+        logoutUser().then(() => {
             window.location.href = '/user_login.html';
         }).catch((error) => {
             console.error('Error signing out:', error);
