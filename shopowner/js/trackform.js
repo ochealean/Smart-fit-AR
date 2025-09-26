@@ -1,5 +1,5 @@
-import { 
-    checkUserAuth, 
+import {
+    checkUserAuth,
     logoutUser,
     readDataRealtime,
     updateData,
@@ -38,7 +38,7 @@ function getUrlParams() {
 // Initialize the page
 async function initializeTracking() {
     const authResult = await checkUserAuth();
-    
+
     if (!authResult.authenticated) {
         window.location.href = "/login.html";
         return;
@@ -191,7 +191,7 @@ function setupEventListeners() {
     // Logout functionality
     const logoutBtn = getElement('logout_btn');
     if (logoutBtn) {
-        logoutBtn.addEventListener('click', async function() {
+        logoutBtn.addEventListener('click', async function () {
             if (confirm('Are you sure you want to logout?')) {
                 const result = await logoutUser();
                 if (result.success) {
@@ -217,6 +217,7 @@ function loadOrderData() {
             const data = result.data;
             updateOrderInfo(data);
             updateShippingInfo(data);
+            console.log("Order data:", data.statusUpdates);
             renderStatusUpdates(data.statusUpdates || {});
         }
     );
@@ -270,15 +271,15 @@ function renderStatusUpdates(updates) {
 
     // Get reference to the empty state element
     const emptyState = getElement("emptyUpdatesState");
-    
+
     // Check if there are any updates
     const hasUpdates = updates && Object.keys(updates).length > 0;
-    
+
     // Show/hide empty state based on whether updates exist
     if (emptyState) {
         emptyState.style.display = hasUpdates ? "none" : "block";
     }
-    
+
     // Clear the update list
     domElements.updateList.innerHTML = "";
 
@@ -286,13 +287,15 @@ function renderStatusUpdates(updates) {
     if (!hasUpdates) return;
 
     // Convert updates object to array and sort by timestamp (newest first)
-    const sortedUpdates = Object.entries(updates)
-        .map(([id, update]) => ({ id, ...update }))
-        .sort((a, b) => b.timestamp - a.timestamp);
+    const updateIDs = Object.keys(updates);
+    const sortedEntries = Object.entries(updates)
+        .sort(([, a], [, b]) => b.timestamp - a.timestamp); // Sort by timestamp descending
 
-    sortedUpdates.forEach(update => {
-        addUpdateToDOM(update.id, update);
+    sortedEntries.forEach(([key, value]) => {
+        addUpdateToDOM(key, value);
+        console.log("Rendering update:", key, value);
     });
+
 }
 
 // Add a single update to the DOM
@@ -360,7 +363,6 @@ async function addStatusUpdate() {
         return;
     }
 
-    // RENAME THIS VARIABLE to avoid conflict with the imported updateData function
     const statusUpdateData = {
         status,
         timestamp: new Date(datetime).getTime(),
@@ -373,10 +375,10 @@ async function addStatusUpdate() {
 
     try {
         console.log("1. Starting to add status update");
-        
+
         // Generate a unique ID for the status update
         const updateId = generate18CharID();
-        
+
         // Use createData to create the status update with the generated ID
         const createResult = await createData(
             `smartfit_AR_Database/transactions/${userID}/${orderID}/statusUpdates/${updateId}`,
@@ -385,10 +387,10 @@ async function addStatusUpdate() {
         );
 
         console.log("2. Status update result:", createResult);
-        
+
         if (createResult.success) {
             console.log("3. Updating main order status");
-            
+
             // Update the main order status using the imported updateData function
             const updateResult = await updateData(
                 `smartfit_AR_Database/transactions/${userID}/${orderID}`,
@@ -396,7 +398,7 @@ async function addStatusUpdate() {
             );
 
             console.log("4. Main order status update result:", updateResult);
-            
+
             if (updateResult.success) {
                 // Close modal and reset form
                 if (domElements.updateModal) {
@@ -422,7 +424,7 @@ async function addStatusUpdate() {
 async function deleteStatusUpdate(updateID) {
     try {
         console.log("Deleting update with ID:", updateID);
-        
+
         const result = await deleteData(
             `smartfit_AR_Database/transactions/${userID}/${orderID}/statusUpdates/${updateID}`
         );
@@ -434,7 +436,7 @@ async function deleteStatusUpdate(updateID) {
             if (updateItem) {
                 updateItem.remove();
             }
-            
+
             // Check if there are any updates left and show empty state if needed
             const remainingUpdates = document.querySelectorAll('.update-item');
             const emptyState = getElement("emptyUpdatesState");
@@ -451,7 +453,7 @@ async function deleteStatusUpdate(updateID) {
 }
 
 // Initialize when DOM is loaded
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     // Mobile sidebar toggle
     const mobileToggle = document.querySelector('.mobile-menu-toggle');
     const sidebar = document.querySelector('.sidebar');
