@@ -691,7 +691,6 @@ body {
     opacity: 1;
 }
 
-/* Toast progress bar */
 .toast-progress {
     position: absolute;
     bottom: 0;
@@ -712,7 +711,6 @@ body {
     }
 }
 
-/* Responsive design */
 @media (max-width: 768px) {
     .toast-container {
         top: 10px;

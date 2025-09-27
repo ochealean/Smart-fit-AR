@@ -12,427 +12,200 @@ function getElement(id) {
     return document.getElementById(id);
 }
 
-const productsGrid = getElement("productsGrid");
-const searchInput = getElement("searchInput");
-const searchButton = getElement("searchButton");
-const clearSearchButton = getElement("clearSearchButton");
-const sortOptions = getElement("sortOptions");
+// Global variables
+let wishlistData = {};
+let allShoes = [];
+let activeTag = null;
+let userData = null;
 
-let wishlistData = {}; 
-let allShoes = []; // Store all shoes for filtering
-let activeTag = null; // Track the currently active tag
-
-// Toast functionality - Integrated directly
-class ToastManager {
-    constructor() {
-        this.container = this.createToastContainer();
-        this.toasts = new Set();
-        this.autoDismissTime = 5000; // 5 seconds
+// Initialize the page
+async function initializeBrowse() {
+    const authStatus = await checkUserAuth();
+    
+    if (authStatus.authenticated && authStatus.role === 'shopowner') {
+        console.log(`User is ${authStatus.role}`, authStatus.userData);
+        window.location.href = "../../shopowner/html/shop_dashboard.html";
+        return;
+    } else if (authStatus.authenticated && authStatus.role === 'customer') {
+        console.log(`User is ${authStatus.role}`, authStatus.userData);
+        userData = authStatus.userData;
+    } else {
+        window.location.href = "/login.html";
+        return;
     }
 
-    createToastContainer() {
-        let container = document.getElementById('toastContainer');
-        if (!container) {
-            container = document.createElement('div');
-            container.id = 'toastContainer';
-            container.className = 'toast-container';
-            document.body.appendChild(container);
-        }
-        return container;
-    }
-
-    show(message, type = 'success', duration = this.autoDismissTime) {
-        const toast = this.createToast(message, type);
-        this.container.appendChild(toast);
-        this.toasts.add(toast);
-
-        // Animate in
-        requestAnimationFrame(() => {
-            toast.classList.add('show');
-        });
-
-        // Auto dismiss
-        if (duration > 0) {
-            setTimeout(() => {
-                this.hide(toast);
-            }, duration);
-        }
-
-        return toast;
-    }
-
-    createToast(message, type) {
-        const toast = document.createElement('div');
-        toast.className = `toast ${type}`;
-        
-        const icon = this.getIcon(type);
-        
-        toast.innerHTML = `
-            <i class="${icon}"></i>
-            <div class="toast-content">${message}</div>
-            <button class="toast-close" aria-label="Close toast">
-                <i class="fas fa-times"></i>
-            </button>
-            <div class="toast-progress"></div>
-        `;
-
-        // Add click event to close button
-        const closeBtn = toast.querySelector('.toast-close');
-        closeBtn.addEventListener('click', () => this.hide(toast));
-
-        // Add click event to toast (close on click)
-        toast.addEventListener('click', (e) => {
-            if (e.target === toast || e.target.classList.contains('toast-content')) {
-                this.hide(toast);
-            }
-        });
-
-        return toast;
-    }
-
-    getIcon(type) {
-        const icons = {
-            success: 'fas fa-check-circle',
-            error: 'fas fa-times-circle',
-            warning: 'fas fa-exclamation-triangle',
-            info: 'fas fa-info-circle'
-        };
-        return icons[type] || icons.info;
-    }
-
-    hide(toast) {
-        if (!this.toasts.has(toast)) return;
-
-        toast.classList.remove('show');
-        toast.classList.add('hiding');
-
-        setTimeout(() => {
-            if (toast.parentNode) {
-                toast.parentNode.removeChild(toast);
-            }
-            this.toasts.delete(toast);
-        }, 300);
-    }
-
-    hideAll() {
-        this.toasts.forEach(toast => this.hide(toast));
-    }
-
-    // Convenience methods
-    success(message, duration) {
-        return this.show(message, 'success', duration);
-    }
-
-    error(message, duration) {
-        return this.show(message, 'error', duration);
-    }
-
-    warning(message, duration) {
-        return this.show(message, 'warning', duration);
-    }
-
-    info(message, duration) {
-        return this.show(message, 'info', duration);
-    }
+    // Show loading state
+    showLoadingState();
+    
+    // Load user profile
+    loadUserProfile();
+    
+    // Load shoes and setup functionality
+    await loadShoes();
+    
+    // Set up event listeners
+    setupEventListeners();
+    
+    // Hide loader and show content
+    hideLoadingState();
 }
 
-// Create global toast instance
-const toast = new ToastManager();
-
-// Add toast CSS styles dynamically
-function addToastStyles() {
-    if (document.getElementById('toast-styles')) return;
-
-    const style = document.createElement('style');
-    style.id = 'toast-styles';
-    style.textContent = `
-        .toast-container {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            z-index: 10000;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-
-        .toast {
-            min-width: 300px;
-            max-width: 400px;
-            padding: 12px 20px;
-            border-radius: 8px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            font-family: inherit;
-            font-size: 14px;
-            font-weight: 500;
-            color: white;
-            opacity: 0;
-            transform: translateX(100%);
-            transition: all 0.3s ease-in-out;
-            cursor: pointer;
-        }
-
-        .toast.show {
-            opacity: 1;
-            transform: translateX(0);
-        }
-
-        .toast.hiding {
-            opacity: 0;
-            transform: translateX(100%);
-        }
-
-        .toast.success {
-            background: linear-gradient(135deg, #48cfad, #38b2ac);
-            border-left: 4px solid #2d9c8a;
-        }
-
-        .toast.error {
-            background: linear-gradient(135deg, #ff6b6b, #fc8181);
-            border-left: 4px solid #e53e3e;
-        }
-
-        .toast.warning {
-            background: linear-gradient(135deg, #ffd93d, #f6c23e);
-            border-left: 4px solid #d69e2e;
-            color: #2d3748;
-        }
-
-        .toast.info {
-            background: linear-gradient(135deg, #4299e1, #3182ce);
-            border-left: 4px solid #2b6cb0;
-        }
-
-        .toast i {
-            font-size: 16px;
-            flex-shrink: 0;
-        }
-
-        .toast .toast-content {
-            flex: 1;
-            line-height: 1.4;
-        }
-
-        .toast .toast-close {
-            background: none;
-            border: none;
-            color: inherit;
-            font-size: 16px;
-            cursor: pointer;
-            opacity: 0.7;
-            transition: opacity 0.2s;
-            padding: 0;
-            width: 20px;
-            height: 20px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .toast .toast-close:hover {
-            opacity: 1;
-        }
-
-        .toast-progress {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            height: 3px;
-            background: rgba(255, 255, 255, 0.5);
-            width: 100%;
-            transform-origin: left;
-            animation: toastProgress 3s linear forwards;
-        }
-
-        @keyframes toastProgress {
-            from {
-                transform: scaleX(1);
-            }
-            to {
-                transform: scaleX(0);
-            }
-        }
-
-        @media (max-width: 768px) {
-            .toast-container {
-                top: 10px;
-                right: 10px;
-                left: 10px;
-            }
-            
-            .toast {
-                min-width: auto;
-                max-width: none;
-            }
-        }
-    `;
-    document.head.appendChild(style);
-}
-
-// Debounce function to prevent rapid clicks
-function debounce(func, wait) {
-    let timeout;
-    return function executedFunction(...args) {
-        const later = () => {
-            clearTimeout(timeout);
-            func(...args);
-        };
-        clearTimeout(timeout);
-        timeout = setTimeout(later, wait);
-    };
-}
-
-// Show loader immediately when the page starts loading
-document.addEventListener('DOMContentLoaded', function() {
+// Show loading state
+function showLoadingState() {
     const loadingOverlay = getElement('loadingOverlay');
     const mainContent = document.querySelector('.main-content');
     
-    // Show loading overlay
-    loadingOverlay.style.display = 'flex';
-    
-    // Add toast styles
-    addToastStyles();
-});
+    if (loadingOverlay) {
+        loadingOverlay.style.display = 'flex';
+    }
+    if (mainContent) {
+        mainContent.classList.remove('loaded');
+    }
+}
 
-// Search functionality
-function setupSearch() {
-    // Show/hide clear button based on input
-    searchInput.addEventListener('input', () => {
-        clearSearchButton.style.display = searchInput.value ? 'block' : 'none';
-    });
+// Hide loading state
+function hideLoadingState() {
+    const loadingOverlay = getElement('loadingOverlay');
+    const mainContent = document.querySelector('.main-content');
     
-    // Clear search button handler
-    clearSearchButton.addEventListener('click', () => {
-        searchInput.value = '';
-        clearSearchButton.style.display = 'none';
-        clearActiveTag();
-        loadShoes(); // Reload all shoes
-    });
+    if (loadingOverlay) {
+        loadingOverlay.style.display = 'none';
+    }
+    if (mainContent) {
+        mainContent.classList.add('loaded');
+    }
+}
+
+// Load user profile
+function loadUserProfile() {
+    // Add user profile loading if needed
+    // Similar to other files, but depends on your HTML structure
+}
+
+// Load all shoes
+async function loadShoes() {
+    const productsGrid = getElement("productsGrid");
+    const user = auth.currentUser;
     
-    // Function to perform search
-    function performSearch(searchTerm) {
-        if (!searchTerm) {
-            loadShoes();
-            return;
+    if (!user) {
+        showError("Please login to browse shoes");
+        return;
+    }
+
+    try {
+        // Get wishlist data
+        const wishlistResult = await readData(`smartfit_AR_Database/wishlist/${user.uid}`);
+        if (wishlistResult.success && wishlistResult.data) {
+            wishlistData = wishlistResult.data;
+        } else {
+            wishlistData = {};
         }
-        
-        // Filter shoes based on search term
-        const filteredShoes = allShoes.filter(shoe => {
-            const searchLower = searchTerm.toLowerCase();
-            return (
-                shoe.name.toLowerCase().includes(searchLower) ||
-                shoe.shopName.toLowerCase().includes(searchLower) ||
-                shoe.type.toLowerCase().includes(searchLower) ||
-                shoe.brand.toLowerCase().includes(searchLower) ||
-                shoe.gender.toLowerCase().includes(searchLower) ||
-                shoe.code.toLowerCase().includes(searchLower)
-            );
-        });
-        
-        displayShoes(filteredShoes);
+
+        // Get all shop names
+        const shopsResult = await readData('smartfit_AR_Database/shop');
+        const shopNames = {};
+        if (shopsResult.success && shopsResult.data) {
+            Object.keys(shopsResult.data).forEach(shopID => {
+                shopNames[shopID] = shopsResult.data[shopID].shopName || shopID;
+            });
+        }
+
+        // Get all shoes
+        const shoesResult = await readData('smartfit_AR_Database/shoe');
+        allShoes = [];
+
+        if (shoesResult.success && shoesResult.data) {
+            processShoesData(shoesResult.data, shopNames, user.uid);
+            displayShoes(allShoes);
+        } else {
+            showNoShoesMessage();
+        }
+    } catch (error) {
+        console.error("Error loading shoes: ", error);
+        showErrorState();
     }
-    
-    // Search button click handler
-    searchButton.addEventListener('click', () => {
-        const searchTerm = searchInput.value.trim();
-        performSearch(searchTerm);
-    });
-    
-    // Enter key handler
-    searchInput.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') {
-            const searchTerm = searchInput.value.trim();
-            performSearch(searchTerm);
+}
+
+// Process shoes data from Firebase
+function processShoesData(shoesData, shopNames, userID) {
+    Object.keys(shoesData).forEach(shopID => {
+        const shopShoes = shoesData[shopID];
+
+        if (shopShoes && typeof shopShoes === 'object') {
+            Object.keys(shopShoes).forEach(shoeID => {
+                const shoeData = shopShoes[shoeID];
+
+                if (shoeData && typeof shoeData === 'object') {
+                    const processedShoe = processShoeData(shoeData, shopID, shoeID, shopNames, userID);
+                    if (processedShoe) {
+                        allShoes.push(processedShoe);
+                    }
+                }
+            });
         }
     });
 }
 
-function setupTagFunctionality() {
-    const tags = document.querySelectorAll('.tag');
-    
-    tags.forEach(tag => {
-        tag.addEventListener('click', () => {
-            const tagText = tag.textContent.trim();
-            
-            // Clear previous active tag
-            clearActiveTag();
-            
-            // Set this tag as active
-            tag.classList.add('active');
-            activeTag = tagText;
-            
-            // Update search input with tag text
-            searchInput.value = tagText;
-            
-            // Show clear button
-            clearSearchButton.style.display = 'block';
-            
-            // Perform search with the tag
-            performTagSearch(tagText);
-        });
-    });
+// Process individual shoe data
+function processShoeData(shoeData, shopID, shoeID, shopNames, userID) {
+    const shopName = shopNames[shopID] || shopID;
+    const shoeName = shoeData.shoeName || 'Unnamed Shoe';
+    const shoeCode = shoeData.shoeCode || 'N/A';
+    const defaultImage = shoeData.defaultImage;
+
+    // Get first variant for price and image
+    const variants = shoeData.variants || {};
+    const firstVariantKey = Object.keys(variants)[0];
+    const firstVariant = firstVariantKey ? variants[firstVariantKey] : {};
+    const price = firstVariant.price || 0;
+    const variantImage = firstVariant.imageUrl;
+
+    const type = shoeData.shoeType || 'Unknown';
+    const brand = shoeData.shoeBrand || 'Unknown';
+    const gender = shoeData.shoeGender || 'Unisex';
+    const dateAdded = shoeData.dateAdded || new Date().toISOString();
+
+    // Check if shoe is in wishlist
+    const isWishlisted = wishlistData &&
+        wishlistData[shopID] &&
+        wishlistData[shopID][shoeID];
+
+    return {
+        shoeID: shoeID,
+        name: shoeName,
+        code: shoeCode,
+        price: price,
+        imageUrl: defaultImage || variantImage || 'https://cdn-icons-png.flaticon.com/512/11542/11542598.png',
+        shopName: shopName,
+        shopID: shopID,
+        isWishlisted: isWishlisted,
+        type: type,
+        brand: brand,
+        gender: gender,
+        dateAdded: dateAdded
+    };
 }
 
-function clearActiveTag() {
-    if (activeTag) {
-        const tags = document.querySelectorAll('.tag');
-        tags.forEach(tag => {
-            if (tag.textContent.trim() === activeTag) {
-                tag.classList.remove('active');
-            }
-        });
-        activeTag = null;
+// Display shoes in the grid
+function displayShoes(shoes) {
+    const productsGrid = getElement("productsGrid");
+    
+    if (!productsGrid) return;
+
+    if (shoes.length === 0) {
+        showNoShoesMessage();
+        return;
     }
-}
 
-function performTagSearch(tagText) {
-    const filteredShoes = allShoes.filter(shoe => {
-        const tagLower = tagText.toLowerCase();
-        return (
-            shoe.type.toLowerCase() === tagLower ||
-            shoe.brand.toLowerCase() === tagLower ||
-            shoe.gender.toLowerCase() === tagLower ||
-            shoe.name.toLowerCase().includes(tagLower) ||
-            shoe.shopName.toLowerCase().includes(tagLower)
-        );
+    let html = '';
+    shoes.forEach(shoe => {
+        html += createProductCard(shoe);
     });
-    
-    displayShoes(filteredShoes);
+
+    productsGrid.innerHTML = html;
 }
 
-// Setup sorting functionality
-function setupSorting() {
-    sortOptions.addEventListener('change', () => {
-        const sortValue = sortOptions.value;
-        sortShoes(sortValue);
-    });
-}
-
-function sortShoes(sortBy) {
-    let sortedShoes = [...allShoes];
-    
-    switch(sortBy) {
-        case 'newest':
-            // Assuming shoes have a dateAdded property
-            sortedShoes.sort((a, b) => new Date(b.dateAdded) - new Date(a.dateAdded));
-            break;
-        case 'price-low':
-            sortedShoes.sort((a, b) => a.price - b.price);
-            break;
-        case 'price-high':
-            sortedShoes.sort((a, b) => b.price - a.price);
-            break;
-        default:
-            // Default sorting (no change)
-            break;
-    }
-    
-    displayShoes(sortedShoes);
-}
-
+// Create product card HTML
 function createProductCard(shoeData) {
     const heartClass = shoeData.isWishlisted ? "fas" : "far";
     const heartColor = shoeData.isWishlisted ? "red" : "";
@@ -463,8 +236,10 @@ function createProductCard(shoeData) {
   `;
 }
 
-function displayShoes(shoes) {
-    if (shoes.length === 0) {
+// Show no shoes message
+function showNoShoesMessage() {
+    const productsGrid = getElement("productsGrid");
+    if (productsGrid) {
         productsGrid.innerHTML = `
             <div class="empty-state" style="grid-column: 1/-1;">
                 <i class="fas fa-shoe-prints"></i>
@@ -472,243 +247,450 @@ function displayShoes(shoes) {
                 <p>Try adjusting your search or filters</p>
             </div>
         `;
-        return;
     }
+}
+
+// Show error state
+function showErrorState() {
+    const productsGrid = getElement("productsGrid");
+    if (productsGrid) {
+        productsGrid.innerHTML = `
+            <div class="empty-state" style="grid-column: 1/-1;">
+                <i class="fas fa-exclamation-triangle"></i>
+                <h3>Error loading shoes</h3>
+                <p>Please try refreshing the page</p>
+            </div>
+        `;
+    }
+    showError("Error loading shoes. Please try refreshing the page.");
+}
+
+// Set up event listeners
+function setupEventListeners() {
+    // Logout functionality
+    const logoutBtn = getElement('logout_btn');
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', handleLogout);
+    }
+
+    // Search functionality
+    setupSearch();
     
-    productsGrid.innerHTML = '';
-    shoes.forEach(shoe => {
-        const productCardHTML = createProductCard(shoe);
-        productsGrid.innerHTML += productCardHTML;
+    // Tag functionality
+    setupTagFunctionality();
+    
+    // Sorting functionality
+    setupSorting();
+    
+    // Mobile sidebar functionality (if applicable)
+    setupMobileNavigation();
+}
+
+// Handle logout
+async function handleLogout() {
+    if (confirm('Are you sure you want to logout?')) {
+        const result = await logoutUser();
+        if (result.success) {
+            window.location.href = '/login.html';
+        } else {
+            console.error('Error signing out:', result.error);
+            showError('Failed to logout. Please try again.');
+        }
+    }
+}
+
+// Search functionality
+function setupSearch() {
+    const searchInput = getElement("searchInput");
+    const searchButton = getElement("searchButton");
+    const clearSearchButton = getElement("clearSearchButton");
+
+    if (!searchInput || !searchButton || !clearSearchButton) return;
+
+    // Show/hide clear button based on input
+    searchInput.addEventListener('input', () => {
+        clearSearchButton.style.display = searchInput.value ? 'block' : 'none';
+    });
+
+    // Clear search button handler
+    clearSearchButton.addEventListener('click', handleClearSearch);
+
+    // Search button click handler
+    searchButton.addEventListener('click', handleSearch);
+
+    // Enter key handler
+    searchInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            handleSearch();
+        }
     });
 }
 
-window.viewDetails = function (shoeID, shopID) {
-    console.log(`Shoe ID: ${shoeID}, Shop ID: ${shopID}`);
-    window.location.href = `/customer/html/shoedetails.html?shoeID=${shoeID}&shopID=${shopID}`;
-};
-
-// Modified loadShoes function to store all shoes
-async function loadShoes() {
-    const user = auth.currentUser;
-    if (!user) return;
-
-    const userID = user.uid;
+// Handle search
+function handleSearch() {
+    const searchInput = getElement("searchInput");
+    const searchTerm = searchInput.value.trim();
     
-    try {
-        // Get wishlist data using readData()
-        const wishlistResult = await readData(`smartfit_AR_Database/wishlist/${userID}`);
-        if (wishlistResult.success && wishlistResult.data) {
-            wishlistData = wishlistResult.data;
-        } else {
-            wishlistData = {}; // Initialize as empty object if no wishlist data
-        }
-
-        // Get all shop names first using readData()
-        const shopsResult = await readData('smartfit_AR_Database/shop');
-        const shopNames = {};
-        if (shopsResult.success && shopsResult.data) {
-            Object.keys(shopsResult.data).forEach(shopID => {
-                shopNames[shopID] = shopsResult.data[shopID].shopName || shopID;
-            });
-        }
-
-        // Now get all shoes using readData()
-        const shoesResult = await readData('smartfit_AR_Database/shoe');
-        
-        // Reset allShoes array
-        allShoes = [];
-        
-        if (shoesResult.success && shoesResult.data) {
-            Object.keys(shoesResult.data).forEach(shopID => {
-                const shopShoes = shoesResult.data[shopID];
-                
-                if (shopShoes && typeof shopShoes === 'object') {
-                    Object.keys(shopShoes).forEach(shoeID => {
-                        const shoeData = shopShoes[shoeID];
-                        
-                        // Only process if shoeData exists and is an object
-                        if (shoeData && typeof shoeData === 'object') {
-                            const shopName = shopNames[shopID] || shopID;
-                            const shoeName = shoeData.shoeName || 'Unnamed Shoe';
-                            const shoeCode = shoeData.shoeCode || 'N/A';
-                            const defaultImage = shoeData.defaultImage;
-                            
-                            // Get first variant for price and image
-                            const variants = shoeData.variants || {};
-                            const firstVariantKey = Object.keys(variants)[0];
-                            const firstVariant = firstVariantKey ? variants[firstVariantKey] : {};
-                            const price = firstVariant.price || 0;
-                            const variantImage = firstVariant.imageUrl;
-                            
-                            const type = shoeData.shoeType || 'Unknown';
-                            const brand = shoeData.shoeBrand || 'Unknown';
-                            const gender = shoeData.shoeGender || 'Unisex';
-                            const dateAdded = shoeData.dateAdded || new Date().toISOString();
-
-                            // Check if shoe is in wishlist
-                            const isWishlisted = wishlistData && 
-                                                wishlistData[shopID] && 
-                                                wishlistData[shopID][shoeID];
-
-                            allShoes.push({
-                                shoeID: shoeID,
-                                name: shoeName,
-                                code: shoeCode,
-                                price: price,
-                                imageUrl: defaultImage || variantImage || 'https://cdn-icons-png.flaticon.com/512/11542/11542598.png',
-                                shopName: shopName,
-                                shopID: shopID,
-                                isWishlisted: isWishlisted,
-                                type: type,
-                                brand: brand,
-                                gender: gender,
-                                dateAdded: dateAdded
-                            });
-                        }
-                    });
-                }
-            });
-            
-            // Display all shoes
-            displayShoes(allShoes);
-        } else {
-            console.log("No shoe data available");
-            productsGrid.innerHTML = '<div class="empty-state" style="grid-column: 1/-1;"><i class="fas fa-shoe-prints"></i><h3>No shoes available</h3><p>Check back later for new arrivals</p></div>';
-        }
-    } catch (error) {
-        console.error("Error loading shoes: ", error);
-        productsGrid.innerHTML = '<div class="empty-state" style="grid-column: 1/-1;"><i class="fas fa-exclamation-triangle"></i><h3>Error loading shoes</h3><p>Please try refreshing the page</p></div>';
-        toast.error("Error loading shoes. Please try refreshing the page.");
-    }
-}
-
-// Updated toggleWishlist function using the integrated toast
-async function toggleWishlist(shoeID, shopID, btnElement) {
-    const user = auth.currentUser;
-    if (!user) {
-        toast.error("Please login to manage wishlist");
+    if (!searchTerm) {
+        loadShoes();
         return;
     }
 
-    // Disable button during operation
-    btnElement.disabled = true;
+    const filteredShoes = allShoes.filter(shoe => {
+        const searchLower = searchTerm.toLowerCase();
+        return (
+            shoe.name.toLowerCase().includes(searchLower) ||
+            shoe.shopName.toLowerCase().includes(searchLower) ||
+            shoe.type.toLowerCase().includes(searchLower) ||
+            shoe.brand.toLowerCase().includes(searchLower) ||
+            shoe.gender.toLowerCase().includes(searchLower) ||
+            shoe.code.toLowerCase().includes(searchLower)
+        );
+    });
+
+    displayShoes(filteredShoes);
+}
+
+// Handle clear search
+function handleClearSearch() {
+    const searchInput = getElement("searchInput");
+    const clearSearchButton = getElement("clearSearchButton");
     
+    searchInput.value = '';
+    clearSearchButton.style.display = 'none';
+    clearActiveTag();
+    loadShoes();
+}
+
+// Tag functionality
+function setupTagFunctionality() {
+    const tags = document.querySelectorAll('.tag');
+    
+    tags.forEach(tag => {
+        tag.addEventListener('click', () => {
+            const tagText = tag.textContent.trim();
+            handleTagClick(tag, tagText);
+        });
+    });
+}
+
+// Handle tag click
+function handleTagClick(tag, tagText) {
+    // Clear previous active tag
+    clearActiveTag();
+
+    // Set this tag as active
+    tag.classList.add('active');
+    activeTag = tagText;
+
+    // Update search input with tag text
+    const searchInput = getElement("searchInput");
+    if (searchInput) {
+        searchInput.value = tagText;
+    }
+
+    // Show clear button
+    const clearSearchButton = getElement("clearSearchButton");
+    if (clearSearchButton) {
+        clearSearchButton.style.display = 'block';
+    }
+
+    // Perform search with the tag
+    performTagSearch(tagText);
+}
+
+function clearActiveTag() {
+    if (activeTag) {
+        const tags = document.querySelectorAll('.tag');
+        tags.forEach(tag => {
+            if (tag.textContent.trim() === activeTag) {
+                tag.classList.remove('active');
+            }
+        });
+        activeTag = null;
+    }
+}
+
+function performTagSearch(tagText) {
+    const filteredShoes = allShoes.filter(shoe => {
+        const tagLower = tagText.toLowerCase();
+        return (
+            shoe.type.toLowerCase() === tagLower ||
+            shoe.brand.toLowerCase() === tagLower ||
+            shoe.gender.toLowerCase() === tagLower ||
+            shoe.name.toLowerCase().includes(tagLower) ||
+            shoe.shopName.toLowerCase().includes(tagLower)
+        );
+    });
+
+    displayShoes(filteredShoes);
+}
+
+// Sorting functionality
+function setupSorting() {
+    const sortOptions = getElement("sortOptions");
+    if (sortOptions) {
+        sortOptions.addEventListener('change', () => {
+            const sortValue = sortOptions.value;
+            sortShoes(sortValue);
+        });
+    }
+}
+
+function sortShoes(sortBy) {
+    let sortedShoes = [...allShoes];
+
+    switch (sortBy) {
+        case 'newest':
+            sortedShoes.sort((a, b) => new Date(b.dateAdded) - new Date(a.dateAdded));
+            break;
+        case 'price-low':
+            sortedShoes.sort((a, b) => a.price - b.price);
+            break;
+        case 'price-high':
+            sortedShoes.sort((a, b) => b.price - a.price);
+            break;
+        default:
+            // Default sorting (no change)
+            break;
+    }
+
+    displayShoes(sortedShoes);
+}
+
+// Mobile navigation setup
+function setupMobileNavigation() {
+    const mobileToggle = document.querySelector('.mobile-menu-toggle');
+    const sidebar = document.querySelector('.sidebar');
+    const overlay = document.querySelector('.sidebar-overlay');
+
+    if (mobileToggle && sidebar && overlay) {
+        mobileToggle.addEventListener('click', () => {
+            sidebar.classList.toggle('active');
+            overlay.classList.toggle('active');
+        });
+
+        overlay.addEventListener('click', () => {
+            sidebar.classList.remove('active');
+            overlay.classList.remove('active');
+        });
+    }
+}
+
+// Toast notification functions
+function showToast(message, type = 'success', duration = 5000) {
+    let container = document.getElementById('toastContainer');
+    if (!container) {
+        container = document.createElement('div');
+        container.id = 'toastContainer';
+        container.className = 'toast-container';
+        document.body.appendChild(container);
+    }
+
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+
+    const icon = getToastIcon(type);
+
+    toast.innerHTML = `
+        <i class="${icon}"></i>
+        <div class="toast-content">${message}</div>
+        <button class="toast-close" aria-label="Close toast">
+            <i class="fas fa-times"></i>
+        </button>
+        <div class="toast-progress"></div>
+    `;
+
+    container.appendChild(toast);
+
+    requestAnimationFrame(() => {
+        toast.classList.add('show');
+    });
+
+    const closeBtn = toast.querySelector('.toast-close');
+    closeBtn.addEventListener('click', () => hideToast(toast));
+
+    toast.addEventListener('click', (e) => {
+        if (e.target === toast || e.target.classList.contains('toast-content')) {
+            hideToast(toast);
+        }
+    });
+
+    if (duration > 0) {
+        setTimeout(() => {
+            hideToast(toast);
+        }, duration);
+    }
+
+    return toast;
+}
+
+function getToastIcon(type) {
+    const icons = {
+        success: 'fas fa-check-circle',
+        error: 'fas fa-times-circle',
+        warning: 'fas fa-exclamation-triangle',
+        info: 'fas fa-info-circle'
+    };
+    return icons[type] || icons.info;
+}
+
+function hideToast(toast) {
+    toast.classList.remove('show');
+    toast.classList.add('hiding');
+
+    setTimeout(() => {
+        if (toast.parentNode) {
+            toast.parentNode.removeChild(toast);
+        }
+    }, 300);
+}
+
+// Convenience toast functions
+function showSuccess(message, duration) {
+    return showToast(message, 'success', duration);
+}
+
+function showError(message, duration) {
+    return showToast(message, 'error', duration);
+}
+
+function showWarning(message, duration) {
+    return showToast(message, 'warning', duration);
+}
+
+function showInfo(message, duration) {
+    return showToast(message, 'info', duration);
+}
+
+// Debounce function
+function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
+}
+
+// Toggle wishlist function
+async function toggleWishlist(shoeID, shopID, btnElement) {
+    const user = auth.currentUser;
+    if (!user) {
+        showError("Please login to manage wishlist");
+        return;
+    }
+
+    btnElement.disabled = true;
+
     const userID = user.uid;
     const wishlistPath = `smartfit_AR_Database/wishlist/${userID}/${shopID}/${shoeID}`;
 
     try {
-        // Use your readData method to check if item exists
         const snapshot = await readData(wishlistPath);
         const icon = btnElement.querySelector("i");
 
         if (snapshot.success && snapshot.data !== null) {
-            // Shoe is already in wishlist -> remove it using deleteData
+            // Remove from wishlist
             const deleteResult = await deleteData(wishlistPath);
-            
+
             if (deleteResult.success) {
-                toast.success("Removed shoe from wishlist");
-                icon.classList.remove("fas");
-                icon.classList.add("far");
-                icon.style.color = "";
-                
-                // Update the local data and allShoes array
-                if (wishlistData[shopID]) {
-                    delete wishlistData[shopID][shoeID];
-                }
-                
-                // Update the shoe in allShoes array
-                const shoeIndex = allShoes.findIndex(shoe => 
-                    shoe.shoeID === shoeID && shoe.shopID === shopID
-                );
-                if (shoeIndex !== -1) {
-                    allShoes[shoeIndex].isWishlisted = false;
-                }
+                showSuccess("Removed shoe from wishlist");
+                updateWishlistUI(icon, false, shoeID, shopID);
             } else {
                 throw new Error(deleteResult.error);
             }
         } else {
-            // Shoe is not in wishlist -> add it using updateData
+            // Add to wishlist
             const addResult = await updateData(wishlistPath, true);
-            
+
             if (addResult.success) {
-                toast.success("Added shoe to wishlist");
-                icon.classList.remove("far");
-                icon.classList.add("fas");
-                icon.style.color = "red";
-                
-                // Update the local data and allShoes array
-                if (!wishlistData[shopID]) {
-                    wishlistData[shopID] = {};
-                }
-                wishlistData[shopID][shoeID] = true;
-                
-                // Update the shoe in allShoes array
-                const shoeIndex = allShoes.findIndex(shoe => 
-                    shoe.shoeID === shoeID && shoe.shopID === shopID
-                );
-                if (shoeIndex !== -1) {
-                    allShoes[shoeIndex].isWishlisted = true;
-                }
+                showSuccess("Added shoe to wishlist");
+                updateWishlistUI(icon, true, shoeID, shopID);
             } else {
                 throw new Error(addResult.error);
             }
         }
     } catch (error) {
         console.error("Error toggling wishlist:", error);
-        toast.error("Failed to update wishlist");
+        showError("Failed to update wishlist");
     } finally {
-        // Re-enable button after operation
         btnElement.disabled = false;
     }
 }
 
-// Apply debounce to the toggleWishlist function
-window.toggleWishlist = debounce(toggleWishlist, 500);
+// Update wishlist UI
+function updateWishlistUI(icon, isWishlisted, shoeID, shopID) {
+    if (isWishlisted) {
+        icon.classList.remove("far");
+        icon.classList.add("fas");
+        icon.style.color = "red";
+        
+        // Update local data
+        if (!wishlistData[shopID]) {
+            wishlistData[shopID] = {};
+        }
+        wishlistData[shopID][shoeID] = true;
 
-// Remove the old showToast function since we're using the new toast system
-
-// Initialize the page
-async function initializePage() {
-    const authStatus = await checkUserAuth();
-    
-    if (authStatus.authenticated) {
-        console.log(`User is ${authStatus.role}`, authStatus.userData);
-        
-        // Load shoes and setup functionality
-        await loadShoes();
-        setupSearch();
-        setupTagFunctionality();
-        setupSorting();
-        
-        // Hide loader and show content
-        const loadingOverlay = getElement('loadingOverlay');
-        const mainContent = document.querySelector('.main-content');
-        
-        loadingOverlay.style.display = 'none';
-        mainContent.classList.add('loaded');
-        
-        // Setup logout button
-        getElement('logout_btn').addEventListener('click', async () => {
-            await logoutUser();
-            window.location.href = "/login.html";
-        });
+        // Update allShoes array
+        const shoeIndex = allShoes.findIndex(shoe =>
+            shoe.shoeID === shoeID && shoe.shopID === shopID
+        );
+        if (shoeIndex !== -1) {
+            allShoes[shoeIndex].isWishlisted = true;
+        }
     } else {
-        window.location.href = "/login.html";
+        icon.classList.remove("fas");
+        icon.classList.add("far");
+        icon.style.color = "";
+        
+        // Update local data
+        if (wishlistData[shopID]) {
+            delete wishlistData[shopID][shoeID];
+        }
+
+        // Update allShoes array
+        const shoeIndex = allShoes.findIndex(shoe =>
+            shoe.shoeID === shoeID && shoe.shopID === shopID
+        );
+        if (shoeIndex !== -1) {
+            allShoes[shoeIndex].isWishlisted = false;
+        }
     }
 }
 
-// Start the application
-initializePage().catch(error => {
-    console.error("Error initializing page:", error);
-    const loadingOverlay = getElement('loadingOverlay');
-    loadingOverlay.innerHTML = `
-        <div class="loader">
-            <i class="fas fa-exclamation-triangle" style="font-size: 3rem; color: #ff6b6b; margin-bottom: 1rem;"></i>
-            <p>Error loading page. Please refresh.</p>
-        </div>
-    `;
-    toast.error("Error loading page. Please refresh.");
-});
+// View details function
+window.viewDetails = function (shoeID, shopID) {
+    console.log(`Shoe ID: ${shoeID}, Shop ID: ${shopID}`);
+    window.location.href = `/customer/html/shoedetails.html?shoeID=${shoeID}&shopID=${shopID}`;
+};
 
-// Make toast available globally
-window.toast = toast;
+// Apply debounce to the toggleWishlist function
+window.toggleWishlist = debounce(toggleWishlist, 500);
+
+// Make toast functions available globally
+window.showToast = showToast;
+window.showSuccess = showSuccess;
+window.showError = showError;
+window.showWarning = showWarning;
+window.showInfo = showInfo;
+
+// Initialize when DOM is loaded
+document.addEventListener('DOMContentLoaded', function() {
+    initializeBrowse().catch(error => {
+        console.error("Error initializing browse page:", error);
+        const loadingOverlay = getElement('loadingOverlay');
+        if (loadingOverlay) {
+            loadingOverlay.innerHTML = `
+                <div class="loader">
+                    <i class="fas fa-exclamation-triangle" style="font-size: 3rem; color: #ff6b6b; margin-bottom: 1rem;"></i>
+                    <p>Error loading page. Please refresh.</p>
+                </div>
+            `;
+        }
+        showError("Error loading page. Please refresh.");
+    });
+});

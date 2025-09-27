@@ -8,52 +8,67 @@ import {
     deleteData
 } from '../../firebaseMethods.js';
 
+// Helper function to get DOM elements
+function getElement(id) {
+    return document.getElementById(id);
+}
+
+// Global variables
+let userData = null;
+let userId = null;
 let cartItems = [];
 let unsubscribeCartListener = null;
 
-// Auth state listener using firebaseMethods
-async function initializePage() {
+// Initialize the page
+async function initializeCart() {
     const authStatus = await checkUserAuth();
     
     if (authStatus.authenticated && authStatus.role === 'shopowner') {
         console.log(`User is ${authStatus.role}`, authStatus.userData);
         window.location.href = "../../shopowner/html/shop_dashboard.html";
+        return;
     } else if (authStatus.authenticated && authStatus.role === 'customer') {
         console.log(`User is ${authStatus.role}`, authStatus.userData);
-        
-        // Update user profile display
-        const userNameDisplay1 = document.getElementById('userName_display1');
-        const userNameDisplay2 = document.getElementById('userName_display2');
-        const imageProfile = document.getElementById('imageProfile');
-        
-        if (userNameDisplay1) {
-            userNameDisplay1.textContent = authStatus.userData.firstName;
-        }
-        if (userNameDisplay2) {
-            userNameDisplay2.textContent = authStatus.userData.firstName + " " + authStatus.userData.lastName;
-        }
-        if (imageProfile) {
-            imageProfile.src = authStatus.userData.profilePhoto || "https://cdn-icons-png.flaticon.com/512/11542/11542598.png";
-        }
-        
-        document.body.style.display = '';
-        
-        // Load cart and user profile
-        loadCart(authStatus.userId);
-        loadUserProfile(authStatus.userId);
+        userData = authStatus.userData;
+        userId = authStatus.userId;
     } else {
         window.location.href = "/login.html";
+        return;
+    }
+
+    // Load user profile
+    loadUserProfile();
+    
+    // Load cart items
+    await loadCartItems();
+    
+    // Set up event listeners
+    setupEventListeners();
+
+    document.body.style.display = '';
+}
+
+// Load user profile
+function loadUserProfile() {
+    const userNameDisplay1 = getElement('userName_display1');
+    const userNameDisplay2 = getElement('userName_display2');
+    const imageProfile = getElement('imageProfile');
+    
+    if (userNameDisplay1) {
+        userNameDisplay1.textContent = userData.firstName || 'Customer';
+    }
+    
+    if (userNameDisplay2) {
+        userNameDisplay2.textContent = `${userData.firstName || ''} ${userData.lastName || ''}`.trim() || 'Customer';
+    }
+    
+    if (imageProfile) {
+        imageProfile.src = userData.profilePhoto || "https://cdn-icons-png.flaticon.com/512/11542/11542598.png";
     }
 }
 
-// Initialize the page
-initializePage().catch((error) => {
-    console.error("Auth check error:", error);
-    window.location.href = "/login.html";
-});
-
-// Load cart from Firebase using firebaseMethods
-async function loadCart(userId) {
+// Load cart items
+async function loadCartItems() {
     const cartPath = `smartfit_AR_Database/carts/${userId}`;
     
     if (unsubscribeCartListener) {
@@ -198,8 +213,8 @@ function getAddedAt(item, cartId) {
 
 // Render cart items in descending order by date
 function renderCart() {
-    const cartContainer = document.getElementById("cartContainer");
-    const cartSummaryContainer = document.getElementById("cartsummarycontainer");
+    const cartContainer = getElement("cartContainer");
+    const cartSummaryContainer = getElement("cartsummarycontainer");
     cartContainer.innerHTML = "";
     cartSummaryContainer.innerHTML = "";
 
@@ -216,6 +231,9 @@ function renderCart() {
         <div class="select-all-container">
             <input type="checkbox" class="cart-item-checkbox" id="selectAllItems" checked>
             <label for="selectAllItems">Select all items</label>
+        </div>
+        <div class="sort-info">
+            <i class="fas fa-sort-amount-down"></i> Sorted by newest first
         </div>
     `;
     cartContainer.appendChild(cartHeader);
@@ -304,10 +322,37 @@ function formatDate(timestamp) {
     }
 }
 
-// Setup cart event listeners
+// Set up event listeners
+function setupEventListeners() {
+    // Logout functionality
+    const logoutBtn = getElement('logout_btn');
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', async function() {
+            if (confirm('Are you sure you want to logout?')) {
+                const result = await logoutUser();
+                if (result.success) {
+                    // Clean up listeners before redirecting
+                    if (unsubscribeCartListener) {
+                        unsubscribeCartListener();
+                    }
+                    window.location.href = '/login.html';
+                } else {
+                    console.error('Error signing out:', result.error);
+                }
+            }
+        });
+    }
+
+    // Cart event listeners
+    setupCartEventListeners();
+
+    // Mobile menu setup
+    setupMobileMenu();
+}
+
 function setupCartEventListeners() {
     // Select All functionality
-    const selectAllCheckbox = document.getElementById('selectAllItems');
+    const selectAllCheckbox = getElement('selectAllItems');
     if (selectAllCheckbox) {
         selectAllCheckbox.addEventListener('change', function() {
             const itemCheckboxes = document.querySelectorAll('.cart-item-checkbox');
@@ -334,10 +379,7 @@ function setupCartEventListeners() {
             if (!confirmDelete) return;
 
             try {
-                const authResult = await checkUserAuth();
-                if (!authResult.authenticated) return;
-
-                const deletePath = `smartfit_AR_Database/carts/${authResult.userId}/${cartId}`;
+                const deletePath = `smartfit_AR_Database/carts/${userId}/${cartId}`;
                 const deleteResult = await deleteData(deletePath);
 
                 if (deleteResult.success) {
@@ -363,11 +405,8 @@ function setupCartEventListeners() {
             const newQty = item.quantity + change;
             if (newQty >= 1 && newQty <= item.availableStock) {
                 try {
-                    const authResult = await checkUserAuth();
-                    if (!authResult.authenticated) return;
-
                     // Update only the quantity field using direct Firebase update
-                    const updatePath = `smartfit_AR_Database/carts/${authResult.userId}/${cartId}`;
+                    const updatePath = `smartfit_AR_Database/carts/${userId}/${cartId}`;
                     const updateResult = await updateData(updatePath, { 
                         quantity: newQty,
                         addedAt: item.addedAt // Preserve original addedAt
@@ -394,11 +433,8 @@ function setupCartEventListeners() {
 
             if (!isNaN(value) && value >= 1 && value <= item.availableStock) {
                 try {
-                    const authResult = await checkUserAuth();
-                    if (!authResult.authenticated) return;
-
                     // Update only the quantity field using direct Firebase update
-                    const updatePath = `smartfit_AR_Database/carts/${authResult.userId}/${cartId}`;
+                    const updatePath = `smartfit_AR_Database/carts/${userId}/${cartId}`;
                     const updateResult = await updateData(updatePath, { 
                         quantity: value,
                         addedAt: item.addedAt // Preserve original addedAt
@@ -432,9 +468,27 @@ function setupCartEventListeners() {
     updateSelectAllState();
 }
 
+function setupMobileMenu() {
+    const mobileToggle = document.querySelector('.mobile-menu-toggle');
+    const sidebar = document.querySelector('.sidebar');
+    const overlay = document.querySelector('.sidebar-overlay');
+
+    if (mobileToggle && sidebar && overlay) {
+        mobileToggle.addEventListener('click', () => {
+            sidebar.classList.toggle('active');
+            overlay.classList.toggle('active');
+        });
+
+        overlay.addEventListener('click', () => {
+            sidebar.classList.remove('active');
+            overlay.classList.remove('active');
+        });
+    }
+}
+
 // Update select all checkbox state
 function updateSelectAllState() {
-    const selectAllCheckbox = document.getElementById('selectAllItems');
+    const selectAllCheckbox = getElement('selectAllItems');
     const itemCheckboxes = document.querySelectorAll('.cart-item-checkbox');
     
     if (itemCheckboxes.length === 0) {
@@ -456,7 +510,7 @@ function updateSelectAllState() {
 
 // Create cart summary
 function createCartSummary() {
-    const cartSummaryContainer = document.getElementById("cartsummarycontainer");
+    const cartSummaryContainer = getElement("cartsummarycontainer");
     cartSummaryContainer.innerHTML = '';
 
     const summary = document.createElement('div');
@@ -489,7 +543,7 @@ function createCartSummary() {
     cartSummaryContainer.appendChild(summary);
 
     // Add checkout button handler
-    document.getElementById("checkoutBtn")?.addEventListener("click", () => {
+    getElement("checkoutBtn")?.addEventListener("click", () => {
         const checkedItems = Array.from(document.querySelectorAll('.cart-item-checkbox:checked'))
             .map(cb => {
                 const cartId = cb.dataset.cartid;
@@ -527,10 +581,10 @@ function updateTotals() {
     const shipping = selectedItems.length > 0 ? 5.0 : 0.0;
     const total = subtotal + tax + shipping;
 
-    const subtotalEl = document.getElementById('subtotal');
-    const taxEl = document.getElementById('tax');
-    const shippingEl = document.getElementById('shipping');
-    const totalEl = document.getElementById('total');
+    const subtotalEl = getElement('subtotal');
+    const taxEl = getElement('tax');
+    const shippingEl = getElement('shipping');
+    const totalEl = getElement('total');
 
     if (subtotalEl) subtotalEl.innerText = `₱${subtotal.toFixed(2)}`;
     if (taxEl) taxEl.innerText = `₱${tax.toFixed(2)}`;
@@ -543,77 +597,50 @@ function updateTotals() {
 
 // Show empty cart message
 function showEmptyCart() {
-    const emptyCartMessage = document.getElementById("emptyCartMessage");
+    const emptyCartMessage = getElement("emptyCartMessage");
     if (emptyCartMessage) {
         emptyCartMessage.style.display = 'block';
     }
 }
 
-// Load and display user profile using firebaseMethods
-async function loadUserProfile(userId) {
-    try {
-        const profilePath = `smartfit_AR_Database/customers/${userId}`;
-        const profileResult = await readData(profilePath);
-        console.log("User profile data:", profileResult);
+// Initialize when DOM is loaded
+document.addEventListener('DOMContentLoaded', function() {
+    // Mobile sidebar toggle
+    const mobileToggle = document.querySelector('.mobile-menu-toggle');
+    const sidebar = document.querySelector('.sidebar');
+    const overlay = document.querySelector('.sidebar-overlay');
 
-        if (profileResult.success && profileResult.data) {
-            displayUserProfile(profileResult.data);
-        } else {
-            console.log("No user profile data found.");
+    if (mobileToggle && sidebar && overlay) {
+        mobileToggle.addEventListener('click', () => {
+            sidebar.classList.toggle('active');
+            overlay.classList.toggle('active');
+        });
+
+        overlay.addEventListener('click', () => {
+            sidebar.classList.remove('active');
+            overlay.classList.remove('active');
+        });
+    }
+
+    // Clean up listeners when page unloads
+    window.addEventListener('beforeunload', () => {
+        if (unsubscribeCartListener) {
+            unsubscribeCartListener();
         }
-    } catch (error) {
-        console.error("Error loading user profile:", error);
-    }
-}
+    });
 
-// Display user profile
-function displayUserProfile(userData) {
-    const userNameDisplay = document.getElementById("userName_display");
-    const imageProfile = document.getElementById("imageProfile");
-
-    console.log("User data:", userData);
-
-    if (userNameDisplay) {
-        userNameDisplay.textContent = `${userData.firstName || ''} ${userData.lastName || ''}`.trim() || 'Customer';
-    }
-
-    if (imageProfile) {
-        // Handle different profile photo structures
-        let profilePhotoUrl = '';
-        if (userData.profilePhoto?.url) {
-            profilePhotoUrl = userData.profilePhoto.url;
-        } else if (userData.profilePhoto) {
-            profilePhotoUrl = userData.profilePhoto;
-        } else if (userData.profilePhotoPath) {
-            profilePhotoUrl = userData.profilePhotoPath;
+    // Initialize cart page
+    initializeCart().catch(error => {
+        console.error('Error initializing cart page:', error);
+        const cartContainer = getElement("cartContainer");
+        if (cartContainer) {
+            cartContainer.innerHTML = `
+                <div class="empty-cart">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <h3>Error Loading Cart</h3>
+                    <p>Please try refreshing the page.</p>
+                </div>
+            `;
         }
-
-        imageProfile.src = profilePhotoUrl || 'https://via.placeholder.com/150';
-        imageProfile.onerror = () => {
-            imageProfile.src = 'https://via.placeholder.com/150';
-        };
-    }
-}
-
-// Logout functionality using firebaseMethods
-document.getElementById('logout_btn')?.addEventListener('click', async function () {
-    if (confirm('Are you sure you want to logout?')) {
-        const logoutResult = await logoutUser();
-        if (logoutResult.success) {
-            // Clean up listeners before redirecting
-            if (unsubscribeCartListener) {
-                unsubscribeCartListener();
-            }
-            window.location.href = '/login.html';
-        } else {
-            console.error('Error signing out:', logoutResult.error);
-        }
-    }
-});
-
-// Clean up listeners when page unloads
-window.addEventListener('beforeunload', () => {
-    if (unsubscribeCartListener) {
-        unsubscribeCartListener();
-    }
+    });
 });

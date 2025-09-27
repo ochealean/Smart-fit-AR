@@ -4,8 +4,7 @@ import {
     readData,
     updateData,
     createData,
-    generate18CharID,
-    sendEmail
+    deleteData
 } from "../../firebaseMethods.js";
 
 // Helper function to get DOM elements
@@ -13,66 +12,86 @@ function getElement(id) {
     return document.getElementById(id);
 }
 
-let userID;
-let userData;
+// Global variables
+let userData = null;
+let userId = null;
 
-// Hide body initially
-document.body.style.display = 'none';
-
-// Check auth state and load user data
+// Initialize the page
 async function initializeCheckout() {
-    const authResult = await checkUserAuth();
+    const authStatus = await checkUserAuth();
     
-    if (!authResult.authenticated) {
+    if (authStatus.authenticated && authStatus.role === 'shopowner') {
+        console.log(`User is ${authStatus.role}`, authStatus.userData);
+        window.location.href = "../../shopowner/html/shop_dashboard.html";
+        return;
+    } else if (authStatus.authenticated && authStatus.role === 'customer') {
+        console.log(`User is ${authStatus.role}`, authStatus.userData);
+        userData = authStatus.userData;
+        userId = authStatus.userId;
+    } else {
         window.location.href = "/login.html";
         return;
     }
 
-    if (authResult.role !== 'customer') {
-        window.location.href = "/customer/html/customer_dashboard.html";
-        return;
-    }
-
-    console.log("User authenticated:", authResult);
-    userID = authResult.userId;
-    userData = authResult.userData;
-
-    // Load user data and populate form
-    await loadUserData();
+    // Load user profile
+    loadUserProfile();
+    
+    // Load order summary
+    await loadOrderSummary();
     
     // Set up event listeners
     setupEventListeners();
 
-    // Load order summary
-    await loadOrderSummary();
-
-    // Show body after initialization
     document.body.style.display = '';
 }
 
-// Load user data and populate form
-async function loadUserData() {
-    try {
-        // Autofill checkout form fields with user data
-        getElement('firstName').value = userData.firstName || '';
-        getElement('lastName').value = userData.lastName || '';
-        getElement('email').value = userData.email || '';
-        getElement('phone').value = userData.phone || '';
-        getElement('address').value = userData.address || '';
-        getElement('city').value = userData.city || '';
-        getElement('state').value = userData.state || '';
-        getElement('zip').value = userData.zip || '';
-        getElement('country').value = 'Philippines';
-
-        console.log("User data loaded successfully");
-    } catch (error) {
-        console.error("Error loading user data:", error);
-        alert("Error loading user data. Please try again.");
+// Load user profile
+function loadUserProfile() {
+    const userNameDisplay1 = getElement('userName_display1');
+    const userNameDisplay2 = getElement('userName_display2');
+    const imageProfile = getElement('imageProfile');
+    
+    if (userNameDisplay1) {
+        userNameDisplay1.textContent = userData.firstName || 'Customer';
     }
+    
+    if (userNameDisplay2) {
+        userNameDisplay2.textContent = `${userData.firstName || ''} ${userData.lastName || ''}`.trim() || 'Customer';
+    }
+    
+    if (imageProfile) {
+        imageProfile.src = userData.profilePhoto || "https://cdn-icons-png.flaticon.com/512/11542/11542598.png";
+    }
+
+    // Autofill checkout form fields with user data
+    getElement('firstName').value = userData.firstName || '';
+    getElement('lastName').value = userData.lastName || '';
+    getElement('email').value = userData.email || '';
+    getElement('phone').value = userData.phone || '';
+    getElement('address').value = userData.address || '';
+    getElement('city').value = userData.city || '';
+    getElement('state').value = userData.state || '';
+    getElement('zip').value = userData.zip || '';
+    getElement('country').value = 'Philippines';
 }
 
-// Function to set up all event listeners
+// Set up event listeners
 function setupEventListeners() {
+    // Logout functionality
+    const logoutBtn = getElement('logout_btn');
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', async function() {
+            if (confirm('Are you sure you want to logout?')) {
+                const result = await logoutUser();
+                if (result.success) {
+                    window.location.href = '/login.html';
+                } else {
+                    console.error('Error signing out:', result.error);
+                }
+            }
+        });
+    }
+
     // Place order button
     const placeOrderBtn = getElement('placeOrderBtn');
     if (placeOrderBtn) {
@@ -96,22 +115,14 @@ function setupEventListeners() {
         });
     }
 
-    // Logout functionality
-    const logoutBtn = getElement('logout_btn');
-    if (logoutBtn) {
-        logoutBtn.addEventListener('click', async function() {
-            if (confirm('Are you sure you want to logout?')) {
-                const result = await logoutUser();
-                if (result.success) {
-                    window.location.href = '/login.html';
-                } else {
-                    console.error('Error signing out:', result.error);
-                }
-            }
-        });
-    }
-
     // Modal functionality
+    setupModalEvents();
+
+    // Mobile menu setup
+    setupMobileMenu();
+}
+
+function setupModalEvents() {
     const modal = getElement('orderConfirmationModal');
     const closeBtn = document.querySelector('.close-modal');
     const continueBtn = getElement('continueShoppingBtn');
@@ -135,6 +146,24 @@ function setupEventListeners() {
             if (event.target === modal) {
                 modal.style.display = 'none';
             }
+        });
+    }
+}
+
+function setupMobileMenu() {
+    const mobileToggle = document.querySelector('.mobile-menu-toggle');
+    const sidebar = document.querySelector('.sidebar');
+    const overlay = document.querySelector('.sidebar-overlay');
+
+    if (mobileToggle && sidebar && overlay) {
+        mobileToggle.addEventListener('click', () => {
+            sidebar.classList.toggle('active');
+            overlay.classList.toggle('active');
+        });
+
+        overlay.addEventListener('click', () => {
+            sidebar.classList.remove('active');
+            overlay.classList.remove('active');
         });
     }
 }
@@ -171,7 +200,7 @@ async function loadOrderSummary() {
     } else {
         // Handle regular cart flow
         try {
-            const cartResult = await readData(`smartfit_AR_Database/carts/${userID}`);
+            const cartResult = await readData(`smartfit_AR_Database/carts/${userId}`);
             
             if (!cartResult.success || !cartResult.data) {
                 getElement('orderItems').innerHTML = '<p>Your cart is empty</p>';
@@ -323,7 +352,7 @@ async function prepareCartOrder() {
         throw new Error('No cart items selected for checkout');
     }
     
-    const cartResult = await readData(`smartfit_AR_Database/carts/${userID}`);
+    const cartResult = await readData(`smartfit_AR_Database/carts/${userId}`);
     if (!cartResult.success || !cartResult.data) {
         throw new Error('Your cart is empty');
     }
@@ -388,7 +417,7 @@ async function processOrderItem(item, shippingInfo, method) {
     // Create order object
     const order = {
         orderId: orderId,
-        userId: userID,
+        userId: userId,
         shippingInfo: shippingInfo,
         date: new Date().toISOString(),
         status: 'pending',
@@ -414,7 +443,7 @@ async function processOrderItem(item, shippingInfo, method) {
 
     // Save order to database
     const createResult = await createData(
-        `smartfit_AR_Database/transactions/${userID}/${orderId}`, 
+        `smartfit_AR_Database/transactions/${userId}/${orderId}`, 
         null, 
         order
     );
@@ -428,12 +457,29 @@ async function processOrderItem(item, shippingInfo, method) {
 
     // Remove from cart if cart order
     if (method === "cartOrder" && item.cartId) {
-        await updateData(`smartfit_AR_Database/carts/${userID}/${item.cartId}`, null);
+        await deleteCartItem(item.cartId);
+    }
+}
+
+// Function to delete cart item
+async function deleteCartItem(cartId) {
+    try {
+        const deleteResult = await deleteData(`smartfit_AR_Database/carts/${userId}/${cartId}`);
+        
+        if (deleteResult.success) {
+            console.log(`Cart item ${cartId} deleted successfully`);
+            return true;
+        } else {
+            console.error("Failed to delete cart item:", deleteResult.error);
+            return false;
+        }
+    } catch (error) {
+        console.error("Error deleting cart item:", error);
+        return false;
     }
 }
 
 // Reduce stock after purchase
-// Reduce stock after purchase - FIXED VERSION
 async function reduceStock(item) {
     try {
         // First, let's check the actual structure of the shoe data
@@ -491,7 +537,7 @@ async function reduceStock(item) {
         
         const updateResult = await updateData(stockPath, {
             stock: newStock,
-            LastUpdatedBy: userID,
+            LastUpdatedBy: userId,
             LastUpdatedAt: new Date().toISOString()
         });
 
@@ -551,7 +597,7 @@ async function displaySingleItemOrder(item) {
 
 // Display multiple item order
 async function displayMultipleItemOrder(cartIDs) {
-    const cartResult = await readData(`smartfit_AR_Database/carts/${userID}`);
+    const cartResult = await readData(`smartfit_AR_Database/carts/${userId}`);
     
     if (!cartResult.success || !cartResult.data) {
         const orderItems = getElement('orderItems');
@@ -727,7 +773,7 @@ function showOrderConfirmationModal(order) {
     modal.style.display = 'block';
 }
 
-// Initialize checkout when DOM is loaded
+// Initialize when DOM is loaded
 document.addEventListener('DOMContentLoaded', function() {
     // Mobile sidebar toggle
     const mobileToggle = document.querySelector('.mobile-menu-toggle');
@@ -756,6 +802,9 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // Initialize checkout
-    initializeCheckout();
+    // Initialize checkout page
+    initializeCheckout().catch(error => {
+        console.error('Error initializing checkout page:', error);
+        alert('Error loading checkout page. Please try refreshing.');
+    });
 });

@@ -11,6 +11,99 @@
 </head>
 
 <body>
+    <!-- Hidden Templates -->
+    <template id="loading-template">
+        <div class="empty-history">
+            <i class="fas fa-spinner fa-spin"></i>
+            <h3>Loading Orders...</h3>
+            <p>Please wait while we load your order history</p>
+        </div>
+    </template>
+
+    <template id="no-orders-template">
+        <div class="empty-history">
+            <i class="fas fa-box-open"></i>
+            <h3>No Orders Yet</h3>
+            <p>You haven't placed any orders yet. Start shopping to see your order history here.</p>
+            <a href="/customer/html/browse.html" class="btn-shop">Shop Now</a>
+        </div>
+    </template>
+
+    <template id="no-filtered-orders-template">
+        <div class="empty-history">
+            <i class="fas fa-filter"></i>
+            <h3>No Orders Found</h3>
+            <p data-message>No orders match your current filters. Try adjusting your filters.</p>
+            <button class="btn-clear-filters" onclick="clearAllFilters()">Clear All Filters</button>
+        </div>
+    </template>
+
+    <template id="no-search-results-template">
+        <div class="empty-history">
+            <i class="fas fa-search"></i>
+            <h3>No Orders Found</h3>
+            <p data-message>No orders found matching your search. Try adjusting your search or filters.</p>
+            <button class="btn-clear-filters" onclick="clearAllFilters()">Clear All Filters</button>
+        </div>
+    </template>
+
+    <template id="error-template">
+        <div class="empty-history">
+            <i class="fas fa-exclamation-triangle"></i>
+            <h3>Error Loading Orders</h3>
+            <p>Please try refreshing the page.</p>
+        </div>
+    </template>
+
+    <template id="order-card-template">
+        <div class="order-card" data-order-id="{{orderId}}">
+            <div class="order-header">
+                <div>
+                    <span class="order-id">Order #{{orderId}}</span>
+                    <span class="order-date"> - {{orderDate}}</span>
+                </div>
+                <span class="order-status {{statusClass}}">{{statusText}}</span>
+            </div>
+            <div class="order-body">
+                <div class="order-items">
+                    {{itemsHTML}}
+                </div>
+                {{rejectionHTML}}
+            </div>
+            <div class="order-footer">
+                <div class="order-total">Total: ₱{{totalAmount}}</div>
+                <div class="order-actions">
+                    {{actionButtons}}
+                </div>
+            </div>
+        </div>
+    </template>
+
+    <template id="order-item-template">
+        <div class="order-item">
+            <img src="{{imageUrl}}" alt="Product" class="item-image">
+            <div class="item-details">
+                <div class="item-name">{{itemName}}</div>
+                <div class="item-variant">Color: {{color}}, Size: {{size}}</div>
+                <div class="item-price">₱{{price}}</div>
+            </div>
+            <div class="item-quantity">Qty: {{quantity}}</div>
+        </div>
+    </template>
+
+    <template id="rejection-info-template">
+        <div class="rejection-info">
+            <div class="rejection-title">
+                <i class="{{icon}}"></i>
+                <span>{{titlePrefix}}: <span class="rejection-shop">{{shop}}</span></span>
+            </div>
+            <div class="rejection-reason">
+                <strong>Reason:</strong> {{reason}}
+            </div>
+        </div>
+    </template>
+
+    <!-- Main Content -->
     <div class="dashboard">
         <!-- Sidebar -->
         <div class="sidebar">
@@ -82,12 +175,6 @@
                     <span class="filter-label">Filter by:</span>
                     <select id="statusFilter" class="form-select">
                         <option value="all">All Orders</option>
-                        <!-- <option value="shipped">Shipped</option>
-                        <option value="in transit">In Transit</option>
-                        <option value="arrived at facility">At Facility</option>
-                        <option value="out for delivery">Out for Delivery</option>
-                        <option value="delivered">Delivered</option>
-                        <option value="completed">Completed</option> -->
                         <option value="rejected">Rejected</option>
                         <option value="cancelled">Cancelled</option>
                     </select>
@@ -110,8 +197,6 @@
     <!-- Sidebar Overlay -->
     <div class="sidebar-overlay"></div>
 
-    <!-- REMOVED THE PROBLEMATIC INLINE SCRIPT -->
-    
     <script src="/customer/js/history.js" type="module"></script>
 </body>
 

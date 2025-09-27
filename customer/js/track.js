@@ -407,7 +407,7 @@ document.addEventListener('DOMContentLoaded', function() {
 document.getElementById('logout_btn').addEventListener('click', function() {
     if (confirm('Are you sure you want to logout?')) {
         logoutUser().then(() => {
-            window.location.href = '/user_login.html';
+            window.location.href = '/login.html';
         }).catch((error) => {
             console.error('Error signing out:', error);
         });

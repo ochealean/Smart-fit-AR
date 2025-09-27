@@ -8,99 +8,148 @@ import {
     generate18CharID
 } from '../../firebaseMethods.js';
 
-// DOM Elements
-const productsGrid = document.querySelector('.wishlist-container');
-const searchBar = document.querySelector('.search-bar');
-const sortOptions = document.querySelector('.sort-options');
-const mobileToggle = document.querySelector('.mobile-menu-toggle');
-const sidebar = document.querySelector('.sidebar');
-const overlay = document.querySelector('.sidebar-overlay');
-const logoutBtn = document.getElementById('logout_btn');
-const userNameDisplay = document.getElementById('userName_display2');
-const userImageProfile = document.getElementById('imageProfile');
+// Helper function to get DOM elements
+function getElement(id) {
+    return document.getElementById(id);
+}
 
-// Store all wishlist items for search functionality
+// Global variables
+let userData = null;
+let userId = null;
 let allWishlistItems = [];
 
-// Mobile sidebar toggle
-if (mobileToggle && sidebar && overlay) {
-    mobileToggle.addEventListener('click', () => {
-        sidebar.classList.toggle('active');
-        overlay.classList.toggle('active');
-    });
-
-    overlay.addEventListener('click', () => {
-        sidebar.classList.remove('active');
-        overlay.classList.remove('active');
-    });
-}
-
-// Search functionality
-searchBar.addEventListener('input', handleSearch);
-
-function handleSearch() {
-    const searchTerm = searchBar.value.toLowerCase().trim();
+// Initialize the page
+async function initializeWishlist() {
+    const authStatus = await checkUserAuth();
     
-    if (!searchTerm) {
-        // If search is empty, show all items
-        renderWishlistItems(allWishlistItems);
+    if (authStatus.authenticated && authStatus.role === 'shopowner') {
+        console.log(`User is ${authStatus.role}`, authStatus.userData);
+        window.location.href = "../../shopowner/html/shop_dashboard.html";
+        return;
+    } else if (authStatus.authenticated && authStatus.role === 'customer') {
+        console.log(`User is ${authStatus.role}`, authStatus.userData);
+        userData = authStatus.userData;
+        userId = authStatus.userId;
+    } else {
+        window.location.href = "/login.html";
         return;
     }
+
+    // Load user profile
+    loadUserProfile();
     
-    // Filter items based on search term
-    const filteredItems = allWishlistItems.filter(item => {
-        return (
-            item.data.shoeName.toLowerCase().includes(searchTerm) ||
-            (item.data.shoeBrand && item.data.shoeBrand.toLowerCase().includes(searchTerm)) ||
-            (item.data.shoeType && item.data.shoeType.toLowerCase().includes(searchTerm)) ||
-            (item.data.generalDescription && item.data.generalDescription.toLowerCase().includes(searchTerm)) ||
-            (item.data.shoeCode && item.data.shoeCode.toLowerCase().includes(searchTerm))
-        );
-    });
+    // Load wishlist items
+    await loadWishlistItems();
     
-    renderWishlistItems(filteredItems);
+    // Set up event listeners
+    setupEventListeners();
 }
 
-// Sort functionality
-sortOptions.addEventListener('change', handleSort);
-
-function handleSort() {
-    const sortBy = sortOptions.value;
-    let sortedItems = [...allWishlistItems];
+// Load user profile
+function loadUserProfile() {
+    const userNameDisplay1 = getElement('userName_display1');
+    const userNameDisplay2 = getElement('userName_display2');
+    const imageProfile = getElement('imageProfile');
     
-    switch(sortBy) {
-        case 'Sort by: Price Low to High':
-            sortedItems.sort((a, b) => {
-                const priceA = getPrice(a.data);
-                const priceB = getPrice(b.data);
-                return priceA - priceB;
-            });
-            break;
-            
-        case 'Sort by: Price High to Low':
-            sortedItems.sort((a, b) => {
-                const priceA = getPrice(a.data);
-                const priceB = getPrice(b.data);
-                return priceB - priceA;
-            });
-            break;
-            
-        case 'Sort by: Recently Added':
-        default:
-            // Default order (as loaded from Firebase)
-            break;
+    if (userNameDisplay1) {
+        userNameDisplay1.textContent = userData.firstName || 'Customer';
     }
     
-    renderWishlistItems(sortedItems);
+    if (userNameDisplay2) {
+        userNameDisplay2.textContent = `${userData.firstName || ''} ${userData.lastName || ''}`.trim() || 'Customer';
+    }
+    
+    if (imageProfile) {
+        imageProfile.src = userData.profilePhoto || "https://cdn-icons-png.flaticon.com/512/11542/11542598.png";
+    }
+    
+    document.body.style.display = '';
 }
 
-function getPrice(data) {
-    const firstVariant = data.variants ? Object.values(data.variants)[0] : null;
-    return firstVariant?.price || 0;
+// Load wishlist data
+async function loadWishlistItems() {
+    const productsGrid = document.querySelector('.wishlist-container');
+    if (!productsGrid) return;
+
+    // Show loading state
+    productsGrid.innerHTML = `
+        <div class="empty-state">
+            <i class="fas fa-spinner fa-spin"></i>
+            <h3>Loading your wishlist...</h3>
+            <p>Please wait while we load your saved items</p>
+        </div>
+    `;
+
+    try {
+        const wishlistPath = `smartfit_AR_Database/wishlist/${userId}`;
+        const wishlistResult = await readData(wishlistPath);
+        
+        if (!wishlistResult.success || !wishlistResult.data) {
+            showEmptyState();
+            return;
+        }
+
+        allWishlistItems = [];
+        const wishlistData = wishlistResult.data;
+        const promises = [];
+        
+        // Process each shop in the wishlist
+        for (const [shopId, shoes] of Object.entries(wishlistData)) {
+            if (shoes && typeof shoes === 'object') {
+                for (const [shoeId, wishlistItem] of Object.entries(shoes)) {
+                    const shoePath = `smartfit_AR_Database/shoe/${shopId}/${shoeId}`;
+                    
+                    const promise = readData(shoePath).then(shoeResult => {
+                        if (shoeResult.success && shoeResult.data) {
+                            const data = shoeResult.data;
+                            
+                            // Ensure required fields exist
+                            const cardData = {
+                                ...data,
+                                shopID: shopId,
+                                shoeName: data.shoeName || 'Unknown Shoe',
+                                shopName: data.shopName || 'Unknown Shop',
+                                defaultImage: data.defaultImage || 'https://via.placeholder.com/300x200?text=No+Image'
+                            };
+                            
+                            allWishlistItems.push({
+                                data: cardData,
+                                shoeId: shoeId,
+                                shopId: shopId
+                            });
+                        } else {
+                            console.log('Shoe not found, removing from wishlist');
+                            const invalidPath = `smartfit_AR_Database/wishlist/${userId}/${shopId}/${shoeId}`;
+                            return deleteData(invalidPath);
+                        }
+                    }).catch(err => {
+                        console.error('Error fetching shoe:', err);
+                    });
+                    
+                    promises.push(promise);
+                }
+            }
+        }
+        
+        await Promise.all(promises);
+        
+        if (allWishlistItems.length > 0) {
+            renderWishlistItems(allWishlistItems);
+        } else {
+            showEmptyState();
+        }
+        
+    } catch (error) {
+        console.error('Error loading wishlist:', error);
+        showEmptyState();
+    }
 }
 
 // Render wishlist items to the grid
 function renderWishlistItems(items) {
+    const productsGrid = document.querySelector('.wishlist-container');
+    if (!productsGrid) return;
+    
     productsGrid.innerHTML = '';
     
     if (items.length === 0) {
@@ -160,16 +209,14 @@ function createProductCard(data, shoeID, shopID) {
 
     // Add event listener for remove button
     card.querySelector('.remove-wishlist').addEventListener('click', async () => {
-        const authResult = await checkUserAuth();
-        console.log(authResult);
-        if (!authResult.authenticated) {
+        if (!userId) {
             alert("You must be logged in to modify your wishlist.");
             return;
         }
 
         if (confirm(`Remove ${data.shoeName} from your wishlist?`)) {
             try {
-                const wishlistPath = `smartfit_AR_Database/wishlist/${authResult.userId}/${shopID}/${shoeID}`;
+                const wishlistPath = `smartfit_AR_Database/wishlist/${userId}/${shopID}/${shoeID}`;
                 const deleteResult = await deleteData(wishlistPath);
                 
                 if (deleteResult.success) {
@@ -194,14 +241,12 @@ function createProductCard(data, shoeID, shopID) {
 
     // Add event listener for view button
     card.querySelector('.btn-view').addEventListener('click', () => {
-        // Navigate to product details page
         window.location.href = `/customer/html/shoedetails.html?shopID=${shopID}&shoeID=${shoeID}`;
     });
 
     // Add event listener for add to cart button
     card.querySelector('.btn-cart').addEventListener('click', async () => {
-        const authResult = await checkUserAuth();
-        if (!authResult.authenticated) {
+        if (!userId) {
             alert("You must be logged in to add items to your cart.");
             return;
         }
@@ -245,9 +290,9 @@ function createProductCard(data, shoeID, shopID) {
         try {
             // Generate unique cart ID
             const cartId = generate18CharID();
-            const cartPath = `smartfit_AR_Database/carts/${authResult.userId}/${cartId}`;
+            const cartPath = `smartfit_AR_Database/carts/${userId}/${cartId}`;
             
-            const createResult = await createData(cartPath, authResult.userId, cartItem);
+            const createResult = await createData(cartPath, userId, cartItem);
             
             if (createResult.success) {
                 alert(`${data.shoeName} added to cart`);
@@ -265,6 +310,9 @@ function createProductCard(data, shoeID, shopID) {
 
 // Show empty state
 function showEmptyState() {
+    const productsGrid = document.querySelector('.wishlist-container');
+    if (!productsGrid) return;
+
     productsGrid.innerHTML = `
         <div class="empty-state">
             <i class="fas fa-heart empty-icon"></i>
@@ -279,146 +327,158 @@ function showEmptyState() {
     `;
 }
 
-// Load user profile data
-async function loadUserProfile(userId) {
-    try {
-        const profilePath = `smartfit_AR_Database/customer/${userId}`;
-        const profileResult = await readData(profilePath);
-        
-        if (profileResult.success && profileResult.data) {
-            const userData = profileResult.data;
-            if (userNameDisplay) {
-                userNameDisplay.textContent = `${userData.firstName || ''} ${userData.lastName || ''}`.trim() || 'Customer Name';
-            }
-            if (userImageProfile) {
-                // Handle different profile photo structures
-                let profilePhotoUrl = '';
-                if (userData.profilePhoto?.url) {
-                    profilePhotoUrl = userData.profilePhoto.url;
-                } else if (userData.profilePhoto) {
-                    profilePhotoUrl = userData.profilePhoto;
-                } else if (userData.profilePhotoPath) {
-                    profilePhotoUrl = userData.profilePhotoPath;
-                }
-                
-                userImageProfile.src = profilePhotoUrl || 'https://via.placeholder.com/150';
-                userImageProfile.onerror = () => {
-                    userImageProfile.src = 'https://via.placeholder.com/150';
-                };
-            }
-        }
-    } catch (error) {
-        console.error('Error loading user profile:', error);
+// Search functionality
+function handleSearch() {
+    const searchBar = document.querySelector('.search-bar');
+    if (!searchBar) return;
+
+    const searchTerm = searchBar.value.toLowerCase().trim();
+    
+    if (!searchTerm) {
+        renderWishlistItems(allWishlistItems);
+        return;
     }
+    
+    const filteredItems = allWishlistItems.filter(item => {
+        return (
+            item.data.shoeName.toLowerCase().includes(searchTerm) ||
+            (item.data.shoeBrand && item.data.shoeBrand.toLowerCase().includes(searchTerm)) ||
+            (item.data.shoeType && item.data.shoeType.toLowerCase().includes(searchTerm)) ||
+            (item.data.generalDescription && item.data.generalDescription.toLowerCase().includes(searchTerm)) ||
+            (item.data.shoeCode && item.data.shoeCode.toLowerCase().includes(searchTerm))
+        );
+    });
+    
+    renderWishlistItems(filteredItems);
 }
 
-// Load wishlist data
-async function loadWishlist(userId) {
-    try {
-        const wishlistPath = `smartfit_AR_Database/wishlist/${userId}`;
-        const wishlistResult = await readData(wishlistPath);
-        
-        if (!wishlistResult.success || !wishlistResult.data) {
-            showEmptyState();
-            return;
-        }
+// Sort functionality
+function handleSort() {
+    const sortOptions = document.querySelector('.sort-options');
+    if (!sortOptions) return;
 
-        allWishlistItems = [];
-        productsGrid.innerHTML = '';
-
-        const wishlistData = wishlistResult.data;
-        const promises = [];
-        
-        // Process each shop in the wishlist
-        for (const [shopId, shoes] of Object.entries(wishlistData)) {
-            if (shoes && typeof shoes === 'object') {
-                for (const [shoeId, wishlistItem] of Object.entries(shoes)) {
-                    // Verify the shoe exists before trying to fetch
-                    const shoePath = `smartfit_AR_Database/shoe/${shopId}/${shoeId}`;
-                    
-                    const promise = readData(shoePath).then(shoeResult => {
-                        if (shoeResult.success && shoeResult.data) {
-                            const data = shoeResult.data;
-                            
-                            // Ensure required fields exist
-                            const cardData = {
-                                ...data,
-                                shopID: shopId,
-                                shoeName: data.shoeName || 'Unknown Shoe',
-                                shopName: data.shopName || 'Unknown Shop',
-                                defaultImage: data.defaultImage || 'https://via.placeholder.com/300x200?text=No+Image'
-                            };
-                            
-                            // Add to allWishlistItems array for search functionality
-                            allWishlistItems.push({
-                                data: cardData,
-                                shoeId: shoeId,
-                                shopId: shopId
-                            });
-                        } else {
-                            console.log('Shoe not found, removing from wishlist');
-                            // Remove invalid reference
-                            const invalidPath = `smartfit_AR_Database/wishlist/${userId}/${shopId}/${shoeId}`;
-                            return deleteData(invalidPath);
-                        }
-                    }).catch(err => {
-                        console.error('Error fetching shoe:', err);
-                    });
-                    
-                    promises.push(promise);
-                }
-            }
-        }
-        
-        // Wait for all promises to resolve before rendering
-        await Promise.all(promises);
-        
-        if (allWishlistItems.length > 0) {
-            renderWishlistItems(allWishlistItems);
-        } else {
-            showEmptyState();
-        }
-        
-    } catch (error) {
-        console.error('Error loading wishlist:', error);
-        showEmptyState();
-    }
-}
-
-// Initialize the page
-async function initializePage() {
-    try {
-        const authResult = await checkUserAuth();
-        console.log(authResult);
-        
-        if (authResult.authenticated && authResult.role === 'customer') {
-            // Load user profile
-            await loadUserProfile(authResult.userId);
+    const sortBy = sortOptions.value;
+    let sortedItems = [...allWishlistItems];
+    
+    switch(sortBy) {
+        case 'Sort by: Price Low to High':
+            sortedItems.sort((a, b) => {
+                const priceA = getPrice(a.data);
+                const priceB = getPrice(b.data);
+                return priceA - priceB;
+            });
+            break;
             
-            // Load wishlist
-            await loadWishlist(authResult.userId);
-        } else {
-            window.location.href = "/login.html";
-        }
-    } catch (error) {
-        console.error("Auth check error:", error);
-        window.location.href = "/login.html";
+        case 'Sort by: Price High to Low':
+            sortedItems.sort((a, b) => {
+                const priceA = getPrice(a.data);
+                const priceB = getPrice(b.data);
+                return priceB - priceA;
+            });
+            break;
+            
+        case 'Sort by: Recently Added':
+        default:
+            // Default order (as loaded from Firebase)
+            break;
+    }
+    
+    renderWishlistItems(sortedItems);
+}
+
+function getPrice(data) {
+    const firstVariant = data.variants ? Object.values(data.variants)[0] : null;
+    return firstVariant?.price || 0;
+}
+
+// Set up event listeners
+function setupEventListeners() {
+    // Logout functionality
+    const logoutBtn = getElement('logout_btn');
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', async function() {
+            if (confirm('Are you sure you want to logout?')) {
+                const result = await logoutUser();
+                if (result.success) {
+                    window.location.href = '/login.html';
+                } else {
+                    console.error('Error signing out:', result.error);
+                }
+            }
+        });
+    }
+
+    // Search functionality
+    const searchBar = document.querySelector('.search-bar');
+    if (searchBar) {
+        let searchTimeout;
+        searchBar.addEventListener('input', (e) => {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                handleSearch();
+            }, 300);
+        });
+    }
+
+    // Sort functionality
+    const sortOptions = document.querySelector('.sort-options');
+    if (sortOptions) {
+        sortOptions.addEventListener('change', handleSort);
+    }
+
+    // Mobile menu setup
+    setupMobileMenu();
+}
+
+function setupMobileMenu() {
+    const mobileToggle = document.querySelector('.mobile-menu-toggle');
+    const sidebar = document.querySelector('.sidebar');
+    const overlay = document.querySelector('.sidebar-overlay');
+
+    if (mobileToggle && sidebar && overlay) {
+        mobileToggle.addEventListener('click', () => {
+            sidebar.classList.toggle('active');
+            overlay.classList.remove('active');
+        });
+
+        overlay.addEventListener('click', () => {
+            sidebar.classList.remove('active');
+            overlay.classList.remove('active');
+        });
     }
 }
 
-// Logout functionality
-if (logoutBtn) {
-    logoutBtn.addEventListener('click', async function() {
-        if (confirm('Are you sure you want to logout?')) {
-            const logoutResult = await logoutUser();
-            if (logoutResult.success) {
-                window.location.href = '/login.html';
-            } else {
-                console.error('Error signing out:', logoutResult.error);
-            }
+// Initialize when DOM is loaded
+document.addEventListener('DOMContentLoaded', function() {
+    // Mobile sidebar toggle
+    const mobileToggle = document.querySelector('.mobile-menu-toggle');
+    const sidebar = document.querySelector('.sidebar');
+    const overlay = document.querySelector('.sidebar-overlay');
+
+    if (mobileToggle && sidebar && overlay) {
+        mobileToggle.addEventListener('click', () => {
+            sidebar.classList.toggle('active');
+            overlay.classList.toggle('active');
+        });
+
+        overlay.addEventListener('click', () => {
+            sidebar.classList.remove('active');
+            overlay.classList.remove('active');
+        });
+    }
+
+    // Initialize wishlist page
+    initializeWishlist().catch(error => {
+        console.error('Error initializing wishlist page:', error);
+        const productsGrid = document.querySelector('.wishlist-container');
+        if (productsGrid) {
+            productsGrid.innerHTML = `
+                <div class="empty-state">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <h3>Error Loading Page</h3>
+                    <p>Please try refreshing the page.</p>
+                </div>
+            `;
         }
     });
-}
-
-// Initialize the page when DOM is loaded
-document.addEventListener('DOMContentLoaded', initializePage);
+});

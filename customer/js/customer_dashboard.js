@@ -12,47 +12,97 @@ function getElement(id) {
     return document.getElementById(id);
 }
 
-// Define fixedDescription function here
-function fixedDescription(description) {
-    if (!description) return 'No description available';
-    return description.length > 100 ? description.substring(0, 100) + '...' : description;
-}
-
 // Global variables for modal functionality
 let selectedVariantKey = null;
 let selectedSizeKey = null;
 let currentShoeData = null;
+let userData = null;
 
-// this is the HTML container where shoes will be displayed
-const shoeContainer = getElement('shoesContainer');
-const productDetailsModal = getElement('productDetailsModal');
+// Initialize the page
+async function initializeDashboard() {
+    const authStatus = await checkUserAuth();
+    
+    if (authStatus.authenticated && authStatus.role === 'shopowner') {
+        console.log(`User is ${authStatus.role}`, authStatus.userData);
+        window.location.href = "../../shopowner/html/shop_dashboard.html";
+        return;
+    } else if (authStatus.authenticated && authStatus.role === 'customer') {
+        console.log(`User is ${authStatus.role}`, authStatus.userData);
+        userData = authStatus.userData;
+    } else {
+        window.location.href = "/login.html";
+        return;
+    }
 
-const authStatus = await checkUserAuth();
-if (authStatus.authenticated) {
-    console.log(`User is ${authStatus.role}`, authStatus.userData);
-    getElement('userName_display1').textContent = authStatus.userData.firstName;
-    getElement('userName_display2').textContent = authStatus.userData.firstName + " " + authStatus.userData.lastName;
-    getElement('imageProfile').src = authStatus.userData.profilePhoto || "https://cdn-icons-png.flaticon.com/512/11542/11542598.png";
-    document.body.style.display = '';
-    const prod = await readData(`smartfit_AR_Database/shoe`);
-    await loadAllShoes(prod);
-} else {
-    window.location.href = "/login.html";
+    // Load user profile
+    loadUserProfile();
+    
+    // Load all shoes
+    await loadAllShoes();
+    
+    // Set up event listeners
+    setupEventListeners();
 }
 
-getElement('logout_btn').addEventListener('click', async () => {
-    await logoutUser();
-    window.location.href = "/login.html";
-});
+// Load user profile
+function loadUserProfile() {
+    const userNameDisplay1 = getElement('userName_display1');
+    const userNameDisplay2 = getElement('userName_display2');
+    const imageProfile = getElement('imageProfile');
+    
+    if (userNameDisplay1) {
+        userNameDisplay1.textContent = userData.firstName || 'Customer';
+    }
+    
+    if (userNameDisplay2) {
+        userNameDisplay2.textContent = `${userData.firstName || ''} ${userData.lastName || ''}`.trim() || 'Customer';
+    }
+    
+    if (imageProfile) {
+        imageProfile.src = userData.profilePhoto || "https://cdn-icons-png.flaticon.com/512/11542/11542598.png";
+    }
+    
+    document.body.style.display = '';
+}
 
-async function loadAllShoes(product) {
-    // this is the HTML container where shoes will be displayed
+// Load all shoes
+async function loadAllShoes() {
+    const shoeContainer = getElement('shoesContainer');
+    if (!shoeContainer) return;
+
+    // Show loading state
+    shoeContainer.innerHTML = `
+        <div class="no-shoes">
+            <i class="fas fa-shoe-prints"></i>
+            <h3>Loading Shoes...</h3>
+            <p>Please wait while we load available shoes</p>
+        </div>
+    `;
+
+    try {
+        const productResult = await readData(`smartfit_AR_Database/shoe`);
+        
+        if (!productResult.success || !productResult.data) {
+            shoeContainer.innerHTML = '<p class="no-shoes">No shoes available at the moment.</p>';
+            return;
+        }
+
+        await displayAllShoes(productResult.data, shoeContainer);
+    } catch (error) {
+        console.error("Error loading shoes:", error);
+        shoeContainer.innerHTML = `
+            <div class="no-shoes">
+                <i class="fas fa-exclamation-triangle"></i>
+                <h3>Error Loading Shoes</h3>
+                <p>Failed to load shoes. Please try again.</p>
+            </div>
+        `;
+    }
+}
+
+// Display all shoes in the container
+async function displayAllShoes(allShops, shoeContainer) {
     let html = '';
-
-    // Loop through all shops
-    const allShops = product.data;
-    // console.log(allShops);
-    // console.log(Object.entries(allShops));
 
     // Check if there are any shops/products
     if (!allShops || Object.keys(allShops).length === 0) {
@@ -114,6 +164,12 @@ async function loadAllShoes(product) {
     });
 
     shoeContainer.innerHTML = html || '<p class="no-shoes">No shoes available at the moment.</p>';
+}
+
+// Helper function to truncate description
+function fixedDescription(description) {
+    if (!description) return 'No description available';
+    return description.length > 100 ? description.substring(0, 100) + '...' : description;
 }
 
 // Product Details Modal Functions
@@ -380,8 +436,41 @@ window.addToCart = async function (cartItem) {
     }
 };
 
-// Event listeners for modal buttons
-getElement('addToCartBtn').addEventListener('click', async function () {
+// Set up event listeners
+function setupEventListeners() {
+    // Logout functionality
+    const logoutBtn = getElement('logout_btn');
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', async function() {
+            if (confirm('Are you sure you want to logout?')) {
+                const result = await logoutUser();
+                if (result.success) {
+                    window.location.href = '/login.html';
+                } else {
+                    console.error('Error signing out:', result.error);
+                }
+            }
+        });
+    }
+
+    // Add to Cart button
+    const addToCartBtn = getElement('addToCartBtn');
+    if (addToCartBtn) {
+        addToCartBtn.addEventListener('click', handleAddToCart);
+    }
+
+    // Buy Now button
+    const buyNowBtn = getElement('buyNowBtn');
+    if (buyNowBtn) {
+        buyNowBtn.addEventListener('click', handleBuyNow);
+    }
+
+    // Modal close events
+    setupModalEvents();
+}
+
+// Handle Add to Cart button click
+async function handleAddToCart() {
     if (!currentShoeData || !selectedVariantKey) {
         alert('Please select a variant first');
         return;
@@ -426,9 +515,10 @@ getElement('addToCartBtn').addEventListener('click', async function () {
     } else {
         alert('Selected quantity exceeds available stock');
     }
-});
+}
 
-getElement('buyNowBtn').addEventListener('click', function () {
+// Handle Buy Now button click
+function handleBuyNow() {
     if (!currentShoeData || !selectedVariantKey) {
         alert('Please select a variant first');
         return;
@@ -467,19 +557,48 @@ getElement('buyNowBtn').addEventListener('click', function () {
 
     // Redirect to checkout with parameters
     window.location.href = `/customer/html/checkout.html?${params.toString()}`;
-});
-
-// Close modal when clicking outside
-window.onclick = function (event) {
-    const modal = getElement('productDetailsModal');
-    if (event.target == modal) {
-        closeProductModal();
-    }
 }
 
-// Close modal with Escape key
-document.addEventListener('keydown', function (e) {
-    if (e.key === 'Escape') {
-        closeProductModal();
+// Set up modal events
+function setupModalEvents() {
+    const modal = getElement('productDetailsModal');
+    
+    // Close modal when clicking outside
+    if (modal) {
+        window.onclick = function (event) {
+            if (event.target == modal) {
+                closeProductModal();
+            }
+        }
     }
+
+    // Close modal with Escape key
+    document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') {
+            closeProductModal();
+        }
+    });
+}
+
+// Initialize when DOM is loaded
+document.addEventListener('DOMContentLoaded', function() {
+    // Mobile sidebar toggle (if applicable)
+    const mobileToggle = document.querySelector('.mobile-menu-toggle');
+    const sidebar = document.querySelector('.sidebar');
+    const overlay = document.querySelector('.sidebar-overlay');
+
+    if (mobileToggle && sidebar && overlay) {
+        mobileToggle.addEventListener('click', () => {
+            sidebar.classList.toggle('active');
+            overlay.classList.toggle('active');
+        });
+
+        overlay.addEventListener('click', () => {
+            sidebar.classList.remove('active');
+            overlay.classList.remove('active');
+        });
+    }
+
+    // Initialize dashboard
+    initializeDashboard();
 });

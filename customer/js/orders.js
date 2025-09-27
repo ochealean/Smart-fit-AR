@@ -17,15 +17,17 @@ let userData;
 // Initialize the page
 async function initializeOrders() {
     const authResult = await checkUserAuth();
+    console.log(authResult);
     
-    if (!authResult.authenticated) {
-        window.location.href = "/login.html";
-        return;
+    if (authResult.authenticated && authResult.role === 'shopowner')
+    {
+        console.log(`User is ${authResult.role}`, authResult.userData);
+        window.location.href = "../../shopowner/html/shop_dashboard.html";
     }
-
-    if (authResult.role !== 'customer') {
-        window.location.href = "/customer/html/customer_dashboard.html";
-        return;
+    else if (authResult.authenticated && authResult.role === 'customer') {
+        console.log(`User is ${authResult.role}`, authResult.userData);
+    } else {
+        window.location.href = "/login.html";
     }
 
     console.log("User authenticated:", authResult);
