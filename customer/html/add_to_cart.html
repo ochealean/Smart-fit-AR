@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <!-- try lang -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Shopping Cart - Customer</title>
@@ -69,7 +68,6 @@
                     <i class="fas fa-bars"></i>
                 </div>
                 <h1><i class="fas fa-shopping-cart"></i> Your Shopping Cart</h1>
-                <!-- <input type="text" class="search-bar" placeholder="Search orders, products..."> -->
                 <div id="profileSection" class="user-profile">
                     <img id="imageProfile" src="#" alt="Profile" class="user-avatar">
                     <span id="userName_display">Alex Johnson</span>
@@ -77,28 +75,14 @@
             </div>
 
             <div class="container">
-                <!-- <h1 class="cart-title">
-                    <i class="fas fa-shopping-cart"></i> Your Shopping Cart
-                </h1> -->
-                
                 <div id="cartContainer">
-                    <div class="cart-header">
-                        
-                    </div>
-                    
+                    <!-- Cart header and items will be populated by JavaScript -->
                 </div>
-                
+
                 <div id="cartsummarycontainer">
-                    <!-- <div class="cart-header">
-                        <div class="select-all">
-                            <input type="checkbox" id="selectAllItems">
-                            <label for="selectAllItems">Select all items</label>
-                        </div>
-                        <span id="itemCount">0 items</span>
-                    </div> -->
-                    <!-- populated by backend -->
+                    <!-- Cart summary will be populated by JavaScript -->
                 </div>
-                
+
                 <div id="emptyCartMessage" class="empty-cart" style="display: none;">
                     <i class="fas fa-shopping-cart"></i>
                     <h2>Your cart is empty</h2>
@@ -132,7 +116,7 @@
             }
         });
     </script>
-    
+
     <script src="/customer/js/add_to_cart.js" type="module"></script>
 </body>
 </html>

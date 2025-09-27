@@ -12,15 +12,42 @@ let cartItems = [];
 let unsubscribeCartListener = null;
 
 // Auth state listener using firebaseMethods
-checkUserAuth().then((authResult) => {
-    if (authResult.authenticated && authResult.role === 'customer') {
-        loadCart(authResult.userId);
-        console.log("User ID:", authResult);
-        loadUserProfile(authResult.userId);
+async function initializePage() {
+    const authStatus = await checkUserAuth();
+    
+    if (authStatus.authenticated && authStatus.role === 'shopowner') {
+        console.log(`User is ${authStatus.role}`, authStatus.userData);
+        window.location.href = "../../shopowner/html/shop_dashboard.html";
+    } else if (authStatus.authenticated && authStatus.role === 'customer') {
+        console.log(`User is ${authStatus.role}`, authStatus.userData);
+        
+        // Update user profile display
+        const userNameDisplay1 = document.getElementById('userName_display1');
+        const userNameDisplay2 = document.getElementById('userName_display2');
+        const imageProfile = document.getElementById('imageProfile');
+        
+        if (userNameDisplay1) {
+            userNameDisplay1.textContent = authStatus.userData.firstName;
+        }
+        if (userNameDisplay2) {
+            userNameDisplay2.textContent = authStatus.userData.firstName + " " + authStatus.userData.lastName;
+        }
+        if (imageProfile) {
+            imageProfile.src = authStatus.userData.profilePhoto || "https://cdn-icons-png.flaticon.com/512/11542/11542598.png";
+        }
+        
+        document.body.style.display = '';
+        
+        // Load cart and user profile
+        loadCart(authStatus.userId);
+        loadUserProfile(authStatus.userId);
     } else {
         window.location.href = "/login.html";
     }
-}).catch((error) => {
+}
+
+// Initialize the page
+initializePage().catch((error) => {
     console.error("Auth check error:", error);
     window.location.href = "/login.html";
 });
@@ -41,13 +68,34 @@ async function loadCart(userId) {
         }
 
         const cartData = result.data;
+        console.log("Raw cart data:", cartData);
         
         // Only re-process if cart data actually changed
         const cartDataString = JSON.stringify(cartData);
         if (window.lastCartData === cartDataString) return;
         window.lastCartData = cartDataString;
+
+        console.log("Processing cart data:", cartData);
         
-        cartItems = await Promise.all(Object.entries(cartData).map(async ([cartId, item]) => {
+        // Convert to array and sort by addedAt (newest first)
+        const cartEntries = Object.entries(cartData);
+
+        console.log("Cart entries before sorting:", cartEntries);
+        
+        // Fixed sorting logic - use addedAt instead of timestamp
+        const sortedEntries = cartEntries.sort(([keyA, itemA], [keyB, itemB]) => {
+            console.log("Comparing items:", itemA, itemB);
+            // Get addedAt from item data
+            const addedAtA = getAddedAt(itemA, keyA);
+            const addedAtB = getAddedAt(itemB, keyB);
+            
+            // Sort in descending order (newest first)
+            return addedAtB - addedAtA;
+        });
+
+        console.log("Sorted entries:", sortedEntries);
+        
+        cartItems = await Promise.all(sortedEntries.map(async ([cartId, item]) => {
             try {
                 const shoePath = `smartfit_AR_Database/shoe/${item.shopId}/${item.shoeId}`;
                 const shoeResult = await readData(shoePath);
@@ -79,7 +127,8 @@ async function loadCart(userId) {
                     variantName: variant.variantName,
                     color: variant.color,
                     size: sizeValue,
-                    availableStock: stock
+                    availableStock: stock,
+                    addedAt: getAddedAt(item, cartId)
                 };
             } catch (err) {
                 console.error("Error loading cart item:", err);
@@ -88,11 +137,66 @@ async function loadCart(userId) {
         }));
 
         cartItems = cartItems.filter(item => item !== null);
+        
+        // Final sort by addedAt to ensure correct order
+        cartItems.sort((a, b) => b.addedAt - a.addedAt);
+        
+        console.log("Final cart items:", cartItems);
         renderCart();
     });
 }
 
-// Render cart items
+// Helper function to extract addedAt from cart item
+function getAddedAt(item, cartId) {
+    console.log("Getting addedAt for item:", item, "cartId:", cartId);
+    
+    // Priority 1: Use item.addedAt if it exists
+    if (item.addedAt) {
+        console.log("Using item.addedAt:", item.addedAt);
+        
+        // Handle different formats of addedAt
+        if (typeof item.addedAt === 'number') {
+            return item.addedAt;
+        } else if (typeof item.addedAt === 'string') {
+            // Parse the ISO date string properly
+            const date = new Date(item.addedAt);
+            const timestamp = date.getTime();
+            
+            // Check if the date is valid (not NaN)
+            if (!isNaN(timestamp)) {
+                console.log("Parsed timestamp:", timestamp);
+                return timestamp;
+            } else {
+                console.log("Invalid date string, trying alternative parsing");
+            }
+        } else if (item.addedAt instanceof Date) {
+            return item.addedAt.getTime();
+        }
+        
+        // If we get here, try to parse as a number directly
+        const parsed = parseInt(item.addedAt);
+        if (!isNaN(parsed)) {
+            console.log("Parsed as number:", parsed);
+            return parsed;
+        }
+    }
+    
+    // Priority 2: Try to parse cartId as timestamp (if it's a Firebase push key)
+    if (cartId && cartId.length > 8) {
+        // Firebase push keys contain timestamp in first 8 characters
+        const timestampFromKey = parseInt(cartId.substring(0, 8), 36);
+        if (!isNaN(timestampFromKey)) {
+            console.log("Using timestamp from cartId:", timestampFromKey);
+            return timestampFromKey;
+        }
+    }
+    
+    // Priority 3: Use current date as fallback (will appear at bottom)
+    console.log("Using fallback current timestamp");
+    return Date.now();
+}
+
+// Render cart items in descending order by date
 function renderCart() {
     const cartContainer = document.getElementById("cartContainer");
     const cartSummaryContainer = document.getElementById("cartsummarycontainer");
@@ -105,12 +209,31 @@ function renderCart() {
         return;
     }
 
+    // Create cart header with select all
+    const cartHeader = document.createElement('div');
+    cartHeader.className = 'cart-header';
+    cartHeader.innerHTML = `
+        <div class="select-all-container">
+            <input type="checkbox" class="cart-item-checkbox" id="selectAllItems" checked>
+            <label for="selectAllItems">Select all items</label>
+        </div>
+    `;
+    cartContainer.appendChild(cartHeader);
+
     const cartItemsSection = document.createElement('div');
     cartItemsSection.className = 'cart-items';
 
+    // Items are already sorted by addedAt in descending order
     cartItems.forEach(item => {
         const itemElement = document.createElement('div');
         itemElement.className = 'cart-item';
+        
+        // Format date for display
+        console.log("Item addedAt timestamp:", item.addedAt, "for item:", item.shoeName);
+        const addedDate = new Date(item.addedAt);
+        console.log("Parsed date:", addedDate);
+        const formattedDate = formatDate(item.addedAt);
+        
         itemElement.innerHTML = `
             <div class="cart-item-select">
                 <input type="checkbox" class="cart-item-checkbox" data-cartid="${item.cartId}" checked>
@@ -125,6 +248,7 @@ function renderCart() {
                 <h3 class="cart-item-name">${item.shoeName}</h3>
                 <p class="cart-item-variant">${item.variantName} (${item.color}) - Size: ${item.size}</p>
                 <p class="cart-item-price">₱${(item.price * item.quantity).toFixed(2)}</p>
+                <p class="cart-item-date"><i class="far fa-clock"></i> Added: ${formattedDate}</p>
 
                 <div class="quantity-controls">
                     <button class="quantity-btn" data-cartid="${item.cartId}" data-change="-1">-</button>
@@ -152,8 +276,56 @@ function renderCart() {
     createCartSummary();
 }
 
+// Helper function to format date for display
+function formatDate(timestamp) {
+    const date = new Date(timestamp);
+    const now = new Date();
+    const diffTime = Math.abs(now - date);
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    
+    // Check if the date is valid
+    if (isNaN(date.getTime())) {
+        console.log("Invalid date timestamp:", timestamp);
+        return 'Recently';
+    }
+    
+    if (diffDays === 1) {
+        return 'Today';
+    } else if (diffDays === 2) {
+        return 'Yesterday';
+    } else if (diffDays <= 7) {
+        return `${diffDays - 1} days ago`;
+    } else {
+        return date.toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric'
+        });
+    }
+}
+
 // Setup cart event listeners
 function setupCartEventListeners() {
+    // Select All functionality
+    const selectAllCheckbox = document.getElementById('selectAllItems');
+    if (selectAllCheckbox) {
+        selectAllCheckbox.addEventListener('change', function() {
+            const itemCheckboxes = document.querySelectorAll('.cart-item-checkbox');
+            itemCheckboxes.forEach(checkbox => {
+                checkbox.checked = this.checked;
+            });
+            updateTotals();
+        });
+    }
+
+    // Individual checkbox change should update select all state
+    document.querySelectorAll('.cart-item-checkbox').forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            updateSelectAllState();
+            updateTotals();
+        });
+    });
+
     // Delete button handlers
     document.querySelectorAll('.delete-btn').forEach(btn => {
         btn.addEventListener('click', async (e) => {
@@ -196,7 +368,10 @@ function setupCartEventListeners() {
 
                     // Update only the quantity field using direct Firebase update
                     const updatePath = `smartfit_AR_Database/carts/${authResult.userId}/${cartId}`;
-                    const updateResult = await updateData(updatePath, { quantity: newQty });
+                    const updateResult = await updateData(updatePath, { 
+                        quantity: newQty,
+                        addedAt: item.addedAt // Preserve original addedAt
+                    });
 
                     if (updateResult.success) {
                         item.quantity = newQty;
@@ -224,7 +399,10 @@ function setupCartEventListeners() {
 
                     // Update only the quantity field using direct Firebase update
                     const updatePath = `smartfit_AR_Database/carts/${authResult.userId}/${cartId}`;
-                    const updateResult = await updateData(updatePath, { quantity: value });
+                    const updateResult = await updateData(updatePath, { 
+                        quantity: value,
+                        addedAt: item.addedAt // Preserve original addedAt
+                    });
 
                     if (updateResult.success) {
                         item.quantity = value;
@@ -239,11 +417,6 @@ function setupCartEventListeners() {
         });
     });
 
-    // Checkbox handlers
-    document.querySelectorAll('.cart-item-checkbox').forEach(cb => {
-        cb.addEventListener('change', updateTotals);
-    });
-
     // View Details button handlers
     document.querySelectorAll('.feedback-btn').forEach(btn => {
         btn.addEventListener('click', (e) => {
@@ -254,6 +427,31 @@ function setupCartEventListeners() {
             }
         });
     });
+
+    // Initialize select all state
+    updateSelectAllState();
+}
+
+// Update select all checkbox state
+function updateSelectAllState() {
+    const selectAllCheckbox = document.getElementById('selectAllItems');
+    const itemCheckboxes = document.querySelectorAll('.cart-item-checkbox');
+    
+    if (itemCheckboxes.length === 0) {
+        if (selectAllCheckbox) {
+            selectAllCheckbox.checked = false;
+            selectAllCheckbox.indeterminate = false;
+        }
+        return;
+    }
+    
+    const allChecked = Array.from(itemCheckboxes).every(checkbox => checkbox.checked);
+    const someChecked = Array.from(itemCheckboxes).some(checkbox => checkbox.checked);
+    
+    if (selectAllCheckbox) {
+        selectAllCheckbox.checked = allChecked;
+        selectAllCheckbox.indeterminate = someChecked && !allChecked;
+    }
 }
 
 // Create cart summary
@@ -338,6 +536,9 @@ function updateTotals() {
     if (taxEl) taxEl.innerText = `₱${tax.toFixed(2)}`;
     if (shippingEl) shippingEl.innerText = `₱${shipping.toFixed(2)}`;
     if (totalEl) totalEl.innerText = `₱${total.toFixed(2)}`;
+
+    // Update select all state whenever totals are updated
+    updateSelectAllState();
 }
 
 // Show empty cart message
