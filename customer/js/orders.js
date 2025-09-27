@@ -1,5 +1,5 @@
-import { 
-    checkUserAuth, 
+import {
+    checkUserAuth,
     logoutUser,
     readData,
     updateData,
@@ -18,9 +18,8 @@ let userData;
 async function initializeOrders() {
     const authResult = await checkUserAuth();
     console.log(authResult);
-    
-    if (authResult.authenticated && authResult.role === 'shopowner')
-    {
+
+    if (authResult.authenticated && authResult.role === 'shopowner') {
         console.log(`User is ${authResult.role}`, authResult.userData);
         window.location.href = "../../shopowner/html/shop_dashboard.html";
     }
@@ -36,10 +35,10 @@ async function initializeOrders() {
 
     // Load user profile
     loadUserProfile();
-    
+
     // Load orders with real-time updates
     loadOrders();
-    
+
     // Set up event listeners
     setupEventListeners();
 }
@@ -48,16 +47,16 @@ async function initializeOrders() {
 function loadUserProfile() {
     const userNameElement = getElement('userName_display2');
     const imageProfileElement = getElement('imageProfile');
-    
+
     if (userNameElement) {
         userNameElement.textContent = `${userData.firstName || ''} ${userData.lastName || ''}`.trim() || 'Customer';
     }
-    
+
     if (imageProfileElement) {
-        imageProfileElement.src = userData.profilePhoto?.profilePhoto?.url || 
+        imageProfileElement.src = userData.profilePhoto?.profilePhoto?.url ||
             "https://firebasestorage.googleapis.com/v0/b/opportunity-9d3bf.appspot.com/o/profile%2Fdefault_profile.png?alt=media&token=5f1a4b8c-7e6b-4f1c-8a2d-0e5f3b7c4a2e";
     }
-    
+
     document.body.style.display = '';
 }
 
@@ -151,27 +150,27 @@ async function displayOrders(orders, ordersContainer) {
 // Create order card element
 async function createOrderCard(order) {
     if (!order) return null;
-
+    
     const status = order.status?.toLowerCase() || 'pending';
 
     // Only show these statuses
     const allowedStatuses = [
         'pending',
-        'order processed', 
-        'shipped', 
+        'order processed',
+        'shipped',
         'accepted',
-        'in transit', 
-        'arrived at facility', 
-        'out for delivery', 
+        'in transit',
+        'arrived at facility',
+        'out for delivery',
         'delivered'
     ];
-    
+
     // Skip if status is not in allowed list
     if (!allowedStatuses.includes(status)) return null;
 
     // Check if this order has a serial number
     let serialNumber = order.serialNumber;
-    
+
     // If not found in order, check shoeVerification collection
     if (!serialNumber) {
         try {
@@ -184,10 +183,22 @@ async function createOrderCard(order) {
         }
     }
 
+    // Check for unresolved issues
+    let hasUnresolvedIssue = false;
+    try {
+        const issueResult = await readData(`smartfit_AR_Database/issueReports/${order.orderId}`);
+        if (issueResult.success && issueResult.data && !issueResult.data.resolved) {
+            hasUnresolvedIssue = true;
+        }
+    } catch (error) {
+        console.log("Error checking issue report:", error);
+    }
+
     const orderCard = document.createElement('div');
     orderCard.className = 'order-card';
     orderCard.dataset.status = status;
     orderCard.dataset.orderId = order.orderId;
+    orderCard.dataset.hasUnresolvedIssue = hasUnresolvedIssue;
     if (serialNumber) {
         orderCard.dataset.serialNumber = serialNumber;
     }
@@ -210,7 +221,7 @@ async function createOrderCard(order) {
         const itemImage = order.item.imageUrl || fallbackImage;
 
         // Add serial number to item details if available
-        const serialNumberHTML = serialNumber ? 
+        const serialNumberHTML = serialNumber ?
             `<div class="item-serial">Serial Number: <strong>${serialNumber}</strong></div>` : '';
 
         orderItemHTML = `
@@ -227,7 +238,7 @@ async function createOrderCard(order) {
     `;
     }
 
-    const actionButtons = generateActionButtons(status, order.orderId, serialNumber);
+    const actionButtons = generateActionButtons(status, order.orderId, serialNumber, hasUnresolvedIssue);
 
     orderCard.innerHTML = `
         <div class="order-header">
@@ -236,6 +247,7 @@ async function createOrderCard(order) {
                 <span class="order-date"> - ${formattedDate}</span>
             </div>
             <span class="order-status ${statusClass}">${statusText}</span>
+            ${hasUnresolvedIssue ? '<span class="issue-badge">Issue Reported</span>' : ''}
         </div>
         <div class="order-body">
             <div class="order-items">
@@ -271,7 +283,7 @@ function getStatusInfo(status) {
 }
 
 // Generate action buttons based on order status
-function generateActionButtons(status, orderId, serialNumber) {
+function generateActionButtons(status, orderId, serialNumber, hasUnresolvedIssue) {
     let buttons = '';
 
     if (status === 'delivered') {
@@ -279,9 +291,11 @@ function generateActionButtons(status, orderId, serialNumber) {
             <button class="btn btn-received" onclick="markAsReceived('${orderId}')">
                 <i class="fas fa-check"></i> Order Received
             </button>
+            ${!hasUnresolvedIssue ? `
             <button class="btn btn-issue" onclick="reportIssue('${orderId}')">
                 <i class="fas fa-exclamation"></i> Report Issue
             </button>
+            ` : ''}
             <button class="btn btn-track" onclick="trackOrder('${orderId}')">
                 <i class="fas fa-truck"></i> Track Package
             </button>
@@ -311,7 +325,7 @@ function generateActionButtons(status, orderId, serialNumber) {
             </button>
         `;
     }
-    
+
     // Add validate button if serial number exists
     if (serialNumber) {
         buttons += `
@@ -328,13 +342,13 @@ function generateActionButtons(status, orderId, serialNumber) {
 async function getSerialNumberFromVerification(orderId) {
     try {
         const verificationResult = await readData('smartfit_AR_Database/shoeVerification');
-        
+
         if (!verificationResult.success || !verificationResult.data) {
             return null;
         }
-        
+
         const allVerifications = verificationResult.data;
-        
+
         // Search for verification record with matching orderId
         for (const key in allVerifications) {
             const verification = allVerifications[key];
@@ -342,7 +356,7 @@ async function getSerialNumberFromVerification(orderId) {
                 return verification;
             }
         }
-        
+
         return null;
     } catch (error) {
         console.error("Error fetching serial number from verification:", error);
@@ -398,13 +412,13 @@ function searchOrders() {
 }
 
 // Cancel order function
-window.cancelOrder = async function(orderId) {
+window.cancelOrder = async function (orderId) {
     if (!confirm('Are you sure you want to cancel this order?')) return;
 
     try {
         // First get the order details
         const orderResult = await readData(`smartfit_AR_Database/transactions/${userID}/${orderId}`);
-        
+
         if (!orderResult.success || !orderResult.data) {
             alert('Order not found');
             return;
@@ -447,7 +461,7 @@ async function restoreStock(item) {
     try {
         // Get current stock
         const stockResult = await readData(`smartfit_AR_Database/shoe/${shopId}/${shoeId}/variants/${variantKey}/sizes/${sizeKey}`);
-        
+
         if (!stockResult.success || !stockResult.data) {
             console.warn('Stock data not found');
             return;
@@ -471,38 +485,56 @@ async function restoreStock(item) {
 }
 
 // Track order function
-window.trackOrder = function(orderId) {
+window.trackOrder = function (orderId) {
     window.location.href = `/customer/html/track.html?orderId=${orderId}&userId=${userID}`;
 };
 
 // Validate shoe function
-window.validateShoe = function(serialNumber) {
+window.validateShoe = function (serialNumber) {
     window.location.href = `/customer/html/shoevalidator.html?ShoeSerialNumber=${encodeURIComponent(serialNumber)}`;
 };
 
 // Mark order as received
-window.markAsReceived = async function(orderId) {
-    if (!confirm('Confirm you have received this order in good condition?')) return;
-
+window.markAsReceived = async function (orderId) {
+    // Check for unresolved issues
+    let hasUnresolvedIssue = false;
     try {
-        const updateResult = await updateData(
-            `smartfit_AR_Database/transactions/${userID}/${orderId}`,
-            { status: 'completed' }
-        );
-
-        if (updateResult.success) {
-            alert('Order marked as received successfully!');
-        } else {
-            alert('Failed to update order status: ' + updateResult.error);
+        const issueResult = await readData(`smartfit_AR_Database/issueReports/${orderId}`);
+        if (issueResult.success && issueResult.data && !issueResult.data.resolved) {
+            hasUnresolvedIssue = true;
         }
     } catch (error) {
-        console.error('Error marking order as received:', error);
-        alert('Failed to update order status. Please try again.');
+        console.log("Error checking issue report:", error);
     }
+
+    let message = 'Confirm you have received this order in good condition?';
+    if (hasUnresolvedIssue) {
+        message = 'You have an ongoing issue report for this order. Are you sure you want to mark it as received?';
+    }
+
+    if (!confirm(message)) return;
+
+    // try {
+    //     const updateResult = await updateData(
+    //         `smartfit_AR_Database/transactions/${userID}/${orderId}`,
+    //         { status: 'completed' }
+    //     );
+
+    //     if (updateResult.success) {
+    //         alert('Order marked as received successfully!');
+    //         // Reload orders to reflect changes
+    //         loadOrders();
+    //     } else {
+    //         alert('Failed to update order status: ' + updateResult.error);
+    //     }
+    // } catch (error) {
+    //     console.error('Error marking order as received:', error);
+    //     alert('Failed to update order status. Please try again.');
+    // }
 };
 
 // Report issue with order
-window.reportIssue = function(orderId) {
+window.reportIssue = function (orderId) {
     window.location.href = `/customer/html/reportIssue.html?orderID=${orderId}&userID=${userID}`;
 };
 
@@ -511,7 +543,7 @@ function setupEventListeners() {
     // Logout functionality
     const logoutBtn = getElement('logout_btn');
     if (logoutBtn) {
-        logoutBtn.addEventListener('click', async function() {
+        logoutBtn.addEventListener('click', async function () {
             if (confirm('Are you sure you want to logout?')) {
                 const result = await logoutUser();
                 if (result.success) {
@@ -525,7 +557,7 @@ function setupEventListeners() {
 }
 
 // Initialize when DOM is loaded
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     // Mobile sidebar toggle
     const mobileToggle = document.querySelector('.mobile-menu-toggle');
     const sidebar = document.querySelector('.sidebar');

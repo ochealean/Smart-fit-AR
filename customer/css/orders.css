@@ -610,3 +610,37 @@
                 justify-content: flex-start;
             }
         }
+        /* Enhance the order card header layout */
+.order-card .order-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.order-header-info {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.order-status-container {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+/* Status badge styles to match */
+.issue-badge {
+    padding: 0.35rem 0.8rem;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    background-color: var(--error);
+    color: white;
+}
