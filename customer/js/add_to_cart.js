@@ -18,11 +18,11 @@ checkUserAuth().then((authResult) => {
         console.log("User ID:", authResult);
         loadUserProfile(authResult.userId);
     } else {
-        window.location.href = "/user_login.html";
+        window.location.href = "/login.html";
     }
 }).catch((error) => {
     console.error("Auth check error:", error);
-    window.location.href = "/user_login.html";
+    window.location.href = "/login.html";
 });
 
 // Load cart from Firebase using firebaseMethods
@@ -403,7 +403,7 @@ document.getElementById('logout_btn')?.addEventListener('click', async function 
             if (unsubscribeCartListener) {
                 unsubscribeCartListener();
             }
-            window.location.href = '/user_login.html';
+            window.location.href = '/login.html';
         } else {
             console.error('Error signing out:', logoutResult.error);
         }

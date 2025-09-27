@@ -1,5 +1,5 @@
-import { 
-    checkUserAuth, 
+import {
+    checkUserAuth,
     logoutUser,
     updateOrderStatus,
     readDataRealtime,
@@ -18,30 +18,30 @@ let currentUserId = null;
 // Authentication and initialization
 async function initializeDashboard() {
     const user = await checkUserAuth();
-    
+
     if (!user.authenticated) {
         window.location.href = "/login.html";
         return;
     }
-    
+
     if (user.userData.status === 'rejected') {
         window.location.href = "/shopowner/html/shop_rejected.html";
         return;
     }
-    
+
     if (user.userData.status === 'pending') {
         window.location.href = "/shopowner/html/shop_pending.html";
         return;
     }
 
     console.log(`User is ${user.role}`, user.userData);
-    
+
     // Set user information
     getElement('userFullname').textContent = user.userData.ownerName || user.userData.name || 'Shop Owner';
-    
+
     // Set shop ID based on user role
     shopLoggedin = user.shopId || user.userId;
-    
+
     // Set profile picture
     const profilePicture = getElement('profilePicture');
     if (user.userData.profilePhoto && user.userData.profilePhoto.url) {
@@ -53,7 +53,10 @@ async function initializeDashboard() {
     }
 
     // Hide/show menu items based on role
-    if (user.role === 'employee') {
+    if (user.role.toLowerCase() === "customer") {
+        window.location.href = "../../customer/html/customer_dashboard.html";
+    }
+    else if (user.role === 'employee') {
         if (user.userData.role.toLowerCase() === "manager") {
             getElement("addemployeebtn").style.display = "none";
         } else if (user.userData.role.toLowerCase() === "salesperson") {
@@ -78,7 +81,7 @@ function loadDashboardData() {
 // Load shop statistics
 function loadShopStats() {
     const productsPath = `smartfit_AR_Database/shoe/${shopLoggedin}`;
-    
+
     const unsubscribe = readDataRealtime(productsPath, (result) => {
         if (!result.success) {
             getElement('totalProducts').textContent = '0';
@@ -91,22 +94,22 @@ function loadShopStats() {
 
         if (products) {
             totalProducts = Object.keys(products).length;
-            
+
             // Count out of stock products
             Object.values(products).forEach(product => {
                 if (product.variants) {
-                    const variants = Array.isArray(product.variants) ? 
+                    const variants = Array.isArray(product.variants) ?
                         product.variants : Object.values(product.variants);
-                    
+
                     variants.forEach(variant => {
                         if (variant.sizes) {
-                            const sizes = Array.isArray(variant.sizes) ? 
+                            const sizes = Array.isArray(variant.sizes) ?
                                 variant.sizes : Object.values(variant.sizes);
-                            
-                            const hasStock = sizes.some(size => 
+
+                            const hasStock = sizes.some(size =>
                                 size.stock && parseInt(size.stock) > 0
                             );
-                            
+
                             if (!hasStock) {
                                 outOfStockCount++;
                             }
@@ -117,10 +120,10 @@ function loadShopStats() {
         }
 
         getElement('totalProducts').textContent = totalProducts.toString();
-        
+
         const changeElement = getElement('productsChange');
         const changeText = getElement('productsChangeText');
-        
+
         if (outOfStockCount > 0) {
             changeElement.innerHTML = '<i class="fas fa-exclamation-triangle"></i>';
             changeText.textContent = `${outOfStockCount} out of stock`;
@@ -139,7 +142,7 @@ function loadShopStats() {
 // Load recent orders
 function loadRecentOrders() {
     const ordersTableBody = getElement('ordersTableBody');
-    
+
     // Use real-time listener for orders
     const ordersRef = 'smartfit_AR_Database/transactions';
     const unsubscribe = readDataRealtime(ordersRef, async (result) => {
@@ -156,8 +159,8 @@ function loadRecentOrders() {
             const userOrders = transactions[userId];
             for (const orderId in userOrders) {
                 const order = userOrders[orderId];
-                const items = order.order_items ? 
-                    Object.values(order.order_items) : 
+                const items = order.order_items ?
+                    Object.values(order.order_items) :
                     (order.item ? [order.item] : []);
 
                 // Check if any item belongs to this shop
@@ -172,7 +175,7 @@ function loadRecentOrders() {
         }
 
         // Sort by date (newest first) and get recent 5
-        const recentOrders = orders.sort((a, b) => 
+        const recentOrders = orders.sort((a, b) =>
             new Date(b.date || b.createdAt) - new Date(a.date || a.createdAt)
         ).slice(0, 5);
 
@@ -185,7 +188,7 @@ function loadRecentOrders() {
 // Display recent orders in table
 function displayRecentOrders(orders) {
     const ordersTableBody = getElement('ordersTableBody');
-    
+
     if (orders.length === 0) {
         displayEmptyOrders();
         return;
@@ -208,8 +211,8 @@ function displayRecentOrders(orders) {
         const status = order.status || 'pending';
         const statusClass = status === 'completed' ? 'shipped' :
             status === 'processing' ? 'pending' :
-            status === 'cancelled' ? 'cancelled' :
-            status === 'accepted' ? 'accepted' : 'pending';
+                status === 'cancelled' ? 'cancelled' :
+                    status === 'accepted' ? 'accepted' : 'pending';
 
         return `
             <tr>
@@ -251,7 +254,7 @@ function displayEmptyOrders() {
 function loadRecentProducts() {
     const productsPath = `smartfit_AR_Database/shoe/${shopLoggedin}`;
     const recentAddedContainer = getElement('recentAdded');
-    
+
     const unsubscribe = readDataRealtime(productsPath, (result) => {
         if (!result.success || !result.data) {
             displayEmptyRecentProducts();
@@ -277,11 +280,11 @@ function loadRecentProducts() {
 // Load top products based on ratings
 function loadTopProducts() {
     const topProductsGrid = getElement('topProductsGrid');
-    
+
     // For now, we'll show featured products. In a real implementation,
     // you would query feedbacks and calculate ratings
     const productsPath = `smartfit_AR_Database/shoe/${shopLoggedin}`;
-    
+
     const unsubscribe = readDataRealtime(productsPath, (result) => {
         if (!result.success || !result.data) {
             displayEmptyTopProducts();
@@ -317,20 +320,20 @@ function displayProductsGrid(products, container, type) {
 
     const html = products.map(product => {
         const variants = product.variants ?
-            (Array.isArray(product.variants) ? 
-                product.variants : 
+            (Array.isArray(product.variants) ?
+                product.variants :
                 Object.values(product.variants)) :
             [];
 
         const firstVariant = variants[0] || null;
         const price = firstVariant ? `₱${firstVariant.price}` : '₱0.00';
-        
+
         const colors = [...new Set(variants.map(v => v.color))];
         const colorText = colors.length > 0 ? colors.join(', ') : 'No color';
-        
+
         const imageUrl = product.defaultImage || (firstVariant ? firstVariant.imageUrl : null);
 
-        const badgeHtml = type === 'top' ? 
+        const badgeHtml = type === 'top' ?
             `<div class="product-badge">
                 4.5 <i class="fas fa-star"></i>
             </div>` : '';
@@ -339,9 +342,9 @@ function displayProductsGrid(products, container, type) {
             <div class="product-card">
                 <div class="product-image">
                     ${imageUrl ?
-                        `<img src="${imageUrl}" alt="${product.shoeName}" class="shoe-thumbnail">` :
-                        '<div class="no-image">No Image</div>'
-                    }
+                `<img src="${imageUrl}" alt="${product.shoeName}" class="shoe-thumbnail">` :
+                '<div class="no-image">No Image</div>'
+            }
                     ${badgeHtml}
                 </div>
                 <div class="product-info">
@@ -405,11 +408,11 @@ function displayEmptyRecentProducts() {
 async function viewOrderDetails(orderId, userId) {
     currentOrderId = orderId;
     currentUserId = userId;
-    
+
     try {
         const orderPath = `smartfit_AR_Database/transactions/${userId}/${orderId}`;
         const result = await readData(orderPath);
-        
+
         if (!result.success) {
             alert('Order not found');
             return;
@@ -498,7 +501,7 @@ async function acceptOrder() {
 
     try {
         const result = await updateOrderStatus(currentUserId, currentOrderId, 'accepted');
-        
+
         if (result.success) {
             alert('Order accepted successfully');
             getElement('orderModal').style.display = 'none';
@@ -529,7 +532,7 @@ async function rejectOrder() {
         const result = await updateOrderStatus(currentUserId, currentOrderId, 'rejected', {
             rejectionReason: reason
         });
-        
+
         if (result.success) {
             getElement('rejectionReason').value = '';
             getElement('rejectModal').style.display = 'none';
@@ -550,17 +553,17 @@ function viewShoeDetails(shoeId) {
 }
 
 // Event listeners
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     // Mobile sidebar toggle
     const mobileToggle = document.querySelector('.mobile-menu-toggle');
     const sidebar = document.querySelector('.sidebar');
     const overlay = document.querySelector('.sidebar-overlay');
-    
+
     mobileToggle.addEventListener('click', () => {
         sidebar.classList.toggle('active');
         overlay.classList.toggle('active');
     });
-    
+
     overlay.addEventListener('click', () => {
         sidebar.classList.remove('active');
         overlay.classList.remove('active');

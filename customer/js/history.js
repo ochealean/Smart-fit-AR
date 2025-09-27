@@ -43,11 +43,11 @@ document.addEventListener('DOMContentLoaded', async () => {
             setupEventListeners(authResult.userId);
         } else {
             // No user is signed in or not a customer, redirect to login
-            window.location.href = "/user_login.html";
+            window.location.href = "/login.html";
         }
     } catch (error) {
         console.error('Authentication error:', error);
-        window.location.href = "/user_login.html";
+        window.location.href = "/login.html";
     }
 });
 
@@ -336,7 +336,7 @@ function setupEventListeners(userId) {
         logoutBtn.addEventListener('click', function() {
             if (confirm('Are you sure you want to logout?')) {
                 logoutUser().then(() => {
-                    window.location.href = '/user_login.html';
+                    window.location.href = '/login.html';
                 }).catch((error) => {
                     console.error('Error signing out:', error);
                 });

@@ -59,6 +59,10 @@ async function initializeAddShoe() {
     }
 
     // Role-based access control
+    // Hide/show menu items based on role
+    if (user.role.toLowerCase() === "customer") {
+        window.location.href = "../../customer/html/customer_dashboard.html";
+    }
     if (user.role === 'employee') {
         if (user.userData.role.toLowerCase() === "manager") {
             getElement("addemployeebtn").style.display = "none";
