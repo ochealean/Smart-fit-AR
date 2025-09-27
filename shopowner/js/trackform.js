@@ -55,10 +55,11 @@ async function initializeTracking() {
 
     // Set role-based UI elements
     // Hide/show menu items based on role
-    if (user.role.toLowerCase() === "customer") {
+    console.log("User role:", authResult.role);
+    if (authResult.role.toLowerCase() === "customer") {
         window.location.href = "../../customer/html/customer_dashboard.html";
     }
-    if (authResult.role === 'employee') {
+    else if (authResult.role === 'employee') {
         const addEmployeeBtn = getElement('addemployeebtn');
         const analyticsBtn = getElement('analyticsbtn');
         const issueReport = getElement('issuereport');

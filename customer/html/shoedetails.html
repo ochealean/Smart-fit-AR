@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Product Details - Customer</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="../css/shoedetails.css">
+    <link rel="icon" href="../../images/smartfitImages/smartfitAR-logo.png" type="image/x-icon">
+</head>
+
+<body>
+    <div class="dashboard">
+        <!-- Sidebar - Purple Theme -->
+        <div class="sidebar">
+            <div class="logo">
+                <div class="logo-icon">
+                    <i class="fas fa-store"></i>
+                </div>
+                <span>SHOE PORTAL</span>
+            </div>
+            <div class="nav-items">
+                <a href="/customer/html/customer_dashboard.html" class="nav-item">
+                    <i class="fas fa-home"></i> Dashboard
+                </a>
+                <a href="/customer/html/browse.html" class="nav-item active">
+                    <i class="fas fa-shopping-bag"></i> Browse Shoes
+                </a>
+                <a href="/customer/html/shoevalidator.html" class="nav-item">
+                    <i class="fas fa-check-circle"></i> Shoe Validation
+                </a>
+                <a href="/customer/html/pickshoe.html" class="nav-item">
+                    <i class="fas fa-shoe-prints"></i> Customize Shoes
+                </a>
+                <a href="/customer/html/customization_pendingOrders.html" class="nav-item">
+                    <i class="fas fa-tools"></i> My Custom Orders
+                </a>
+                <a href="/customer/html/orders.html" class="nav-item">
+                    <i class="fas fa-receipt"></i> My Orders
+                </a>
+                <a href="/customer/html/add_to_cart.html" class="nav-item">
+                    <i class="fas fa-shopping-cart"></i> My Cart
+                </a>
+                <a href="/customer/html/history.html" class="nav-item">
+                    <i class="fas fa-history"></i> Order History
+                </a>
+                <a href="/customer/html/issue_response.html" class="nav-item">
+                    <i class="fas fa-reply"></i> Issue Response
+                </a>
+                <a href="/customer/html/wishlist.html" class="nav-item">
+                    <i class="fas fa-heart"></i> Wishlist
+                </a>
+                <a href="/chatbot/html/chatbot.html" class="nav-item">
+                    <i class="fas fa-comment"></i> Chatbot
+                </a>
+                <a href="/customer/html/customerprofile.html" class="nav-item">
+                    <i class="fas fa-cog"></i> Settings
+                </a>
+                <a id="logout_btn" class="nav-item">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </a>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <div class="header">
+                <div class="mobile-menu-toggle">
+                    <i class="fas fa-bars"></i>
+                </div>
+                <h1>Product Details</h1>
+                <div class="user-profile">
+                    <img id="imageProfile" src="https://randomuser.me/api/portraits/men/32.jpg" alt="Profile"
+                        class="user-avatar">
+                    <span id="userName_display2">Alex Johnson</span>
+                </div>
+            </div>
+
+            <a href="/customer/html/browse.html" class="back-btn">
+                <i class="fas fa-arrow-left"></i> Back to Browse
+            </a>
+
+            <div class="product-details-container">
+                <!-- LEFT COLUMN -->
+                <div class="product-left">
+                    <div class="product-main-image">
+                        <img src="/errorimage.jpg" alt="Product Image" id="mainProductImage">
+                    </div>
+                    <div class="product-variants">
+                        <h3>Available Variants</h3>
+                        <div class="variant-options" id="variantOptions"></div>
+                        <div class="variant-section">
+                            <div class="variant-title">Select Color</div>
+                            <div class="color-options" id="colorOptions"></div>
+                        </div>
+                        <div class="variant-section">
+                            <div class="variant-title">Select Size</div>
+                            <div class="size-options" id="sizeOptions"></div>
+                        </div>
+                    </div>
+                </div>
+                <!-- RIGHT COLUMN -->
+                <div class="product-info">
+                    <h1 class="product-name" id="productName">Nike Air Max 270 React</h1>
+                    <div class="product-shop" id="productShop">Shop Name: Elite Footwear</div>
+                    <div class="product-code" id="productCode">Product Code: NIKE-AM270-001</div>
+                    <div class="product-price" id="productPrice">₱150.00</div>
+                    <div class="product-meta">
+                        <span class="product-brand" id="productBrand">Brand: Nike</span>
+                        <span class="product-type" id="productType">Type: Sneakers</span>
+                        <span class="product-gender" id="productGender">Gender: Unisex</span>
+                    </div>
+
+                    <div class="quantity-selector" id="quantitySelector">
+                        <label for="quantity">Quantity:</label>
+                        <div class="quantity-controls">
+                            <button type="button" class="quantity-btn minus" onclick="adjustQuantity(-1)">-</button>
+                            <input type="number" id="quantity" name="quantity" min="1" value="1"
+                                onchange="validateQuantity()">
+                            <button type="button" class="quantity-btn plus" onclick="adjustQuantity(1)">+</button>
+                        </div>
+                        <div class="available-stock" id="availableStock">Available: 10</div>
+                    </div>
+
+                    <div class="product-description">
+                        <h4>Description</h4>
+                        <p id="productDescription">The Nike Air Max 270 React combines the oversized Air Max 270
+                            cushioning with React foam for an incredibly comfortable and responsive feel. The breathable
+                            mesh upper provides lightweight support, while the bold colors and design make a statement
+                            wherever you go.</p>
+                    </div>
+
+                    <div class="action-buttons">
+                        <button class="btn btn-primary" id="addToCartBtn">
+                            <i class="fas fa-shopping-cart"></i> Add to Cart
+                        </button>
+                        <button class="btn btn-secondary" id="buyNowBtn">
+                            <i class="fas fa-bolt"></i> Buy Now
+                        </button>
+                        <button class="btn wishlist-btn" id="wishlistBtn">
+                            <i class="far fa-heart"></i>
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Reviews Section -->
+            <div class="reviews-section">
+                <div class="reviews-header">
+                    <h2 class="reviews-title">Customer Reviews <span id="averageRating" class="average-rating">4.5 <i
+                                class="fas fa-star"></i></span></h2>
+                    <div class="review-filters">
+                        <div class="stars-filter" data-rating="5" onclick="filterReviews(5)">
+                            <div class="stars">
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                            </div>
+                            <div class="text">5 Stars</div>
+                        </div>
+                        <div class="stars-filter" data-rating="4" onclick="filterReviews(4)">
+                            <div class="stars">
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="far fa-star"></i>
+                            </div>
+                            <div class="text">4 Stars</div>
+                        </div>
+                        <div class="stars-filter" data-rating="3" onclick="filterReviews(3)">
+                            <div class="stars">
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="far fa-star"></i>
+                                <i class="far fa-star"></i>
+                            </div>
+                            <div class="text">3 Stars</div>
+                        </div>
+                        <div class="stars-filter" data-rating="2" onclick="filterReviews(2)">
+                            <div class="stars">
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="far fa-star"></i>
+                                <i class="far fa-star"></i>
+                                <i class="far fa-star"></i>
+                            </div>
+                            <div class="text">2 Stars</div>
+                        </div>
+                        <div class="stars-filter" data-rating="1" onclick="filterReviews(1)">
+                            <div class="stars">
+                                <i class="fas fa-star"></i>
+                                <i class="far fa-star"></i>
+                                <i class="far fa-star"></i>
+                                <i class="far fa-star"></i>
+                                <i class="far fa-star"></i>
+                            </div>
+                            <div class="text">1 Star</div>
+                        </div>
+                        <div class="stars-filter active" data-rating="0" onclick="filterReviews(0)">
+                            <div class="text">All Reviews</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="reviewsContainer">
+                    <!-- Reviews will be populated here -->
+                    <div class="review-item">
+                        <div class="review-header">
+                            <span class="review-author">John D.</span>
+                            <span class="review-date">April 15, 2023</span>
+                        </div>
+                        <div class="review-stars">
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                        </div>
+                        <p>These are the most comfortable shoes I've ever worn! The cushioning is amazing and they look
+                            great too.</p>
+                    </div>
+                    <div class="review-item">
+                        <div class="review-header">
+                            <span class="review-author">Sarah M.</span>
+                            <span class="review-date">March 28, 2023</span>
+                        </div>
+                        <div class="review-stars">
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="far fa-star"></i>
+                        </div>
+                        <p>Love the look and feel, but they run a half size small. I'd recommend going up a size.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sidebar Overlay -->
+    <div class="sidebar-overlay"></div>
+
+    <script>
+        // Mobile sidebar toggle
+        document.addEventListener('DOMContentLoaded', function () {
+            const mobileToggle = document.querySelector('.mobile-menu-toggle');
+            const sidebar = document.querySelector('.sidebar');
+            const overlay = document.querySelector('.sidebar-overlay');
+
+            if (mobileToggle && sidebar && overlay) {
+                mobileToggle.addEventListener('click', () => {
+                    sidebar.classList.toggle('active');
+                    overlay.classList.toggle('active');
+                });
+
+                overlay.addEventListener('click', () => {
+                    sidebar.classList.remove('active');
+                    overlay.classList.remove('active');
+                });
+            }
+        });
+
+
+    </script>
+    <script src="/customer/js/shoedetails.js" type="module"></script>
+</body>
+
+</html>
