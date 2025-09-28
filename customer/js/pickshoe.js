@@ -1,4 +1,3 @@
-// pickshoe.js - Refactored to use firebaseMethods only
 import {
     checkUserAuth,
     logoutUser,
