@@ -1,0 +1,1052 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About Us - SmartFit Shoe Shop Portal</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --black: #121212;
+            --blue: #6e8efb;
+            --violet: #a777e3;
+            --white: #FFFFFF;
+            --gold: #FFE082;
+            --lightgray: #333;
+            --darkgray: #222;
+            --red: #FF5252;
+            --gray: #E8EDED;
+            --blueish: #6e8efb;
+            --royalviolet: #6A0572;
+            --primary: #6e8efb;
+            --primary-dark: #5a7df0;
+            --secondary: #a777e3;
+            --accent: #FFE082;
+            --dark: #121212;
+            --light: #FFFFFF;
+            --gray-light: #f5f7fa;
+            --gray-medium: #e4e8eb;
+            --gray-dark: #333;
+            --success: #4CAF50;
+            --warning: #FFC107;
+            --error: #f44336;
+            --text-primary: #333;
+            --text-secondary: #666;
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.12);
+            --shadow-md: 0 4px 6px rgba(0,0,0,0.1);
+            --shadow-lg: 0 10px 25px rgba(0,0,0,0.1);
+            --transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: 'Poppins', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: var(--text-primary);
+            background: linear-gradient(135deg, var(--gray-light) 0%, var(--gray-medium) 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        /* Header Styles */
+        .header {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: var(--light);
+            padding: 2rem 0;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header h1 {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            position: relative;
+            display: inline-block;
+            animation: fadeInDown 1s ease;
+        }
+
+        .header h1::after {
+            content: '';
+            display: block;
+            width: 80px;
+            height: 4px;
+            background: var(--accent);
+            margin: 1rem auto;
+            border-radius: 3px;
+        }
+
+        .header p {
+            font-size: 1.2rem;
+            max-width: 800px;
+            margin: 0 auto;
+            opacity: 0.9;
+            animation: fadeInUp 1s ease;
+        }
+
+        /* Hero Section */
+        .hero {
+            padding: 4rem 0;
+            text-align: center;
+        }
+
+        .hero-content {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .hero h2 {
+            font-size: 2.2rem;
+            color: var(--primary);
+            margin-bottom: 2rem;
+            position: relative;
+            display: inline-block;
+        }
+
+        .hero h2::after {
+            content: '';
+            display: block;
+            width: 60px;
+            height: 3px;
+            background: var(--primary);
+            margin: 0.8rem auto;
+            border-radius: 3px;
+        }
+
+        .hero p {
+            font-size: 1.1rem;
+            margin-bottom: 1.5rem;
+            color: var(--text-secondary);
+        }
+
+        /* Study Title Section */
+        .study-title {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: var(--light);
+            padding: 3rem 0;
+            text-align: center;
+        }
+
+        .study-title h2 {
+            font-size: 1.8rem;
+            max-width: 1000px;
+            margin: 0 auto;
+            line-height: 1.4;
+            font-weight: 600;
+        }
+
+        /* Mission & Vision */
+        .mission-vision {
+            padding: 4rem 0;
+            background: var(--light);
+            position: relative;
+        }
+
+        .mv-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 2rem;
+            justify-content: center;
+        }
+
+        .mv-card {
+            flex: 1;
+            min-width: 300px;
+            background: var(--gray-light);
+            border-radius: 12px;
+            padding: 2rem;
+            box-shadow: var(--shadow-md);
+            transition: var(--transition);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .mv-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .mv-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 5px;
+            height: 100%;
+            background: linear-gradient(to bottom, var(--primary), var(--secondary));
+        }
+
+        .mv-card h3 {
+            font-size: 1.5rem;
+            color: var(--primary);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+        }
+
+        .mv-card h3 i {
+            margin-right: 10px;
+            color: var(--secondary);
+        }
+
+        .mv-card p {
+            color: var(--text-secondary);
+        }
+
+        /* Capabilities Section */
+        .capabilities {
+            padding: 4rem 0;
+            background: var(--gray-light);
+        }
+
+        .capabilities h2 {
+            text-align: center;
+            font-size: 2.5rem;
+            color: var(--primary);
+            margin-bottom: 3rem;
+            position: relative;
+            display: inline-block;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .capabilities h2::after {
+            content: '';
+            display: block;
+            width: 80px;
+            height: 4px;
+            background: var(--primary);
+            margin: 1rem auto;
+            border-radius: 3px;
+        }
+
+        .capabilities-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .capability-item {
+            background: var(--light);
+            padding: 1.5rem;
+            border-radius: 8px;
+            box-shadow: var(--shadow-sm);
+            transition: var(--transition);
+            display: flex;
+            align-items: flex-start;
+            gap: 1rem;
+        }
+
+        .capability-item:hover {
+            transform: translateY(-3px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .capability-icon {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: var(--light);
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .capability-text {
+            color: var(--text-secondary);
+        }
+
+        /* System Explanation Section */
+        .system-explanation {
+            padding: 4rem 0;
+            background: var(--light);
+        }
+
+        .system-explanation h2 {
+            text-align: center;
+            font-size: 2.5rem;
+            color: var(--primary);
+            margin-bottom: 3rem;
+            position: relative;
+            display: inline-block;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .system-explanation h2::after {
+            content: '';
+            display: block;
+            width: 80px;
+            height: 4px;
+            background: var(--primary);
+            margin: 1rem auto;
+            border-radius: 3px;
+        }
+
+        .explanation-content {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .explanation-point {
+            margin-bottom: 2.5rem;
+            padding: 1.5rem;
+            background: var(--gray-light);
+            border-radius: 8px;
+            box-shadow: var(--shadow-sm);
+            transition: var(--transition);
+        }
+
+        .explanation-point:hover {
+            transform: translateY(-3px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .explanation-point h3 {
+            font-size: 1.3rem;
+            color: var(--primary);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+        }
+
+        .explanation-point h3 i {
+            margin-right: 10px;
+            color: var(--secondary);
+        }
+
+        .explanation-point p {
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        /* Team Section */
+        .team {
+            padding: 4rem 0;
+            text-align: center;
+            background: var(--light);
+        }
+
+        .team h2 {
+            font-size: 2.5rem;
+            color: var(--primary);
+            margin-bottom: 3rem;
+            position: relative;
+            display: inline-block;
+        }
+
+        .team h2::after {
+            content: '';
+            display: block;
+            width: 80px;
+            height: 4px;
+            background: var(--primary);
+            margin: 1rem auto;
+            border-radius: 3px;
+        }
+
+        .team-container {
+            display: flex;
+            flex-direction: column;
+            gap: 4rem;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .team-member {
+            display: flex;
+            background: var(--gray-light);
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: var(--shadow-md);
+            transition: var(--transition);
+            animation: fadeIn 1s ease;
+            min-height: 300px;
+        }
+
+        .team-member:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .team-member:nth-child(even) {
+            flex-direction: row-reverse;
+        }
+
+        .member-img {
+            flex: 1;
+            background: linear-gradient(135deg, var(--gray-medium), var(--gray-light));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+            min-height: 300px;
+        }
+
+        .member-img img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: var(--transition);
+        }
+
+        .member-img:hover img {
+            transform: scale(1.05);
+        }
+
+        .member-info {
+            flex: 1;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            text-align: left;
+        }
+
+        .member-info h3 {
+            font-size: 1.5rem;
+            color: var(--primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .member-info p {
+            color: var(--text-secondary);
+        }
+
+        .member-role {
+            color: var(--secondary) !important;
+            margin-bottom: 1rem;
+            font-size: 1rem;
+            font-weight: 600;
+        }
+
+        .member-desc {
+            margin-top: 1rem;
+            line-height: 1.6;
+        }
+
+        /* Expertise Section */
+        .member-expertise {
+            margin-top: 1.5rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--gray-medium);
+        }
+
+        .expertise-title {
+            font-size: 1rem;
+            color: var(--primary);
+            margin-bottom: 0.8rem;
+            font-weight: 600;
+        }
+
+        .expertise-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .expertise-item {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: var(--light);
+            padding: 0.4rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+
+        /* Future Section */
+        .future {
+            padding: 4rem 0;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: var(--light);
+            text-align: center;
+        }
+
+        .future-content {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .future h2 {
+            font-size: 2.2rem;
+            margin-bottom: 2rem;
+            position: relative;
+            display: inline-block;
+        }
+
+        .future h2::after {
+            content: '';
+            display: block;
+            width: 80px;
+            height: 4px;
+            background: var(--accent);
+            margin: 1rem auto;
+            border-radius: 3px;
+        }
+
+        .future p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+            margin-bottom: 1.5rem;
+        }
+
+        /* Footer */
+        .footer {
+            background: var(--dark);
+            color: var(--light);
+            padding: 2rem 0;
+            margin-top: auto;
+        }
+
+        .footer-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1.5rem;
+            text-align: center;
+        }
+
+        .footer nav {
+            display: flex;
+            gap: 1.5rem;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .footer a {
+            color: var(--light);
+            text-decoration: none;
+            transition: var(--transition);
+            font-size: 0.9rem;
+            position: relative;
+        }
+
+        .footer a::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            width: 0;
+            height: 1px;
+            background: var(--accent);
+            transition: var(--transition);
+        }
+
+        .footer a:hover {
+            color: var(--accent);
+        }
+
+        .footer a:hover::after {
+            width: 100%;
+        }
+
+        /* Back to Top Button */
+        .back-to-top {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: var(--light);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+            box-shadow: var(--shadow-lg);
+            transition: var(--transition);
+            z-index: 1000;
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        .back-to-top.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .back-to-top:hover {
+            transform: translateY(-5px);
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes fadeInDown {
+            from { opacity: 0; transform: translateY(-30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes fadeInLeft {
+            from { opacity: 0; transform: translateX(-50px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        @keyframes fadeInRight {
+            from { opacity: 0; transform: translateX(50px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        .animate-on-scroll {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: opacity 0.6s ease, transform 0.6s ease;
+        }
+
+        .is-visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Responsive Design */
+        @media (max-width: 900px) {
+            .header h1 {
+                font-size: 2.5rem;
+            }
+            
+            .mv-container {
+                flex-direction: column;
+            }
+            
+            .team-member {
+                flex-direction: column !important;
+            }
+            
+            .member-img {
+                min-height: 250px;
+            }
+            
+            .study-title h2 {
+                font-size: 1.5rem;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .capabilities-list {
+                grid-template-columns: 1fr;
+            }
+            
+            .expertise-list {
+                justify-content: center;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .header p {
+                font-size: 1rem;
+            }
+            
+            .hero h2, .team h2, .future h2, .capabilities h2, .system-explanation h2 {
+                font-size: 1.8rem;
+            }
+            
+            .study-title h2 {
+                font-size: 1.2rem;
+            }
+            
+            .footer nav {
+                flex-direction: column;
+                align-items: center;
+                gap: 1rem;
+            }
+            
+            .back-to-top {
+                bottom: 20px;
+                right: 20px;
+                width: 40px;
+                height: 40px;
+            }
+            
+            .expertise-item {
+                font-size: 0.7rem;
+                padding: 0.3rem 0.6rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header Section -->
+    <header class="header">
+        <div class="container">
+            <h1>About SmartFit</h1>
+            <p>Transforming the footwear retail experience through innovation and technology</p>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="container">
+            <div class="hero-content">
+                <h2>Our Story</h2>
+                <p>SmartFit is an innovative platform designed to transform the footwear retail experience through the integration of augmented reality and AI-powered assistance. It was developed to address the challenges faced by both customers and retailers, offering a smarter and more convenient way to explore, customize, and purchase footwear.</p>
+                <p>Through features such as augmented reality try-ons, customization tools, and intelligent recommendations, SmartFit empowers customers to make confident purchasing decisions while supporting retailers in reaching a wider audience and enhancing their services.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Study Title Section -->
+    <section class="study-title">
+        <div class="container">
+            <h2>SMARTFIT: A PROPOSED AUGMENTED REALITY-INTEGRATED FOOTWEAR RETAIL AND CUSTOMIZATION PORTAL WITH AI-POWERED ASSISTANCE</h2>
+        </div>
+    </section>
+
+    <!-- Mission & Vision Section -->
+    <section class="mission-vision">
+        <div class="container">
+            <div class="mv-container">
+                <div class="mv-card animate-on-scroll">
+                    <h3><i class="fas fa-bullseye"></i> Our Mission</h3>
+                    <p>Our mission is to provide a user-friendly and engaging shopping experience that combines technology with fashion, making footwear selection more accurate, personalized, and efficient.</p>
+                </div>
+                <div class="mv-card animate-on-scroll">
+                    <h3><i class="fas fa-eye"></i> Our Vision</h3>
+                    <p>We envision SmartFit as a trusted solution that bridges the gap between digital convenience and customer satisfaction in the retail industry.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Capabilities Section -->
+    <section class="capabilities">
+        <div class="container">
+            <h2>Our Capabilities</h2>
+            <div class="capabilities-list">
+                <div class="capability-item animate-on-scroll">
+                    <div class="capability-icon">
+                        <i class="fas fa-user-plus"></i>
+                    </div>
+                    <div class="capability-text">
+                        Allowing customers and shop owners to register through registration module
+                    </div>
+                </div>
+                <div class="capability-item animate-on-scroll">
+                    <div class="capability-icon">
+                        <i class="fas fa-boxes"></i>
+                    </div>
+                    <div class="capability-text">
+                        Providing shop owners with an inventory management module to update stock levels and manage the online catalog
+                    </div>
+                </div>
+                <div class="capability-item animate-on-scroll">
+                    <div class="capability-icon">
+                        <i class="fas fa-vr-cardboard"></i>
+                    </div>
+                    <div class="capability-text">
+                        Enabling customers to access augmented reality features that let them try on the shoes virtually
+                    </div>
+                </div>
+                <div class="capability-item animate-on-scroll">
+                    <div class="capability-icon">
+                        <i class="fas fa-paint-brush"></i>
+                    </div>
+                    <div class="capability-text">
+                        Offering customization option for shoes that allows customers to personalize their selections
+                    </div>
+                </div>
+                <div class="capability-item animate-on-scroll">
+                    <div class="capability-icon">
+                        <i class="fas fa-shopping-cart"></i>
+                    </div>
+                    <div class="capability-text">
+                        Facilitating customers to place shoe orders easily through the place order module
+                    </div>
+                </div>
+                <div class="capability-item animate-on-scroll">
+                    <div class="capability-icon">
+                        <i class="fas fa-map-marker-alt"></i>
+                    </div>
+                    <div class="capability-text">
+                        Implementing a tracking system that allows customers to monitor the status of their shoe orders in real time
+                    </div>
+                </div>
+                <div class="capability-item animate-on-scroll">
+                    <div class="capability-icon">
+                        <i class="fas fa-robot"></i>
+                    </div>
+                    <div class="capability-text">
+                        Integrating AI-driven chatbot to assist customers with their inquiries
+                    </div>
+                </div>
+                <div class="capability-item animate-on-scroll">
+                    <div class="capability-icon">
+                        <i class="fas fa-star"></i>
+                    </div>
+                    <div class="capability-text">
+                        Establishing a feedback system where users can submit ratings and reviews
+                    </div>
+                </div>
+                <div class="capability-item animate-on-scroll">
+                    <div class="capability-icon">
+                        <i class="fas fa-chart-bar"></i>
+                    </div>
+                    <div class="capability-text">
+                        Creating a report generation to collect data from the system for easy report creation
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- System Explanation Section -->
+    <section class="system-explanation">
+        <div class="container">
+            <h2>How SmartFit Works</h2>
+            <div class="explanation-content">
+                <div class="explanation-point animate-on-scroll">
+                    <h3><i class="fas fa-users"></i> User Registration & Account Management</h3>
+                    <p>The proposed system will allow all users to register on the platform by filling out a sign-up form to create an account. It will allow the shop owners and employees to efficiently manage shoe inventory, process orders, and update product availability. With the use of the proposed system, authorized employees can track transactions, monitor stock levels, and oversee customization requests, ensuring a streamlined and efficient retail experience.</p>
+                </div>
+                
+                <div class="explanation-point animate-on-scroll">
+                    <h3><i class="fas fa-vr-cardboard"></i> Augmented Reality Experience</h3>
+                    <p>Through the use of augmented reality integration, registered customers can virtually interact and visualize shoes before making a purchase that allows them to explore different styles, colors, and designs in real time.</p>
+                </div>
+                
+                <div class="explanation-point animate-on-scroll">
+                    <h3><i class="fas fa-shopping-cart"></i> Ordering System</h3>
+                    <p>Through the use of the ordering system, customers can easily place shoe orders through a user-friendly interface that streamlines the purchasing process. Shop owners and employees can manage orders, update product availability, and process transactions.</p>
+                </div>
+                
+                <div class="explanation-point animate-on-scroll">
+                    <h3><i class="fas fa-paint-brush"></i> Customization Features</h3>
+                    <p>Through the use of the customization feature, customers can personalize their shoe selections by choosing designs, colors, and materials while receiving accurate cost estimates. Shop owners and employees can review customization requests, confirm feasibility, and process personalized orders efficiently.</p>
+                </div>
+                
+                <div class="explanation-point animate-on-scroll">
+                    <h3><i class="fas fa-map-marker-alt"></i> Order Tracking</h3>
+                    <p>Through the use of the order tracking system, the customers can monitor the status of their purchases in real time. Shop owners and employees can update order statuses to keep customers informed about the progress of their purchases.</p>
+                </div>
+                
+                <div class="explanation-point animate-on-scroll">
+                    <h3><i class="fas fa-robot"></i> AI-Powered Support & Feedback</h3>
+                    <p>Through the integration of AI-driven customer support, customers receive timely and accurate assistance for their inquiries. Also, the feedback system will allow the customers to submit ratings and reviews, providing valuable insights into product quality and service satisfaction.</p>
+                </div>
+                
+                <div class="explanation-point animate-on-scroll">
+                    <h3><i class="fas fa-chart-bar"></i> Reporting & Analytics</h3>
+                    <p>The system features report generation, enabling shop owners and employees to collect and organize data for efficient analysis of sales, inventory, and customer feedback.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Team Section -->
+    <section class="team">
+        <div class="container">
+            <h2>Meet Our Innovator Crew</h2>
+            <div class="team-container">
+                <!-- Team Member 1 -->
+                <div class="team-member animate-on-scroll">
+                    <div class="member-img">
+                        <img src="/images/members/bautista.jpg" alt="Veeny Ree Mae Bautista" onerror="this.onerror=null;this.src='https://placehold.co/400x500/6e8efb/FFFFFF?text=VEENY+R.+BAUTISTA';">
+                    </div>
+                    <div class="member-info">
+                        <h3>VEENY REE MAE BAUTISTA</h3>
+                        <p class="member-role">UI/UX Designer, Researcher & Quality Assurance</p>
+                        <p class="member-desc">Responsible for creating intuitive user interfaces and ensuring the highest quality standards throughout the development process.</p>
+                        
+                        <div class="member-expertise">
+                            <h4 class="expertise-title">Areas of Expertise:</h4>
+                            <div class="expertise-list">
+                                <span class="expertise-item">Management Skills</span>
+                                <span class="expertise-item">Documentation</span>
+                                <span class="expertise-item">Research</span>
+                                <span class="expertise-item">Analysis</span>
+                                <span class="expertise-item">Collaboration</span>
+                                <span class="expertise-item">Adaptability</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Team Member 2 -->
+                <div class="team-member animate-on-scroll">
+                    <div class="member-img">
+                        <img src="/images/members/ramos.png" alt="Armabel Ramos" onerror="this.onerror=null;this.src='https://placehold.co/400x500/a777e3/FFFFFF?text=ARMABEL+RAMOS';">
+                    </div>
+                    <div class="member-info">
+                        <h3>ARMABEL RAMOS</h3>
+                        <p class="member-role">Researcher, Data Analyst & Quality Assurance</p>
+                        <p class="member-desc">Leads research initiatives and maintains quality assurance protocols to ensure the platform meets user expectations.</p>
+                        
+                        <div class="member-expertise">
+                            <h4 class="expertise-title">Areas of Expertise:</h4>
+                            <div class="expertise-list">
+                                <span class="expertise-item">Flexibility</span>
+                                <span class="expertise-item">Documentation</span>
+                                <span class="expertise-item">Research Skills</span>
+                                <span class="expertise-item">Collaboration</span>
+                                <span class="expertise-item">Learning Agility</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Team Member 3 -->
+                <div class="team-member animate-on-scroll">
+                    <div class="member-img">
+                        <img src="/images/members/ochea.jpg" alt="Leander Ochea" onerror="this.onerror=null;this.src='https://placehold.co/400x500/6e8efb/FFFFFF?text=LEANDER+OCHEA';">
+                    </div>
+                    <div class="member-info">
+                        <h3>LEANDER OCHEA</h3>
+                        <p class="member-role">Backend Developer, AR Developer & Database Administrator</p>
+                        <p class="member-desc">Manages the server-side logic, database architecture, and ensures seamless data flow throughout the application.</p>
+                        
+                        <div class="member-expertise">
+                            <h4 class="expertise-title">Areas of Expertise:</h4>
+                            <div class="expertise-list">
+                                <span class="expertise-item">Backend Development</span>
+                                <span class="expertise-item">Cloud Database Integration</span>
+                                <span class="expertise-item">Server-Side</span>
+                                <span class="expertise-item">Frontend</span>
+                                <span class="expertise-item">Environment Configuration</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Team Member 4 -->
+                <div class="team-member animate-on-scroll">
+                    <div class="member-img">
+                        <img src="/images/members/parubrub.png" alt="Marc Steeven Parubrub" onerror="this.onerror=null;this.src='https://placehold.co/400x500/a777e3/FFFFFF?text=MARC+STEEVEN+PARUBRUB';">
+                    </div>
+                    <div class="member-info">
+                        <h3>MARC STEEVEN PARUBRUB</h3>
+                        <p class="member-role">Project Manager, Frontend Developer & AR Developer</p>
+                        <p class="member-desc">Oversees project execution, develops frontend components, and designs user experiences for the SmartFit platform.</p>
+                        
+                        <div class="member-expertise">
+                            <h4 class="expertise-title">Areas of Expertise:</h4>
+                            <div class="expertise-list">
+                                <span class="expertise-item">Project Management</span>
+                                <span class="expertise-item">Team Handling</span>
+                                <span class="expertise-item">Augmented Reality (AR) Application Development</span>
+                                <span class="expertise-item">Frontend Development</span>
+                                <span class="expertise-item">Adaptability</span>
+                                <span class="expertise-item">Problem Solving</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Future Section -->
+    <section class="future">
+        <div class="container">
+            <div class="future-content">
+                <h2>Looking Ahead</h2>
+                <p>The development of SmartFit is driven by a dedicated team of researchers, developers, and designers who share a commitment to innovation, accessibility, and user-focused solutions. Together, we aim to ensure that every user's journey is seamless, enjoyable, and rewarding.</p>
+                <p>Our goal is to continuously improve SmartFit by expanding its features and adapting to the evolving needs of both customers and businesses. We are committed to building a platform that not only meets current demands but also shapes the future of footwear retail.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer Section -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <p>&copy; 2025 SmartFit Shoe Shop Portal. All rights reserved.</p>
+                <nav>
+                    <a href="/">Home</a>
+                    <a href="/extras/privacypolicy.html">Privacy Policy</a>
+                    <a href="/extras/termsofservice.html">Terms of Service</a>
+                    <a href="/extras/contactus.html">Contact Us</a>
+                    <a href="/extras/aboutus.html">About Us</a>
+                </nav>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Back to Top Button -->
+    <a href="#" class="back-to-top">
+        <i class="fas fa-arrow-up"></i>
+    </a>
+
+    <script>
+        // Animation on scroll functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            const animatedElements = document.querySelectorAll('.animate-on-scroll');
+            const backToTopButton = document.querySelector('.back-to-top');
+            
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('is-visible');
+                    }
+                });
+            }, {
+                threshold: 0.1
+            });
+            
+            animatedElements.forEach(element => {
+                observer.observe(element);
+            });
+            
+            // Back to top button functionality
+            window.addEventListener('scroll', () => {
+                if (window.pageYOffset > 300) {
+                    backToTopButton.classList.add('visible');
+                } else {
+                    backToTopButton.classList.remove('visible');
+                }
+            });
+            
+            backToTopButton.addEventListener('click', (e) => {
+                e.preventDefault();
+                window.scrollTo({
+                    top: 0,
+                    behavior: 'smooth'
+                });
+            });
+            
+            // Add subtle parallax effect to header
+            window.addEventListener('scroll', () => {
+                const header = document.querySelector('.header');
+                const scrolled = window.pageYOffset;
+                const rate = scrolled * -0.5;
+                header.style.backgroundPosition = `0px ${rate}px`;
+            });
+        });
+    </script>
+</body>
+</html>
