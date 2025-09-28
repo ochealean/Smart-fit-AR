@@ -1,4 +1,3 @@
-// Import Firebase utility methods
 import { readDataRealtime, logoutUser, updateData, checkUserAuth, sendEmail } from '../../firebaseMethods.js';
 
 // Global variables

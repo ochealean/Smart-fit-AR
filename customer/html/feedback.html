@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Submit Feedback</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="icon" href="../../images/smartfitImages/smartfitAR-logo.png" type="image/x-icon">
+    <link rel="stylesheet" href="../css/feedback.css">
+</head>
+
+<body>
+    <div class="dashboard">
+        <!-- Sidebar Navigation -->
+        <div class="sidebar">
+            <div class="logo">SHOE PORTAL</div>
+            <div class="nav-items">
+                <a href="/customer/html/customer_dashboard.html" class="nav-item">
+                    <i class="fas fa-home"></i> Dashboard
+                </a>
+                <a href="/customer/html/browse.html" class="nav-item active">
+                    <i class="fas fa-shopping-bag"></i> Browse Shoes
+                </a>
+                <a href="/customer/html/shoevalidator.html" class="nav-item">
+                    <i class="fas fa-check-circle"></i> Shoe Validation
+                </a>
+                <a href="/customer/html/pickshoe.html" class="nav-item">
+                    <i class="fas fa-shoe-prints"></i> Customize Shoes
+                </a>
+                <a href="/customer/html/customization_pendingOrders.html" class="nav-item">
+                    <i class="fas fa-tools"></i> My Custom Orders
+                </a>
+                <a href="/customer/html/orders.html" class="nav-item">
+                    <i class="fas fa-receipt"></i> My Orders
+                </a>
+                <a href="/customer/html/add_to_cart.html" class="nav-item">
+                    <i class="fas fa-shopping-cart"></i> My Cart
+                </a>
+                <a href="/customer/html/history.html" class="nav-item">
+                    <i class="fas fa-history"></i> Order History
+                </a>
+                <a href="/customer/html/issue_response.html" class="nav-item">
+                    <i class="fas fa-reply"></i> Issue Response
+                </a>
+                <a href="/customer/html/wishlist.html" class="nav-item">
+                    <i class="fas fa-heart"></i> Wishlist
+                </a>
+                <a href="/chatbot/html/chatbot.html" class="nav-item">
+                    <i class="fas fa-comment"></i> Chatbot
+                </a>
+                <a href="/customer/html/customerprofile.html" class="nav-item">
+                    <i class="fas fa-cog"></i> Settings
+                </a>
+                <a id="logout_btn" class="nav-item">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </a>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+
+            <div class="header">
+                <!-- nilagyan ng span at id -->
+                <h1><i class="fas fa-comment-alt"></i> Submit Feedback</h1>
+                <div class="user-profile">
+                    <img id="imageProfile" src="#" alt="Profile" class="user-avatar">
+                    <!-- nilagyan ng id -->
+                    <span id="userName_display2">Alex Johnson</span>
+                </div>
+            </div>
+
+            <div class="feedback-container">
+                <div class="feedback-header">
+
+                    <p>Share your experience with this product</p>
+                </div>
+
+                <div class="shoe-details">
+                    <img src="https://example.com/shoe-image.jpg " alt="Shoe Image" class="shoe-image" id="shoeImage">
+                    <div class="shoe-info">
+                        <h2 class="shoe-name" id="shoeName">Running Shoe Pro 2023</h2>
+                        <div class="shoe-id" id="shoeId">Product ID: SH12345</div>
+                        <div class="shop-name" id="shopName">From: Elite Footwear</div>
+                    </div>
+                </div>
+
+                <form id="feedbackForm">
+                    <div class="rating-section">
+                        <div class="rating-title">How would you rate this product?</div>
+                        <div class="stars" id="starRating">
+                            <i class="fas fa-star star" data-rating="1"></i>
+                            <i class="fas fa-star star" data-rating="2"></i>
+                            <i class="fas fa-star star" data-rating="3"></i>
+                            <i class="fas fa-star star" data-rating="4"></i>
+                            <i class="fas fa-star star" data-rating="5"></i>
+                        </div>
+                        <!-- <div class="rating-labels">
+                            <span>Poor</span>
+                            <span>Fair</span>
+                            <span>Good</span>
+                            <span>Very Good</span>
+                            <span>Excellent</span>
+                        </div> -->
+                        <input type="hidden" id="ratingValue" name="rating" value="0">
+                    </div>
+
+                    <div class="comment-section">
+                        <label for="comment" class="rating-title">Share your thoughts (optional)</label>
+                        <textarea id="comment" name="comment"
+                            placeholder="What did you like or dislike about this product?"></textarea>
+                    </div>
+
+                    <button type="submit" class="submit-btn" id="submitBtn">
+                        <span>Submit Feedback</span>
+                        <div class="loader" id="loader"></div>
+                    </button>
+
+                    <div class="success-message" id="successMessage">
+                        <i class="fas fa-check-circle"></i> Thank you for your feedback!
+                    </div>
+                </form>
+                <div id="existingFeedback" style="display: none;">
+                    <div class="rating-section">
+                        <div class="rating-title">Your Rating:</div>
+                        <div class="stars" id="existingStarRating">
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                        </div>
+                    </div>
+                    <div class="comment-section">
+                        <div class="rating-title">Your Review:</div>
+                        <div id="existingComment"
+                            style="padding: 15px; background: #f8f9fa; border-radius: 8px; margin-bottom: 20px;"></div>
+                    </div>
+                    <button id="editReviewBtn" class="submit-btn"
+                        style="background-color: var(--warning); margin-bottom: 20px;">
+                        <span>Edit Review</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Star rating functionality
+            const stars = document.querySelectorAll('.star');
+            const ratingValue = document.getElementById('ratingValue');
+            
+            stars.forEach(star => {
+                star.addEventListener('click', function() {
+                    const rating = parseInt(this.dataset.rating);
+                    ratingValue.value = rating;
+                    
+                    // Update star display
+                    stars.forEach((s, index) => {
+                        if (index < rating) {
+                            s.classList.add('active');
+                        } else {
+                            s.classList.remove('active');
+                        }
+                    });
+                });
+                
+                // Hover effect
+                star.addEventListener('mouseover', function() {
+                    const hoverRating = parseInt(this.dataset.rating);
+                    stars.forEach((s, index) => {
+                        if (index < hoverRating) {
+                            s.style.color = 'var(--star-color)';
+                        }
+                    });
+                });
+                
+                star.addEventListener('mouseout', function() {
+                    const currentRating = parseInt(ratingValue.value);
+                    stars.forEach((s, index) => {
+                        if (index >= currentRating) {
+                            s.style.color = '#ccc';
+                        }
+                    });
+                });
+            });
+            
+            // Form submission
+            const feedbackForm = document.getElementById('feedbackForm');
+            const submitBtn = document.getElementById('submitBtn');
+            const loader = document.getElementById('loader');
+            const successMessage = document.getElementById('successMessage');
+            
+            feedbackForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                // Validate rating
+                if (parseInt(ratingValue.value) === 0) {
+                    alert('Please select a rating');
+                    return;
+                }
+                
+                // Show loading state
+                submitBtn.disabled = true;
+                loader.style.display = 'block';
+                submitBtn.querySelector('span').textContent = 'Submitting...';
+                
+                // Simulate API call (replace with actual fetch to your backend)
+                setTimeout(() => {
+                    console.log('Feedback submitted:', {
+                        rating: ratingValue.value,
+                        comment: document.getElementById('comment').value,
+                        shoeId: 'SH12345' // This would come from your data
+                    });
+                    
+                    // Hide loader and show success
+                    loader.style.display = 'none';
+                    submitBtn.style.display = 'none';
+                    successMessage.style.display = 'block';
+                    
+                    // Reset form after 3 seconds
+                    setTimeout(() => {
+                        feedbackForm.reset();
+                        stars.forEach(s => s.classList.remove('active'));
+                        ratingValue.value = '0';
+                        submitBtn.disabled = false;
+                        submitBtn.querySelector('span').textContent = 'Submit Feedback';
+                        submitBtn.style.display = 'flex';
+                        successMessage.style.display = 'none';
+                    }, 3000);
+                    
+                }, 1500);
+            });
+            
+            // In a real implementation, you would fetch the shoe details from your backend
+            // For now, we'll simulate it with static data
+            function loadShoeDetails() {
+                // This would come from your backend in a real implementation
+                const shoeData = {
+                    imageUrl: 'https://example.com/shoe-image.jpg',
+                    name: 'Running Shoe Pro 2023',
+                    id: 'SH12345',
+                    shop: 'Elite Footwear'
+                };
+                
+                document.getElementById('shoeImage').src = shoeData.imageUrl;
+                document.getElementById('shoeName').textContent = shoeData.name;
+                document.getElementById('shoeId').textContent = `Product ID: ${shoeData.id}`;
+                document.getElementById('shopName').textContent = `From: ${shoeData.shop}`;
+            }
+            
+            loadShoeDetails();
+        });
+    </script> -->
+    <script src="/customer/js/feedback.js" type="module"></script>
+</body>
+
+</html>

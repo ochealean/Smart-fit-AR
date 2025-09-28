@@ -1,4 +1,3 @@
-// shopowner_addemployee.js - UPDATED TO USE FIREBASE METHODS
 import { 
     checkUserAuth, 
     logoutUser, 

@@ -514,23 +514,23 @@ window.markAsReceived = async function (orderId) {
 
     if (!confirm(message)) return;
 
-    // try {
-    //     const updateResult = await updateData(
-    //         `smartfit_AR_Database/transactions/${userID}/${orderId}`,
-    //         { status: 'completed' }
-    //     );
+    try {
+        const updateResult = await updateData(
+            `smartfit_AR_Database/transactions/${userID}/${orderId}`,
+            { status: 'completed' }
+        );
 
-    //     if (updateResult.success) {
-    //         alert('Order marked as received successfully!');
-    //         // Reload orders to reflect changes
-    //         loadOrders();
-    //     } else {
-    //         alert('Failed to update order status: ' + updateResult.error);
-    //     }
-    // } catch (error) {
-    //     console.error('Error marking order as received:', error);
-    //     alert('Failed to update order status. Please try again.');
-    // }
+        if (updateResult.success) {
+            alert('Order marked as received successfully!');
+            // Reload orders to reflect changes
+            loadOrders();
+        } else {
+            alert('Failed to update order status: ' + updateResult.error);
+        }
+    } catch (error) {
+        console.error('Error marking order as received:', error);
+        alert('Failed to update order status. Please try again.');
+    }
 };
 
 // Report issue with order

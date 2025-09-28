@@ -1,4 +1,3 @@
-// wishlist.js - Using only firebaseMethods
 import { 
     checkUserAuth, 
     logoutUser, 
