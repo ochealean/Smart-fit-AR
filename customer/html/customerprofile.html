@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile Settings | Customer</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="icon" href="../../images/smartfitImages/smartfitAR-logo.png" type="image/x-icon">
+    <link rel="stylesheet" href="../css/customerprofile.css">
+</head>
+
+<body>
+    <div class="dashboard">
+        <!-- Sidebar Navigation -->
+        <div class="sidebar">
+            <div class="logo">
+                <div class="logo-icon">
+                    <i class="fas fa-store"></i>
+                </div>
+                <span>SHOE PORTAL</span>
+            </div>
+            <div class="nav-items">
+                <a href="/customer/html/customer_dashboard.html" class="nav-item">
+                    <i class="fas fa-home"></i> Dashboard
+                </a>
+                <a href="/customer/html/browse.html" class="nav-item">
+                    <i class="fas fa-shopping-bag"></i> Browse Shoes
+                </a>
+                <a href="/customer/html/shoevalidator.html" class="nav-item">
+                    <i class="fas fa-check-circle"></i> Shoe Validation
+                </a>
+                <a href="/customer/html/pickshoe.html" class="nav-item">
+                    <i class="fas fa-shoe-prints"></i> Customize Shoes
+                </a>
+                <a href="/customer/html/customization_pendingOrders.html" class="nav-item">
+                    <i class="fas fa-tools"></i> My Custom Orders
+                </a>
+                <a href="/customer/html/orders.html" class="nav-item">
+                    <i class="fas fa-receipt"></i> My Orders
+                </a>
+                <a href="/customer/html/add_to_cart.html" class="nav-item">
+                    <i class="fas fa-shopping-cart"></i> My Cart
+                </a>
+                <a href="/customer/html/history.html" class="nav-item">
+                    <i class="fas fa-history"></i> Order History
+                </a>
+                <a href="/customer/html/issue_response.html" class="nav-item">
+                    <i class="fas fa-reply"></i> Issue Response
+                </a>
+                <a href="/customer/html/wishlist.html" class="nav-item">
+                    <i class="fas fa-heart"></i> Wishlist
+                </a>
+                <a href="/chatbot/html/chatbot.html" class="nav-item">
+                    <i class="fas fa-comment"></i> Chatbot
+                </a>
+                <a href="/customer/html/customerprofile.html" class="nav-item active">
+                    <i class="fas fa-cog"></i> Settings
+                </a>
+                <a id="logout_btn" class="nav-item">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </a>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <div class="header">
+                <!-- Mobile Menu Toggle -->
+                <div class="mobile-menu-toggle">
+                    <i class="fas fa-bars"></i>
+                </div>
+                <h1><i class="fas fa-user-cog"></i> Profile Settings</h1>
+                <div class="user-profile">
+                    <img id="imageProfile" src="https://randomuser.me/api/portraits/men/32.jpg" alt="Profile" class="user-avatar">
+                    <span id="userName_display2">Alex Johnson</span>
+                </div>
+            </div>
+
+            <!-- Profile Container -->
+            <div class="profile-container">
+                <!-- Profile Header -->
+                <div class="profile-header">
+                    <div class="profile-avatar">
+                        <img src="https://randomuser.me/api/portraits/men/32.jpg" alt="Profile Photo" id="profilePhotoImg">
+                        <label class="avatar-upload">
+                            <i class="fas fa-camera"></i> Change
+                            <input type="file" accept="image/*" id="profilePhotoUpload">
+                        </label>
+                    </div>
+
+                    <div class="profile-info">
+                        <h2 class="profile-name">Alex Johnson</h2>
+                        <div class="profile-email">alex.johnson@example.com</div>
+                    </div>
+                </div>
+
+                <!-- Profile Form -->
+                <form class="profile-form" id="profileForm">
+                    <!-- Personal Information Section -->
+                    <div class="form-section">
+                        <h3 class="section-title"><i class="fas fa-user"></i> Personal Information</h3>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="firstName" class="form-label">First Name</label>
+                                <input type="text" id="firstName" class="form-control" value="Firstname">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="lastName" class="form-label">Last Name</label>
+                                <input type="text" id="lastName" class="form-control" value="Lastname">
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="email" class="form-label">Email</label>
+                                <input type="email" id="email" class="form-control" value="sample@example.com" readonly>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="phone" class="form-label">Phone Number</label>
+                                <div style="display: flex; align-items: center;">
+                                    <span
+                                        style="padding: 0.8rem 0.5rem; background: var(--gray-light); border-radius: var(--radius-sm) 0 0 var(--radius-sm);">+63</span>
+                                    <input type="tel" id="phone" class="form-control" value="9691731931" maxlength="10"
+                                        style="border-radius: 0 var(--radius-sm) var(--radius-sm) 0; margin-left: -1px;">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="birthdate" class="form-label">Date of Birth</label>
+                            <input type="date" id="birthdate" class="form-control" >
+                        </div>
+                    </div>
+
+                    <!-- Address Information Section -->
+                    <div class="form-section">
+                        <h3 class="section-title"><i class="fas fa-map-marker-alt"></i> Address Information</h3>
+
+                        <div class="form-group">
+                            <label for="address" class="form-label">Address</label>
+                            <input type="text" id="address" class="form-control" value="sample address">
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="city" class="form-label">City</label>
+                                <input type="text" id="city" class="form-control" value="Balanga">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="province" class="form-label">Province</label>
+                                <input type="text" id="province" class="form-control" value="Bataan">
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="zipCode" class="form-label">ZIP Code</label>
+                                <input type="text" id="zipCode" class="form-control" value="2100">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="country" class="form-label">Country</label>
+                                <select id="country" class="form-select" value="Philippines">
+                                    <option value="Philippines" selected>Philippines</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Password Change Section -->
+                    <div class="form-section">
+                        <h3 class="section-title"><i class="fas fa-lock"></i> Change Password</h3>
+
+                        <div class="form-row">
+                            <div class="form-group password-toggle">
+                                <label for="currentPassword" class="form-label">Current Password</label>
+                                <input type="password" id="currentPassword" class="form-control">
+                                <i class="fas fa-eye password-toggle-icon" id="toggleCurrentPassword"></i>
+                            </div>
+
+                            <div class="form-group password-toggle">
+                                <label for="newPassword" class="form-label">New Password</label>
+                                <input type="password" id="newPassword" class="form-control">
+                                <i class="fas fa-eye password-toggle-icon" id="toggleNewPassword"></i>
+                            </div>
+                        </div>
+
+                        <div class="form-group password-toggle">
+                            <label for="confirmPassword" class="form-label">Confirm New Password</label>
+                            <input type="password" id="confirmPassword" class="form-control">
+                            <i class="fas fa-eye password-toggle-icon" id="toggleConfirmPassword"></i>
+                        </div>
+                    </div>
+
+                    <!-- Form Actions -->
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-cancel">Cancel</button>
+                        <button type="submit" class="btn btn-save"><i class="fas fa-save"></i> Save Changes</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mobile Overlay -->
+    <div class="sidebar-overlay"></div>
+
+    <!-- <script>
+        // Mobile sidebar toggle
+        document.addEventListener('DOMContentLoaded', function () {
+            const mobileToggle = document.querySelector('.mobile-menu-toggle');
+            const sidebar = document.querySelector('.sidebar');
+            const overlay = document.querySelector('.sidebar-overlay');
+
+            if (mobileToggle) {
+                mobileToggle.addEventListener('click', () => {
+                    sidebar.classList.toggle('active');
+                    overlay.classList.toggle('active');
+                });
+            }
+
+            if (overlay) {
+                overlay.addEventListener('click', () => {
+                    sidebar.classList.remove('active');
+                    overlay.classList.remove('active');
+                });
+            }
+
+            // Password toggle functionality
+            function setupPasswordToggle(inputId, toggleId) {
+                const passwordInput = document.getElementById(inputId);
+                const toggleIcon = document.getElementById(toggleId);
+
+                if (passwordInput && toggleIcon) {
+                    toggleIcon.addEventListener('click', function () {
+                        if (passwordInput.type === 'password') {
+                            passwordInput.type = 'text';
+                            toggleIcon.classList.remove('fa-eye');
+                            toggleIcon.classList.add('fa-eye-slash');
+                        } else {
+                            passwordInput.type = 'password';
+                            toggleIcon.classList.remove('fa-eye-slash');
+                            toggleIcon.classList.add('fa-eye');
+                        }
+                    });
+                }
+            }
+
+            setupPasswordToggle('currentPassword', 'toggleCurrentPassword');
+            setupPasswordToggle('newPassword', 'toggleNewPassword');
+            setupPasswordToggle('confirmPassword', 'toggleConfirmPassword');
+
+            // Form submission
+            document.getElementById('profileForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                alert('Profile updated successfully!');
+            });
+
+            // Cancel button
+            document.querySelector('.btn-cancel').addEventListener('click', function() {
+                if (confirm('Are you sure you want to cancel? All unsaved changes will be lost.')) {
+                    window.location.reload();
+                }
+            });
+
+            // Profile photo upload
+            document.getElementById('profilePhotoUpload').addEventListener('change', function(e) {
+                if (this.files && this.files[0]) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        document.getElementById('profilePhotoImg').src = e.target.result;
+                    }
+                    reader.readAsDataURL(this.files[0]);
+                }
+            });
+        });
+    </script> -->
+    <script src="../js/customerprofile.js" type="module"></script>
+</body>
+
+</html>
