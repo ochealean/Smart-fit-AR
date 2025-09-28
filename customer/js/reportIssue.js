@@ -10,6 +10,7 @@ import {
 const urlParams = new URLSearchParams(window.location.search);
 const orderID = urlParams.get('orderID');
 const userID = urlParams.get('userID');
+var userEmail = "";
 
 // Initialize the page when auth state changes
 auth.onAuthStateChanged((user) => {
@@ -28,10 +29,12 @@ auth.onAuthStateChanged((user) => {
 
 function loadUserProfile(user) {
     try {
+        console.log('Loading user profile:', user.email);
         document.getElementById('userName_display2').textContent = user.displayName || 'User';
         const placeholderSVG = "data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='150' height='150' viewBox='0 0 150 150'%3E%3Crect width='150' height='150' fill='%23e0e0e0'/%3E%3Ctext x='50%' y='50%' font-family='Arial' font-size='16' fill='%23000' text-anchor='middle' dominant-baseline='middle'%3EUser%3C/text%3E%3C/svg%3E";
         document.getElementById('imageProfile').src = user.photoURL || placeholderSVG;
         document.getElementById('orderIdDisplay').textContent = orderID ? orderID.substring(0, 8).toUpperCase() : 'N/A';
+        userEmail = user.email || '';
     } catch (error) {
         console.error('Error loading user profile:', error);
     }
@@ -170,6 +173,7 @@ function initializePage() {
                 // Create report in database
                 const reportData = {
                     orderID: orderID,
+                    customerEmail: userEmail,
                     userID: userID,
                     issueType: issueType,
                     description: description,

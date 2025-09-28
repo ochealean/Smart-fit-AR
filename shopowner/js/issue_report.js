@@ -1,10 +1,11 @@
-import { 
-    checkUserAuth, 
-    logoutUser, 
-    readData, 
-    readDataRealtime, 
+import {
+    checkUserAuth,
+    logoutUser,
+    readData,
+    readDataRealtime,
     updateData,
-    auth
+    auth,
+    sendEmail
 } from '../../firebaseMethods.js';
 
 // Initialize EmailJS
@@ -23,7 +24,7 @@ let sname; //shop name
 const issueTableBody = document.getElementById("issueReportsTableBody");
 const responseDialog = document.getElementById("responseDialog");
 const overlay = document.getElementById("overlay");
-const adminResponse = document.getElementById("adminResponse");
+const customerResponse = document.getElementById("customerResponse");
 const responseStatus = document.getElementById("responseStatus");
 const prevBtn = document.getElementById("prevBtn");
 const nextBtn = document.getElementById("nextBtn");
@@ -42,7 +43,7 @@ document.addEventListener('DOMContentLoaded', () => {
 async function checkAuthState() {
     try {
         const authResult = await checkUserAuth();
-        
+
         if (!authResult.authenticated) {
             window.location.href = "/admin/html/admin_login.html";
             return;
@@ -57,7 +58,7 @@ async function checkAuthState() {
         // Check if user is employee
         const employeePath = `smartfit_AR_Database/employees/${user.uid}`;
         const employeeResult = await readData(employeePath);
-        
+
         if (employeeResult.success) {
             const shopData = employeeResult.data;
             console.log("shopData: ", shopData);
@@ -80,7 +81,7 @@ async function checkAuthState() {
             // Check if user is shop owner
             const shopPath = `smartfit_AR_Database/shop/${user.uid}`;
             const shopResult = await readData(shopPath);
-            
+
             if (shopResult.success) {
                 const shopData = shopResult.data;
                 roleLoggedin = "Shop Owner";
@@ -119,12 +120,12 @@ function updateProfileHeader(userData) {
     // Set profile picture - FIXED IMAGE RETRIEVAL
     if (userData.profilePhoto && userData.profilePhoto.url) {
         profilePicture.src = userData.profilePhoto.url;
-        profilePicture.onerror = function() {
+        profilePicture.onerror = function () {
             this.src = getDefaultAvatar();
         };
     } else if (userData.uploads && userData.uploads.shopLogo && userData.uploads.shopLogo.url) {
         profilePicture.src = userData.uploads.shopLogo.url;
-        profilePicture.onerror = function() {
+        profilePicture.onerror = function () {
             this.src = getDefaultAvatar();
         };
     } else {
@@ -224,6 +225,7 @@ function loadIssueReports() {
 
         // Convert object to array and create rows
         const issues = result.data;
+        console.log("Loaded issues:", issues);
         Object.keys(issues).forEach(issueId => {
             const issue = issues[issueId];
             const row = createIssueRow(issueId, issue);
@@ -319,7 +321,7 @@ async function showIssueDetails(e, issueId) {
 
     try {
         const result = await readData(issuePath);
-        
+
         if (result.success) {
             const issue = result.data;
             updateIssueModalContent(issueId, issue);
@@ -334,6 +336,7 @@ async function showIssueDetails(e, issueId) {
 }
 
 function updateIssueModalContent(issueId, issue) {
+    console.log("Issue data:", issue);
     const modalContent = document.getElementById('modalIssueContent');
     const modalTitle = document.getElementById('modalIssueTitle');
 
@@ -410,7 +413,7 @@ function updateIssueModalContent(issueId, issue) {
         </div>
         
         <div class="modal-section">
-            <h3>Admin Responses</h3>
+            <h3>Shop Responses</h3>
             <div class="responses-container">
                 ${responsesHTML}
             </div>
@@ -423,13 +426,14 @@ async function showResponseDialog(e, issueId) {
     e.stopPropagation();
 
     currentIssueId = issueId;
-    adminResponse.value = '';
+    customerResponse.value = '';
     responseStatus.value = 'processing';
 
     try {
         const issuePath = `smartfit_AR_Database/issueReports/${issueId}`;
         const issueResult = await readData(issuePath);
-        
+        console.log("Issue result:", issueResult);
+
         if (!issueResult.success) {
             showNotification("Issue report not found", "error");
             return;
@@ -438,15 +442,16 @@ async function showResponseDialog(e, issueId) {
         const issue = issueResult.data;
 
         // Get user email from users/customer node
-        let userEmail = null;
+        let userEmail = issue.customerEmail || '';
         const userPath = `smartfit_AR_Database/customer/${issue.userID}`;
         const userResult = await readData(userPath);
-        
+
         if (userResult.success) {
             const userData = userResult.data;
             userEmail = userData.email || userData.userEmail;
         }
 
+        // customer email from issue report if available of the clicked issue
         currentUserEmail = userEmail;
 
         document.getElementById('dialogMessage').textContent =
@@ -467,17 +472,18 @@ function hideResponseDialog() {
 }
 
 async function submitResponse() {
-    const responseText = adminResponse.value.trim();
+    const responseText = customerResponse.value.trim();
     const newStatus = responseStatus.value;
+    console.log(newStatus);
 
     if (!responseText) {
         // Add visual feedback to the textarea
-        adminResponse.style.border = "2px solid red";
-        adminResponse.focus();
+        customerResponse.style.border = "2px solid red";
+        customerResponse.focus();
 
         // Remove the red border after 2 seconds
         setTimeout(() => {
-            adminResponse.style.border = "";
+            customerResponse.style.border = "";
         }, 2000);
         showNotification("Please enter a response message", "error");
         return;
@@ -500,7 +506,7 @@ async function submitResponse() {
 
         // Update the issue report with the new response
         const updates = {
-            [`adminResponses/${timestamp}`]: responseData,
+            [`customerResponses/${timestamp}`]: responseData,
             status: newStatus,
             resolved: newStatus === 'resolved',
             lastUpdated: new Date().toISOString()
@@ -512,24 +518,23 @@ async function submitResponse() {
         if (!updateResult.success) {
             throw new Error(updateResult.error);
         }
+            console.log(`Would send email to ${currentUserEmail} about status: ${newStatus}`);
+            console.log('sname:', sname );
+            console.log('customerResponse:', customerResponse.value );
 
         // Send email notification to user if email is available
         if (currentUserEmail) {
-            try {
-                const templateParams = {
-                    to_email: currentUserEmail,
-                    from_name: sname || 'Shoe Portal Admin',
-                    subject: `Update on your issue report`,
-                    message: `Your issue report has been updated. Status: ${newStatus}\n\nAdmin Response:\n${responseText}`,
-                    reply_to: 'no-reply@shoeportal.com'
-                };
-
-                await emailjs.send('service_8i28mes', 'template_btslatu', templateParams);
-                console.log('Notification email sent');
-            } catch (emailError) {
-                console.error('Failed to send email:', emailError);
-                // Don't fail the whole operation if email fails
-            }
+            sendEmail(currentUserEmail, customerResponse.value, sname, 'maZuEJjFTiKrGZ4vX', 'service_n28x5fo', 'template_yp9a4ph')
+                .then(result => {
+                    if (result && !result.success) {
+                        console.warn('Email sending failed (non-critical):', result.error);
+                    } else {
+                        console.log('Issue Report email sent successfully');
+                    }
+                })
+                .catch(error => {
+                    console.error('Email sending error:', error);
+                });
         }
 
         showNotification("Response submitted successfully", "success");
