@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Privacy Policy - SmartFit Shoe Shop Portal</title>
+    <link rel="icon" href="../../images/smartfitImages/smartfitAR-logo.png" type="image/x-icon">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         :root {
@@ -75,8 +76,76 @@
             animation: slideIn 0.8s ease-out;
         }
 
+        /* SmartFit Logo Styles */
+        .logo-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            animation: fadeInDown 1s ease;
+        }
+
+        .header-logo {
+            width: 60px;
+            height: 60px;
+            object-fit: contain;
+            filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.3));
+            transition: var(--transition);
+            transform-origin: center;
+        }
+
+        .logo-container:hover .header-logo {
+            transform: scale(1.1) rotate(5deg);
+            filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.4));
+        }
+
+        .brand-name {
+            font-size: 2.2rem;
+            font-weight: 700;
+            color: var(--primary);
+            letter-spacing: -0.5px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            /* No after effects as requested */
+        }
+
+        /* Footer Logo Styles */
+        .footer-logo-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.8rem;
+            margin-bottom: 1rem;
+        }
+
+        .footer-logo {
+            width: 35px;
+            height: 35px;
+            object-fit: contain;
+            filter: brightness(0) invert(1);
+            opacity: 0.8;
+            transition: var(--transition);
+        }
+
+        .footer-logo-container:hover .footer-logo {
+            opacity: 1;
+            transform: scale(1.1);
+        }
+
+        .footer-brand-name {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: var(--light);
+            opacity: 0.9;
+        }
+
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes fadeInDown {
+            from { opacity: 0; transform: translateY(-30px); }
             to { opacity: 1; transform: translateY(0); }
         }
 
@@ -175,6 +244,36 @@
             font-weight: 500;
         }
 
+        /* Back to Top Button */
+        .back-to-top {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: var(--light);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+            box-shadow: var(--shadow-lg);
+            transition: var(--transition);
+            z-index: 1000;
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        .back-to-top.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .back-to-top:hover {
+            transform: translateY(-5px);
+        }
+
         .footer {
             background: var(--dark);
             color: var(--light);
@@ -241,11 +340,51 @@
             .privacy-section h2 {
                 font-size: 1.3rem;
             }
+
+            .logo-container {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+            
+            .header-logo {
+                width: 50px;
+                height: 50px;
+            }
+            
+            .brand-name {
+                font-size: 1.8rem;
+            }
+
+            .footer-logo-container {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+            
+            .footer-logo {
+                width: 30px;
+                height: 30px;
+            }
+            
+            .footer-brand-name {
+                font-size: 1.1rem;
+            }
+
+            .back-to-top {
+                bottom: 20px;
+                right: 20px;
+                width: 40px;
+                height: 40px;
+            }
         }
     </style>
 </head>
 <body>
     <div class="privacy-container">
+        <div class="logo-container">
+            <img src="/images/smartfitAR-logo.png" alt="SmartFit Logo" class="header-logo">
+            <span class="brand-name">SmartFit</span>
+        </div>
+
         <div class="privacy-header">
             <h1><i class="fas fa-shield-alt"></i> Privacy Policy</h1>
             <p>Last Updated: May 2025</p>
@@ -353,6 +492,10 @@
 
     <footer class="footer">
         <div class="footer-content">
+            <div class="footer-logo-container">
+                <img src="images/smartfitlogo.png" alt="SmartFit Logo" class="footer-logo">
+                <span class="footer-brand-name">SmartFit</span>
+            </div>
             <p>&copy; 2025 SmartFit Shoe Shop Portal. All rights reserved.</p>
             <nav>
                 <a href="/">Home</a>
@@ -364,8 +507,32 @@
         </div>
     </footer>
 
+    <!-- Back to Top Button -->
+    <a href="#" class="back-to-top">
+        <i class="fas fa-arrow-up"></i>
+    </a>
+
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            const backToTopButton = document.querySelector('.back-to-top');
+            
+            // Back to top button functionality
+            window.addEventListener('scroll', () => {
+                if (window.pageYOffset > 300) {
+                    backToTopButton.classList.add('visible');
+                } else {
+                    backToTopButton.classList.remove('visible');
+                }
+            });
+            
+            backToTopButton.addEventListener('click', (e) => {
+                e.preventDefault();
+                window.scrollTo({
+                    top: 0,
+                    behavior: 'smooth'
+                });
+            });
+
             // Smooth scroll for anchor links
             document.querySelectorAll('a[href^="#"]').forEach(anchor => {
                 anchor.addEventListener('click', function (e) {
