@@ -402,13 +402,13 @@ async function addToCart() {
     }
 }
 
-// Buy now
+// Buy now - using URL params instead of database
 async function buyNow() {
     try {
         // Calculate totals using updatePreview
         const prices = updatePreview();
 
-        // Clean up selections
+        // Clean up selections for URL params
         const cleanSelections = {};
         Object.keys(selections[currentModel]).forEach(key => {
             if (selections[currentModel][key] !== undefined) {
@@ -427,7 +427,6 @@ async function buyNow() {
 
         // Create order data with price breakdown
         const orderData = {
-            userId: userSession.userId,
             model: currentModel,
             size: selectedSize,
             basePrice: basePrice,
@@ -435,61 +434,21 @@ async function buyNow() {
             insolePrice: prices.insolePrice,
             customizationPrice: prices.customizationPrice,
             vatPrice: prices.vatPrice,
-            price: prices.totalPrice,
-            quantity: 1,
-            addedAt: Date.now(),
-            image: getPreviewImageUrl(),
-            isCustom: true,
-            selections: cleanSelections,
+            totalPrice: prices.totalPrice,
             productionTime: `${prices.totalDays}-${prices.totalDays + 3} days`,
-            status: "pending",
-            statusUpdates: {
-                initial: {
-                    status: "pending",
-                    timestamp: Date.now(),
-                    message: "Order received and being processed"
-                }
-            },
-            orderDate: new Date().toISOString()
+            selections: cleanSelections,
+            timestamp: Date.now()
         };
 
-        // Generate order ID
-        const orderId = `CUST-${Date.now()}-${Math.random().toString(36).substr(2, 4).toUpperCase()}`;
-
-        // Save to boughtshoe
-        const boughtShoePath = `smartfit_AR_Database/boughtshoe/${userSession.userId}/${orderId}`;
-        const boughtResult = await createData(boughtShoePath, userSession.userId, orderData);
-
-        // Save to transactions
-        const transactionPath = `smartfit_AR_Database/customizedtransactions/${userSession.userId}/${orderId}`;
-        const transactionData = {
-            date: new Date().toISOString(),
-            item: {
-                name: `Custom ${currentModel} shoe`,
-                basePrice: basePrice,
-                lacesPrice: prices.lacesPrice,
-                insolePrice: prices.insolePrice,
-                customizationPrice: prices.customizationPrice,
-                vatPrice: prices.vatPrice,
-                price: prices.totalPrice,
-                quantity: 1,
-                size: selectedSize,
-                isCustom: true,
-                image: getPreviewImageUrl()
-            },
-            status: "pending",
-            totalAmount: prices.totalPrice,
-            userId: userSession.userId
-        };
-
-        const transactionResult = await createData(transactionPath, userSession.userId, transactionData);
-
-        if (boughtResult.success && transactionResult.success) {
-            alert(`Your custom ${currentModel} shoe order has been placed successfully! Order ID: ${orderId}`);
-            window.location.href = `/customer/html/checkoutcustomize.html?orderId=${orderId}`;
-        } else {
-            throw new Error('Failed to create order');
-        }
+        // Encode order data for URL parameters
+        const orderDataString = encodeURIComponent(JSON.stringify(orderData));
+        
+        // Generate a simple order ID
+        const orderId = `CUST-${Date.now()}`;
+        
+        // Redirect to checkout with URL parameters
+        window.location.href = `/customer/html/checkoutcustomize.html?orderId=${orderId}&orderData=${orderDataString}`;
+        
     } catch (error) {
         console.error('Error during buy now: ', error);
         alert('There was an error placing your order. Please try again.');
