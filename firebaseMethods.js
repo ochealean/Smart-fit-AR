@@ -60,7 +60,8 @@ export async function checkUserAuth() {
                         role: 'employee',
                         userData: employeeData,
                         userId: user.uid,
-                        shopId: employeeData.shopId
+                        shopId: employeeData.shopId,
+                        verifiedEmail: user.emailVerified
                     });
                     return;
                 }
@@ -76,7 +77,8 @@ export async function checkUserAuth() {
                         role: 'shopowner',
                         userData: shopData,
                         userId: user.uid,
-                        shopId: user.uid
+                        shopId: user.uid,
+                        verifiedEmail: user.emailVerified
                     });
                     return;
                 }
@@ -91,7 +93,8 @@ export async function checkUserAuth() {
                         authenticated: true,
                         role: 'customer',
                         userData: customerData,
-                        userId: user.uid
+                        userId: user.uid,
+                        verifiedEmail: user.emailVerified
                     });
                     return;
                 }
