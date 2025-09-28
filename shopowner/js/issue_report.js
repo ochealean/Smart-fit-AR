@@ -8,55 +8,51 @@ import {
     sendEmail
 } from '../../firebaseMethods.js';
 
-// Initialize EmailJS
-emailjs.init('gBZ5mCvVmgjo7wn0W');
+// Helper function to get DOM elements
+function getElement(id) {
+    return document.getElementById(id);
+}
 
 // Global variables
+let userData = null;
+let userId = null;
+let shopLoggedin = null;
+let roleLoggedin = null;
+let sname = null;
 let currentIssueId = null;
 let currentUserEmail = null;
 let currentPage = 1;
 const rowsPerPage = 10;
-let shopLoggedin; // shop ID of the logged-in user
-let roleLoggedin; // role of the logged-in user
-let sname; //shop name
-
-// DOM Elements
-const issueTableBody = document.getElementById("issueReportsTableBody");
-const responseDialog = document.getElementById("responseDialog");
-const overlay = document.getElementById("overlay");
-const customerResponse = document.getElementById("customerResponse");
-const responseStatus = document.getElementById("responseStatus");
-const prevBtn = document.getElementById("prevBtn");
-const nextBtn = document.getElementById("nextBtn");
-const paginationContainer = document.querySelector(".pagination");
-const searchInput = document.getElementById("issueSearch");
-const searchBtn = document.getElementById("searchBtn");
-const clearSearchBtn = document.getElementById("clearSearch");
 
 // Initialize the page
-document.addEventListener('DOMContentLoaded', () => {
-    checkAuthState();
+async function initializeIssueReports() {
+    const authStatus = await checkUserAuth();
+    
+    if (!authStatus.authenticated) {
+        window.location.href = "/admin/html/admin_login.html";
+        return;
+    }
+
+    userData = authStatus.userData;
+    userId = authStatus.userId;
+
+    // Load user profile and shop data
+    await loadUserProfile();
+    
+    // Load issue reports
+    await loadIssueReports();
+    
+    // Set up event listeners
     setupEventListeners();
-    loadIssueReports();
-});
 
-async function checkAuthState() {
+    document.body.style.display = '';
+}
+
+// Load user profile and shop data
+async function loadUserProfile() {
     try {
-        const authResult = await checkUserAuth();
-
-        if (!authResult.authenticated) {
-            window.location.href = "/admin/html/admin_login.html";
-            return;
-        }
-
-        const user = auth.currentUser;
-        if (!user) {
-            window.location.href = "/admin/html/admin_login.html";
-            return;
-        }
-
         // Check if user is employee
-        const employeePath = `smartfit_AR_Database/employees/${user.uid}`;
+        const employeePath = `smartfit_AR_Database/employees/${userId}`;
         const employeeResult = await readData(employeePath);
 
         if (employeeResult.success) {
@@ -71,38 +67,39 @@ async function checkAuthState() {
 
             // Set role-based UI elements
             if (shopData.role.toLowerCase() === "manager") {
-                document.getElementById("addemployeebtn").style.display = "none";
+                getElement("addemployeebtn").style.display = "none";
             } else if (shopData.role.toLowerCase() === "salesperson") {
-                document.getElementById("addemployeebtn").style.display = "none";
-                document.getElementById("analyticsbtn").style.display = "none";
+                getElement("addemployeebtn").style.display = "none";
+                getElement("analyticsbtn").style.display = "none";
             }
 
         } else {
             // Check if user is shop owner
-            const shopPath = `smartfit_AR_Database/shop/${user.uid}`;
+            const shopPath = `smartfit_AR_Database/shop/${userId}`;
             const shopResult = await readData(shopPath);
 
             if (shopResult.success) {
                 const shopData = shopResult.data;
                 roleLoggedin = "Shop Owner";
                 sname = shopData.shopName || 'Shop Owner';
-                shopLoggedin = user.uid;
+                shopLoggedin = userId;
                 updateProfileHeader(shopData);
             } else {
                 // User not found in employees or shop - redirect to login
                 window.location.href = "/admin/html/admin_login.html";
+                return;
             }
         }
     } catch (error) {
-        console.error("Error checking auth state:", error);
+        console.error("Error loading user profile:", error);
         window.location.href = "/admin/html/admin_login.html";
     }
 }
 
 // Function to update profile header
 function updateProfileHeader(userData) {
-    const profilePicture = document.getElementById('profilePicture');
-    const userFullname = document.getElementById('userFullname');
+    const profilePicture = getElement('profilePicture');
+    const userFullname = getElement('userFullname');
 
     if (!profilePicture || !userFullname) return;
 
@@ -117,7 +114,7 @@ function updateProfileHeader(userData) {
         userFullname.textContent = `${userData.firstName} ${userData.lastName}`;
     }
 
-    // Set profile picture - FIXED IMAGE RETRIEVAL
+    // Set profile picture
     if (userData.profilePhoto && userData.profilePhoto.url) {
         profilePicture.src = userData.profilePhoto.url;
         profilePicture.onerror = function () {
@@ -137,76 +134,13 @@ function getDefaultAvatar() {
     return "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' fill='%23ddd'%3E%3Crect width='100' height='100'/%3E%3Ctext x='50%' y='50%' font-size='20' text-anchor='middle' dominant-baseline='middle' fill='%23666'%3EProfile%3C/text%3E%3C/svg%3E";
 }
 
-function setupEventListeners() {
-    // Response dialog buttons
-    document.getElementById("confirmResponse")?.addEventListener("click", submitResponse);
-    document.getElementById("cancelResponse")?.addEventListener("click", hideResponseDialog);
-
-    // Modal close button
-    document.getElementById("closeIssueModal")?.addEventListener("click", () => {
-        document.getElementById("issueDetailsModal").classList.remove("show");
-        overlay.classList.remove("show");
-    });
-
-    // Pagination
-    prevBtn?.addEventListener("click", () => {
-        if (currentPage > 1) {
-            currentPage--;
-            setupPagination();
-        }
-    });
-
-    nextBtn?.addEventListener("click", () => {
-        const rows = issueTableBody.querySelectorAll("tr");
-        const pageCount = Math.ceil(rows.length / rowsPerPage);
-
-        if (currentPage < pageCount) {
-            currentPage++;
-            setupPagination();
-        }
-    });
-
-    // Search functionality
-    searchBtn?.addEventListener("click", performSearch);
-    clearSearchBtn?.addEventListener("click", clearSearch);
-    searchInput?.addEventListener("keyup", (e) => {
-        if (e.key === "Enter") performSearch();
-    });
-
-    // Logout functionality
-    const logoutLink = document.querySelector('a[href="/admin/html/admin_login.html"]');
-    logoutLink?.addEventListener('click', function (e) {
-        e.preventDefault();
-        document.getElementById('logoutDialog').classList.add('show');
-        overlay.classList.add('show');
-    });
-
-    document.getElementById('cancelLogout')?.addEventListener('click', function () {
-        document.getElementById('logoutDialog').classList.remove('show');
-        overlay.classList.remove('show');
-    });
-
-    document.getElementById('confirmLogout')?.addEventListener('click', function () {
-        logoutUser().then(result => {
-            if (result.success) {
-                window.location.href = '/admin/html/admin_login.html';
-            } else {
-                showNotification(`Logout failed: ${result.error}`, "error");
-            }
-        });
-    });
-
-    // Overlay click
-    overlay?.addEventListener('click', function () {
-        document.getElementById('responseDialog').classList.remove('show');
-        document.getElementById('issueDetailsModal').classList.remove('show');
-        document.getElementById('logoutDialog').classList.remove('show');
-        this.classList.remove('show');
-    });
-}
-
-function loadIssueReports() {
+// Load issue reports
+async function loadIssueReports() {
     const issuesPath = 'smartfit_AR_Database/issueReports';
+    const issueTableBody = getElement("issueReportsTableBody");
+
+    // Show loading state
+    issueTableBody.innerHTML = '<tr><td colspan="9">Loading issue reports...</td></tr>';
 
     // Use readDataRealtime for real-time updates
     const unsubscribe = readDataRealtime(issuesPath, (result) => {
@@ -235,7 +169,6 @@ function loadIssueReports() {
         setupPagination();
     });
 
-    // Return unsubscribe function if needed for cleanup
     return unsubscribe;
 }
 
@@ -250,11 +183,10 @@ function createIssueRow(issueId, issue) {
         issue.status.charAt(0).toUpperCase() + issue.status.slice(1) :
         'Pending';
 
-    // Create photos preview - FIXED IMAGE RETRIEVAL
+    // Create photos preview
     let photosHTML = 'No photos';
     if (issue.photoURLs && issue.photoURLs.length > 0) {
         photosHTML = issue.photoURLs.map(photoObj => {
-            // Handle both string URLs and object with url property
             const photoUrl = typeof photoObj === 'string' ? photoObj : photoObj.url;
             return `<img src="${photoUrl}" class="photo-thumbnail" alt="Issue photo" data-url="${photoUrl}" onerror="this.style.display='none'">`;
         }).join('');
@@ -313,6 +245,75 @@ function getIssueTypeLabel(type) {
     return types[type] || type || 'Unknown';
 }
 
+// Set up event listeners
+function setupEventListeners() {
+    // Logout functionality
+    const logoutLink = document.querySelector('a[href="/admin/html/admin_login.html"]');
+    logoutLink?.addEventListener('click', function (e) {
+        e.preventDefault();
+        getElement('logoutDialog').classList.add('show');
+        getElement('overlay').classList.add('show');
+    });
+
+    getElement('cancelLogout')?.addEventListener('click', function () {
+        getElement('logoutDialog').classList.remove('show');
+        getElement('overlay').classList.remove('show');
+    });
+
+    getElement('confirmLogout')?.addEventListener('click', function () {
+        logoutUser().then(result => {
+            if (result.success) {
+                window.location.href = '/admin/html/admin_login.html';
+            } else {
+                showNotification(`Logout failed: ${result.error}`, "error");
+            }
+        });
+    });
+
+    // Response dialog buttons
+    getElement("confirmResponse")?.addEventListener("click", submitResponse);
+    getElement("cancelResponse")?.addEventListener("click", hideResponseDialog);
+
+    // Modal close button
+    getElement("closeIssueModal")?.addEventListener("click", () => {
+        getElement("issueDetailsModal").classList.remove("show");
+        getElement("overlay").classList.remove("show");
+    });
+
+    // Pagination
+    getElement("prevBtn")?.addEventListener("click", () => {
+        if (currentPage > 1) {
+            currentPage--;
+            setupPagination();
+        }
+    });
+
+    getElement("nextBtn")?.addEventListener("click", () => {
+        const rows = getElement("issueReportsTableBody").querySelectorAll("tr");
+        const pageCount = Math.ceil(rows.length / rowsPerPage);
+
+        if (currentPage < pageCount) {
+            currentPage++;
+            setupPagination();
+        }
+    });
+
+    // Search functionality
+    getElement("searchBtn")?.addEventListener("click", performSearch);
+    getElement("clearSearchBtn")?.addEventListener("click", clearSearch);
+    getElement("searchInput")?.addEventListener("keyup", (e) => {
+        if (e.key === "Enter") performSearch();
+    });
+
+    // Overlay click
+    getElement('overlay')?.addEventListener('click', function () {
+        getElement('responseDialog').classList.remove('show');
+        getElement('issueDetailsModal').classList.remove('show');
+        getElement('logoutDialog').classList.remove('show');
+        this.classList.remove('show');
+    });
+}
+
 async function showIssueDetails(e, issueId) {
     e.preventDefault();
     currentIssueId = issueId;
@@ -325,8 +326,8 @@ async function showIssueDetails(e, issueId) {
         if (result.success) {
             const issue = result.data;
             updateIssueModalContent(issueId, issue);
-            document.getElementById('issueDetailsModal').classList.add('show');
-            overlay.classList.add('show');
+            getElement('issueDetailsModal').classList.add('show');
+            getElement('overlay').classList.add('show');
         } else {
             showNotification("Issue report not found", "error");
         }
@@ -337,12 +338,12 @@ async function showIssueDetails(e, issueId) {
 
 function updateIssueModalContent(issueId, issue) {
     console.log("Issue data:", issue);
-    const modalContent = document.getElementById('modalIssueContent');
-    const modalTitle = document.getElementById('modalIssueTitle');
+    const modalContent = getElement('modalIssueContent');
+    const modalTitle = getElement('modalIssueTitle');
 
     modalTitle.textContent = `Issue Report #${issueId.substring(0, 8)}`;
 
-    // Format photos if they exist - FIXED IMAGE RETRIEVAL
+    // Format photos if they exist
     let photosHTML = '<p>No photos submitted</p>';
     if (issue.photoURLs && issue.photoURLs.length > 0) {
         photosHTML = issue.photoURLs.map(photoObj => {
@@ -426,8 +427,8 @@ async function showResponseDialog(e, issueId) {
     e.stopPropagation();
 
     currentIssueId = issueId;
-    customerResponse.value = '';
-    responseStatus.value = 'processing';
+    getElement('customerResponse').value = '';
+    getElement('responseStatus').value = 'processing';
 
     try {
         const issuePath = `smartfit_AR_Database/issueReports/${issueId}`;
@@ -451,13 +452,12 @@ async function showResponseDialog(e, issueId) {
             userEmail = userData.email || userData.userEmail;
         }
 
-        // customer email from issue report if available of the clicked issue
         currentUserEmail = userEmail;
 
-        document.getElementById('dialogMessage').textContent =
+        getElement('dialogMessage').textContent =
             `Respond to issue report for Order #${issue.orderID ? issue.orderID.substring(0, 8) : 'Unknown'}`;
-        responseDialog.classList.add('show');
-        overlay.classList.add('show');
+        getElement('responseDialog').classList.add('show');
+        getElement('overlay').classList.add('show');
 
     } catch (error) {
         showNotification(`Error preparing response: ${error.message}`, "error");
@@ -465,23 +465,23 @@ async function showResponseDialog(e, issueId) {
 }
 
 function hideResponseDialog() {
-    responseDialog.classList.remove('show');
-    overlay.classList.remove('show');
+    getElement('responseDialog').classList.remove('show');
+    getElement('overlay').classList.remove('show');
     currentIssueId = null;
     currentUserEmail = null;
 }
 
 async function submitResponse() {
-    const responseText = customerResponse.value.trim();
-    const newStatus = responseStatus.value;
+    const responseText = getElement('customerResponse').value.trim();
+    const newStatus = getElement('responseStatus').value;
     console.log(newStatus);
 
     if (!responseText) {
         // Add visual feedback to the textarea
+        const customerResponse = getElement('customerResponse');
         customerResponse.style.border = "2px solid red";
         customerResponse.focus();
 
-        // Remove the red border after 2 seconds
         setTimeout(() => {
             customerResponse.style.border = "";
         }, 2000);
@@ -518,13 +518,14 @@ async function submitResponse() {
         if (!updateResult.success) {
             throw new Error(updateResult.error);
         }
-            console.log(`Would send email to ${currentUserEmail} about status: ${newStatus}`);
-            console.log('sname:', sname );
-            console.log('customerResponse:', customerResponse.value );
+
+        console.log(`Would send email to ${currentUserEmail} about status: ${newStatus}`);
+        console.log('sname:', sname);
+        console.log('customerResponse:', responseText);
 
         // Send email notification to user if email is available
         if (currentUserEmail) {
-            sendEmail(currentUserEmail, customerResponse.value, sname, 'maZuEJjFTiKrGZ4vX', 'service_n28x5fo', 'template_yp9a4ph')
+            sendEmail(currentUserEmail, responseText, sname, 'maZuEJjFTiKrGZ4vX', 'service_n28x5fo', 'template_yp9a4ph')
                 .then(result => {
                     if (result && !result.success) {
                         console.warn('Email sending failed (non-critical):', result.error);
@@ -547,7 +548,8 @@ async function submitResponse() {
 
 // Search functionality
 function performSearch() {
-    const searchTerm = searchInput.value.trim().toLowerCase();
+    const searchTerm = getElement('searchInput').value.trim().toLowerCase();
+    const issueTableBody = getElement("issueReportsTableBody");
 
     if (!searchTerm) {
         clearSearch();
@@ -576,7 +578,8 @@ function performSearch() {
 }
 
 function clearSearch() {
-    searchInput.value = '';
+    getElement('searchInput').value = '';
+    const issueTableBody = getElement("issueReportsTableBody");
     const rows = issueTableBody.querySelectorAll("tr");
     rows.forEach(row => row.style.display = '');
     currentPage = 1;
@@ -585,6 +588,8 @@ function clearSearch() {
 
 // Pagination functions
 function setupPagination() {
+    const issueTableBody = getElement("issueReportsTableBody");
+    const paginationContainer = document.querySelector(".pagination");
     const rows = issueTableBody.querySelectorAll("tr:not([style*='display: none'])");
     const pageCount = Math.ceil(rows.length / rowsPerPage);
 
@@ -608,7 +613,7 @@ function setupPagination() {
             updatePaginationButtons();
         });
 
-        paginationContainer.insertBefore(pageBtn, nextBtn);
+        paginationContainer.insertBefore(pageBtn, getElement("nextBtn"));
     }
 
     updateTableDisplay();
@@ -616,6 +621,7 @@ function setupPagination() {
 }
 
 function updateTableDisplay() {
+    const issueTableBody = getElement("issueReportsTableBody");
     const rows = issueTableBody.querySelectorAll("tr:not([style*='display: none'])");
     const startIndex = (currentPage - 1) * rowsPerPage;
     const endIndex = startIndex + rowsPerPage;
@@ -626,6 +632,9 @@ function updateTableDisplay() {
 }
 
 function updatePaginationButtons() {
+    const issueTableBody = getElement("issueReportsTableBody");
+    const prevBtn = getElement("prevBtn");
+    const nextBtn = getElement("nextBtn");
     const rows = issueTableBody.querySelectorAll("tr:not([style*='display: none'])");
     const pageCount = Math.ceil(rows.length / rowsPerPage);
 
@@ -655,7 +664,7 @@ function formatDisplayDate(timestamp) {
 }
 
 function showNotification(message, type) {
-    const notification = document.getElementById('notification');
+    const notification = getElement('notification');
     if (!notification) return;
 
     notification.textContent = message;
@@ -671,6 +680,25 @@ function showNotification(message, type) {
         }, 500);
     }, 3000);
 }
+
+// Initialize when DOM is loaded
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize issue reports page
+    initializeIssueReports().catch(error => {
+        console.error('Error initializing issue reports page:', error);
+        const issueTableBody = getElement("issueReportsTableBody");
+        if (issueTableBody) {
+            issueTableBody.innerHTML = `
+                <tr>
+                    <td colspan="9" class="error-state">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        Error loading issue reports. Please try refreshing the page.
+                    </td>
+                </tr>
+            `;
+        }
+    });
+});
 
 // Make functions available globally if needed
 window.showIssueDetails = showIssueDetails;
