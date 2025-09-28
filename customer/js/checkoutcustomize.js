@@ -17,6 +17,7 @@ const backButton = document.querySelector('.back-button');
 // Order data from URL parameters
 const urlParams = new URLSearchParams(window.location.search);
 const orderId = urlParams.get('orderId');
+const orderDataString = urlParams.get('orderData');
 let orderData = null;
 let orderConfirmed = false;
 let currentSlide = 0;
@@ -52,12 +53,12 @@ async function initializePage() {
     // Set user profile information
     setUserProfile();
     
-    // Load order data if orderId exists in URL
-    if (orderId) {
-        console.log('Order ID found:', orderId);
-        await loadOrderData(orderId);
+    // Load order data from URL parameters
+    if (orderId && orderDataString) {
+        console.log('Order data found in URL parameters');
+        await loadOrderDataFromURL();
     } else {
-        console.log('No order ID found, redirecting...');
+        console.log('No order data found in URL, redirecting...');
         window.location.href = '/customer/html/customizeshoe.html';
     }
     
@@ -71,9 +72,6 @@ async function initializePage() {
 // Handle beforeunload event
 function handleBeforeUnload(e) {
     if (!orderConfirmed && orderId) {
-        // Delete the order if not confirmed
-        deleteOrderFromDatabase();
-        
         // Standard way to show confirmation dialog
         e.preventDefault();
         e.returnValue = '';
@@ -81,24 +79,23 @@ function handleBeforeUnload(e) {
     }
 }
 
-// Delete order from database
-async function deleteOrderFromDatabase() {
+// Load order data from URL parameters
+async function loadOrderDataFromURL() {
     try {
-        // Remove from boughtshoe
-        const boughtshoePath = `smartfit_AR_Database/boughtshoe/${userSession.userId}/${orderId}`;
-        const boughtResult = await deleteData(boughtshoePath);
-        
-        // Remove from customizedtransactions if exists
-        const transactionPath = `smartfit_AR_Database/customizedtransactions/${userSession.userId}/${orderId}`;
-        const transactionResult = await deleteData(transactionPath);
-        
-        if (boughtResult.success && transactionResult.success) {
-            console.log('Order deleted successfully');
-        } else {
-            console.log('Order deletion completed with warnings');
+        if (!orderDataString) {
+            throw new Error('No order data in URL parameters');
         }
+        
+        // Decode and parse the order data from URL
+        orderData = JSON.parse(decodeURIComponent(orderDataString));
+        console.log('Order data loaded from URL:', orderData);
+        
+        // Display order details
+        displayOrderDetails(orderData);
+        
     } catch (error) {
-        console.error('Error deleting order:', error);
+        console.error('Error loading order data from URL:', error);
+        window.location.href = '/customer/html/customizeshoe.html';
     }
 }
 
@@ -186,26 +183,6 @@ function prefillShippingForm() {
     }
     
     console.log('Form pre-filled successfully');
-}
-
-// Load order data from Firebase
-async function loadOrderData(orderId) {
-    try {
-        const orderPath = `smartfit_AR_Database/boughtshoe/${userSession.userId}/${orderId}`;
-        const result = await readData(orderPath);
-        
-        if (result.success && result.data) {
-            orderData = result.data;
-            console.log('Order data loaded:', orderData);
-            displayOrderDetails(orderData);
-        } else {
-            console.error('Order not found');
-            window.location.href = '/customer/html/customizeshoe.html';
-        }
-    } catch (error) {
-        console.error('Error loading order data:', error);
-        window.location.href = '/customer/html/customizeshoe.html';
-    }
 }
 
 function initializeCarousel() {
@@ -507,11 +484,10 @@ function initializeEventListeners() {
     
     // Back to customize button
     if (backToCustomizeBtn) {
-        backToCustomizeBtn.addEventListener('click', async () => {
+        backToCustomizeBtn.addEventListener('click', () => {
             if (!orderConfirmed) {
                 const confirmCancel = confirm('Are you sure you want to cancel this order? Your custom design will be lost.');
                 if (confirmCancel) {
-                    await deleteOrderFromDatabase();
                     window.location.href = '/customer/html/customizeshoe.html';
                 }
             } else {
@@ -522,12 +498,11 @@ function initializeEventListeners() {
     
     // Back button (arrow)
     if (backButton) {
-        backButton.addEventListener('click', async (e) => {
+        backButton.addEventListener('click', (e) => {
             e.preventDefault();
             if (!orderConfirmed) {
                 const confirmCancel = confirm('Are you sure you want to cancel this order? Your custom design will be lost.');
                 if (confirmCancel) {
-                    await deleteOrderFromDatabase();
                     window.location.href = '/customer/html/customizeshoe.html';
                 }
             } else {
@@ -539,7 +514,7 @@ function initializeEventListeners() {
     // View order button in modal
     if (viewOrderBtn) {
         viewOrderBtn.addEventListener('click', () => {
-            window.location.href = `/customer/html/customization_pendingOrders.html?orderId=${orderId}`;
+            window.location.href = `/customer/html/customization_pendingOrders.html`;
         });
     }
     
@@ -553,7 +528,7 @@ function initializeEventListeners() {
                 confirmOrderBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
                 
                 // Update order with shipping and payment info
-                await updateOrderWithShippingInfo();
+                await saveOrderToDatabase();
                 
                 // Mark order as confirmed
                 orderConfirmed = true;
@@ -573,11 +548,11 @@ function initializeEventListeners() {
     }
     
     // Handle browser back button
-    window.addEventListener('popstate', async () => {
+    window.addEventListener('popstate', () => {
         if (!orderConfirmed) {
             const confirmCancel = confirm('Are you sure you want to cancel this order? Your custom design will be lost.');
             if (confirmCancel) {
-                await deleteOrderFromDatabase();
+                window.location.href = '/customer/html/customizeshoe.html';
             }
         }
     });
@@ -601,8 +576,8 @@ async function handleLogout() {
     }
 }
 
-// Update order with shipping information
-async function updateOrderWithShippingInfo() {
+// Save order to database with shipping information
+async function saveOrderToDatabase() {
     // Get form values
     const shippingInfo = {
         firstName: getElement('firstName')?.value || '',
@@ -619,53 +594,61 @@ async function updateOrderWithShippingInfo() {
     const paymentMethodElement = document.querySelector('input[name="paymentMethod"]:checked');
     const paymentMethod = paymentMethodElement ? paymentMethodElement.value : 'credit_card';
     
-    // Update order data
-    const updates = {
+    // Calculate final totals
+    const vatRate = 0.12;
+    const subtotal = orderData.basePrice + (orderData.customizationPrice || 0);
+    const vatAmount = subtotal * vatRate;
+    const shippingPrice = 200;
+    const totalPrice = subtotal + vatAmount + shippingPrice;
+    
+    // Create complete order object
+    const completeOrderData = {
         ...orderData,
+        userId: userSession.userId,
+        orderId: orderId,
         shippingInfo: shippingInfo,
         paymentMethod: paymentMethod,
         status: 'processing',
         statusUpdates: {
-            ...(orderData.statusUpdates || {}),
             processing: {
                 status: 'processing',
                 timestamp: Date.now(),
                 message: 'Order is being processed'
             }
         },
-        confirmedAt: Date.now()
+        confirmedAt: Date.now(),
+        vatAmount: vatAmount,
+        shippingPrice: shippingPrice,
+        finalTotal: totalPrice
     };
     
-    // Update in boughtshoe
+    // Save to boughtshoe
     const boughtshoePath = `smartfit_AR_Database/boughtshoe/${userSession.userId}/${orderId}`;
-    const boughtResult = await updateData(boughtshoePath, updates);
+    const boughtResult = await updateData(boughtshoePath, completeOrderData);
     
-    // Also update in transactions
+    // Also save to transactions
     const transactionPath = `smartfit_AR_Database/customizedtransactions/${userSession.userId}/${orderId}`;
     const transactionData = {
-        ...updates,
+        ...completeOrderData,
         date: new Date().toISOString(),
         item: {
             name: `Custom ${orderData.model} shoe`,
-            price: orderData.price || orderData.totalPrice,
+            price: totalPrice,
             quantity: 1,
             size: orderData.size,
             isCustom: true,
-            image: orderData.image || getPreviewImageUrl(orderData.model)
+            image: getPreviewImageUrl(orderData.model)
         },
         status: "pending",
-        totalAmount: orderData.price || orderData.totalPrice,
-        userId: userSession.userId,
-        shippingInfo: shippingInfo,
-        paymentMethod: paymentMethod
+        totalAmount: totalPrice
     };
     
     const transactionResult = await updateData(transactionPath, transactionData);
     
     if (boughtResult.success && transactionResult.success) {
-        console.log('Order updated successfully');
+        console.log('Order saved successfully to database');
     } else {
-        throw new Error('Failed to update order');
+        throw new Error('Failed to save order to database');
     }
 }
 
