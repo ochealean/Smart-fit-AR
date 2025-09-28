@@ -347,7 +347,7 @@ async function saveDesignToDatabase() {
         };
 
         // Save to database
-        const designPath = `smartfit_AR_Database/saved_customShoes/${userSession.userId}`;
+        const designPath = `smartfit_AR_Database/saved_customShoes/${userSession.userId}/${generate18CharID()}`;
         const result = await createData(designPath, userSession.userId, designData);
         
         if (result.success) {
@@ -388,7 +388,7 @@ async function addToCart() {
         };
 
         // Save to cart
-        const cartPath = `smartfit_AR_Database/customized_cart/${userSession.userId}`;
+        const cartPath = `smartfit_AR_Database/customized_cart/${userSession.userId}/${generate18CharID()}`;
         const result = await createData(cartPath, userSession.userId, cartItem);
         
         if (result.success) {
