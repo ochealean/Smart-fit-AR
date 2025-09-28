@@ -1,5 +1,4 @@
 :root {
-    /* Using the same color variables as your registration forms */
     --black: #121212;
     --blue: #6e8efb;
     --violet: #a777e3;
@@ -98,17 +97,41 @@ body {
     animation: fadeIn 0.8s ease-out 0.2s both;
 }
 
-.login-header h1 {
-    color: var(--primary);
-    font-size: 2.2rem;
-    margin-bottom: 0.5rem;
+.logo-container {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 0.8rem;
-    position: relative;
+    gap: 1rem;
+    margin-bottom: 1rem;
+    animation: fadeIn 0.8s ease-out 0.2s both;
 }
 
+.login-logo {
+    width: 60px;
+    height: 60px;
+    object-fit: contain;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+    transition: var(--transition);
+    transform-origin: center;
+}
+
+.logo-container:hover .login-logo {
+    transform: scale(1.1) rotate(5deg);
+    filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));
+}
+
+.brand-name {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: var(--primary);
+    letter-spacing: -0.5px;
+    background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    position: relative;
+    padding-right: 1rem;
+}
 
 .login-header p {
     color: var(--text-secondary);
@@ -445,8 +468,21 @@ body {
         border-radius: 12px;
     }
 
-    .login-header h1 {
-        font-size: 1.8rem;
+    .logo-container {
+        gap: 0.8rem;
+    }
+    
+    .login-logo {
+        width: 50px;
+        height: 50px;
+    }
+    
+    .brand-name {
+        font-size: 2rem;
+    }
+    
+    .brand-name::after {
+        height: 1.5rem;
     }
 
     .login-type-btn {
@@ -468,9 +504,23 @@ body {
         padding: 0.9rem;
     }
 
-    .login-header h1 {
+    .logo-container {
         flex-direction: column;
         gap: 0.5rem;
+    }
+    
+    .login-logo {
+        width: 45px;
+        height: 45px;
+    }
+    
+    .brand-name {
+        font-size: 1.8rem;
+        padding-right: 0;
+    }
+    
+    .brand-name::after {
+        display: none;
     }
 }
 
