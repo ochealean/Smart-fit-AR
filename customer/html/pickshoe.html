@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Select Shoe Model</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="icon" href="../../images/smartfitImages/smartfitAR-logo.png" type="image/x-icon">
+    <link rel="stylesheet" href="../css/pickshoe.css">
+</head>
+<body>
+
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="loading-overlay">
+        <div class="loader">
+            <div class="loader-spinner"></div>
+            <p>Loading your Customize Shoe...</p>
+        </div>
+    </div>
+
+    <div class="dashboard">
+        <!-- Sidebar - Purple Theme -->
+        <div class="sidebar">
+            <div class="logo">
+                <div class="logo-icon">
+                    <i class="fas fa-store"></i>
+                </div>
+                <span>SHOE PORTAL</span>
+            </div>
+            <div class="nav-items">
+                <a href="/customer/html/customer_dashboard.html" class="nav-item">
+                    <i class="fas fa-home"></i> Dashboard
+                </a>
+                <a href="/customer/html/browse.html" class="nav-item">
+                    <i class="fas fa-shopping-bag"></i> Browse Shoes
+                </a>
+                <a href="/customer/html/shoevalidator.html" class="nav-item">
+                    <i class="fas fa-check-circle"></i> Shoe Validation
+                </a>
+                <a href="/customer/html/pickshoe.html" class="nav-item active">
+                    <i class="fas fa-shoe-prints"></i> Customize Shoes
+                </a>
+                <a href="/customer/html/customization_pendingOrders.html" class="nav-item">
+                    <i class="fas fa-tools"></i> My Custom Orders
+                </a>
+                <a href="/customer/html/orders.html" class="nav-item">
+                    <i class="fas fa-receipt"></i> My Orders
+                </a>
+                <a href="/customer/html/add_to_cart.html" class="nav-item">
+                    <i class="fas fa-shopping-cart"></i> My Cart
+                </a>
+                <a href="/customer/html/history.html" class="nav-item">
+                    <i class="fas fa-history"></i> Order History
+                </a>
+                <a href="/customer/html/issue_response.html" class="nav-item">
+                    <i class="fas fa-reply"></i> Issue Response
+                </a>
+                <a href="/customer/html/wishlist.html" class="nav-item">
+                    <i class="fas fa-heart"></i> Wishlist
+                </a>
+                <a href="/chatbot/html/chatbot.html" class="nav-item">
+                    <i class="fas fa-comment"></i> Chatbot
+                </a>
+                <a href="/customer/html/customerprofile.html" class="nav-item">
+                    <i class="fas fa-cog"></i> Settings
+                </a>
+                <a id="logout_btn" class="nav-item">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </a>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <div class="header">
+                <div class="mobile-menu-toggle">
+                    <i class="fas fa-bars"></i>
+                </div>
+                <h1>Select Your Shoe Model</h1>
+                <div class="user-profile">
+                    <img id="imageProfile" src="#" alt="Profile" class="user-avatar" onerror="this.src='https://cdn-icons-png.flaticon.com/512/11542/11542598.png'">
+                    <span id="userName_display2">Customer name</span>
+                </div>
+            </div>
+
+            <div class="model-selection-container">
+                <h2 class="section-title">Available Models</h2>
+                <div class="model-grid" id="modelGrid">
+                    <!-- Model 1 -->
+                    <div class="model-card" data-model="classic" data-base-price="2499" data-base-days="7">
+                        <img src="/images/shoemodel1.png" alt="Classic Sneaker" class="model-image" onerror="this.src='https://cdn-icons-png.flaticon.com/512/11542/11542598.png'">
+                        <div class="model-details">
+                            <h3 class="model-name">Classic Sneaker</h3>
+                            <div class="model-price">₱2,499.00</div>
+                            <p class="model-description">Our timeless classic sneaker with customizable options for sole, upper, laces, and more.</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Model 2 -->
+                    <div class="model-card" data-model="runner" data-base-price="2999" data-base-days="5">
+                        <img src="/images/shoemodel2.png" alt="Performance Runner" class="model-image" onerror="this.src='https://cdn-icons-png.flaticon.com/512/11542/11542598.png'">
+                        <div class="model-details">
+                            <h3 class="model-name">Performance Runner</h3>
+                            <div class="model-price">₱2,999.00</div>
+                            <p class="model-description">High-performance running shoe with advanced cushioning technology and breathable materials.</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Model 3 -->
+                    <div class="model-card" data-model="basketball" data-base-price="2799" data-base-days="10">
+                        <img src="/images/shoemodel3.png" alt="High-Top Basketball" class="model-image" onerror="this.src='https://cdn-icons-png.flaticon.com/512/11542/11542598.png'">
+                        <div class="model-details">
+                            <h3 class="model-name">High-Top Basketball</h3>
+                            <div class="model-price">₱2,799.00</div>
+                            <p class="model-description">Ankle-supporting basketball shoes with customizable colors and premium materials.</p>
+                        </div>
+                    </div>
+                    
+                    </div>
+                </div>
+                
+                <button id="customizeBtn" class="btn btn-primary" disabled>
+                    <i class="fas fa-magic"></i> Customize Selected Model
+                </button>
+
+                <!-- Saved Designs Section -->
+                <div class="saved-designs-container hidden">
+                    <h2 class="section-title">My Saved Designs</h2>
+                    
+                    <div id="savedDesignsList">
+                        <!-- Empty State (hidden by default) -->
+                        <div class="empty-state" id="emptySavedDesigns" style="display: none;">
+                            <i class="fas fa-shoe-prints"></i>
+                            <h3>No Saved Designs Yet</h3>
+                            <p>Customize a shoe model and save your design to see it appear here.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sidebar Overlay -->
+    <div class="sidebar-overlay"></div>
+
+    <script>
+        // Mobile sidebar toggle
+        document.addEventListener('DOMContentLoaded', function () {
+            const mobileToggle = document.querySelector('.mobile-menu-toggle');
+            const sidebar = document.querySelector('.sidebar');
+            const overlay = document.querySelector('.sidebar-overlay');
+
+            if (mobileToggle && sidebar && overlay) {
+                mobileToggle.addEventListener('click', () => {
+                    sidebar.classList.toggle('active');
+                    overlay.classList.toggle('active');
+                });
+
+                overlay.addEventListener('click', () => {
+                    sidebar.classList.remove('active');
+                    overlay.classList.remove('active');
+                });
+            }
+
+            // Show loader immediately
+            const loadingOverlay = document.getElementById('loadingOverlay');
+            const mainContent = document.querySelector('.main-content');
+            
+            // Show loading overlay
+            loadingOverlay.style.display = 'flex';
+            
+            // Initialize with sample data after a delay (simulating loading)
+            setTimeout(() => {
+                
+                // Hide loader and show content
+                loadingOverlay.style.opacity = '0';
+                loadingOverlay.style.visibility = 'hidden';
+                
+                // Show main content with fade-in effect
+                mainContent.classList.add('loaded');
+            }, 2000); // 2 second delay
+        });
+    </script>
+
+    <script src="../js/pickshoe.js" type="module"></script>
+</body>
+</html>
