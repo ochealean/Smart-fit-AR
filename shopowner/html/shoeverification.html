@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shoe Validation - Shop Owner</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="../css/shoeverification.css">
+    <link rel="icon" href="../../images/smartfitImages/smartfitAR-logo.png" type="image/x-icon">
+</head>
+
+<body>
+    <div class="dashboard">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="logo">
+                <div class="logo-icon">
+                    <i class="fas fa-store"></i>
+                </div>
+                <span>SHOP DASHBOARD</span>
+            </div>
+            <div class="nav-items">
+                <a href="/shopowner/html/shop_dashboard.html" class="nav-item">
+                    <i class="fas fa-home"></i> Dashboard
+                </a>
+                <a href="/shopowner/html/shopowner_addshoe.html" class="nav-item">
+                    <i class="fas fa-shoe-prints"></i> Add Shoe
+                </a>
+                <a href="/shopowner/html/shoeverification.html" class="nav-item active manager">
+                    <i class="fas fa-check-circle"></i> Shoe Verification
+                </a>
+                <a id="addemployeebtn" href="/shopowner/html/shopowner_addemployee.html" class="nav-item shopowner">
+                    <i class="fas fa-users"></i> Add Employee
+                </a>
+                <a href="/shopowner/html/shop_inventory.html" class="nav-item">
+                    <i class="fas fa-boxes"></i> Inventory
+                </a>
+                <a href="/shopowner/html/shop_order.html" class="nav-item">
+                    <i class="fas fa-shopping-cart"></i> Orders
+                </a>
+                <a id="issuereport" href="/shopowner/html/issue_report.html" class="nav-item manager">
+                    <i class="fas fa-exclamation-circle"></i> Issue Report
+                </a>
+                <a id="analyticsbtn" href="/shopowner/html/analytics.html" class="nav-item manager">
+                    <i class="fas fa-chart-line"></i> Analytics
+                </a>
+                <a href="/shopowner/html/shopprofile.html" class="nav-item">
+                    <i class="fas fa-cog"></i> Settings
+                </a>
+                <a id="logout_btn" class="nav-item">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </a>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <div class="header">
+                <div class="mobile-menu-toggle">
+                    <i class="fas fa-bars"></i>
+                </div>
+                <h1>Shoe Verification</h1>
+                <div class="user-profile">
+                    <img id="profilePicture" src="https://randomuser.me/api/portraits/women/45.jpg" alt="User" class="user-avatar">
+                    <span id="userFullname">Shop Owner</span>
+                </div>
+            </div>
+
+            <!-- Tabs Navigation -->
+            <div class="tabs">
+                <button class="tab-btn active" data-tab="validation-form">Submit Validation</button>
+                <button class="tab-btn" data-tab="validation-history">Validation History</button>
+            </div>
+
+            <!-- Validation Form Tab -->
+            <div class="tab-content active" id="validation-form">
+                <div class="form-container">
+                    <h2 class="form-title"><i class="fas fa-clipboard-check"></i> Submit Shoe for Validation</h2>
+
+                    <form id="shoeValidationForm">
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label for="serialNumber" class="form-label">Serial Number</label>
+                                <input type="text" id="serialNumber" class="form-input"
+                                    placeholder="Enter shoe serial number" required>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="shoeModel" class="form-label">Shoe Model</label>
+                                <input type="text" id="shoeModel" class="form-input" placeholder="Enter shoe model name"
+                                    required>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="description" class="form-label">General Description / Proof of
+                                Authenticity</label>
+                            <textarea id="description" class="form-textarea"
+                                placeholder="Provide detailed description and proof of authenticity..."
+                                required></textarea>
+                        </div>
+
+                        <div class="image-upload-section">
+                            <h3 class="form-label">Shoe Images (Required)</h3>
+                            <p style="color: var(--gray-dark); margin-bottom: 1rem;">Please upload clear images of the
+                                shoe from different angles</p>
+
+                            <div class="image-grid">
+                                <div class="image-upload-item" id="frontViewUpload">
+                                    <i class="fas fa-camera"></i>
+                                    <p>Front View</p>
+                                    <img id="frontViewPreview" class="image-preview">
+                                    <span class="remove-image">&times;</span>
+                                    <input type="file" id="frontView" accept="image/*" style="display: none;">
+                                </div>
+
+                                <div class="image-upload-item" id="backViewUpload">
+                                    <i class="fas fa-camera"></i>
+                                    <p>Back View</p>
+                                    <img id="backViewPreview" class="image-preview">
+                                    <span class="remove-image">&times;</span>
+                                    <input type="file" id="backView" accept="image/*" style="display: none;">
+                                </div>
+
+                                <div class="image-upload-item" id="topViewUpload">
+                                    <i class="fas fa-camera"></i>
+                                    <p>Top View</p>
+                                    <img id="topViewPreview" class="image-preview">
+                                    <span class="remove-image">&times;</span>
+                                    <input type="file" id="topView" accept="image/*" style="display: none;">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-actions">
+                            <button type="button" class="btn btn-secondary">Cancel</button>
+                            <button type="submit" class="btn btn-primary"><i class="fas fa-paper-plane"></i> Submit for
+                                Validation</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Validation History Tab -->
+            <div class="tab-content" id="validation-history">
+                <div class="table-container">
+                    <h2 class="form-title"><i class="fas fa-history"></i> Past Validations</h2>
+
+                    <table class="validation-table">
+                        <thead>
+                            <tr>
+                                <th>Serial Number</th>
+                                <th>Model</th>
+                                <th>Submitted Date</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>SN12345678</td>
+                                <td>Nike Air Jordan 1</td>
+                                <td>Oct 15, 2023</td>
+                                <td><span class="status-badge status-legit">Legit</span></td>
+                                <td><button class="action-btn view-details" data-id="1">View Details</button></td>
+                            </tr>
+                            <tr>
+                                <td>SN87654321</td>
+                                <td>Adidas Yeezy Boost 350</td>
+                                <td>Oct 10, 2023</td>
+                                <td><span class="status-badge status-fake">Fake</span></td>
+                                <td><button class="action-btn view-details" data-id="2">View Details</button></td>
+                            </tr>
+                            <tr>
+                                <td>SN11223344</td>
+                                <td>New Balance 550</td>
+                                <td>Oct 5, 2023</td>
+                                <td><span class="status-badge status-pending">Pending</span></td>
+                                <td><button class="action-btn view-details" data-id="3">View Details</button></td>
+                            </tr>
+                            <tr>
+                                <td>SN55667788</td>
+                                <td>Nike Dunk Low</td>
+                                <td>Sep 28, 2023</td>
+                                <td><span class="status-badge status-legit">Legit</span></td>
+                                <td><button class="action-btn view-details" data-id="4">View Details</button></td>
+                            </tr>
+                            <tr>
+                                <td>SN99887766</td>
+                                <td>Converse Chuck Taylor</td>
+                                <td>Sep 20, 2023</td>
+                                <td><span class="status-badge status-fake">Fake</span></td>
+                                <td><button class="action-btn view-details" data-id="5">View Details</button></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Validation Details Modal -->
+    <div class="modal" id="validationModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Validation Details</h2>
+                <button class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label class="form-label">Serial Number</label>
+                        <p id="modal-serial">SN12345678</p>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Shoe Model</label>
+                        <p id="modal-model">Nike Air Jordan 1</p>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Description</label>
+                    <p id="modal-description">This is a limited edition release with special packaging and extra laces.
+                        The quality of materials is exceptional with no visible flaws in stitching or glue marks.</p>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Submitted Images</label>
+                    <div class="modal-images">
+                        <img src="#" alt="Front View" class="modal-image" id="modal-front">
+                        <img src="#" alt="Back View" class="modal-image" id="modal-back">
+                        <img src="#" alt="Top View" class="modal-image" id="modal-top">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Validation Status</label>
+                    <p id="modal-status"><span class="status-badge status-legit">Legit</span></p>
+                </div>
+
+                <div class="modal-reason" id="modal-reason">
+                    <h4>Validation Notes:</h4>
+                    <p id="modal-reason-text">This shoe passed all authenticity checks. The serial number matches the
+                        manufacturer's database, materials are consistent with authentic products, and all design
+                        elements are correct for this model.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sidebar Overlay -->
+    <div class="sidebar-overlay"></div>
+
+   <script src="../js/shoeverification.js" type="module"></script>
+</body>
+
+</html>

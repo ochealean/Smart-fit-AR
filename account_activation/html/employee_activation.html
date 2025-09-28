@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Activate Your Account</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            /* Using the same color variables as your registration forms */
+            --black: #121212;
+            --blue: #6e8efb;
+            --violet: #a777e3;
+            --white: #FFFFFF;
+            --gold: #FFE082;
+            --lightgray: #333;
+            --darkgray: #222;
+            --red: #FF5252;
+            --gray: #E8EDED;
+            --blueish: #6e8efb;
+            --royalviolet: #6A0572;
+            --primary: #6e8efb;
+            --primary-dark: #5a7df0;
+            --secondary: #a777e3;
+            --accent: #FFE082;
+            --dark: #121212;
+            --light: #FFFFFF;
+            --gray-light: #f5f7fa;
+            --gray-medium: #e4e8eb;
+            --gray-dark: #333;
+            --success: #4CAF50;
+            --warning: #FFC107;
+            --error: #f44336;
+            --text-primary: #333;
+            --text-secondary: #666;
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.12);
+            --shadow-md: 0 4px 6px rgba(0,0,0,0.1);
+            --shadow-lg: 0 10px 25px rgba(0,0,0,0.1);
+            --transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+
+        /* General Styles */
+        body {
+            font-family: 'Poppins', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: var(--text-primary);
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, var(--gray-light) 0%, var(--gray-medium) 100%);
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        /* Activation Container */
+        .activation-container {
+            max-width: 500px;
+            margin: 2rem auto;
+            padding: 2.5rem;
+            background: var(--light);
+            border-radius: 16px;
+            box-shadow: var(--shadow-lg);
+            flex: 1;
+            box-sizing: border-box;
+            position: relative;
+            overflow: hidden;
+            animation: fadeIn 0.6s ease-out;
+        }
+
+        .activation-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            animation: slideIn 0.8s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(-100%); }
+            to { transform: translateX(0); }
+        }
+
+        .activation-container h1 {
+            color: var(--primary);
+            font-size: 2.2rem;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.8rem;
+            position: relative;
+            text-align: center;
+        }
+
+        .activation-container p {
+            color: var(--text-secondary);
+            font-size: 1rem;
+            margin-top: 1.2rem;
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        /* Form Styles */
+        .form-group {
+            margin-bottom: 1.5rem;
+            position: relative;
+            animation: fadeIn 0.6s ease-out;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: var(--dark);
+            transition: var(--transition);
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 1rem 1.2rem;
+            border: 2px solid var(--gray-medium);
+            border-radius: 10px;
+            font-size: 0.95rem;
+            transition: var(--transition);
+            background-color: var(--gray-light);
+            box-sizing: border-box;
+        }
+
+        .form-group input:focus {
+            border-color: var(--primary);
+            outline: none;
+            box-shadow: 0 0 0 4px rgba(110, 142, 251, 0.2);
+            background-color: var(--light);
+            transform: translateY(-2px);
+        }
+
+        .form-group input:focus + label {
+            color: var(--primary);
+        }
+
+        .password-note {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            margin-top: 0.5rem;
+        }
+
+        .password-input-container {
+            position: relative;
+        }
+
+        .password-input-container input {
+            padding-right: 40px !important;
+        }
+
+        .toggle-password {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            color: var(--text-secondary);
+            transition: var(--transition);
+        }
+
+        .toggle-password:hover {
+            color: var(--primary);
+        }
+
+        /* Button Styles */
+        #activateBtn {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: var(--light);
+            border: none;
+            padding: 1.1rem;
+            font-size: 1rem;
+            font-weight: 600;
+            border-radius: 10px;
+            cursor: pointer;
+            width: 100%;
+            transition: var(--transition);
+            box-shadow: var(--shadow-sm);
+            position: relative;
+            overflow: hidden;
+            margin-top: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.8rem;
+        }
+
+        #activateBtn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: var(--transition);
+        }
+
+        #activateBtn:hover {
+            transform: translateY(-3px);
+            box-shadow: var(--shadow-md);
+        }
+
+        #activateBtn:hover::before {
+            left: 100%;
+        }
+
+        #activateBtn:active {
+            transform: translateY(0);
+        }
+
+        .register-link {
+            text-align: center;
+            margin-top: 1rem;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            animation: fadeIn 0.6s ease-out 0.5s both;
+        }
+
+        .register-link a {
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 500;
+            position: relative;
+        }
+
+        .register-link a::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            width: 0;
+            height: 1px;
+            background: var(--primary);
+            transition: var(--transition);
+        }
+
+        .register-link a:hover {
+            color: var(--secondary);
+        }
+
+        .register-link a:hover::after {
+            width: 100%;
+        }
+
+        /* Footer */
+        .login-footer {
+            background: var(--dark);
+            color: var(--light);
+            padding: 1.5rem 0;
+            margin-top: auto;
+        }
+
+        .login-footer .footer-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .login-footer nav {
+            display: flex;
+            gap: 1.5rem;
+        }
+
+        .login-footer a {
+            color: var(--light);
+            text-decoration: none;
+            transition: var(--transition);
+            font-size: 0.9rem;
+            position: relative;
+        }
+
+        .login-footer a::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            width: 0;
+            height: 1px;
+            background: var(--accent);
+            transition: var(--transition);
+        }
+
+        .login-footer a:hover {
+            color: var(--accent);
+        }
+
+        .login-footer a:hover::after {
+            width: 100%;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 600px) {
+            .activation-container {
+                margin: 1rem;
+                padding: 1.8rem;
+                border-radius: 12px;
+            }
+            
+            .activation-container h1 {
+                font-size: 1.8rem;
+            }
+            
+            #activateBtn {
+                padding: 1rem;
+            }
+        }
+
+        @media (max-width: 400px) {
+            .activation-container h1 {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="activation-container">
+        <h1><i class="fas fa-user-shield"></i> Account Activation</h1>
+        <p>Enter your default credentials and set up your personal account</p>
+        
+        <form id="activationForm">
+            <div class="form-group">
+                <label for="defaultEmail">Default Account Email</label>
+                <input type="email" id="defaultEmail" required 
+                       placeholder="Enter the email provided by your employer">
+            </div>
+            
+            <div class="form-group">
+                <label for="defaultPassword">Default Password</label>
+                <div class="password-input-container">
+                    <input type="password" id="defaultPassword" required 
+                        placeholder="Enter the temporary password">
+                    <i class="fas fa-eye-slash toggle-password" data-target="defaultPassword"></i>
+                </div>
+                <p class="password-note">This is the password generated when your account was created</p>
+            </div>
+            
+            <div class="form-group">
+                <label for="newEmail">Your Personal Email</label>
+                <input type="email" id="newEmail" required 
+                       placeholder="Enter your preferred email">
+            </div>
+            
+            <div class="form-group">
+                <label for="newPassword">New Password</label>
+                <div class="password-input-container">
+                    <input type="password" id="newPassword" required 
+                        placeholder="Create your password (min 6 characters)">
+                    <i class="fas fa-eye-slash toggle-password" data-target="newPassword"></i>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="confirmPassword">Confirm New Password</label>
+                <div class="password-input-container">
+                    <input type="password" id="confirmPassword" required 
+                        placeholder="Re-enter your new password">
+                    <i class="fas fa-eye-slash toggle-password" data-target="confirmPassword"></i>
+                </div>
+            </div>
+            
+            <button type="submit" id="activateBtn">
+                <i class="fas fa-user-check"></i> Activate Account
+            </button>
+        </form>
+
+        <div class="register-link">
+               Don't have an employee account? <a href="../../user_login.html#shop">Go back to Login Page</a>
+        </div>
+
+    </div>
+
+    <footer class="login-footer">
+        <div class="footer-content">
+            <p>&copy; 2025 Shoe Shop Portal. All rights reserved.</p>
+            <nav>
+                <a href="/">Home</a>
+                <a href="/extras/privacypolicy.html">Privacy Policy</a>
+                <a href="/extras/termsofservice.html">Terms of Service</a>
+                <a href="/extras/contactus.html">Contact Us</a>
+            </nav>
+        </div>
+    </footer>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Password visibility toggle
+        const togglePasswordButtons = document.querySelectorAll('.toggle-password');
+        
+        togglePasswordButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const targetId = this.getAttribute('data-target');
+                const passwordInput = document.getElementById(targetId);
+                
+                if (passwordInput.type === 'password') {
+                    passwordInput.type = 'text';
+                    this.classList.remove('fa-eye-slash');
+                    this.classList.add('fa-eye');
+                } else {
+                    passwordInput.type = 'password';
+                    this.classList.remove('fa-eye');
+                    this.classList.add('fa-eye-slash');
+                }
+            });
+        });
+    });
+    </script>
+
+    <script src="../js/employee_activation.js" type="module"></script>
+</body>
+</html>

@@ -1,0 +1,545 @@
+// shopowner_addemployee.js - UPDATED TO USE FIREBASE METHODS
+import { 
+    checkUserAuth, 
+    logoutUser, 
+    createUserWithEmailAndPasswordWrapper,
+    sendEmailVerificationWrapper,
+    updateData,
+    readData,
+    viewProfile
+} from '../../firebaseMethods.js';
+
+// Global variables
+let shopOwnerUid = null;
+let shopName = null;
+let lastEmployeeNumber = 0;
+
+// DOM Elements
+const addEmployeeForm = document.getElementById('addEmployeeForm');
+const employeeNameInput = document.getElementById('employeeName');
+const employeeEmailInput = document.getElementById('employeeEmail');
+const employeeRoleInput = document.getElementById('employeeRole');
+const employeePhoneInput = document.getElementById('employeePhone');
+const employeePasswordInput = document.getElementById('employeePassword');
+const confirmPasswordInput = document.getElementById('confirmPassword');
+const logoutBtn = document.getElementById('logout_btn');
+const generateEmployeesBtn = document.getElementById('generateEmployees');
+const createBatchEmployeesBtn = document.getElementById('createBatchEmployees');
+const batchPreview = document.getElementById('batchPreview');
+const employeeCountInput = document.getElementById('employeeCount');
+const batchEmployeeRoleInput = document.getElementById('batchEmployeeRole');
+const emailDomainInput = document.getElementById('emailDomain');
+
+// Initialize the application
+function init() {
+    setupAuthStateListener();
+    setupEventListeners();
+    setupPasswordValidation();
+    setupPhoneNumberFormatting();
+    setupBatchCreation();
+}
+
+// Set up authentication state listener
+function setupAuthStateListener() {
+    checkUserAuth().then((authResult) => {
+        if (authResult.authenticated && authResult.role === "shopowner") {
+            shopOwnerUid = authResult.userId;
+            updateProfileHeader(authResult.userId);
+            loadShopData(authResult.userId);
+            loadLastEmployeeNumber(authResult.userId);
+        } else {
+            window.location.href = '/user_login.html';
+        }
+    }).catch((error) => {
+        console.error('Auth error:', error);
+        window.location.href = "/user_login.html";
+    });
+}
+
+// Function to update profile header
+function updateProfileHeader(userUID) {
+    // Use viewProfile method from firebaseMethods
+    viewProfile(userUID, `smartfit_AR_Database/shop/${userUID}`).then((result) => {
+        if (result.success) {
+            const shopData = result.data;
+            const profilePicture = document.getElementById('profilePicture');
+            const userFullname = document.getElementById('userFullname');
+
+            if (!profilePicture || !userFullname) return;
+
+            // Set profile name
+            if (shopData.name) {
+                userFullname.textContent = shopData.name;
+            } else if (shopData.shopName) {
+                userFullname.textContent = shopData.shopName;
+            } else if (shopData.ownerName) {
+                userFullname.textContent = shopData.ownerName;
+            }
+
+            // Set profile picture
+            if (shopData.profilePhoto && shopData.profilePhoto.url) {
+                profilePicture.src = shopData.profilePhoto.url;
+            } else if (shopData.uploads && shopData.uploads.shopLogo && shopData.uploads.shopLogo.url) {
+                profilePicture.src = shopData.uploads.shopLogo.url;
+            } else {
+                // Set default avatar if no image available
+                profilePicture.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' fill='%23ddd'%3E%3Crect width='100' height='100'/%3E%3Ctext x='50%' y='50%' font-size='20' text-anchor='middle' dominant-baseline='middle' fill='%23666'%3EProfile%3C/text%3E%3C/svg%3E";
+            }
+        }
+    }).catch((error) => {
+        console.error('Error loading profile:', error);
+    });
+}
+
+// Load shop data
+async function loadShopData(uid) {
+    try {
+        // Use readData method from firebaseMethods
+        const result = await readData(`smartfit_AR_Database/shop/${uid}`);
+        if (result.success && result.data) {
+            shopName = result.data.shopName;
+        }
+    } catch (error) {
+        console.error("Error loading shop data:", error);
+    }
+}
+
+// Load last employee number from database
+async function loadLastEmployeeNumber(shopId) {
+    try {
+        // Use readData method from firebaseMethods
+        const result = await readData(`smartfit_AR_Database/shop/${shopId}/lastEmployeeNumber`);
+        lastEmployeeNumber = result.success && result.data !== null ? result.data : 0;
+    } catch (error) {
+        console.error("Error loading last employee number:", error);
+    }
+}
+
+// Update last employee number in database
+async function updateLastEmployeeNumber(shopId, newNumber) {
+    try {
+        // Use updateData method from firebaseMethods
+        const result = await updateData(`smartfit_AR_Database/shop/${shopId}`, {
+            lastEmployeeNumber: newNumber
+        });
+        
+        if (result.success) {
+            lastEmployeeNumber = newNumber;
+        } else {
+            throw new Error(result.error);
+        }
+    } catch (error) {
+        console.error("Error updating last employee number:", error);
+    }
+}
+
+// Set up event listeners
+function setupEventListeners() {
+    if (addEmployeeForm) {
+        addEmployeeForm.addEventListener('submit', handleFormSubmit);
+    }
+
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', handleLogout);
+    }
+
+    if (generateEmployeesBtn) {
+        generateEmployeesBtn.addEventListener('click', generateBatchEmployees);
+    }
+
+    if (createBatchEmployeesBtn) {
+        createBatchEmployeesBtn.addEventListener('click', createBatchEmployees);
+    }
+}
+
+// Set up password validation
+function setupPasswordValidation() {
+    if (employeePasswordInput) {
+        employeePasswordInput.addEventListener('input', validatePassword);
+    }
+
+    if (confirmPasswordInput) {
+        confirmPasswordInput.addEventListener('input', validatePassword);
+    }
+}
+
+// Set up phone number formatting
+function setupPhoneNumberFormatting() {
+    if (employeePhoneInput) {
+        employeePhoneInput.addEventListener('input', formatPhoneNumber);
+    }
+}
+
+// Set up batch creation functionality
+function setupBatchCreation() {
+    const creationOptions = document.querySelectorAll('.creation-option');
+    const singleCreation = document.getElementById('singleCreation');
+    const batchCreation = document.getElementById('batchCreation');
+
+    creationOptions.forEach(option => {
+        option.addEventListener('click', () => {
+            creationOptions.forEach(opt => opt.classList.remove('active'));
+            option.classList.add('active');
+
+            if (option.dataset.type === 'single') {
+                singleCreation.style.display = 'block';
+                batchCreation.style.display = 'none';
+            } else {
+                singleCreation.style.display = 'none';
+                batchCreation.style.display = 'block';
+            }
+        });
+    });
+}
+
+// Logout handler function
+function handleLogout() {
+    if (confirm('Are you sure you want to logout?')) {
+        logoutUser().then((result) => {
+            if (result.success) {
+                window.location.href = '/user_login.html';
+            } else {
+                alert('Logout error: ' + result.error);
+            }
+        });
+    }
+}
+
+// Handle form submission
+async function handleFormSubmit(e) {
+    e.preventDefault();
+
+    if (!shopOwnerUid) {
+        alert("Please sign in as a shop owner first.");
+        return;
+    }
+
+    // Validate password match
+    if (employeePasswordInput.value !== confirmPasswordInput.value) {
+        alert("Passwords don't match!");
+        return;
+    }
+
+    const employeeData = {
+        name: employeeNameInput.value.trim(),
+        email: employeeEmailInput.value.trim(),
+        role: employeeRoleInput.value,
+        phone: employeePhoneInput.value.trim(),
+        password: employeePasswordInput.value.trim(),
+    };
+
+    // Validate required fields
+    if (!employeeData.name || !employeeData.email || !employeeData.role || !employeeData.password) {
+        alert("Please fill all required fields.");
+        return;
+    }
+
+    try {
+        // Create employee account with verification email (default behavior)
+        await createEmployeeAccount(employeeData, { sendVerificationEmail: true });
+        alert(`Employee ${employeeData.name} created successfully!`);
+        e.target.reset();
+    } catch (error) {
+        console.error("Error creating employee:", error);
+        handleEmployeeCreationError(error);
+    }
+}
+
+// Create employee account
+async function createEmployeeAccount(employeeData, options = { sendVerificationEmail: true }) {
+    if (!shopOwnerUid) {
+        throw new Error("Shop owner not authenticated. Please sign in first.");
+    }
+
+    try {
+        console.log("Attempting to create user:", employeeData.email);
+        
+        // Use createUserWithEmailAndPasswordWrapper from firebaseMethods
+        const userResult = await createUserWithEmailAndPasswordWrapper(
+            employeeData.email,
+            employeeData.password
+        );
+
+        if (!userResult.success) {
+            throw new Error(userResult.error);
+        }
+
+        const user = userResult.user;
+
+        // Only send verification email if option is true (default for single creation)
+        if (options.sendVerificationEmail) {
+            console.log("Sending verification email");
+            try {
+                await sendEmailVerificationWrapper(user);
+            } catch (emailError) {
+                console.warn("Email verification failed:", emailError);
+                // Continue with account creation even if email fails
+            }
+        }
+
+        console.log("Saving employee data to database");
+        
+        // Use updateData method from firebaseMethods
+        const saveResult = await updateData(`smartfit_AR_Database/employees/${user.uid}`, {
+            name: employeeData.name,
+            email: employeeData.email,
+            role: employeeData.role,
+            phone: employeeData.phone,
+            shopId: shopOwnerUid,
+            shopName: shopName,
+            dateAdded: new Date().toISOString(),
+            status: 'active'
+        });
+
+        if (!saveResult.success) {
+            throw new Error(saveResult.error);
+        }
+
+        console.log("Employee account created successfully");
+        return { success: true };
+    } catch (error) {
+        console.error("Error during employee creation:", {
+            message: error.message,
+            stack: error.stack
+        });
+
+        // Handle specific Firebase errors
+        if (error.message.includes('email-already-in-use')) {
+            throw new Error('This email is already registered');
+        } else if (error.message.includes('invalid-email')) {
+            throw new Error('Please enter a valid email address');
+        } else if (error.message.includes('weak-password')) {
+            throw new Error('Password is too weak (minimum 6 characters)');
+        }
+
+        throw error;
+    }
+}
+
+// Generate batch employees
+async function generateBatchEmployees() {
+    const count = parseInt(employeeCountInput.value);
+    const role = batchEmployeeRoleInput.value;
+    const domain = emailDomainInput.value.trim() || 'yourcompany.com';
+
+    if (count < 1 || count > 100) {
+        alert('Please enter a number between 1 and 100');
+        return;
+    }
+
+    if (!domain.match(/^[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/)) {
+        alert('Please enter a valid email domain (e.g., company.com)');
+        return;
+    }
+
+    batchPreview.innerHTML = '';
+
+    for (let i = 1; i <= count; i++) {
+        const employeeNum = (lastEmployeeNumber + i).toString().padStart(3, '0');
+        const username = `employee${employeeNum}`;
+        const email = `${username}@${domain}`;
+        const password = generatePassword();
+
+        const accountDiv = document.createElement('div');
+        accountDiv.className = 'batch-account';
+        accountDiv.innerHTML = `
+            <div>
+                <p><strong>Username:</strong> ${username}</p>
+                <p><strong>Email:</strong> ${email}</p>
+                <p><strong>Role:</strong> ${role}</p>
+            </div>
+            <div>
+                <p><strong>Password:</strong> ${password}</p>
+                <p><small>Email will ${document.getElementById('sendEmails').checked ? '' : 'not '}be sent</small></p>
+                ${document.getElementById('sendEmails').checked && !document.getElementById('includePasswordInEmail').checked ?
+                '<p><small>Password will not be included in email</small></p>' : ''}
+            </div>
+            <input type="hidden" name="batchUsername[]" value="${username}">
+            <input type="hidden" name="batchEmail[]" value="${email}">
+            <input type="hidden" name="batchPassword[]" value="${password}">
+            <input type="hidden" name="batchRole[]" value="${role}">
+        `;
+
+        batchPreview.appendChild(accountDiv);
+    }
+
+    batchPreview.classList.add('active');
+    createBatchEmployeesBtn.disabled = false;
+}
+
+// Create batch employees
+async function createBatchEmployees() {
+    const accounts = [];
+    const accountDivs = batchPreview.querySelectorAll('.batch-account');
+
+    // Show loading state
+    createBatchEmployeesBtn.disabled = true;
+    createBatchEmployeesBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Creating Employees...';
+
+    accountDivs.forEach(div => {
+        accounts.push({
+            username: div.querySelector('input[name="batchUsername[]"]').value,
+            email: div.querySelector('input[name="batchEmail[]"]').value,
+            password: div.querySelector('input[name="batchPassword[]"]').value,
+            role: div.querySelector('input[name="batchRole[]"]').value
+        });
+    });
+
+    try {
+        // Create all accounts as default accounts (not in Firebase Auth)
+        for (const account of accounts) {
+            // Generate a unique ID for the default account
+            const employeeId = `default_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
+
+            // Use updateData method from firebaseMethods
+            const result = await updateData(`smartfit_AR_Database/employees/${employeeId}`, {
+                name: account.username,
+                email: account.email,
+                role: account.role,
+                phone: '',
+                shopId: shopOwnerUid,
+                shopName: shopName,
+                dateAdded: new Date().toISOString(),
+                status: 'default', // Mark as default account
+                tempPassword: account.password, // Store temp password for later activation
+                isDefaultAccount: true // Flag to identify default accounts
+            });
+
+            if (!result.success) {
+                throw new Error(result.error);
+            }
+        }
+
+        // Update the last employee number
+        const newLastNumber = lastEmployeeNumber + accounts.length;
+        await updateLastEmployeeNumber(shopOwnerUid, newLastNumber);
+
+        alert(`Successfully created ${accounts.length} default employee accounts!`);
+
+        // Reset the form
+        batchPreview.innerHTML = '';
+        batchPreview.classList.remove('active');
+        createBatchEmployeesBtn.innerHTML = '<i class="fas fa-save"></i> Create All Employees';
+        createBatchEmployeesBtn.disabled = false;
+    } catch (error) {
+        console.error('Error creating accounts:', error);
+        alert('Error creating accounts. Please check console for details.');
+        createBatchEmployeesBtn.disabled = false;
+        createBatchEmployeesBtn.innerHTML = '<i class="fas fa-save"></i> Create All Employees';
+    }
+}
+
+// Generate random password
+function generatePassword() {
+    const length = 12;
+    const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*";
+    let password = "";
+
+    // Ensure at least one of each character type
+    password += getRandomChar("ABCDEFGHIJKLMNOPQRSTUVWXYZ");
+    password += getRandomChar("abcdefghijklmnopqrstuvwxyz");
+    password += getRandomChar("0123456789");
+    password += getRandomChar("!@#$%^&*");
+
+    // Fill the rest randomly
+    for (let i = password.length; i < length; i++) {
+        const randomIndex = Math.floor(Math.random() * charset.length);
+        password += charset[randomIndex];
+    }
+
+    // Shuffle the password
+    return password.split('').sort(() => 0.5 - Math.random()).join('');
+}
+
+function getRandomChar(charSet) {
+    return charSet[Math.floor(Math.random() * charSet.length)];
+}
+
+// Validate password
+function validatePassword() {
+    const password = employeePasswordInput.value;
+    const confirmPassword = confirmPasswordInput.value;
+
+    // Check password requirements
+    const reqLength = document.getElementById('reqLength');
+    const reqUppercase = document.getElementById('reqUppercase');
+    const reqLowercase = document.getElementById('reqLowercase');
+    const reqNumber = document.getElementById('reqNumber');
+    const reqSpecial = document.getElementById('reqSpecial');
+
+    if (reqLength) reqLength.style.color = password.length >= 8 ? 'green' : 'red';
+    if (reqUppercase) reqUppercase.style.color = /[A-Z]/.test(password) ? 'green' : 'red';
+    if (reqLowercase) reqLowercase.style.color = /[a-z]/.test(password) ? 'green' : 'red';
+    if (reqNumber) reqNumber.style.color = /[0-9]/.test(password) ? 'green' : 'red';
+    if (reqSpecial) reqSpecial.style.color = /[!@#$%^&*]/.test(password) ? 'green' : 'red';
+
+    // Check if passwords match
+    if (password && confirmPassword) {
+        if (password !== confirmPassword) {
+            confirmPasswordInput.setCustomValidity("Passwords don't match");
+        } else {
+            confirmPasswordInput.setCustomValidity('');
+        }
+    }
+}
+
+// Format phone number
+function formatPhoneNumber(e) {
+    // Remove all non-digit characters
+    let phoneNumber = e.target.value.replace(/\D/g, '');
+
+    // Limit to 10 digits (Philippine mobile numbers are 10 digits without country code)
+    if (phoneNumber.length > 10) {
+        phoneNumber = phoneNumber.substring(0, 10);
+    }
+
+    // Update the input value with just the digits
+    e.target.value = phoneNumber;
+}
+
+// Handle employee creation errors
+function handleEmployeeCreationError(error) {
+    if (error.message.includes('email-already-in-use')) {
+        alert('This email is already registered');
+    } else if (error.message.includes('invalid-email')) {
+        alert('Please enter a valid email address');
+    } else if (error.message.includes('weak-password')) {
+        alert('Password is too weak. Please use a stronger password.');
+    } else {
+        alert('Error: ' + error.message);
+    }
+}
+
+// Logout functionality
+if (document.getElementById('logout_btn')) {
+    document.getElementById('logout_btn').addEventListener('click', function () {
+        if (confirm('Are you sure you want to logout?')) {
+            logoutUser().then((result) => {
+                if (result.success) {
+                    window.location.href = '/user_login.html';
+                } else {
+                    alert('Logout error: ' + result.error);
+                }
+            });
+        }
+    });
+}
+
+// Toggle password visibility
+function togglePassword(fieldId) {
+    const field = document.getElementById(fieldId);
+    const icon = field.nextElementSibling;
+
+    if (field.type === "password") {
+        field.type = "text";
+        icon.classList.remove("fa-eye");
+        icon.classList.add("fa-eye-slash");
+    } else {
+        field.type = "password";
+        icon.classList.remove("fa-eye-slash");
+        icon.classList.add("fa-eye");
+    }
+}
+
+// Initialize the application when DOM is loaded
+document.addEventListener('DOMContentLoaded', init);
