@@ -802,3 +802,202 @@ textarea.form-control {
         opacity: 1;
     }
 }
+
+/* Modal container */
+#modalIssueContent.modal-body {
+  max-width: 920px;
+  width: 95%;
+  max-height: 80vh;
+  overflow-y: auto;
+  margin: 1.5rem auto;
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.12);
+  padding: 20px 22px;
+  font-family: Inter, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  color: #222;
+  line-height: 1.45;
+  box-sizing: border-box;
+}
+
+/* Section headings */
+#modalIssueContent .modal-section {
+  margin-bottom: 18px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+#modalIssueContent .modal-section:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+  padding-bottom: 0;
+}
+
+#modalIssueContent h3 {
+  margin: 0 0 12px 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #111;
+}
+
+/* Info grid (order id, user id, status, etc.) */
+#modalIssueContent .info-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px 18px;
+  align-items: center;
+}
+
+#modalIssueContent .info-item {
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
+  padding: 8px 10px;
+  background: #fafafa;
+  border-radius: 8px;
+  border: 1px solid #f3f3f3;
+}
+
+#modalIssueContent .info-label {
+  font-weight: 600;
+  color: #444;
+  min-width: 110px;
+  display: inline-block;
+  font-size: 13px;
+}
+
+#modalIssueContent .info-value {
+  color: #222;
+  font-size: 14px;
+  word-break: break-word;
+}
+
+/* Status badges */
+#modalIssueContent .info-value.status-resolved {
+  color: #0f5132;
+  background: #e6f4ea;
+  padding: 4px 8px;
+  border-radius: 999px;
+  font-weight: 600;
+  font-size: 13px;
+  border: 1px solid rgba(15,81,50,0.08);
+}
+
+#modalIssueContent .info-value.status-pending {
+  color: #7a4f04;
+  background: #fff7e6;
+  padding: 4px 8px;
+  border-radius: 999px;
+  font-weight: 600;
+  font-size: 13px;
+  border: 1px solid rgba(122,79,4,0.06);
+}
+
+#modalIssueContent .info-value.status-open {
+  color: #6b0f0f;
+  background: #fff0f0;
+  padding: 4px 8px;
+  border-radius: 999px;
+  font-weight: 600;
+  font-size: 13px;
+  border: 1px solid rgba(107,15,15,0.06);
+}
+
+/* Issue description block */
+#modalIssueContent .issue-description-full {
+  background: #fafafa;
+  border: 1px solid #f1f1f1;
+  padding: 12px 14px;
+  border-radius: 8px;
+  font-size: 14px;
+  color: #222;
+  white-space: pre-wrap;
+}
+
+/* Document / photo grid */
+#modalIssueContent .document-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 12px;
+  align-items: start;
+}
+
+#modalIssueContent .document-item {
+  width: 100%;
+  aspect-ratio: 1 / 1; /* makes a square box */
+  border-radius: 8px;
+  overflow: hidden;
+  position: relative;
+}
+
+#modalIssueContent .document-preview {
+  display: block;
+  width: 100%;
+  text-align: center;
+  text-decoration: none;
+  outline: none;
+}
+
+#modalIssueContent .document-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover; /* makes it cover the box */
+  display: block;
+}
+
+/* Responses list */
+#modalIssueContent .responses-container {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+#modalIssueContent .response-item {
+  background: #fbfbfb;
+  border: 1px solid #f0f0f0;
+  padding: 10px 12px;
+  border-radius: 8px;
+}
+
+#modalIssueContent .response-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 8px;
+  font-size: 13px;
+  color: #555;
+}
+
+#modalIssueContent .response-message {
+  font-size: 14px;
+  color: #222;
+  white-space: pre-wrap;
+}
+
+/* Small helpers */
+#modalIssueContent .summary-small {
+  font-size: 13px;
+  color: #666;
+}
+
+/* Responsive */
+@media (max-width: 720px) {
+  #modalIssueContent.modal-body {
+    padding: 16px;
+    width: 96%;
+  }
+
+  #modalIssueContent .info-grid {
+    grid-template-columns: 1fr;
+  }
+
+  #modalIssueContent .info-label {
+    min-width: 90px;
+    font-size: 13px;
+  }
+
+  #modalIssueContent h3 {
+    font-size: 16px;
+  }
+}

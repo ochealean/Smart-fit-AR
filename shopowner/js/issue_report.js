@@ -358,8 +358,9 @@ function updateIssueModalContent(issueId, issue) {
 
     // Format admin responses if they exist
     let responsesHTML = '<p>No responses yet</p>';
-    if (issue.adminResponses) {
-        responsesHTML = Object.entries(issue.adminResponses).map(([timestamp, response]) => `
+    console.log("Admin responses:", issue);
+    if (issue.shopResponse) {
+        responsesHTML = Object.entries(issue.shopResponse).map(([timestamp, response]) => `
             <div class="response-item">
                 <div class="response-header">
                     <span class="response-date">${formatDisplayDate(parseInt(timestamp))}</span>
@@ -496,17 +497,19 @@ async function submitResponse() {
 
     try {
         const timestamp = Date.now();
+        // shopUserID is the ID of the shop owner/employee responding
+        // shopName is the name of the shop
         const responseData = {
             message: responseText,
             status: newStatus,
             timestamp: timestamp,
-            adminId: auth.currentUser.uid,
-            adminName: sname || 'Admin'
+            shopUserID: auth.currentUser.uid,
+            shopName: sname || 'Admin'
         };
 
         // Update the issue report with the new response
         const updates = {
-            [`customerResponses/${timestamp}`]: responseData,
+            [`shopResponse/${timestamp}`]: responseData,
             status: newStatus,
             resolved: newStatus === 'resolved',
             lastUpdated: new Date().toISOString()
