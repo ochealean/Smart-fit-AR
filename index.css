@@ -1563,6 +1563,10 @@ header {
         padding: 1rem 1.5rem;
         min-width: 120px;
     }
+
+    .cta-btn {
+        width: 100%;
+    }
     
     .stat-number {
         font-size: 2rem;
