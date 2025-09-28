@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Terms of Service - SmartFit Shoe Shop Portal</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --black: #121212;
+            --blue: #6e8efb;
+            --violet: #a777e3;
+            --white: #FFFFFF;
+            --gold: #FFE082;
+            --lightgray: #333;
+            --darkgray: #222;
+            --red: #FF5252;
+            --gray: #E8EDED;
+            --blueish: #6e8efb;
+            --royalviolet: #6A0572;
+            --primary: #6e8efb;
+            --primary-dark: #5a7df0;
+            --secondary: #a777e3;
+            --accent: #FFE082;
+            --dark: #121212;
+            --light: #FFFFFF;
+            --gray-light: #f5f7fa;
+            --gray-medium: #e4e8eb;
+            --gray-dark: #333;
+            --success: #4CAF50;
+            --warning: #FFC107;
+            --error: #f44336;
+            --text-primary: #333;
+            --text-secondary: #666;
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.12);
+            --shadow-md: 0 4px 6px rgba(0,0,0,0.1);
+            --shadow-lg: 0 10px 25px rgba(0,0,0,0.1);
+            --transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+
+        body {
+            font-family: 'Poppins', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: var(--text-primary);
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, var(--gray-light) 0%, var(--gray-medium) 100%);
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        .terms-container {
+            max-width: 800px;
+            margin: 2rem auto;
+            padding: 2.5rem;
+            background: var(--light);
+            border-radius: 16px;
+            box-shadow: var(--shadow-lg);
+            flex: 1;
+            box-sizing: border-box;
+            position: relative;
+            overflow: hidden;
+            animation: fadeIn 0.6s ease-out;
+        }
+
+        .terms-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            animation: slideIn 0.8s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(-100%); }
+            to { transform: translateX(0); }
+        }
+
+        .terms-header {
+            text-align: center;
+            margin-bottom: 2rem;
+            animation: fadeIn 0.8s ease-out 0.2s both;
+        }
+
+        .terms-header h1 {
+            color: var(--primary);
+            font-size: 2.2rem;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.8rem;
+            position: relative;
+        }
+
+        .terms-header h1::after {
+            content: '';
+            display: block;
+            width: 60px;
+            height: 3px;
+            background: var(--accent);
+            margin: 0.8rem auto;
+            border-radius: 3px;
+        }
+
+        .terms-header p {
+            color: var(--text-secondary);
+            font-size: 1rem;
+            margin-top: 1.2rem;
+        }
+
+        .terms-content {
+            animation: fadeIn 0.8s ease-out 0.4s both;
+        }
+
+        .terms-section {
+            margin-bottom: 2rem;
+        }
+
+        .terms-section h2 {
+            color: var(--primary);
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .terms-section h2 i {
+            color: var(--secondary);
+        }
+
+        .terms-section h3 {
+            color: var(--violet);
+            font-size: 1.2rem;
+            margin: 1.5rem 0 0.5rem;
+        }
+
+        .terms-section p, .terms-section ul {
+            color: var(--text-primary);
+            margin-bottom: 1rem;
+        }
+
+        .terms-section ul {
+            padding-left: 1.5rem;
+        }
+
+        .terms-section li {
+            margin-bottom: 0.5rem;
+            position: relative;
+        }
+
+        .terms-section li::before {
+            content: '•';
+            color: var(--secondary);
+            font-weight: bold;
+            display: inline-block;
+            width: 1em;
+            margin-left: -1em;
+        }
+
+        .highlight {
+            background-color: rgba(255, 224, 130, 0.2);
+            padding: 0.2rem 0.4rem;
+            border-radius: 4px;
+            font-weight: 500;
+        }
+
+        .warning {
+            background-color: rgba(255, 193, 7, 0.2);
+            padding: 1rem;
+            border-left: 4px solid var(--warning);
+            margin: 1rem 0;
+            border-radius: 0 4px 4px 0;
+        }
+
+        .footer {
+            background: var(--dark);
+            color: var(--light);
+            padding: 1.5rem 0;
+            margin-top: auto;
+        }
+
+        .footer-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+            text-align: center;
+        }
+
+        .footer nav {
+            display: flex;
+            gap: 1.5rem;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .footer a {
+            color: var(--light);
+            text-decoration: none;
+            transition: var(--transition);
+            font-size: 0.9rem;
+            position: relative;
+        }
+
+        .footer a::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            width: 0;
+            height: 1px;
+            background: var(--accent);
+            transition: var(--transition);
+        }
+
+        .footer a:hover {
+            color: var(--accent);
+        }
+
+        .footer a:hover::after {
+            width: 100%;
+        }
+
+        @media (max-width: 600px) {
+            .terms-container {
+                margin: 1rem;
+                padding: 1.8rem;
+                border-radius: 12px;
+            }
+            
+            .terms-header h1 {
+                font-size: 1.8rem;
+            }
+            
+            .terms-section h2 {
+                font-size: 1.3rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="terms-container">
+        <div class="terms-header">
+            <h1><i class="fas fa-file-contract"></i> Terms of Service</h1>
+            <p>Last Updated: May 2025</p>
+        </div>
+
+        <div class="terms-content">
+            <div class="terms-section">
+                <h2><i class="fas fa-info-circle"></i> 1. Acceptance of Terms</h2>
+                <p>By accessing or using the <span class="highlight">SmartFit: Augmented Reality-Integrated Footwear Retail and Customization Portal with AI-Powered Assistance</span> ("Service"), you agree to be bound by these Terms of Service ("Terms"). If you do not agree to all of these Terms, do not use our Service.</p>
+                
+                <div class="warning">
+                    <p><i class="fas fa-exclamation-triangle"></i> <strong>Important:</strong> These Terms contain provisions that limit our liability and govern how disputes are resolved.</p>
+                </div>
+            </div>
+
+            <div class="terms-section">
+                <h2><i class="fas fa-user"></i> 2. User Accounts</h2>
+                <h3>A. Account Creation</h3>
+                <p>To access certain features, you must register for an account. You agree to:</p>
+                <ul>
+                    <li>Provide accurate and complete information</li>
+                    <li>Maintain the security of your password</li>
+                    <li>Promptly update any information that changes</li>
+                </ul>
+
+                <h3>B. Account Responsibilities</h3>
+                <p>You are responsible for all activities under your account. Notify us immediately of any unauthorized use.</p>
+            </div>
+
+            <div class="terms-section">
+                <h2><i class="fas fa-shopping-cart"></i> 3. Orders & Payments</h2>
+                <h3>A. Product Availability</h3>
+                <p>All products are subject to availability. We reserve the right to limit quantities and cancel orders.</p>
+
+                <h3>B. Pricing</h3>
+                <p>Prices are shown in Philippine Pesos (₱) and are subject to change without notice.</p>
+
+                <h3>C. Payment Methods</h3>
+                <p>We accept major credit cards and digital payment methods. All payments are processed securely through our third-party payment processors.</p>
+            </div>
+
+            <div class="terms-section">
+                <h2><i class="fas fa-shoe-prints"></i> 4. AR Try-On & Customization</h2>
+                <h3>A. Virtual Try-On</h3>
+                <p>Our augmented reality feature allows you to visualize footwear:</p>
+                <ul>
+                    <li>Results may vary based on device capabilities and lighting conditions</li>
+                    <li>Not a guarantee of perfect fit - check size guides before purchase</li>
+                </ul>
+
+                <h3>B. Custom Orders</h3>
+                <p>Customized products:</p>
+                <ul>
+                    <li>May have longer processing times</li>
+                    <li>Are typically non-returnable unless defective</li>
+                    <li>Final products may vary slightly from digital previews</li>
+                </ul>
+            </div>
+
+            <div class="terms-section">
+                <h2><i class="fas fa-exchange-alt"></i> 5. Returns & Refunds</h2>
+                <h3>A. Standard Returns</h3>
+                <p>Unworn, undamaged items may be returned within 30 days with original packaging.</p>
+
+                <h3>B. Refund Processing</h3>
+                <p>Refunds will be issued to the original payment method within 7-10 business days.</p>
+
+                <h3>C. Non-Returnable Items</h3>
+                <p>The following cannot be returned:</p>
+                <ul>
+                    <li>Customized footwear</li>
+                    <li>Items marked "final sale"</li>
+                    <li>Used or damaged merchandise</li>
+                </ul>
+            </div>
+
+            <div class="terms-section">
+                <h2><i class="fas fa-robot"></i> 6. AI Customer Support</h2>
+                <p>Our AI-powered assistant provides:</p>
+                <ul>
+                    <li>24/7 basic support for common inquiries</li>
+                    <li>Automated responses based on available information</li>
+                    <li>Escalation to human agents when necessary</li>
+                </ul>
+                <p><strong>Note:</strong> The AI may occasionally provide incomplete or inaccurate information.</p>
+            </div>
+
+            <div class="terms-section">
+                <h2><i class="fas fa-ban"></i> 7. Prohibited Conduct</h2>
+                <p>You agree not to:</p>
+                <ul>
+                    <li>Use the Service for any illegal purpose</li>
+                    <li>Attempt to reverse engineer any technology</li>
+                    <li>Upload harmful code or viruses</li>
+                    <li>Harass other users or our staff</li>
+                    <li>Use automated systems to access the Service</li>
+                </ul>
+            </div>
+
+            <div class="terms-section">
+                <h2><i class="fas fa-gavel"></i> 8. Intellectual Property</h2>
+                <p>All content on the Service, including:</p>
+                <ul>
+                    <li>AR technology and 3D models</li>
+                    <li>Software and algorithms</li>
+                    <li>Branding and logos</li>
+                </ul>
+                <p>are owned by or licensed to us and protected by intellectual property laws.</p>
+            </div>
+
+            <div class="terms-section">
+                <h2><i class="fas fa-exclamation-triangle"></i> 9. Disclaimers</h2>
+                <p>The Service is provided "as is" without warranties of any kind. We do not guarantee that:</p>
+                <ul>
+                    <li>The Service will be uninterrupted or error-free</li>
+                    <li>AR visualizations will be perfectly accurate</li>
+                    <li>Results from AI support will be completely reliable</li>
+                </ul>
+            </div>
+
+            <div class="terms-section">
+                <h2><i class="fas fa-balance-scale"></i> 10. Limitation of Liability</h2>
+                <p>To the maximum extent permitted by law, we shall not be liable for:</p>
+                <ul>
+                    <li>Indirect, incidental, or consequential damages</li>
+                    <li>Errors in AR visualization leading to purchase decisions</li>
+                    <li>Inconvenience caused by Service interruptions</li>
+                </ul>
+            </div>
+
+            <div class="terms-section">
+                <h2><i class="fas fa-globe"></i> 11. Governing Law</h2>
+                <p>These Terms shall be governed by the laws of the Republic of the Philippines. Any disputes shall be resolved in the courts of Bataan.</p>
+            </div>
+
+            <div class="terms-section">
+                <h2><i class="fas fa-edit"></i> 12. Changes to Terms</h2>
+                <p>We may modify these Terms at any time. Continued use after changes constitutes acceptance.</p>
+            </div>
+
+            <div class="terms-section">
+                <h2><i class="fas fa-envelope"></i> 13. Contact Us</h2>
+                <p>For questions about these Terms:</p>
+                <ul>
+                    <li><strong>Email:</strong> legal@smartfit-portal.com</li>
+                    <li><strong>Phone:</strong> 0922 333 4444</li>
+                    <li><strong>Address:</strong> 123 Shoe Street, Bataan, Philippines</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <footer class="footer">
+        <div class="footer-content">
+            <p>&copy; 2025 SmartFit Shoe Shop Portal. All rights reserved.</p>
+            <nav>
+                <a href="/">Home</a>
+                <a href="/extras/privacypolicy.html">Privacy Policy</a>
+                <a href="/extras/termsofservice.html">Terms of Service</a>
+                <a href="/extras/termsofservice.html">Contact Us</a>
+                <a href="/extras/aboutus.html">About Us</a>
+            </nav>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Smooth scroll for anchor links
+            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+                anchor.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    document.querySelector(this.getAttribute('href')).scrollIntoView({
+                        behavior: 'smooth'
+                    });
+                });
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contact Us - SmartFit Shoe Shop Portal</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --black: #121212;
+            --blue: #6e8efb;
+            --violet: #a777e3;
+            --white: #FFFFFF;
+            --gold: #FFE082;
+            --lightgray: #333;
+            --darkgray: #222;
+            --red: #FF5252;
+            --gray: #E8EDED;
+            --blueish: #6e8efb;
+            --royalviolet: #6A0572;
+            --primary: #6e8efb;
+            --primary-dark: #5a7df0;
+            --secondary: #a777e3;
+            --accent: #FFE082;
+            --dark: #121212;
+            --light: #FFFFFF;
+            --gray-light: #f5f7fa;
+            --gray-medium: #e4e8eb;
+            --gray-dark: #333;
+            --success: #4CAF50;
+            --warning: #FFC107;
+            --error: #f44336;
+            --text-primary: #333;
+            --text-secondary: #666;
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.12);
+            --shadow-md: 0 4px 6px rgba(0,0,0,0.1);
+            --shadow-lg: 0 10px 25px rgba(0,0,0,0.1);
+            --transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+
+        body {
+            font-family: 'Poppins', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: var(--text-primary);
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, var(--gray-light) 0%, var(--gray-medium) 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .contact-container {
+            display: flex;
+            flex: 1;
+        }
+
+        .contact-left {
+            flex: 1;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: var(--light);
+            padding: 3rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .contact-left::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--accent), var(--violet));
+        }
+
+        .contact-left-content {
+            max-width: 500px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 2;
+        }
+
+        .contact-left h1 {
+            font-size: 2.5rem;
+            margin-bottom: 1.5rem;
+            position: relative;
+            display: inline-block;
+        }
+
+        .contact-left h1::after {
+            content: '';
+            display: block;
+            width: 60px;
+            height: 3px;
+            background: var(--accent);
+            margin-top: 0.8rem;
+            border-radius: 3px;
+        }
+
+        .contact-left p {
+            margin-bottom: 2rem;
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .contact-info {
+            margin-top: 2rem;
+        }
+
+        .contact-info-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .contact-info-icon {
+            width: 50px;
+            height: 50px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 1rem;
+            font-size: 1.2rem;
+            color: var(--accent);
+        }
+
+        .contact-info-text h3 {
+            margin: 0 0 0.3rem 0;
+            font-size: 1.2rem;
+        }
+
+        .contact-info-text p {
+            margin: 0;
+            opacity: 0.8;
+            font-size: 1rem;
+        }
+
+        .contact-right {
+            flex: 1;
+            padding: 3rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            background-color: var(--light);
+        }
+
+        .contact-form-container {
+            max-width: 500px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .contact-form-header {
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+
+        .contact-form-header h2 {
+            color: var(--primary);
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .contact-form-header p {
+            color: var(--text-secondary);
+        }
+
+        .contact-form {
+            animation: fadeIn 0.6s ease-out;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: var(--dark);
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 1rem;
+            border: 2px solid var(--gray-medium);
+            border-radius: 8px;
+            font-size: 0.95rem;
+            transition: var(--transition);
+            background-color: var(--gray-light);
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            border-color: var(--primary);
+            outline: none;
+            box-shadow: 0 0 0 4px rgba(110, 142, 251, 0.2);
+            background-color: var(--light);
+        }
+
+        .form-group textarea {
+            min-height: 150px;
+            resize: vertical;
+        }
+
+        .subject-select {
+            display: flex;
+            margin-bottom: 0.5rem;
+        }
+
+        .subject-option {
+            flex: 1;
+            text-align: center;
+            padding: 0.8rem;
+            background: var(--gray-light);
+            border: 2px solid var(--gray-medium);
+            cursor: pointer;
+            transition: var(--transition);
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .subject-option:first-child {
+            border-radius: 8px 0 0 8px;
+        }
+
+        .subject-option:last-child {
+            border-radius: 0 8px 8px 0;
+        }
+
+        .subject-option:hover {
+            background: rgba(110, 142, 251, 0.1);
+        }
+
+        .subject-option.active {
+            background: var(--primary);
+            color: var(--light);
+            border-color: var(--primary);
+        }
+
+        .submit-btn {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: var(--light);
+            border: none;
+            padding: 1.1rem;
+            font-size: 1rem;
+            font-weight: 600;
+            border-radius: 8px;
+            cursor: pointer;
+            width: 100%;
+            transition: var(--transition);
+            margin-top: 1rem;
+            box-shadow: var(--shadow-sm);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .submit-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: var(--transition);
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .submit-btn:hover::before {
+            left: 100%;
+        }
+
+        .submit-btn:active {
+            transform: translateY(0);
+        }
+
+        .contact-shoe-icon {
+            position: absolute;
+            opacity: 0.1;
+            font-size: 15rem;
+            color: var(--accent);
+            z-index: 1;
+        }
+
+        .shoe-icon-1 {
+            top: 10%;
+            left: 10%;
+            transform: rotate(15deg);
+        }
+
+        .shoe-icon-2 {
+            bottom: 10%;
+            right: 10%;
+            transform: rotate(-15deg);
+        }
+
+        .footer {
+            background: var(--dark);
+            color: var(--light);
+            padding: 1.5rem 0;
+            margin-top: auto;
+        }
+
+        .footer-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+            text-align: center;
+        }
+
+        .footer nav {
+            display: flex;
+            gap: 1.5rem;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .footer a {
+            color: var(--light);
+            text-decoration: none;
+            transition: var(--transition);
+            font-size: 0.9rem;
+            position: relative;
+        }
+
+        .footer a::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            width: 0;
+            height: 1px;
+            background: var(--accent);
+            transition: var(--transition);
+        }
+
+        .footer a:hover {
+            color: var(--accent);
+        }
+
+        .footer a:hover::after {
+            width: 100%;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @media (max-width: 900px) {
+            .contact-container {
+                flex-direction: column;
+            }
+            
+            .contact-left, .contact-right {
+                padding: 2rem;
+            }
+            
+            .contact-left {
+                padding-top: 4rem;
+                padding-bottom: 2rem;
+            }
+            
+            .contact-left-content {
+                max-width: 100%;
+            }
+            
+            .contact-form-container {
+                max-width: 100%;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .subject-select {
+                flex-direction: column;
+            }
+            
+            .subject-option {
+                border-radius: 8px !important;
+                margin-bottom: 0.5rem;
+            }
+            
+            .footer-nav {
+                flex-direction: column;
+                align-items: center;
+                gap: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="contact-container">
+        <!-- Left Side - Decorative/Info -->
+        <div class="contact-left">
+            <i class="fas fa-shoe-prints contact-shoe-icon shoe-icon-1"></i>
+            <i class="fas fa-sneaker contact-shoe-icon shoe-icon-2"></i>
+            
+            <div class="contact-left-content">
+                <h1>Get in Touch</h1>
+                <p>Have questions about our AR shoe try-on feature, customization options, or need support? Our team is here to help you with any inquiries about SmartFit.</p>
+                
+                <div class="contact-info">
+                    <div class="contact-info-item">
+                        <div class="contact-info-icon">
+                            <i class="fas fa-map-marker-alt"></i>
+                        </div>
+                        <div class="contact-info-text">
+                            <h3>Our Location</h3>
+                            <p>123 Shoe Street, Bataan, Philippines</p>
+                        </div>
+                    </div>
+                    
+                    <div class="contact-info-item">
+                        <div class="contact-info-icon">
+                            <i class="fas fa-envelope"></i>
+                        </div>
+                        <div class="contact-info-text">
+                            <h3>Email Us</h3>
+                            <p>smartfitar000@gmail.com</p>
+                        </div>
+                    </div>
+                    
+                    <div class="contact-info-item">
+                        <div class="contact-info-icon">
+                            <i class="fas fa-phone-alt"></i>
+                        </div>
+                        <div class="contact-info-text">
+                            <h3>Call Us</h3>
+                            <p>0922 333 4444</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Right Side - Contact Form -->
+        <div class="contact-right">
+            <div class="contact-form-container">
+                <div class="contact-form-header">
+                    <h2>Send Us a Message</h2>
+                    <p>Fill out the form below and we'll get back to you as soon as possible.</p>
+                </div>
+                
+                <form class="contact-form" id="contactForm">
+                    <div class="form-group">
+                        <label for="email">Your Email</label>
+                        <input type="email" id="email" name="email" required placeholder="Enter your email address">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="subject">Subject</label>
+                        <div class="subject-select">
+                            <div class="subject-option" data-value="Question">Question</div>
+                            <div class="subject-option" data-value="Issue">Issue</div>
+                            <div class="subject-option" data-value="Feedback">Feedback</div>
+                        </div>
+                        <input type="text" id="subject" name="subject" required placeholder="Or type your own subject">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="message">Your Message</label>
+                        <textarea id="message" name="message" required placeholder="How can we help you?"></textarea>
+                    </div>
+                    
+                    <button type="submit" class="submit-btn">Send Message <i class="fas fa-paper-plane"></i></button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer Section -->
+    <footer class="footer">
+        <div class="footer-content">
+            <p>&copy; 2025 SmartFit Shoe Shop Portal. All rights reserved.</p>
+            <nav>
+                <a href="/">Home</a>
+                <a href="/extras/privacypolicy.html">Privacy Policy</a>
+                <a href="/extras/termsofservice.html">Terms of Service</a>
+                <a href="/extras/contactus.html">Contact Us</a>
+                <a href="/extras/aboutus.html">About Us</a>
+            </nav>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Subject option selection
+            const subjectOptions = document.querySelectorAll('.subject-option');
+            const subjectInput = document.getElementById('subject');
+            
+            subjectOptions.forEach(option => {
+                option.addEventListener('click', function() {
+                    // Remove active class from all options
+                    subjectOptions.forEach(opt => opt.classList.remove('active'));
+                    
+                    // Add active class to clicked option
+                    this.classList.add('active');
+                    
+                    // Set input value
+                    subjectInput.value = this.getAttribute('data-value');
+                });
+            });
+            
+            // Form submission
+            const contactForm = document.getElementById('contactForm');
+            contactForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                // Get form values
+                const email = document.getElementById('email').value;
+                const subject = document.getElementById('subject').value;
+                const message = document.getElementById('message').value;
+                
+                // Here you would typically send the data to a server
+                console.log('Form submitted:', { email, subject, message });
+                
+                // Show success message (in a real app, you would handle this properly)
+                alert('Thank you for your message! We will get back to you soon.');
+                contactForm.reset();
+                subjectOptions.forEach(opt => opt.classList.remove('active'));
+            });
+        });
+    </script>
+</body>
+</html>

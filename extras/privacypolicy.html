@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Privacy Policy - SmartFit Shoe Shop Portal</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --black: #121212;
+            --blue: #6e8efb;
+            --violet: #a777e3;
+            --white: #FFFFFF;
+            --gold: #FFE082;
+            --lightgray: #333;
+            --darkgray: #222;
+            --red: #FF5252;
+            --gray: #E8EDED;
+            --blueish: #6e8efb;
+            --royalviolet: #6A0572;
+            --primary: #6e8efb;
+            --primary-dark: #5a7df0;
+            --secondary: #a777e3;
+            --accent: #FFE082;
+            --dark: #121212;
+            --light: #FFFFFF;
+            --gray-light: #f5f7fa;
+            --gray-medium: #e4e8eb;
+            --gray-dark: #333;
+            --success: #4CAF50;
+            --warning: #FFC107;
+            --error: #f44336;
+            --text-primary: #333;
+            --text-secondary: #666;
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.12);
+            --shadow-md: 0 4px 6px rgba(0,0,0,0.1);
+            --shadow-lg: 0 10px 25px rgba(0,0,0,0.1);
+            --transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+
+        body {
+            font-family: 'Poppins', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: var(--text-primary);
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, var(--gray-light) 0%, var(--gray-medium) 100%);
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        .privacy-container {
+            max-width: 800px;
+            margin: 2rem auto;
+            padding: 2.5rem;
+            background: var(--light);
+            border-radius: 16px;
+            box-shadow: var(--shadow-lg);
+            flex: 1;
+            box-sizing: border-box;
+            position: relative;
+            overflow: hidden;
+            animation: fadeIn 0.6s ease-out;
+        }
+
+        .privacy-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            animation: slideIn 0.8s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(-100%); }
+            to { transform: translateX(0); }
+        }
+
+        .privacy-header {
+            text-align: center;
+            margin-bottom: 2rem;
+            animation: fadeIn 0.8s ease-out 0.2s both;
+        }
+
+        .privacy-header h1 {
+            color: var(--primary);
+            font-size: 2.2rem;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.8rem;
+            position: relative;
+        }
+
+        .privacy-header h1::after {
+            content: '';
+            display: block;
+            width: 60px;
+            height: 3px;
+            background: var(--accent);
+            margin: 0.8rem auto;
+            border-radius: 3px;
+        }
+
+        .privacy-header p {
+            color: var(--text-secondary);
+            font-size: 1rem;
+            margin-top: 1.2rem;
+        }
+
+        .privacy-content {
+            animation: fadeIn 0.8s ease-out 0.4s both;
+        }
+
+        .privacy-section {
+            margin-bottom: 2rem;
+        }
+
+        .privacy-section h2 {
+            color: var(--primary);
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .privacy-section h2 i {
+            color: var(--secondary);
+        }
+
+        .privacy-section h3 {
+            color: var(--violet);
+            font-size: 1.2rem;
+            margin: 1.5rem 0 0.5rem;
+        }
+
+        .privacy-section p, .privacy-section ul {
+            color: var(--text-primary);
+            margin-bottom: 1rem;
+        }
+
+        .privacy-section ul {
+            padding-left: 1.5rem;
+        }
+
+        .privacy-section li {
+            margin-bottom: 0.5rem;
+            position: relative;
+        }
+
+        .privacy-section li::before {
+            content: '•';
+            color: var(--secondary);
+            font-weight: bold;
+            display: inline-block;
+            width: 1em;
+            margin-left: -1em;
+        }
+
+        .highlight {
+            background-color: rgba(255, 224, 130, 0.2);
+            padding: 0.2rem 0.4rem;
+            border-radius: 4px;
+            font-weight: 500;
+        }
+
+        .footer {
+            background: var(--dark);
+            color: var(--light);
+            padding: 1.5rem 0;
+            margin-top: auto;
+        }
+
+        .footer-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+            text-align: center;
+        }
+
+        .footer nav {
+            display: flex;
+            gap: 1.5rem;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .footer a {
+            color: var(--light);
+            text-decoration: none;
+            transition: var(--transition);
+            font-size: 0.9rem;
+            position: relative;
+        }
+
+        .footer a::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            width: 0;
+            height: 1px;
+            background: var(--accent);
+            transition: var(--transition);
+        }
+
+        .footer a:hover {
+            color: var(--accent);
+        }
+
+        .footer a:hover::after {
+            width: 100%;
+        }
+
+        @media (max-width: 600px) {
+            .privacy-container {
+                margin: 1rem;
+                padding: 1.8rem;
+                border-radius: 12px;
+            }
+            
+            .privacy-header h1 {
+                font-size: 1.8rem;
+            }
+            
+            .privacy-section h2 {
+                font-size: 1.3rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="privacy-container">
+        <div class="privacy-header">
+            <h1><i class="fas fa-shield-alt"></i> Privacy Policy</h1>
+            <p>Last Updated: May 2025</p>
+        </div>
+
+        <div class="privacy-content">
+            <div class="privacy-section">
+                <h2><i class="fas fa-info-circle"></i> 1. Introduction</h2>
+                <p>Welcome to <span class="highlight">SmartFit: Augmented Reality-Integrated Footwear Retail and Customization Portal with AI-Powered Assistance</span> ("we," "our," or "us"). We are committed to protecting your privacy and ensuring the security of your personal information. This Privacy Policy explains how we collect, use, disclose, and safeguard your data when you use our website and services.</p>
+                <p>By accessing or using our <span class="highlight">Shoe Shop Portal</span>, you agree to the terms of this Privacy Policy. If you do not agree, please do not use our services.</p>
+            </div>
+
+            <div class="privacy-section">
+                <h2><i class="fas fa-database"></i> 2. Information We Collect</h2>
+                <h3>A. Personal Information</h3>
+                <ul>
+                    <li><strong>Account Registration:</strong> Name, email address, phone number, shipping address.</li>
+                    <li><strong>Payment Information:</strong> Transaction details (processed securely via third-party payment gateways; we do not store full payment details).</li>
+                    <li><strong>Customer Support:</strong> Messages, inquiries, and feedback submitted via chatbot or email.</li>
+                </ul>
+
+                <h3>B. Non-Personal Information</h3>
+                <ul>
+                    <li><strong>Device & Usage Data:</strong> IP address, browser type, operating system, pages visited, session duration.</li>
+                    <li><strong>Cookies & Tracking Technologies:</strong> Used to enhance user experience (e.g., login sessions, preferences).</li>
+                </ul>
+
+                <h3>C. Augmented Reality (AR) Data</h3>
+                <ul>
+                    <li><strong>Camera Access:</strong> For AR shoe try-on features (images are processed in real-time and not stored).</li>
+                    <li><strong>Foot Measurements (if applicable):</strong> Used for fit recommendations but anonymized.</li>
+                </ul>
+            </div>
+
+            <div class="privacy-section">
+                <h2><i class="fas fa-cogs"></i> 3. How We Use Your Information</h2>
+                <p>We use collected data for:</p>
+                <ul>
+                    <li><strong>Account Management:</strong> User registration, login, and profile updates.</li>
+                    <li><strong>Order Processing:</strong> Purchase fulfillment, shipping, and returns.</li>
+                    <li><strong>Customer Support:</strong> Responding to inquiries via AI chatbot or human agents.</li>
+                    <li><strong>Improvements:</strong> Analyzing usage trends to enhance features.</li>
+                    <li><strong>Marketing (Opt-In):</strong> Sending promotions (you can unsubscribe anytime).</li>
+                </ul>
+            </div>
+
+            <div class="privacy-section">
+                <h2><i class="fas fa-share-alt"></i> 4. Data Sharing & Disclosure</h2>
+                <p>We <strong>do not sell</strong> your personal information. Data may be shared with:</p>
+                <ul>
+                    <li><strong>Service Providers:</strong> Payment processors, shipping partners, cloud storage.</li>
+                    <li><strong>Legal Compliance:</strong> If required by law (e.g., court orders, fraud prevention).</li>
+                    <li><strong>Business Transfers:</strong> In case of mergers/acquisitions (users will be notified).</li>
+                </ul>
+            </div>
+
+            <div class="privacy-section">
+                <h2><i class="fas fa-lock"></i> 5. Data Security</h2>
+                <p>We implement industry-standard measures:</p>
+                <ul>
+                    <li><strong>Encryption (SSL/TLS)</strong> for data transmission.</li>
+                    <li><strong>Firewalls & access controls</strong> to prevent unauthorized access.</li>
+                    <li><strong>Regular security audits</strong> to protect against breaches.</li>
+                </ul>
+            </div>
+
+            <div class="privacy-section">
+                <h2><i class="fas fa-user-check"></i> 6. Your Rights & Choices</h2>
+                <p>You can:</p>
+                <ul>
+                    <li><strong>Access/Update</strong> your account information.</li>
+                    <li><strong>Delete</strong> your account (subject to retention policies).</li>
+                    <li><strong>Opt-Out</strong> of marketing emails.</li>
+                    <li><strong>Disable Cookies</strong> via browser settings (may affect functionality).</li>
+                </ul>
+            </div>
+
+            <div class="privacy-section">
+                <h2><i class="fas fa-link"></i> 7. Third-Party Links</h2>
+                <p>Our portal only facilitates the display of billing or account details provided by the shop owner for payment purposes. We do not process or handle payments directly. In case of any payment-related issues or errors, please contact the respective shop owner using the contact information provided on their shop profile. We are <strong>not responsible</strong> for resolving such issues and cannot offer support or refunds on their behalf.</p>
+            </div>
+
+            <div class="privacy-section">
+                <h2><i class="fas fa-child"></i> 8. Children's Privacy</h2>
+                <p>Our services are <strong>not intended for users under 13</strong>. If we discover underage usage, we will delete the data.</p>
+            </div>
+
+            <div class="privacy-section">
+                <h2><i class="fas fa-sync-alt"></i> 9. Changes to This Policy</h2>
+                <p>We may update this policy periodically. Changes will be posted on this page with a revised "Last Updated" date.</p>
+            </div>
+
+            <div class="privacy-section">
+                <h2><i class="fas fa-envelope"></i> 10. Contact Us</h2>
+                <p>For privacy-related questions, contact:</p>
+                <ul>
+                    <li><strong>Email:</strong> privacy@smartfit-portal.com</li>
+                    <li><strong>Phone:</strong> 0922 333 4444</li>
+                    <li><strong>Address:</strong> 123 Shoe Street, Bataan, Philippines</li>
+                </ul>
+                <p><strong>By using SmartFit, you acknowledge that you have read and understood this Privacy Policy.</strong></p>
+            </div>
+        </div>
+    </div>
+
+    <footer class="footer">
+        <div class="footer-content">
+            <p>&copy; 2025 SmartFit Shoe Shop Portal. All rights reserved.</p>
+            <nav>
+                <a href="/">Home</a>
+                <a href="/extras/privacypolicy.html">Privacy Policy</a>
+                <a href="/extras/termsofservice.html">Terms of Service</a>
+                <a href="/extras/contactus.html">Contact Us</a>
+                <a href="/extras/aboutus.html">About Us</a>
+            </nav>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Smooth scroll for anchor links
+            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+                anchor.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    document.querySelector(this.getAttribute('href')).scrollIntoView({
+                        behavior: 'smooth'
+                    });
+                });
+            });
+        });
+    </script>
+</body>
+</html>
