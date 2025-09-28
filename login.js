@@ -1,5 +1,7 @@
 import { signInWithEmailAndPasswordWrapper, checkUserAuth, readData, sendPasswordResetEmailWrapper, logoutUser } from "../../firebaseMethods.js";
 
+var isUserAccountVerified;
+
 // Helper function to get DOM elements
 function getElement(id) {
     return document.getElementById(id);
@@ -16,7 +18,8 @@ function redirectToDashboard(role) {
 
 // Check if user is already logged in
 checkUserAuth().then(user => {
-    if (user.authenticated) {
+    isUserAccountVerified = user.verifiedEmail;
+    if (user.authenticated && user.verifiedEmail) {
         console.log("User is already logged in:", user);
         redirectToDashboard(user.role);
     }
