@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Checkout Customized Shoe</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="icon" href="../../images/smartfitImages/smartfitAR-logo.png" type="image/x-icon">
+    <link rel="stylesheet" href="../css/checkoutcustomize.css">
+</head>
+
+<body>
+    <div class="dashboard">
+        <!-- Sidebar - Purple Theme -->
+        <div class="sidebar">
+            <div class="logo">
+                <div class="logo-icon">
+                    <i class="fas fa-store"></i>
+                </div>
+                <span>SHOE PORTAL</span>
+            </div>
+            <div class="nav-items">
+                <a href="/customer/html/customer_dashboard.html" class="nav-item">
+                    <i class="fas fa-home"></i> Dashboard
+                </a>
+                <a href="/customer/html/browse.html" class="nav-item">
+                    <i class="fas fa-shopping-bag"></i> Browse Shoes
+                </a>
+                <a href="/customer/html/shoevalidator.html" class="nav-item">
+                    <i class="fas fa-check-circle"></i> Shoe Validation
+                </a>
+                <a href="/customer/html/pickshoe.html" class="nav-item">
+                    <i class="fas fa-shoe-prints"></i> Customize Shoes
+                </a>
+                <a href="/customer/html/customization_pendingOrders.html" class="nav-item">
+                    <i class="fas fa-tools"></i> My Custom Orders
+                </a>
+                <a href="/customer/html/orders.html" class="nav-item">
+                    <i class="fas fa-receipt"></i> My Orders
+                </a>
+                <a href="/customer/html/add_to_cart.html" class="nav-item">
+                    <i class="fas fa-shopping-cart"></i> My Cart
+                </a>
+                <a href="/customer/html/history.html" class="nav-item">
+                    <i class="fas fa-history"></i> Order History
+                </a>
+                <a href="/customer/html/issue_response.html" class="nav-item">
+                    <i class="fas fa-reply"></i> Issue Response
+                </a>
+                <a href="/customer/html/wishlist.html" class="nav-item">
+                    <i class="fas fa-heart"></i> Wishlist
+                </a>
+                <a href="/chatbot/html/chatbot.html" class="nav-item">
+                    <i class="fas fa-comment"></i> Chatbot
+                </a>
+                <a href="/customer/html/customerprofile.html" class="nav-item">
+                    <i class="fas fa-cog"></i> Settings
+                </a>
+                <a id="logout_btn" class="nav-item">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </a>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <div class="header">
+                <div class="mobile-menu-toggle">
+                    <i class="fas fa-bars"></i>
+                </div>
+                <a href="/customer/html/customizeshoe.html" class="back-button">
+                    <i class="fas fa-arrow-left"></i>
+                </a>
+                <h1>Checkout Custom Design</h1>
+                <div class="user-profile">
+                    <img id="imageProfile" src="#" alt="Profile" class="user-avatar">
+                    <span id="userName_display2">Customer name</span>
+                </div>
+            </div>
+
+            <div class="checkout-container">
+                <!-- Custom Design Preview -->
+                <div class="custom-design-preview">
+                    <h2 class="design-title">Your Custom Design</h2>
+
+                    <div class="design-warning">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <strong>Important:</strong> Please double-check your design as customized items cannot be
+                        returned or refunded.
+                    </div>
+
+                    <!-- Replace the existing shoe-preview-container with this code -->
+                    <div class="shoe-preview-container">
+                        <div class="shoe-carousel" id="shoeCarousel">
+                            <!-- Main view -->
+                            <div class="carousel-slide active">
+                                <img src="" alt="Main View" class="component-preview" id="checkoutMainImage">
+                            </div>
+                            <!-- Front view -->
+                            <div class="carousel-slide">
+                                <img src="" alt="Front View" class="component-preview" id="checkoutFrontImage">
+                            </div>
+                            <!-- Side view -->
+                            <div class="carousel-slide">
+                                <img src="" alt="Side View" class="component-preview" id="checkoutSideImage">
+                            </div>
+                            <!-- Back view -->
+                            <div class="carousel-slide">
+                                <img src="" alt="Back View" class="component-preview" id="checkoutBackImage">
+                            </div>
+                        </div>
+                        <div class="carousel-controls">
+                            <button class="carousel-prev" id="carouselPrev">
+                                <i class="fas fa-chevron-left"></i>
+                            </button>
+                            <div class="carousel-indicators" id="carouselIndicators">
+                                <span class="indicator active" data-index="0"></span>
+                                <span class="indicator" data-index="1"></span>
+                                <span class="indicator" data-index="2"></span>
+                                <span class="indicator" data-index="3"></span>
+                            </div>
+                            <button class="carousel-next" id="carouselNext">
+                                <i class="fas fa-chevron-right"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="design-details">
+                        <div class="detail-section">
+                            <h3 class="detail-title"><i class="fas fa-shoe-prints"></i> Model Details</h3>
+                            <div class="detail-row">
+                                <span class="detail-label">Model:</span>
+                                <span class="detail-value" id="checkoutModelName">Classic Sneaker</span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="detail-label">Size:</span>
+                                <span class="detail-value" id="checkoutSize">8</span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="detail-label">Production Time:</span>
+                                <span class="detail-value" id="checkoutProductionTime">7-10 days</span>
+                            </div>
+                        </div>
+
+                        <div class="detail-section">
+                            <h3 class="detail-title"><i class="fas fa-palette"></i> Customization</h3>
+                            <div id="customizationDetails">
+                                <!-- Dynamic content will be inserted here -->
+                            </div>
+                        </div>
+
+                        <!-- Price breakdown section -->
+                        <div class="price-breakdown">
+                            <div class="price-row">
+                                <span class="price-label">Base Price:</span>
+                                <span class="price-value" id="checkoutBasePrice">₱0.00</span>
+                            </div>
+                            <div class="price-row">
+                                <span class="price-label">Customization:</span>
+                                <span class="price-value" id="checkoutCustomizationPrice">₱0.00</span>
+                            </div>
+                            <div class="price-row">
+                                <span class="price-label">VAT (12%):</span>
+                                <span class="price-value" id="checkoutVatAmount">₱0.00</span>
+                            </div>
+                             <div class="price-row">
+                                <span class="price-label">Shipping fee:</span>
+                                <span class="price-value" id="checkoutShippingfee">₱0.00</span>
+                            </div>
+                            <div class="price-row total">
+                                <span class="price-label">Total:</span>
+                                <span class="price-value" id="checkoutTotalPrice">₱0.00</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Checkout Form -->
+                <div class="checkout-form">
+                    <h2 class="section-title">Shipping Information</h2>
+                    <form id="shippingForm">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="firstName">First Name</label>
+                                <input type="text" id="firstName" class="form-control" required readonly>
+                            </div>
+                            <div class="form-group">
+                                <label for="lastName">Last Name</label>
+                                <input type="text" id="lastName" class="form-control" required readonly>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="address">Address</label>
+                            <input type="text" id="address" class="form-control" required>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="city">City</label>
+                                <input type="text" id="city" class="form-control" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="zip">ZIP Code</label>
+                                <input type="text" id="zip" class="form-control" required>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="form-group">
+                                <label for="state">Province</label>
+                                <input type="text" id="state" class="form-control" required readonly>
+                            </div>
+                            <label for="country">Country</label>
+                            <select id="country" class="form-control" required readonly>
+                                <option value="">Select Country</option>
+                                <option value="Philippines" selected>Philippines</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="phone">Phone Number</label>
+                            <input type="tel" id="phone" class="form-control" required readonly>
+                        </div>
+                        <div class="form-group">
+                            <label for="email">Email</label>
+                            <input type="email" id="email" class="form-control" required readonly>
+                        </div>
+
+                        <div class="payment-methods">
+                            <h2 class="section-title">Payment Method</h2>
+
+                            <label class="payment-method" for="gcash">
+                                <input type="radio" id="gcash" name="paymentMethod" value="gcash" checked>
+                                <div class="payment-method-icon">
+                                    <i class="fas fa-mobile-alt"></i>
+                                </div>
+                                <div class="payment-method-details" for="gcash">
+                                    <div class="payment-method-name">GCash</div>
+                                    <div class="payment-method-desc">Pay instantly via GCash mobile wallet</div>
+                                </div>
+                            </label>
+
+                            <label class="payment-method" for="cod">
+                                <input type="radio" id="cod" name="paymentMethod" value="cod">
+                                <div class="payment-method-icon">
+                                    <i class="fas fa-money-bill-wave"></i>
+                                </div>
+                                <div class="payment-method-details" for="cod">
+                                    <div class="payment-method-name">Cash on Delivery</div>
+                                    <div class="payment-method-desc">Pay when you receive your order</div>
+                                </div>
+                            </label>
+                        </div>
+
+                        <div class="action-buttons">
+                            <button type="button" class="btn btn-outline" id="backToCustomizeBtn">
+                                <i class="fas fa-edit"></i> Edit Design
+                            </button>
+                            <button type="submit" class="btn btn-primary" id="confirmOrderBtn">
+                                <i class="fas fa-check-circle"></i> Confirm Order
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sidebar Overlay -->
+    <div class="sidebar-overlay"></div>
+
+    <!-- Order Confirmation Modal -->
+    <div id="orderConfirmationModal" class="modal"
+        style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center;">
+        <div class="modal-content"
+            style="background: white; padding: 2rem; border-radius: var(--radius-md); max-width: 500px; width: 90%;">
+            <div style="text-align: center;">
+                <i class="fas fa-check-circle" style="font-size: 3rem; color: var(--success); margin-bottom: 1rem;"></i>
+                <h3 style="margin-bottom: 1rem;">Order Confirmed!</h3>
+                <p style="margin-bottom: 1.5rem;">Your custom shoe order has been placed successfully.</p>
+
+                <div
+                    style="text-align: left; margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--gray-light);">
+                    <h4 style="margin-bottom: 1rem;">Order Details</h4>
+                    <div class="detail-row">
+                        <span class="detail-label">Order Number:</span>
+                        <span class="detail-value" id="modalOrderNumber">#123456</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Total Amount:</span>
+                        <span class="detail-value" id="modalOrderTotal">₱2,499.00</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Estimated Delivery:</span>
+                        <span class="detail-value" id="modalDeliveryDate">7-10 days</span>
+                    </div>
+                </div>
+
+                <button id="viewOrderBtn" class="btn btn-primary" style="margin-top: 1.5rem; width: 100%;">
+                    <i class="fas fa-receipt"></i> View Order
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="../js/checkoutcustomize.js" type="module"></script>
+</body>
+
+</html>
