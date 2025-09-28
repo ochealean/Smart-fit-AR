@@ -9,7 +9,8 @@ import {
   createUserWithEmailAndPassword, 
   signInWithEmailAndPassword, 
   sendEmailVerification,
-  sendPasswordResetEmail
+  sendPasswordResetEmail,
+  updatePassword
 } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-auth.js";
 
 // Firebase configuration
@@ -650,6 +651,50 @@ export function sendEmail(email, reason, shopname, publickey, serviceID, templat
     }
 }
 
+export async function changeUserPassword(newPassword) {
+  const auth = getAuth();
+  const user = auth.currentUser;
+
+  if (!user) {
+    return { success: false, error: "No authenticated user found." };
+  }
+
+  try {
+    await updatePassword(user, newPassword);
+    return { success: true, message: "Password updated successfully." };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+}
+// Add this to your firebaseMethods.js in the AUTHENTICATION METHODS section
+
+/**
+ * Reauthenticate user with email and password
+ * @param {string} email - User email
+ * @param {string} password - Current password
+ * @returns {Promise<Object>} JSON with reauthentication result
+ */
+export async function reauthenticateUser(email, password) {
+    try {
+        const auth = getAuth();
+        const user = auth.currentUser;
+        
+        if (!user) {
+            return { success: false, error: "No authenticated user found" };
+        }
+        
+        if (user.email !== email) {
+            return { success: false, error: "Email does not match current user" };
+        }
+        
+        // Reauthenticate by signing in again
+        await signInWithEmailAndPassword(auth, email, password);
+        return { success: true, message: "User reauthenticated successfully" };
+    } catch (error) {
+        return { success: false, error: error.message };
+    }
+}
+
 // Export Firebase instances for advanced usage
 export { app, auth, db, storage };
 
@@ -669,6 +714,8 @@ export default {
     createUserWithEmailAndPasswordWrapper,
     sendEmailVerificationWrapper,
     sendPasswordResetEmailWrapper,
+    changeUserPassword,
+    reauthenticateUser,
     sendEmail,
 
     // Image Management
