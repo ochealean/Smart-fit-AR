@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shoe Validation - Customer</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="icon" href="../../images/smartfitImages/smartfitAR-logo.png" type="image/x-icon">
+    <link rel="stylesheet" href="../css/shoevalidator.css">
+</head>
+<body>
+    <div class="dashboard">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="logo">
+                <div class="logo-icon">
+                    <i class="fas fa-store"></i>
+                </div>
+                <span>SHOE PORTAL</span>
+            </div>
+            <div class="nav-items">
+                <a href="/customer/html/customer_dashboard.html" class="nav-item">
+                    <i class="fas fa-home"></i> Dashboard
+                </a>
+                <a href="/customer/html/browse.html" class="nav-item">
+                    <i class="fas fa-shopping-bag"></i> Browse Shoes
+                </a>
+                <a href="/customer/html/shoevalidator.html" class="nav-item active">
+                    <i class="fas fa-check-circle"></i> Shoe Validation
+                </a>
+                <a href="/customer/html/pickshoe.html" class="nav-item">
+                    <i class="fas fa-shoe-prints"></i> Customize Shoes
+                </a>
+                <a href="/customer/html/customization_pendingOrders.html" class="nav-item">
+                    <i class="fas fa-tools"></i> My Custom Orders
+                </a>
+                <a href="/customer/html/orders.html" class="nav-item">
+                    <i class="fas fa-receipt"></i> My Orders
+                </a>
+                <a href="/customer/html/add_to_cart.html" class="nav-item">
+                    <i class="fas fa-shopping-cart"></i> My Cart
+                </a>
+                <a href="/customer/html/history.html" class="nav-item">
+                    <i class="fas fa-history"></i> Order History
+                </a>
+                <a href="/customer/html/issue_response.html" class="nav-item">
+                    <i class="fas fa-reply"></i> Issue Response
+                </a>
+                <a href="/customer/html/wishlist.html" class="nav-item">
+                    <i class="fas fa-heart"></i> Wishlist
+                </a>
+                <a href="/chatbot/html/chatbot.html" class="nav-item">
+                    <i class="fas fa-comment"></i> Chatbot
+                </a>
+                <a href="/customer/html/customerprofile.html" class="nav-item">
+                    <i class="fas fa-cog"></i> Settings
+                </a>
+                <a id="logout_btn" class="nav-item">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </a>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <div class="header">
+                <div class="mobile-menu-toggle">
+                    <i class="fas fa-bars"></i>
+                </div>
+                <h1>Shoe Validation</h1>
+                <div class="user-profile">
+                    <img id="imageProfile" src="errorimage.jpg" alt="Profile" class="user-avatar">
+                    <span id="userName_display2">Customer name</span>
+                </div>
+            </div>
+
+            <!-- Validation Form -->
+            <div class="validation-container">
+                <h2 class="validation-title"><i class="fas fa-search"></i> Check Shoe Authenticity</h2>
+                
+                <div class="form-group">
+                    <label for="serialNumber" class="form-label">Enter Shoe Serial Number</label>
+                    <input type="text" id="serialNumber" class="form-input" placeholder="e.g., SN12345678" required>
+                </div>
+                
+                <button id="validateBtn" class="btn btn-primary">
+                    <i class="fas fa-check-circle"></i> Validate Shoe
+                </button>
+                
+                <div class="loading-spinner" id="loadingSpinner">
+                    <div class="spinner"></div>
+                    <p>Checking validation status...</p>
+                </div>
+                
+                <div class="error-message" id="errorMessage">
+                    <i class="fas fa-exclamation-circle"></i> <span id="errorText"></span>
+                </div>
+            </div>
+
+            <!-- Results Section -->
+            <div class="results-container" id="resultsContainer">
+                <h2 class="results-title"><i class="fas fa-clipboard-check"></i> Validation Results</h2>
+                
+                <div class="validation-details">
+                    <div class="detail-group">
+                        <div class="detail-label">Serial Number</div>
+                        <div class="detail-value" id="resultSerial">SN12345678</div>
+                    </div>
+                    
+                    <div class="detail-group">
+                        <div class="detail-label">Shoe Model</div>
+                        <div class="detail-value" id="resultModel">Nike Air Jordan 1</div>
+                    </div>
+                    
+                    <div class="detail-group">
+                        <div class="detail-label">Shop Owner</div>
+                        <div class="detail-value" id="resultShop">Sneaker Haven</div>
+                    </div>
+                    
+                    <div class="detail-group">
+                        <div class="detail-label">Validation Status</div>
+                        <div class="detail-value">
+                            <span class="status-badge" id="resultStatus">Pending</span>
+                        </div>
+                    </div>
+                    
+                    <div class="detail-group">
+                        <div class="detail-label">Submitted Date</div>
+                        <div class="detail-value" id="resultDate">Oct 15, 2023</div>
+                    </div>
+                    
+                    <div class="detail-group">
+                        <div class="detail-label">Validated Date</div>
+                        <div class="detail-value" id="resultValidatedDate">Oct 16, 2023</div>
+                    </div>
+                </div>
+                
+                <div class="images-section">
+                    <h3 class="detail-label">Validation Images</h3>
+                    <div class="images-grid">
+                        <div>
+                            <img src="" alt="Front View" class="validation-image" id="resultFrontImage" onerror="this.onerror=null; this.src='https://cdn-icons-png.flaticon.com/512/11542/11542598.png';">
+                            <div class="image-label">Front View</div>
+                        </div>
+                        <div>
+                            <img src="" alt="Back View" class="validation-image" id="resultBackImage" onerror="this.onerror=null; this.src='https://cdn-icons-png.flaticon.com/512/11542/11542598.png';">
+                            <div class="image-label">Back View</div>
+                        </div>
+                        <div>
+                            <img src="" alt="Top View" class="validation-image" id="resultTopImage" onerror="this.onerror=null; this.src='https://cdn-icons-png.flaticon.com/512/11542/11542598.png';">
+                            <div class="image-label">Top View</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="reason-section" id="reasonSection">
+                    <h3 class="reason-title">Validation Notes</h3>
+                    <p class="reason-text" id="resultReason">
+                        This shoe passed all authenticity checks. The serial number matches the manufacturer's database, 
+                        materials are consistent with authentic products, and all design elements are correct for this model.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sidebar Overlay -->
+    <div class="sidebar-overlay"></div>
+
+    <script src="../js/shoevalidator.js" type="module"></script>
+</body>
+</html>
