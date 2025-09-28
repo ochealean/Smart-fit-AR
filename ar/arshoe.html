@@ -1,0 +1,1562 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SmartFit - AR Shoe Try-On Experience</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #5e72e4;
+            --secondary: #825ee4;
+            --accent: #ff9e3f;
+            --dark: #1a1a2e;
+            --light: #f8f9fa;
+            --gray: #e9ecef;
+            --white: #ffffff;
+            --black: #121212;
+            --success: #2dce89;
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.12);
+            --shadow-md: 0 4px 6px rgba(0,0,0,0.1);
+            --shadow-lg: 0 10px 15px rgba(0,0,0,0.1);
+            --transition: all 0.3s ease;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--light);
+            color: var(--dark);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 2rem;
+        }
+
+        section {
+            padding: 4rem 0;
+        }
+
+        a {
+            text-decoration: none;
+            color: inherit;
+        }
+
+        /* Hero Section */
+        .hero-section {
+            position: relative;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            background: linear-gradient(135deg, rgba(26, 26, 46, 0.9) 0%, rgba(94, 114, 228, 0.7) 100%);
+            overflow: hidden;
+            color: var(--white);
+        }
+
+        .hero-background {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: url('https://images.unsplash.com/photo-1460353581641-37baddab0fa2?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80') no-repeat center center;
+            background-size: cover;
+            z-index: -2;
+        }
+
+        .hero-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, rgba(26, 26, 46, 0.9) 0%, rgba(94, 114, 228, 0.7) 100%);
+            z-index: -1;
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 2;
+            width: 100%;
+        }
+
+        .hero-title {
+            font-size: 4rem;
+            font-weight: 800;
+            margin-bottom: 1rem;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        }
+
+        .hero-tagline {
+            font-size: 1.5rem;
+            margin-bottom: 2rem;
+            max-width: 600px;
+            opacity: 0.9;
+        }
+
+        .powered-by {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 3rem;
+            font-size: 1.1rem;
+        }
+
+        .deepar-logo {
+            font-weight: 700;
+            color: var(--accent);
+            background: rgba(255, 255, 255, 0.1);
+            padding: 0.5rem 1rem;
+            border-radius: 50px;
+        }
+
+        .hero-cta {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 3rem;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.8rem 1.75rem;
+            border-radius: 50px;
+            font-weight: 600;
+            text-align: center;
+            transition: var(--transition);
+            cursor: pointer;
+            border: 2px solid transparent;
+            min-width: 180px;
+            gap: 0.5rem;
+        }
+
+        .btn-primary {
+            background-color: var(--primary);
+            color: var(--white);
+        }
+
+        .btn-primary:hover {
+            background-color: #4a5fd1;
+            box-shadow: var(--shadow-md);
+            transform: translateY(-2px);
+        }
+
+        .btn-outline {
+            background-color: transparent;
+            color: var(--white);
+            border-color: var(--white);
+        }
+
+        .btn-outline:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .btn-sm {
+            padding: 0.5rem 1rem;
+            font-size: 0.85rem;
+            min-width: auto;
+        }
+
+        .btn-ar {
+            background-color: var(--accent);
+            color: var(--white);
+            margin-top: 0.75rem;
+            width: 100%;
+        }
+
+        .btn-ar:hover {
+            background-color: #ff8c1a;
+        }
+
+        .browser-notice {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 12px;
+            padding: 1.5rem;
+            max-width: 600px;
+            border-left: 4px solid var(--accent);
+            margin-bottom: 2rem;
+        }
+
+        .browser-notice h4 {
+            margin-bottom: 0.75rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .browser-notice h4 i {
+            color: var(--accent);
+        }
+
+        /* Browser Compatibility Section */
+        .browser-compatibility {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 12px;
+            padding: 1.5rem;
+            max-width: 600px;
+            margin-bottom: 2rem;
+            display: none;
+        }
+
+        .browser-compatibility.show {
+            display: block;
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        .browser-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .browser-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 0.75rem;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            transition: var(--transition);
+        }
+
+        .browser-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .browser-icon {
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            font-size: 1.25rem;
+        }
+
+        .browser-opera {
+            background: #FF1B2D;
+            color: white;
+        }
+
+        .browser-chrome {
+            background: #4285F4;
+            color: white;
+        }
+
+        .browser-firefox {
+            background: #FF7139;
+            color: white;
+        }
+
+        .browser-edge {
+            background: #0078D7;
+            color: white;
+        }
+
+        .browser-safari {
+            background: #000000;
+            color: white;
+        }
+
+        .browser-info {
+            flex: 1;
+        }
+
+        .browser-name {
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+
+        .browser-status {
+            font-size: 0.85rem;
+            opacity: 0.8;
+        }
+
+        .download-opera {
+            margin-top: 1.5rem;
+            text-align: center;
+            padding-top: 1.5rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        /* Floating Elements */
+        .floating-shoes {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            pointer-events: none;
+        }
+
+        .floating-item {
+            position: absolute;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: var(--shadow-lg);
+            animation: float 6s ease-in-out infinite;
+        }
+
+        .floating-item:nth-child(1) {
+            width: 180px;
+            height: 180px;
+            top: 20%;
+            right: 10%;
+            animation-delay: 0s;
+        }
+
+        .floating-item:nth-child(2) {
+            width: 220px;
+            height: 220px;
+            bottom: 20%;
+            right: 20%;
+            animation-delay: 2s;
+        }
+
+        .floating-item:nth-child(3) {
+            width: 150px;
+            height: 150px;
+            top: 40%;
+            left: 15%;
+            animation-delay: 4s;
+        }
+
+        .floating-item video,
+        .floating-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        /* Shoe Models Section */
+        .shoe-models {
+            background-color: var(--white);
+            padding: 5rem 0;
+        }
+
+        .section-title {
+            text-align: center;
+            margin-bottom: 3rem;
+            position: relative;
+        }
+
+        .section-title h2 {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            color: var(--dark);
+        }
+
+        .section-title p {
+            color: #666;
+            font-size: 1.1rem;
+        }
+
+        .section-title:after {
+            content: '';
+            position: absolute;
+            width: 80px;
+            height: 4px;
+            background: linear-gradient(to right, var(--primary), var(--secondary));
+            bottom: -15px;
+            left: 50%;
+            transform: translateX(-50%);
+            border-radius: 2px;
+        }
+
+        .model-category {
+            margin-bottom: 4rem;
+            background: var(--white);
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: var(--shadow-md);
+        }
+
+        .model-header {
+            background: linear-gradient(to right, var(--primary), var(--secondary));
+            color: var(--white);
+            padding: 2rem;
+            text-align: center;
+        }
+
+        .model-header h3 {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .model-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0;
+        }
+
+        .model-info {
+            padding: 2.5rem;
+            background: var(--light);
+        }
+
+        .model-description {
+            margin-bottom: 2rem;
+        }
+
+        .model-description p {
+            margin-bottom: 1.5rem;
+            line-height: 1.8;
+        }
+
+        .pros-cons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .pros, .cons {
+            padding: 1.5rem;
+            border-radius: 10px;
+        }
+
+        .pros {
+            background: rgba(45, 206, 137, 0.1);
+            border-left: 4px solid var(--success);
+        }
+
+        .cons {
+            background: rgba(255, 94, 87, 0.1);
+            border-left: 4px solid #ff5e57;
+        }
+
+        .pros h4, .cons h4 {
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .pros h4 i {
+            color: var(--success);
+        }
+
+        .cons h4 i {
+            color: #ff5e57;
+        }
+
+        .pros ul, .cons ul {
+            list-style-type: none;
+            padding-left: 0;
+        }
+
+        .pros li, .cons li {
+            margin-bottom: 0.75rem;
+            position: relative;
+            padding-left: 1.5rem;
+        }
+
+        .pros li:before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            color: var(--success);
+            font-weight: bold;
+        }
+
+        .cons li:before {
+            content: "✗";
+            position: absolute;
+            left: 0;
+            color: #ff5e57;
+            font-weight: bold;
+        }
+
+        .color-options {
+            padding: 2.5rem;
+            background: var(--white);
+        }
+
+        .color-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1.5rem;
+        }
+
+        .color-option {
+            text-align: center;
+            transition: var(--transition);
+            padding: 1rem;
+            border-radius: 10px;
+            border: 1px solid transparent;
+        }
+
+        .color-option:hover {
+            transform: translateY(-5px);
+            border-color: var(--gray);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .color-image {
+            height: 180px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1rem;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .color-image img {
+            max-height: 100%;
+            max-width: 100%;
+            object-fit: contain;
+        }
+
+        .color-name {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--dark);
+        }
+
+        .color-swatch {
+            display: flex;
+            justify-content: center;
+            gap: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .swatch {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            border: 2px solid var(--white);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .swatch.white { background-color: #ffffff; border: 1px solid #eee; }
+        .swatch.black { background-color: #000000; }
+        .swatch.blue { background-color: #0066cc; }
+        .swatch.red { background-color: #cc0000; }
+
+        /* Footer */
+        footer {
+            background-color: var(--dark);
+            color: var(--white);
+            padding: 4rem 0 0;
+        }
+
+        .footer-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 3rem;
+            margin-bottom: 3rem;
+        }
+
+        .footer-col h3 {
+            color: var(--white);
+            margin-bottom: 1.5rem;
+            position: relative;
+            padding-bottom: 0.75rem;
+        }
+
+        .footer-col h3:after {
+            content: '';
+            position: absolute;
+            width: 50px;
+            height: 3px;
+            background: var(--accent);
+            bottom: 0;
+            left: 0;
+        }
+
+        .footer-col p{
+            color: rgba(255,255,255,0.7);
+        }
+
+        .footer-col ul {
+            list-style: none;
+        }
+
+        .footer-col ul li {
+            margin-bottom: 0.75rem;
+        }
+
+        .footer-col ul li a {
+            color: rgba(255,255,255,0.7);
+            transition: var(--transition);
+        }
+
+        .footer-col ul li a:hover {
+            color: var(--accent);
+            padding-left: 5px;
+        }
+
+        .social-links {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        .social-links a {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            background-color: rgba(255,255,255,0.1);
+            border-radius: 50%;
+            color: var(--white);
+            transition: var(--transition);
+        }
+
+        .social-links a:hover {
+            background-color: var(--accent);
+            transform: translateY(-3px);
+        }
+
+        .social-links a.facebook:hover {
+        background-color: #1877F2;
+        }
+
+        .social-links a.instagram:hover {
+        background-color: #E1306C;
+        }
+
+        .social-links a.twitter:hover {
+        background-color: #000000;
+        }
+
+        .social-links a.youtube:hover {
+        background-color: #FF0000;
+        }
+
+        .footer-bottom {
+            padding: 1.5rem 0;
+            border-top: 1px solid rgba(255,255,255,0.1);
+            text-align: center;
+            color: rgba(255,255,255,0.7);
+            font-size: 0.9rem;
+        }
+
+        .footer-bottom p {
+            color: rgba(255,255,255,0.7);
+            margin: 0;
+        }
+
+        .footer-bottom a {
+            color: var(--accent);
+            font-weight: 600;
+        }
+
+        /* QR Code Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.8);
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .modal.active {
+            display: flex;
+            opacity: 1;
+        }
+
+        .modal-content {
+            background: var(--white);
+            padding: 2.5rem;
+            border-radius: 12px;
+            text-align: center;
+            max-width: 90%;
+            max-height: 90%;
+            width: 450px; /* Increased width */
+        }
+
+        .modal h3 {
+            margin-bottom: 1.5rem;
+            color: var(--dark);
+            font-size: 1.5rem;
+        }
+
+        .qr-code {
+            width: 250px; /* Increased size */
+            height: 250px; /* Increased size */
+            background: var(--white);
+            margin: 0 auto 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid var(--gray);
+        }
+
+        .qr-code img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        .qr-placeholder {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #f0f0f0;
+            font-weight: bold;
+            font-size: 1.2rem; /* Larger text */
+        }
+
+        .copy-link-container {
+            margin: 1.5rem 0;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .copy-link-label {
+            font-weight: 600;
+            color: var(--dark);
+            margin-bottom: 0.5rem;
+        }
+
+        .copy-link-input {
+            display: flex;
+            align-items: center;
+            background: var(--light);
+            border-radius: 8px;
+            overflow: hidden;
+            border: 1px solid var(--gray);
+        }
+
+        .link-input {
+            flex: 1;
+            padding: 0.75rem 1rem;
+            border: none;
+            background: transparent;
+            font-size: 0.9rem;
+            color: var(--dark);
+        }
+
+        .copy-btn {
+            padding: 0.75rem 1rem;
+            background: var(--primary);
+            color: var(--white);
+            border: none;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .copy-btn:hover {
+            background: #4a5fd1;
+        }
+
+        .copy-success {
+            color: var(--success);
+            font-size: 0.85rem;
+            margin-top: 0.5rem;
+            display: none;
+        }
+
+        .copy-success.show {
+            display: block;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .modal-close {
+            padding: 0.75rem 1.5rem;
+            background: var(--primary);
+            color: var(--white);
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: var(--transition);
+            min-width: 120px;
+        }
+
+        .modal-close:hover {
+            background: #4a5fd1;
+        }
+
+        .btn-opera {
+            padding: 0.75rem 1.5rem;
+            background: #FF1B2D;
+            color: var(--white);
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: var(--transition);
+            min-width: 120px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .btn-opera:hover {
+            background: #e00;
+        }
+
+        .opera-note {
+            margin-top: 1rem;
+            margin-bottom: 1rem;
+            font-size: 0.85rem;
+            color: #666;
+            padding: 0.75rem;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+        }
+
+        /* Animations */
+        @keyframes float {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            50% { transform: translateY(-20px) rotate(2deg); }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        /* Responsive Design */
+        @media (max-width: 992px) {
+            .hero-title {
+                font-size: 3rem;
+            }
+            
+            .model-content {
+                grid-template-columns: 1fr;
+            }
+            
+            .color-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .hero-title {
+                font-size: 2.5rem;
+            }
+            
+            .hero-tagline {
+                font-size: 1.2rem;
+            }
+            
+            .hero-cta {
+                flex-direction: column;
+            }
+            
+            .pros-cons {
+                grid-template-columns: 1fr;
+            }
+            
+            .color-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .floating-item {
+                display: none;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .hero-title {
+                font-size: 2rem;
+            }
+            
+            .container {
+                padding: 0 1rem;
+            }
+            
+            .model-info, .color-options {
+                padding: 1.5rem;
+            }
+            .footer-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .modal-content {
+                padding: 1.5rem;
+            }
+            
+            .modal-actions {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Hero Section -->
+    <section class="hero-section">
+        <div class="hero-background"></div>
+        <div class="hero-overlay"></div>
+        
+        <div class="floating-shoes">
+            <div class="floating-item">
+                <img src="https://placehold.co/300x200/ffffff/000000/png?text=Classic+Shoe" alt="Floating Shoe 1">
+            </div>
+            <div class="floating-item">
+                <video autoplay muted loop playsinline>
+                    <source src="https://assets.adidas.com/videos/ar_1,w_720,c_fill,q_auto,f_auto/6fd2f4b4d42345049f24c0921a698322_d98c/Superstar_II_Shoes_White_JP9677_video.mp4" type="video/mp4">
+                </video>
+            </div>
+            <div class="floating-item">
+                <img src="https://placehold.co/300x200/000000/ffffff/png?text=Running+Shoe" alt="Floating Shoe 3">
+            </div>
+        </div>
+        
+        <div class="container hero-content">
+            <h1 class="hero-title">SmartFit</h1>
+            <p class="hero-tagline">Try before you buy with our revolutionary AR technology. See how shoes look on your feet from the comfort of your home.</p>
+            
+            <div class="powered-by">
+                <span>Powered by</span>
+                <span class="deepar-logo">deepAR</span>
+            </div>
+            
+            <div class="hero-cta">
+                <a href="https://sdk.developer.deepar.ai/effectTester/index.html?url1=https%3A%2F%2Fdeepar-temporary-resources-prod.s3.eu-west-1.amazonaws.com%2F250456b5-7d37-4a01-b00c-bbe5a8237d83&name1=Basketball-White.deeparproj&face1=0&url2=https%3A%2F%2Fdeepar-temporary-resources-prod.s3.eu-west-1.amazonaws.com%2F1e92b432-bf36-41f9-9a6e-61067c3dcd88&name2=Basketball-Black.deeparproj&face2=0&url3=https%3A%2F%2Fdeepar-temporary-resources-prod.s3.eu-west-1.amazonaws.com%2F12cfd2b6-8aef-47d5-aeb7-2966d7fe81ce&name3=Basketball-Red.deeparproj&face3=0&url4=https%3A%2F%2Fdeepar-temporary-resources-prod.s3.eu-west-1.amazonaws.com%2Fe2f14b32-bac5-4eab-85a9-c791c32d8d12&name4=Basketball-Blue.deeparproj&face4=0&url5=https%3A%2F%2Fdeepar-temporary-resources-prod.s3.eu-west-1.amazonaws.com%2F32c3bf87-2311-4c04-8322-40da4040080d&name5=Running-White.deeparproj&face5=0&url6=https%3A%2F%2Fdeepar-temporary-resources-prod.s3.eu-west-1.amazonaws.com%2F204fbbd0-00d1-4d08-838f-429683710c6a&name6=Running-Black.deeparproj&face6=0&url7=https%3A%2F%2Fdeepar-temporary-resources-prod.s3.eu-west-1.amazonaws.com%2F379e6e4d-8eec-46fa-93c2-1b0878b0cba7&name7=Running-Blue.deeparproj&face7=0&url8=https%3A%2F%2Fdeepar-temporary-resources-prod.s3.eu-west-1.amazonaws.com%2F2a4a070e-abe1-48de-ba26-75c12804098b&name8=Running-Red.deeparproj&face8=0"
+                target="_self" class="btn btn-primary">
+                    <i class="fas fa-mobile-alt"></i> Try AR Now
+                </a>
+                <a href="#shoe-models" class="btn btn-outline" id="view-collection-btn">
+                    <i class="fas fa-shoe-prints"></i> View Collection
+                </a>
+            </div>
+            
+            <div class="browser-notice">
+                <h4><i class="fas fa-info-circle"></i> Browser Compatibility Notice</h4>
+                <p>For the best experience, we recommend using Opera browser. Some browsers like Chrome may have issues with the camera switching functionality. SmartFit is currently optimized for Opera to ensure seamless AR try-on experience.</p>
+                <a href="#" class="btn btn-sm btn-outline" id="view-browsers-btn" style="margin-top: 1rem;">
+                    <i class="fas fa-desktop"></i> View Supported Browsers
+                </a>
+            </div>
+            
+            <div class="browser-compatibility" id="browser-compatibility">
+                <h4><i class="fas fa-check-circle"></i> Supported Browsers</h4>
+                <div class="browser-list">
+                    <div class="browser-item">
+                        <div class="browser-icon browser-opera">
+                            <i class="fab fa-opera"></i>
+                        </div>
+                        <div class="browser-info">
+                            <div class="browser-name">Opera</div>
+                            <div class="browser-status">Fully supported - Recommended</div>
+                        </div>
+                    </div>
+                    
+                    <div class="browser-item">
+                        <div class="browser-icon browser-chrome">
+                            <i class="fab fa-chrome"></i>
+                        </div>
+                        <div class="browser-info">
+                            <div class="browser-name">Google Chrome</div>
+                            <div class="browser-status">Limited support - Camera switching issues</div>
+                        </div>
+                    </div>
+                    
+                    <div class="browser-item">
+                        <div class="browser-icon browser-firefox">
+                            <i class="fab fa-firefox-browser"></i>
+                        </div>
+                        <div class="browser-info">
+                            <div class="browser-name">Mozilla Firefox</div>
+                            <div class="browser-status">Basic support - Some features limited</div>
+                        </div>
+                    </div>
+                    
+                    <div class="browser-item">
+                        <div class="browser-icon browser-edge">
+                            <i class="fab fa-edge"></i>
+                        </div>
+                        <div class="browser-info">
+                            <div class="browser-name">Microsoft Edge</div>
+                            <div class="browser-status">Basic support - Some features limited</div>
+                        </div>
+                    </div>
+                    
+                    <div class="browser-item">
+                        <div class="browser-icon browser-safari">
+                            <i class="fab fa-safari"></i>
+                        </div>
+                        <div class="browser-info">
+                            <div class="browser-name">Apple Safari</div>
+                            <div class="browser-status">Limited support - iOS camera restrictions</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="download-opera">
+                    <p>For the best AR experience, we recommend downloading Opera</p>
+                    <a href="https://www.opera.com/download" class="btn btn-primary" target="_blank" style="margin-top: 1rem;">
+                        <i class="fab fa-opera"></i> Download Opera Browser
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Shoe Models Section -->
+    <section id="shoe-models" class="shoe-models">
+        <div class="container">
+            <div class="section-title">
+                <h2>Our Shoe Collection</h2>
+                <p>Discover our premium range of footwear in multiple color options</p>
+            </div>
+            
+            <!-- Classic Model -->
+            <div class="model-category">
+                <div class="model-header">
+                    <h3>Classic Model</h3>
+                    <p>Timeless design with modern comfort</p>
+                </div>
+                
+                <div class="model-content">
+                    <div class="model-info">
+                        <div class="model-description">
+                            <p>Our Classic model combines timeless style with contemporary comfort. Designed for everyday wear, these shoes feature premium materials and exceptional craftsmanship.</p>
+                            <p>The versatile design transitions seamlessly from casual outings to semi-formal occasions, making it the perfect addition to any wardrobe.</p>
+                        </div>
+                        
+                        <div class="pros-cons">
+                            <div class="pros">
+                                <h4><i class="fas fa-plus-circle"></i> Advantages</h4>
+                                <ul>
+                                    <li>Timeless design never goes out of style</li>
+                                    <li>Premium leather construction</li>
+                                    <li>All-day comfort with cushioned insoles</li>
+                                    <li>Versatile for various occasions</li>
+                                </ul>
+                            </div>
+                            
+                            <div class="cons">
+                                <h4><i class="fas fa-minus-circle"></i> Considerations</h4>
+                                <ul>
+                                    <li>Requires breaking in period</li>
+                                    <li>Higher price point</li>
+                                    <li>Not designed for intense athletic activities</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="color-options">
+                        <h4>Color Options</h4>
+                        <div class="color-grid">
+                            <!-- White -->
+                            <div class="color-option">
+                                <div class="color-image">
+                                    <img src="https://placehold.co/300x200/ffffff/000000/png?text=Classic+White" alt="Classic White">
+                                </div>
+                                <div class="color-name">Classic White</div>
+                                <div class="color-swatch">
+                                    <div class="swatch white"></div>
+                                </div>
+                                <button class="btn btn-sm btn-ar" data-color="white" data-model="classic">
+                                    <i class="fas fa-camera"></i> Try AR
+                                </button>
+                            </div>
+                            
+                            <!-- Black -->
+                            <div class="color-option">
+                                <div class="color-image">
+                                    <img src="https://placehold.co/300x200/000000/ffffff/png?text=Classic+Black" alt="Classic Black">
+                                </div>
+                                <div class="color-name">Classic Black</div>
+                                <div class="color-swatch">
+                                    <div class="swatch black"></div>
+                                </div>
+                                <button class="btn btn-sm btn-ar" data-color="black" data-model="classic">
+                                    <i class="fas fa-camera"></i> Try AR
+                                </button>
+                            </div>
+                            
+                            <!-- Blue -->
+                            <div class="color-option">
+                                <div class="color-image">
+                                    <img src="https://placehold.co/300x200/0066cc/ffffff/png?text=Classic+Blue" alt="Classic Blue">
+                                </div>
+                                <div class="color-name">Classic Blue</div>
+                                <div class="color-swatch">
+                                    <div class="swatch blue"></div>
+                                </div>
+                                <button class="btn btn-sm btn-ar" data-color="blue" data-model="classic">
+                                    <i class="fas fa-camera"></i> Try AR
+                                </button>
+                            </div>
+                            
+                            <!-- Red -->
+                            <div class="color-option">
+                                <div class="color-image">
+                                    <img src="https://placehold.co/300x200/cc0000/ffffff/png?text=Classic+Red" alt="Classic Red">
+                                </div>
+                                <div class="color-name">Classic Red</div>
+                                <div class="color-swatch">
+                                    <div class="swatch red"></div>
+                                </div>
+                                <button class="btn btn-sm btn-ar" data-color="red" data-model="classic">
+                                    <i class="fas fa-camera"></i> Try AR
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Running Model -->
+            <div class="model-category">
+                <div class="model-header">
+                    <h3>Running Model</h3>
+                    <p>Designed for performance and comfort</p>
+                </div>
+                
+                <div class="model-content">
+                    <div class="model-info">
+                        <div class="model-description">
+                            <p>Our Running model is engineered for peak performance. Featuring advanced cushioning technology and breathable materials, these shoes will enhance your running experience.</p>
+                            <p>With responsive soles and adaptive support, these shoes are perfect for both casual joggers and serious marathon trainers.</p>
+                        </div>
+                        
+                        <div class="pros-cons">
+                            <div class="pros">
+                                <h4><i class="fas fa-plus-circle"></i> Advantages</h4>
+                                <ul>
+                                    <li>Advanced cushioning technology</li>
+                                    <li>Breathable mesh upper</li>
+                                    <li>Excellent traction on various surfaces</li>
+                                    <li>Lightweight design reduces fatigue</li>
+                                </ul>
+                            </div>
+                            
+                            <div class="cons">
+                                <h4><i class="fas fa-minus-circle"></i> Considerations</h4>
+                                <ul>
+                                    <li>Not suitable for formal occasions</li>
+                                    <li>May require sizing up for wide feet</li>
+                                    <li>Limited color options compared to other models</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="color-options">
+                        <h4>Color Options</h4>
+                        <div class="color-grid">
+                            <!-- White -->
+                            <div class="color-option">
+                                <div class="color-image">
+                                    <img src="https://placehold.co/300x200/ffffff/000000/png?text=Running+White" alt="Running White">
+                                </div>
+                                <div class="color-name">Running White</div>
+                                <div class="color-swatch">
+                                    <div class="swatch white"></div>
+                                </div>
+                                <button class="btn btn-sm btn-ar" data-color="white" data-model="running">
+                                    <i class="fas fa-camera"></i> Try AR
+                                </button>
+                            </div>
+                            
+                            <!-- Black -->
+                            <div class="color-option">
+                                <div class="color-image">
+                                    <img src="https://placehold.co/300x200/000000/ffffff/png?text=Running+Black" alt="Running Black">
+                                </div>
+                                <div class="color-name">Running Black</div>
+                                <div class="color-swatch">
+                                    <div class="swatch black"></div>
+                                </div>
+                                <button class="btn btn-sm btn-ar" data-color="black" data-model="running">
+                                    <i class="fas fa-camera"></i> Try AR
+                                </button>
+                            </div>
+                            
+                            <!-- Blue -->
+                            <div class="color-option">
+                                <div class="color-image">
+                                    <img src="https://placehold.co/300x200/0066cc/ffffff/png?text=Running+Blue" alt="Running Blue">
+                                </div>
+                                <div class="color-name">Running Blue</div>
+                                <div class="color-swatch">
+                                    <div class="swatch blue"></div>
+                                </div>
+                                <button class="btn btn-sm btn-ar" data-color="blue" data-model="running">
+                                    <i class="fas fa-camera"></i> Try AR
+                                </button>
+                            </div>
+                            
+                            <!-- Red -->
+                            <div class="color-option">
+                                <div class="color-image">
+                                    <img src="https://placehold.co/300x200/cc0000/ffffff/png?text=Running+Red" alt="Running Red">
+                                </div>
+                                <div class="color-name">Running Red</div>
+                                <div class="color-swatch">
+                                    <div class="swatch red"></div>
+                                </div>
+                                <button class="btn btn-sm btn-ar" data-color="red" data-model="running">
+                                    <i class="fas fa-camera"></i> Try AR
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Basketball Model -->
+            <div class="model-category">
+                <div class="model-header">
+                    <h3>Basketball Model</h3>
+                    <p>Court-ready performance with superior support</p>
+                </div>
+                
+                <div class="model-content">
+                    <div class="model-info">
+                        <div class="model-description">
+                            <p>Our Basketball model is designed for serious players who demand performance and style. With ankle support, responsive cushioning, and superior traction, these shoes will elevate your game.</p>
+                            <p>The durable construction withstands the demands of the court while providing the comfort needed for extended play.</p>
+                        </div>
+                        
+                        <div class="pros-cons">
+                            <div class="pros">
+                                <h4><i class="fas fa-plus-circle"></i> Advantages</h4>
+                                <ul>
+                                    <li>Enhanced ankle support</li>
+                                    <li>Superior court traction</li>
+                                    <li>Responsive cushioning for jumps</li>
+                                    <li>Durable construction for intense play</li>
+                                </ul>
+                            </div>
+                            
+                            <div class="cons">
+                                <h4><i class="fas fa-minus-circle"></i> Considerations</h4>
+                                <ul>
+                                    <li>Heavier than running shoes</li>
+                                    <li>Higher cut may feel restrictive to some</li>
+                                    <li>Not ideal for casual everyday wear</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="color-options">
+                        <h4>Color Options</h4>
+                        <div class="color-grid">
+                            <!-- White -->
+                            <div class="color-option">
+                                <div class="color-image">
+                                    <img src="https://placehold.co/300x200/ffffff/000000/png?text=Basketball+White" alt="Basketball White">
+                                </div>
+                                <div class="color-name">Basketball White</div>
+                                <div class="color-swatch">
+                                    <div class="swatch white"></div>
+                                </div>
+                                <button class="btn btn-sm btn-ar" data-color="white" data-model="basketball">
+                                    <i class="fas fa-camera"></i> Try AR
+                                </button>
+                            </div>
+                            
+                            <!-- Black -->
+                            <div class="color-option">
+                                <div class="color-image">
+                                    <img src="https://placehold.co/300x200/000000/ffffff/png?text=Basketball+Black" alt="Basketball Black">
+                                </div>
+                                <div class="color-name">Basketball Black</div>
+                                <div class="color-swatch">
+                                    <div class="swatch black"></div>
+                                </div>
+                                <button class="btn btn-sm btn-ar" data-color="black" data-model="basketball">
+                                    <i class="fas fa-camera"></i> Try AR
+                                </button>
+                            </div>
+                            
+                            <!-- Blue -->
+                            <div class="color-option">
+                                <div class="color-image">
+                                    <img src="https://placehold.co/300x200/0066cc/ffffff/png?text=Basketball+Blue" alt="Basketball Blue">
+                                </div>
+                                <div class="color-name">Basketball Blue</div>
+                                <div class="color-swatch">
+                                    <div class="swatch blue"></div>
+                                </div>
+                                <button class="btn btn-sm btn-ar" data-color="blue" data-model="basketball">
+                                    <i class="fas fa-camera"></i> Try AR
+                                </button>
+                            </div>
+                            
+                            <!-- Red -->
+                            <div class="color-option">
+                                <div class="color-image">
+                                    <img src="https://placehold.co/300x200/cc0000/ffffff/png?text=Basketball+Red" alt="Basketball Red">
+                                </div>
+                                <div class="color-name">Basketball Red</div>
+                                <div class="color-swatch">
+                                    <div class="swatch red"></div>
+                                </div>
+                                <button class="btn btn-sm btn-ar" data-color="red" data-model="basketball">
+                                    <i class="fas fa-camera"></i> Try AR
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer>
+        <div class="container">
+            <div class="footer-grid">
+                <div class="footer-col">
+                    <h3>About Us</h3>
+                    <p>Connecting customers with local shoe shops since 2025. Our mission is to make shoe shopping easier and more accessible for everyone.</p>
+                </div>
+                
+                <div class="footer-col">
+                    <h3>Quick Links</h3>
+                    <ul>
+                        <li><a href="/index.html">Home</a></li>
+                        <li><a href="extras/privacypolicy.html">Privacy Policy</a></li>
+                        <li><a href="extras/termsofservice.html">Terms of Service</a></li>
+                        <li><a href="extras/contactus.html">Contact Us</a></li>
+                        <li><a href="/extras/aboutus.html">About Us</a></li>
+                    </ul>
+                </div>
+                
+                <div class="footer-col">
+                    <h3>Contact</h3>
+                    <p><i class="fas fa-envelope"></i> info@shoeshopportal.com</p>
+                    <p><i class="fas fa-phone"></i> 0922 333 4444</p>
+                    <p><i class="fas fa-map-marker-alt"></i> 123 Shoe Street, Manila</p>
+                </div>
+                
+                <div class="footer-col">
+                    <h3>Follow Us</h3>
+                    <div class="social-links">
+                        <a href="extras/devonprocess.html" class="facebook"><i class="fab fa-facebook-f"></i></a>
+                        <a href="extras/devonprocess.html" class="instagram"><i class="fab fa-instagram"></i></a>
+                        <a href="extras/devonprocess.html" class="twitter"><i class="fab fa-twitter"></i></a>
+                        <a href="extras/devonprocess.html" class="youtube"><i class="fab fa-youtube"></i></a>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="footer-bottom">
+                <p>&copy; 2025 Shoe Shop Portal. All rights reserved. <a href="admin/html/admin_login.html">Admin Login</a></p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- QR Code Modal -->
+    <div class="modal" id="qr-modal">
+        <div class="modal-content">
+            <h3 id="modal-title">Scan to Try AR</h3>
+            <div class="qr-code">
+                <img id="qr-placeholder" src="" alt="QR Code">
+            </div>
+            <p>Scan this QR code with your Opera browser to try on these shoes in AR</p>
+            
+            <!-- Copy link section -->
+            <div class="copy-link-container">
+                <div class="copy-link-label">Or copy this link:</div>
+                <div class="copy-link-input">
+                    <input type="text" class="link-input" id="ar-link" readonly value="https://smartfit.com/ar/try-on">
+                    <button class="copy-btn" id="copy-link-btn">
+                        <i class="fas fa-copy"></i>
+                    </button>
+                </div>
+                <div class="copy-success" id="copy-success">Link copied to clipboard!</div>
+            </div>
+            
+            <!-- Opera download section -->
+            <div class="opera-note">
+                <p><i class="fas fa-info-circle"></i> For the best AR experience, we recommend using Opera browser</p>
+            </div>
+            
+            <div class="modal-actions">
+                <button class="btn-opera" id="download-opera-btn">
+                    <i class="fab fa-opera"></i> Download Opera
+                </button>
+                <button class="modal-close" id="modal-close">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+
+        // QR Code Images Mapping
+        const qrCodeImages = {
+            classic: {
+                white: "qr/classic/white.png",
+                black: "qr/classic/black.png",
+                blue: "qr/classic/blue.png",
+                red: "qr/classic/red.png"
+            },
+            running: {
+                white: "qr/running/white.png",
+                black: "qr/running/black.png",
+                blue: "qr/running/blue.png",
+                red: "qr/running/red.png"
+            },
+            basketball: {
+                white: "qr/basketball/white.png",
+                black: "qr/basketball/black.png",
+                blue: "qr/basketball/blue.png",
+                red: "qr/basketball/red.png"
+            }
+        };
+
+        // DeepAR Links Mapping
+        const deeparLinks = {
+            classic: {
+                white: "white",
+                black: "black",
+                blue: "blue",
+                red: "red"
+            },
+            running: {
+                white: "https://sdk.developer.deepar.ai/effectTester/index.html?url1=https%3A%2F%2Fdeepar-temporary-resources-prod.s3.eu-west-1.amazonaws.com%2F32c3bf87-2311-4c04-8322-40da4040080d&name1=Running-White.deeparproj&sdkVersion=5.6.0",
+                black: "https://sdk.developer.deepar.ai/effectTester/index.html?url1=https%3A%2F%2Fdeepar-temporary-resources-prod.s3.eu-west-1.amazonaws.com%2F204fbbd0-00d1-4d08-838f-429683710c6a&name1=Running-Black.deeparproj&sdkVersion=5.6.0",
+                blue: "https://sdk.developer.deepar.ai/effectTester/index.html?url1=https%3A%2F%2Fdeepar-temporary-resources-prod.s3.eu-west-1.amazonaws.com%2F379e6e4d-8eec-46fa-93c2-1b0878b0cba7&name1=Running-Blue.deeparproj&sdkVersion=5.6.0",
+                red: "https://sdk.developer.deepar.ai/effectTester/index.html?url1=https%3A%2F%2Fdeepar-temporary-resources-prod.s3.eu-west-1.amazonaws.com%2F2a4a070e-abe1-48de-ba26-75c12804098b&name1=Running-Red.deeparproj&sdkVersion=5.6.0"
+            },
+            basketball: {
+                white: "https://sdk.developer.deepar.ai/effectTester/index.html?url1=https%3A%2F%2Fdeepar-temporary-resources-prod.s3.eu-west-1.amazonaws.com%2F250456b5-7d37-4a01-b00c-bbe5a8237d83&name1=Basketball-White.deeparproj&sdkVersion=5.6.0",
+                black: "https://sdk.developer.deepar.ai/effectTester/index.html?url1=https%3A%2F%2Fdeepar-temporary-resources-prod.s3.eu-west-1.amazonaws.com%2F1e92b432-bf36-41f9-9a6e-61067c3dcd88&name1=Basketball-Black.deeparproj&sdkVersion=5.6.0",
+                blue: "https://sdk.developer.deepar.ai/effectTester/index.html?url1=https%3A%2F%2Fdeepar-temporary-resources-prod.s3.eu-west-1.amazonaws.com%2F8ad51b0f-f101-4c38-a03c-f41bddf3f29e&name1=Basketball-Blue.deeparproj&sdkVersion=5.6.0",
+                red: "https://sdk.developer.deepar.ai/effectTester/index.html?url1=https%3A%2F%2Fdeepar-temporary-resources-prod.s3.eu-west-1.amazonaws.com%2F8963b31a-0ac0-4495-a3bd-aaad5b0edca7&name1=Basketball-Red.deeparproj&sdkVersion=5.6.0"
+            }
+        };
+
+        // Browser compatibility toggle
+        document.getElementById('view-browsers-btn').addEventListener('click', function(e) {
+            e.preventDefault();
+            document.getElementById('browser-compatibility').classList.toggle('show');
+        });
+
+        // Smooth scroll to collection
+        document.getElementById('view-collection-btn').addEventListener('click', function(e) {
+            e.preventDefault();
+            document.getElementById('shoe-models').scrollIntoView({ 
+                behavior: 'smooth' 
+            });
+        });
+
+        // AR Try-On buttons
+        const arButtons = document.querySelectorAll('.btn-ar');
+        const modal = document.getElementById('qr-modal');
+        const modalTitle = document.getElementById('modal-title');
+        const qrPlaceholder = document.getElementById('qr-placeholder');
+        const modalClose = document.getElementById('modal-close');
+        const arLinkInput = document.getElementById('ar-link');
+        const copyLinkBtn = document.getElementById('copy-link-btn');
+        const copySuccess = document.getElementById('copy-success');
+        const downloadOperaBtn = document.getElementById('download-opera-btn');
+        
+        arButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const color = this.getAttribute('data-color');
+                const model = this.getAttribute('data-model');
+                
+                // Update modal content based on selection
+                const displayColor = color.charAt(0).toUpperCase() + color.slice(1);
+                const displayModel = model.charAt(0).toUpperCase() + model.slice(1);
+                
+                modalTitle.textContent = `Try ${displayColor} ${displayModel} in AR`;
+                qrPlaceholder.src = qrCodeImages[model][color];
+                
+                // Get the appropriate DeepAR link
+                const arLink = deeparLinks[model][color];
+                arLinkInput.value = arLink;
+                
+                // Reset copy success message
+                copySuccess.classList.remove('show');
+                
+                // Show modal
+                modal.classList.add('active');
+            });
+        });
+
+        // Close modal
+        modalClose.addEventListener('click', function() {
+            modal.classList.remove('active');
+        });
+
+        // Close modal if clicked outside
+        window.addEventListener('click', function(e) {
+            if (e.target === modal) {
+                modal.classList.remove('active');
+            }
+        });
+
+        // Copy link functionality
+        copyLinkBtn.addEventListener('click', function() {
+            // Select the text
+            arLinkInput.select();
+            arLinkInput.setSelectionRange(0, 99999); // For mobile devices
+            
+            // Copy the text
+            navigator.clipboard.writeText(arLinkInput.value)
+                .then(() => {
+                    // Show success message
+                    copySuccess.classList.add('show');
+                    
+                    // Hide success message after 3 seconds
+                    setTimeout(() => {
+                        copySuccess.classList.remove('show');
+                    }, 3000);
+                })
+                .catch(err => {
+                    console.error('Failed to copy: ', err);
+                    // Fallback for older browsers
+                    try {
+                        document.execCommand('copy');
+                        copySuccess.classList.add('show');
+                        setTimeout(() => {
+                            copySuccess.classList.remove('show');
+                        }, 3000);
+                    } catch (err) {
+                        alert('Failed to copy link. Please select and copy manually.');
+                    }
+                });
+        });
+
+        // Download Opera browser
+        downloadOperaBtn.addEventListener('click', function() {
+            window.open('https://www.opera.com/download', '_blank');
+        });
+
+        // Simple animation for floating elements
+        document.addEventListener('DOMContentLoaded', function() {
+            const floatingItems = document.querySelectorAll('.floating-item');
+            
+            floatingItems.forEach((item, index) => {
+                // Set random initial positions for a more natural look
+                item.style.animationDelay = `${index * 2}s`;
+            });
+        });
+    </script>
+</body>
+</html>
