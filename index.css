@@ -270,8 +270,8 @@ header {
 }
 
 .logo img {
-    width: 150px; /* Fixed width instead of percentage */
-    height: 150px; /* Fixed height instead of percentage */
+    width: 150px;
+    height: 150px;
     object-fit: contain;
     filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
     transition: var(--transition);
