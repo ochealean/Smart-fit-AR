@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analytics - Shop Owner</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.css">
+    <link rel="stylesheet" href="/shopowner/css/analytics.css">
+    <link rel="icon" type="image/png" href="/images/smartfitImages/smartfitAR-logo.png">
+</head>
+
+<body>
+    <div class="dashboard">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="logo">
+                <div class="logo-icon">
+                    <i class="fas fa-store"></i>
+                </div>
+                <span>SHOP DASHBOARD</span>
+            </div>
+            <div class="nav-items">
+                <a href="/shopowner/html/shop_dashboard.html" class="nav-item">
+                    <i class="fas fa-home"></i> Dashboard
+                </a>
+                <a href="/shopowner/html/shopowner_addshoe.html" class="nav-item">
+                    <i class="fas fa-shoe-prints"></i> Add Shoe
+                </a>
+                <a href="/shopowner/html/shoeverification.html" class="nav-item">
+                    <i class="fas fa-check-circle"></i> Shoe Verification
+                </a>
+                <a id="addemployeebtn" href="/shopowner/html/shopowner_addemployee.html" class="nav-item shopowner">
+                    <i class="fas fa-users"></i> Add Employee
+                </a>
+                <a href="/shopowner/html/shop_inventory.html" class="nav-item">
+                    <i class="fas fa-boxes"></i> Inventory
+                </a>
+                <a href="/shopowner/html/shop_order.html" class="nav-item">
+                    <i class="fas fa-shopping-cart"></i> Orders
+                </a>
+                <a id="issuereport" href="/shopowner/html/issue_report.html" class="nav-item manager">
+                    <i class="fas fa-exclamation-circle"></i> Issue Report
+                </a>
+                <a id="analyticsbtn" href="/shopowner/html/analytics.html" class="nav-item manager active">
+                    <i class="fas fa-chart-line"></i> Analytics
+                </a>
+                <a href="/shopowner/html/shopprofile.html" class="nav-item">
+                    <i class="fas fa-cog"></i> Settings
+                </a>
+                <a id="logout_btn" class="nav-item">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </a>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <div class="header">
+                <!-- Mobile Menu Toggle -->
+                <div class="mobile-menu-toggle">
+                    <i class="fas fa-bars"></i>
+                </div>
+                <h1>Shop Analytics</h1>
+                <div class="user-profile">
+                    <img id="profilePicture" src="https://randomuser.me/api/portraits/women/45.jpg" alt="User"
+                        class="user-avatar">
+                    <span id="userFullname">Shop Owner</span>
+                </div>
+                <span id="userName_display2" style="display: none;"></span>
+                <button id="printInventoryBtn" class="btn btn-primary">
+                    <i class="fas fa-file-pdf"></i> Print Inventory Status (PDF)
+                </button>
+            </div>
+
+            <div class="analytics-container">
+                <!-- Sales Chart -->
+                <div class="analytics-card">
+                    <div class="card-header">
+                        <h2 class="card-title">Daily Sales</h2>
+                        <!-- <div class="filter-controls">
+                            <button class="filter-btn active" data-period="day">Today</button>
+                            <button class="filter-btn" data-period="week">Week</button>
+                            <button class="filter-btn" data-period="month">Month</button>
+                        </div> -->
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="salesChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Inventory Status -->
+                <div class="analytics-card">
+                    <div class="card-header">
+                        <h2 class="card-title">Inventory Status</h2>
+                        <div class="filter-controls">
+                            <button class="filter-btn active" data-filter="all">All</button>
+                            <button class="filter-btn" data-filter="low">Low Stock</button>
+                            <button class="filter-btn" data-filter="out">Out of Stock</button>
+                        </div>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="inventoryStatusChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Inventory Changes -->
+            <div class="analytics-card">
+                <div class="card-header">
+                    <h2 class="card-title">Recent Inventory Changes</h2>
+                </div>
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Shoe</th>
+                            <th>Action</th>
+                            <th>User</th>
+                            <th>Quantity</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="inventoryChanges">
+                        <!-- Data will be loaded dynamically -->
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Recent Sales -->
+            <div class="analytics-card">
+                <div class="card-header">
+                    <h2 class="card-title">Recent Sales</h2>
+                    <div class="filter-controls">
+                        <button class="filter-btn active" data-recent-filter="day">Today</button>
+                        <button class="filter-btn" data-recent-filter="week">Week</button>
+                        <button class="filter-btn" data-recent-filter="month">Month</button>
+                    </div>
+                </div>
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Date/Time</th>
+                            <th>Order ID</th>
+                            <th>Customer</th>
+                            <th>Product</th>
+                            <th>Size</th>
+                            <th>Qty</th>
+                            <th>Amount</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="recentSales">
+                        <!-- Data will be loaded dynamically -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mobile Overlay -->
+    <div class="sidebar-overlay"></div>
+
+    <!-- this includes the html2pdf.js library in your webpage. -->
+    <!-- may html2pdf library kasi to -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+    <!-- ito naman is for chart ito ay version of Chart.js hosted on jsDelivr -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.js"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const mobileToggle = document.querySelector('.mobile-menu-toggle');
+            const sidebar = document.querySelector('.sidebar');
+            const overlay = document.querySelector('.sidebar-overlay');
+
+            if (mobileToggle) {
+                mobileToggle.addEventListener('click', () => {
+                    sidebar.classList.toggle('active');
+                    overlay.classList.toggle('active');
+                });
+            }
+
+            if (overlay) {
+                overlay.addEventListener('click', () => {
+                    sidebar.classList.remove('active');
+                    overlay.classList.remove('active');
+                });
+            }
+        });
+    </script>
+
+
+    <script src="/shopowner/js/analytics.js" type="module"></script>
+</body>
+
+</html>
