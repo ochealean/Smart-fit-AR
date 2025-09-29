@@ -8,7 +8,9 @@ import {
 } from "../../firebaseMethods.js";
 
 // Backend server URL for ChatGPT API
-const BackendServer = 'https://github-chat-backend.onrender.com/api/chat';
+// old backend server
+// https://github-chat-backend.onrender.com/api/chat
+const BackendServer = 'https://smart-fit-ar-backend.onrender.com/api/chat';
 
 // DOM Elements
 const inputField = document.getElementById('user-input');
