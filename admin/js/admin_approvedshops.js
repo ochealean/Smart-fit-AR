@@ -18,8 +18,7 @@ const overlay = document.getElementById("overlay");
 const logoutDialog = document.getElementById('logoutDialog');
 const menuBtn = document.querySelector(".menu-btn");
 const navLinks = document.querySelector(".nav-links");
-const modal = document.getElementById("ModalDialog");
-const tableBody = document.querySelector("#approved-shops tbody");
+const tableBody = document.getElementById("approvedShopsTableBody");
 const prevBtn = document.getElementById("prevBtn");
 const nextBtn = document.getElementById("nextBtn");
 const paginationContainer = document.querySelector(".pagination");
@@ -28,16 +27,6 @@ const searchBtn = document.getElementById('searchBtn');
 const clearSearchBtn = document.getElementById('clearSearch');
 
 /* UTILITY FUNCTIONS */
-
-/**
- * Checks if a table is empty and displays a message if no rows are present
- */
-function checkEmptyTable() {
-    const tbody = document.querySelector('tbody');
-    if (tbody && tbody.querySelectorAll('tr').length === 0) {
-        tbody.innerHTML = '<tr><td colspan="7">No approved shops remaining</td></tr>';
-    }
-}
 
 /**
  * Displays a notification message
@@ -67,48 +56,6 @@ function showNotification(message, type) {
 }
 
 /**
- * Updates confirmation dialog content based on action type
- * @param {Object} shop - Shop data object
- * @param {string} actionType - 'approve' or 'reject'
- * @param {HTMLElement} currentRow - The table row being acted upon
- */
-function updateDialogContent(shop, actionType, currentRow) {
-    const dialogMessage = document.getElementById("dialogMessage");
-    const confirmBtn = document.getElementById("confirmAction");
-    const rejectionInput = document.getElementById("rejectionReason");
-
-    if (!dialogMessage || !confirmBtn || !rejectionInput) {
-        console.error("Confirmation dialog elements missing in DOM");
-        return;
-    }
-
-    const confirmIcon = confirmBtn.querySelector('i');
-    const actionText = confirmBtn.querySelector('.action-text');
-    
-    const username = shop.username || 'N/A';
-    shopName = shop.shopName || 'Unknown Shop';
-
-    dialogMessage.textContent = `Are you sure you want to ${actionType} "${shopName}" (${username})?`;
-
-    if (actionType === 'approve') {
-        confirmIcon.className = 'fas fa-check';
-        actionText.textContent = 'Approve';
-        confirmBtn.className = 'approve-btn';
-        rejectionInput.style.display = 'none';
-    } else {
-        emailCell = currentRow.querySelector('td:nth-child(4)');
-        email = emailCell?.textContent?.trim() || '';
-        console.log('Email:', email);
-
-        confirmIcon.className = 'fas fa-ban';
-        actionText.textContent = 'Reject';
-        confirmBtn.className = 'reject-btn';
-        rejectionInput.style.display = 'block';
-        rejectionInput.value = '';
-    }
-}
-
-/**
  * Shows the confirmation dialog and overlay
  */
 function showDialog() {
@@ -123,7 +70,6 @@ function hideDialog() {
     document.getElementById('shopDetailsModal')?.classList.remove('show');
     dialog?.classList.remove("show");
     overlay?.classList.remove("show");
-    modal?.classList.remove("show");
     currentAction = null;
     currentRow = null;
     currentShopId = null;
@@ -255,19 +201,12 @@ function updateShopModalContent(shop) {
             <h3>Timestamps</h3>
             <div class="info-grid">
                 <div class="info-item">
-                    <span class="info-label">Status Changed Date: </span>
-                    <span class="info-value">${formatDisplayDate(shop.dateProcessed) || 'N/A'}</span>
+                    <span class="info-label">Approval Date: </span>
+                    <span class="info-value">${formatDisplayDate(shop.dateApproved) || 'N/A'}</span>
                 </div>
                 <div class="info-item">
-                    ${shop.status === 'approved' ? `
-                        <span class="info-label">Approval Date: </span>
-                        <span class="info-value">${formatDisplayDate(shop.dateApproved)}</span>
-                    ` : ''}
-                    
-                    ${shop.status === 'rejected' ? `
-                        <span class="info-label">Rejection Date: </span>
-                        <span class="info-value">${formatDisplayDate(shop.dateRejected)}</span>
-                    ` : ''}
+                    <span class="info-label">Date Processed: </span>
+                    <span class="info-value">${formatDisplayDate(shop.dateProcessed) || 'N/A'}</span>
                 </div>
             </div>
         </div>
@@ -318,14 +257,13 @@ function renderDocumentItem(url, title) {
 /* SHOP MANAGEMENT FUNCTIONS */
 
 /**
- * Shows confirmation dialog for approve/reject actions
+ * Shows confirmation dialog for reject action
  * @param {Event} e - Click event
- * @param {string} actionType - 'approve' or 'reject'
  */
-function showConfirmationDialog(e, actionType) {
+function showConfirmationDialog(e) {
     e.preventDefault();
     currentShopId = e.currentTarget.getAttribute('data-id');
-    currentAction = actionType;
+    currentAction = 'reject';
     currentRow = e.currentTarget.closest("tr");
 
     const shopPath = `smartfit_AR_Database/shop/${currentShopId}`;
@@ -333,7 +271,7 @@ function showConfirmationDialog(e, actionType) {
     const unsubscribe = readDataRealtime(shopPath, (result) => {
         if (result.success) {
             const shop = result.data;
-            updateDialogContent(shop, actionType, currentRow);
+            updateDialogContent(shop);
             showDialog();
         } else {
             showNotification("Shop data not found", "error");
@@ -342,7 +280,31 @@ function showConfirmationDialog(e, actionType) {
 }
 
 /**
- * Loads shops from Firebase and populates table
+ * Updates confirmation dialog content for rejection
+ * @param {Object} shop - Shop data object
+ */
+function updateDialogContent(shop) {
+    const dialogMessage = document.getElementById("dialogMessage");
+    const rejectionInput = document.getElementById("rejectionReason");
+    const rejectionContainer = document.getElementById("rejectionReasonContainer");
+
+    if (!dialogMessage || !rejectionInput || !rejectionContainer) {
+        console.error("Confirmation dialog elements missing in DOM");
+        return;
+    }
+
+    shopName = shop.shopName || 'Unknown Shop';
+    dialogMessage.textContent = `Are you sure you want to reject "${shopName}"?`;
+    
+    emailCell = currentRow.querySelector('td:nth-child(4)');
+    email = emailCell?.textContent?.trim() || '';
+    
+    rejectionContainer.style.display = 'block';
+    rejectionInput.value = '';
+}
+
+/**
+ * Loads approved shops from Firebase and populates table
  */
 function loadShops() {
     const shopsPath = 'smartfit_AR_Database/shop';
@@ -368,7 +330,7 @@ function loadShops() {
                 hasShops = true;
                 const shopWithId = { ...shop, id: shopId };
                 originalShops.push(shopWithId);
-                const row = createShopRow(shopId, shop, 'approved');
+                const row = createShopRow(shopId, shop);
                 tbody.appendChild(row);
             }
         });
@@ -388,20 +350,15 @@ function loadShops() {
 }
 
 /**
- * Creates a table row for shop data
+ * Creates a table row for approved shop data
  * @param {string} shopId - Firebase shop ID
  * @param {Object} shop - Shop data object
- * @param {string} status - Current shop status
  * @returns {HTMLElement} Table row element
  */
-function createShopRow(shopId, shop, status) {
+function createShopRow(shopId, shop) {
     const row = document.createElement('tr');
     row.className = 'animate-fade';
     row.setAttribute('data-id', shopId);
-
-    const maxLength = 10;
-    const reasonText = shop.rejectionReason || 'No reason provided';
-    const shortenedText = reasonText.length > maxLength ? reasonText.substring(0, maxLength) + '...' : reasonText;
 
     row.innerHTML = `
         <td title="${shopId}">${shopId.substring(0, 6)}...</td>
@@ -409,20 +366,13 @@ function createShopRow(shopId, shop, status) {
         <td>${shop.ownerName || 'N/A'}</td>
         <td>${shop.email || 'N/A'}</td>
         <td><a href="#" data-id="${shopId}" class="view-link"><i class="fas fa-eye"></i> View</a></td>
-        <td>${shop.dateProcessed ? formatDisplayDate(shop.dateProcessed) : 'Pending'}</td>
-        ${status === 'rejected' ? `<td title="${shortenedText}">${shortenedText || 'No reason'}</td>` : ''}
+        <td>${shop.dateApproved ? formatDisplayDate(shop.dateApproved) : 'N/A'}</td>
         <td>
-            ${status === 'pending' ?
-            `<button class="approve-btn" data-id="${shopId}"><i class="fas fa-check"></i> Approve</button>
-                 <button class="reject-btn" data-id="${shopId}"><i class="fas fa-ban"></i> Reject</button>` :
-            status === 'approved' ?
-                `<button class="reject-btn" data-id="${shopId}"><i class="fas fa-ban"></i> Reject</button>` :
-                `<button class="approve-btn" data-id="${shopId}"><i class="fas fa-check"></i> Approve</button>`}
+            <button class="reject-btn" data-id="${shopId}"><i class="fas fa-ban"></i> Reject</button>
         </td>
     `;
 
-    row.querySelector('.approve-btn')?.addEventListener('click', (e) => showConfirmationDialog(e, 'approve'));
-    row.querySelector('.reject-btn')?.addEventListener('click', (e) => showConfirmationDialog(e, 'reject'));
+    row.querySelector('.reject-btn')?.addEventListener('click', (e) => showConfirmationDialog(e));
     row.querySelector('.view-link')?.addEventListener('click', (e) => e.preventDefault());
 
     return row;
@@ -440,15 +390,7 @@ function updateTableDisplay() {
     const endIndex = startIndex + rowsPerPage;
 
     rows.forEach((row, index) => {
-        // Hide row by default
-        row.classList.remove("show");
-        row.style.display = 'none';
-
-        // Show row if it's within the current page range
-        if (index >= startIndex && index < endIndex) {
-            row.classList.add("show");
-            row.style.display = '';
-        }
+        row.style.display = index >= startIndex && index < endIndex ? '' : 'none';
     });
 }
 
@@ -459,17 +401,7 @@ function updatePaginationButtons() {
     if (!tableBody) return;
     const rows = tableBody.querySelectorAll("tr");
     const pageCount = Math.ceil(rows.length / rowsPerPage);
-    const pageButtons = paginationContainer.querySelectorAll(".page-btn");
 
-    // Update active state for number buttons
-    pageButtons.forEach(btn => {
-        btn.classList.remove("active");
-        if (parseInt(btn.textContent) === currentPage) {
-            btn.classList.add("active");
-        }
-    });
-
-    // Update Previous/Next button disabled states
     prevBtn.disabled = currentPage === 1;
     nextBtn.disabled = currentPage === pageCount || pageCount === 0;
 }
@@ -492,7 +424,6 @@ function createPageButton(pageNumber) {
         setupPagination();
     });
 
-    // Insert the button before the 'Next' button
     paginationContainer.insertBefore(pageBtn, nextBtn);
 }
 
@@ -503,7 +434,7 @@ function setupPagination() {
     const rows = document.querySelectorAll("#approvedShopsTableBody tr");
     const pageCount = Math.ceil(rows.length / rowsPerPage);
 
-    // Clear existing page number buttons (excluding prev/next)
+    // Clear existing page number buttons
     const existingPageButtons = paginationContainer.querySelectorAll(".page-btn");
     existingPageButtons.forEach(btn => btn.remove());
 
@@ -512,34 +443,11 @@ function setupPagination() {
     let startPage = Math.max(1, currentPage - Math.floor(maxPageButtonsToShow / 2));
     let endPage = Math.min(pageCount, startPage + maxPageButtonsToShow - 1);
 
-    // Adjust startPage if endPage hits the limit early
     startPage = Math.max(1, endPage - maxPageButtonsToShow + 1);
 
-    // Add 'First' button if needed
-    if (startPage > 1) {
-        createPageButton(1);
-        if (startPage > 2) {
-            const ellipsis = document.createElement('span');
-            ellipsis.textContent = '...';
-            ellipsis.className = 'pagination-ellipsis';
-            paginationContainer.insertBefore(ellipsis, nextBtn);
-        }
-    }
-
-    // Add page number buttons in the calculated range
+    // Add page number buttons
     for (let i = startPage; i <= endPage; i++) {
         createPageButton(i);
-    }
-
-    // Add 'Last' button if needed
-    if (endPage < pageCount) {
-        if (endPage < pageCount - 1) {
-            const ellipsis = document.createElement('span');
-            ellipsis.textContent = '...';
-            ellipsis.className = 'pagination-ellipsis';
-            paginationContainer.insertBefore(ellipsis, nextBtn);
-        }
-        createPageButton(pageCount);
     }
 
     updateTableDisplay();
@@ -578,7 +486,7 @@ function performSearch(searchTerm) {
         tbody.innerHTML = '<tr><td colspan="7">No matching shops found</td></tr>';
     } else {
         filteredShops.forEach(shop => {
-            const row = createShopRow(shop.id, shop, 'approved');
+            const row = createShopRow(shop.id, shop);
             tbody.appendChild(row);
         });
     }
@@ -650,28 +558,20 @@ function initializeEventListeners() {
         const shopPath = `smartfit_AR_Database/shop/${currentShopId}`;
 
         const updatePayload = {
-            status: currentAction === "approve" ? "approved" : "rejected",
+            status: 'rejected',
             dateProcessed: new Date().toISOString(),
-            ...(currentAction === "approve" && { dateApproved: new Date().toISOString() }),
-            ...(currentAction === "reject" && { dateRejected: new Date().toISOString() }),
-            ...(reason && { rejectionReason: reason })
+            dateRejected: new Date().toISOString(),
+            rejectionReason: reason
         };
 
         updateData(shopPath, updatePayload)
             .then((result) => {
                 if (result.success) {
-                    showNotification(`Shop ${currentAction}ed successfully!`, "success");
+                    showNotification(`Shop rejected successfully!`, "success");
                     currentRow?.remove();
-                    checkEmptyTable();
-
-                    // Email sending logic (only for rejections)
-                    if (currentAction === "reject") {
-                        if (!email) {
-                            console.warn('No email available for rejection notification');
-                            hideDialog();
-                            return;
-                        }
-
+                    
+                    // Send rejection email
+                    if (email) {
                         sendEmail(email, reason, shopName, 'maZuEJjFTiKrGZ4vX', 'service_3vhu66j', 'template_20tf4tf')
                             .then(result => {
                                 if (result && !result.success) {
@@ -684,13 +584,12 @@ function initializeEventListeners() {
                                 console.error('Email sending error:', error);
                             });
                     }
-
                 } else {
                     throw new Error(result.error);
                 }
             })
             .catch((error) => {
-                showNotification(`Failed to ${currentAction} shop: ${error.message}`, "error");
+                showNotification(`Failed to reject shop: ${error.message}`, "error");
             })
             .finally(() => {
                 hideDialog();
@@ -703,7 +602,6 @@ function initializeEventListeners() {
         document.getElementById('confirmationDialog')?.classList.remove('show');
         document.getElementById('shopDetailsModal')?.classList.remove('show');
         document.getElementById('logoutDialog')?.classList.remove('show');
-        document.getElementById('ModalDialog')?.classList.remove('show');
         this.classList.remove('show');
         document.getElementById('rejectionReason').value = '';
         currentAction = null;
@@ -748,7 +646,6 @@ document.addEventListener('DOMContentLoaded', () => {
         initializeEventListeners();
         loadShops();
         setupSearchListeners();
-        setupPagination();
 
         // Logout functionality
         const logoutLink = document.querySelector('a[href="/admin/html/admin_login.html"]');
