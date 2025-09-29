@@ -1,0 +1,1087 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chatbot Manager - Admin</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #3498db;
+            --primary-dark: #2980b9;
+            --secondary: #2c3e50;
+            --accent: #e74c3c;
+            --success: #27ae60;
+            --warning: #f39c12;
+            --error: #c0392b;
+            --light: #ecf0f1;
+            --dark: #2c3e50;
+            --gray: #bdc3c7;
+            --gray-light: #ecf0f1;
+            --gray-dark: #7f8c8d;
+            --text-primary: #2c3e50;
+            --text-secondary: #34495e;
+            --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.12);
+            --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.1);
+            --transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            --radius-sm: 4px;
+            --radius-md: 8px;
+            --radius-lg: 12px;
+        }
+
+        .responseTD {
+            height: 100px;
+            overflow-y: auto;
+        }
+
+        /* Base Styles */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        html,
+        body {
+            min-height: 100%;
+            min-width: 350px;
+            margin: 0;
+            padding: 0;
+            overflow-y: visible;
+        }
+
+        body {
+            background-color: var(--gray-light);
+            color: var(--text-primary);
+            display: flex;
+            flex-direction: column;
+            line-height: 1.6;
+        }
+
+        /* Navigation */
+        nav {
+            background-color: var(--secondary);
+            color: white;
+            box-shadow: var(--shadow-lg);
+            padding: 0 15px;
+            position: sticky;
+            top: 0;
+            z-index: 800;
+            transition: all 0.3s ease;
+        }
+
+        .nav-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 0;
+        }
+
+        .nav-links {
+            display: flex;
+            transition: all 0.3s ease;
+            gap: 15px;
+        }
+
+        .nav-links li {
+            list-style: none;
+            position: relative;
+        }
+
+        .nav-links a {
+            color: white;
+            text-decoration: none;
+            padding: 12px 18px;
+            display: block;
+            border-radius: var(--radius-sm);
+            transition: var(--transition);
+            font-weight: 500;
+        }
+
+        .nav-links a:hover,
+        .nav-links a.active {
+            background-color: rgba(255, 255, 255, 0.15);
+            transform: translateY(-2px);
+        }
+
+        .nav-links a.active::after {
+            content: '';
+            position: absolute;
+            bottom: -3px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100%;
+            height: 3px;
+            background-color: var(--primary);
+            border-radius: 3px;
+        }
+
+        .right-menu {
+            margin-right: 2rem;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .username-display {
+            font-weight: bold;
+            position: relative;
+            padding-right: 10px;
+        }
+
+        .username-display::after {
+            content: '';
+            position: absolute;
+            right: -10px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 8px;
+            height: 8px;
+            background-color: var(--success);
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% {
+                transform: translateY(-50%) scale(1);
+                opacity: 1;
+            }
+
+            50% {
+                transform: translateY(-50%) scale(1.3);
+                opacity: 0.7;
+            }
+
+            100% {
+                transform: translateY(-50%) scale(1);
+                opacity: 1;
+            }
+        }
+
+        .menu-btn {
+            font-size: 24px;
+            cursor: pointer;
+            display: none;
+            transition: var(--transition);
+        }
+
+        .menu-btn:hover {
+            transform: rotate(90deg);
+        }
+
+        /* Container */
+        .container {
+            padding: 70px;
+            margin: 0 auto;
+            width: 100%;
+            flex: 1;
+            position: relative;
+        }
+
+        /* Table Styles */
+        .table-container {
+            width: 100%;
+            overflow-x: auto;
+            background: white;
+            border-radius: var(--radius-md);
+            box-shadow: var(--shadow-sm);
+            transition: var(--transition);
+            margin: 20px 0 30px 0;
+        }
+
+        .table-container:hover {
+            box-shadow: var(--shadow-md);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 800px;
+        }
+
+        thead {
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        th,
+        td {
+            padding: 15px;
+            text-align: left;
+            vertical-align: middle;
+        }
+
+        th {
+            background-color: var(--secondary);
+            color: white;
+            font-weight: 600;
+            top: 0;
+            z-index: 10;
+            position: relative;
+            transition: var(--transition);
+        }
+
+        th:hover {
+            background-color: var(--dark);
+        }
+
+        th::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: linear-gradient(90deg, var(--primary), var(--accent));
+            opacity: 0.7;
+        }
+
+        tr {
+            transition: var(--transition);
+            border-bottom: 1px solid var(--gray-light);
+        }
+
+        tr:last-child {
+            border-bottom: none;
+        }
+
+        tr:hover {
+            background-color: rgba(52, 152, 219, 0.05);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--gray-light);
+            position: relative; /* Added this */
+        }
+
+        .modal-header h3 {
+            color: var(--secondary);
+            font-size: 1.5rem;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            flex-grow: 1; /* Added this */
+        }
+
+        .close-modal {
+            background: none;
+            border: none;
+            font-size: 1.75rem;
+            color: var(--gray-dark);
+            cursor: pointer;
+            transition: var(--transition);
+            padding: 0.25rem;
+            line-height: 1;
+            position: static; /* Changed from absolute to static */
+            margin-left: auto; /* Added this to push it to the right */
+        }
+
+        .close-modal:hover {
+            color: var(--accent);
+            transform: rotate(90deg);
+        }
+
+        /* Buttons */
+        button {
+            padding: 10px 18px;
+            border: none;
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            font-weight: 600;
+            transition: var(--transition);
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .approve-btn {
+            margin: 2.5px;
+            background-color: var(--success);
+            color: white;
+        }
+
+        .approve-btn:hover {
+            background-color: #229954;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .cancel-btn {
+            margin: 2.5px;
+            background-color: var(--gray-dark);
+            color: white;
+        }
+
+        .cancel-btn:hover {
+            background-color: var(--gray);
+        }
+
+        .clear-btn {
+            background-color: var(--accent);
+            color: white;
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .clear-btn:hover {
+            background-color: var(--error);
+        }
+
+        .edit-btn {
+            background-color: var(--primary);
+            color: white;
+            margin-right: 5px;
+        }
+
+        .edit-btn:hover {
+            background-color: var(--primary-dark);
+        }
+
+        .delete-btn {
+            background-color: var(--accent);
+            color: white;
+        }
+
+        .delete-btn:hover {
+            background-color: var(--error);
+        }
+
+        .response-actions {
+            display: flex;
+            gap: 5px;
+        }
+
+        /* Modal Styles */
+        .response-modal {
+            background: white;
+            border-radius: var(--radius-lg);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+            width: 90%;
+            max-width: 500px;
+            padding: 2rem;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 1001;
+            display: none;
+        }
+
+        .response-modal.active {
+            display: block;
+            animation: modalFadeIn 0.3s ease-out;
+        }
+
+        @keyframes modalFadeIn {
+            from {
+                opacity: 0;
+                transform: translate(-50%, -60%);
+            }
+            to {
+                opacity: 1;
+                transform: translate(-50%, -50%);
+            }
+        }
+
+        .modal-body {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .response-form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 1.25rem;
+        }
+
+        .response-input {
+            width: 100%;
+            padding: 0.8rem 1rem;
+            border: 1px solid var(--gray);
+            border-radius: var(--radius-md);
+            font-size: 1rem;
+            transition: var(--transition);
+            background-color: white;
+            color: var(--text-primary);
+        }
+
+        .response-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+        }
+
+        .response-input::placeholder {
+            color: var(--gray-dark);
+            opacity: 0.7;
+        }
+
+        select.response-input {
+            appearance: none;
+            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-position: right 1rem center;
+            background-size: 1em;
+            padding-right: 2.5rem;
+        }
+
+        textarea.response-input {
+            min-height: 150px;
+            resize: vertical;
+            line-height: 1.5;
+            font-family: inherit;
+        }
+
+        .response-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .clear-container {
+            display: flex;
+            justify-content: flex-end;
+        }
+
+        .clear-btn {
+            background-color: var(--gray-light);
+            color: var(--gray-dark);
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: var(--radius-sm);
+            font-size: 0.9rem;
+            transition: var(--transition);
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .clear-btn:hover {
+            background-color: var(--gray);
+            color: var(--dark);
+        }
+
+        .modal-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--gray-light);
+        }
+
+        .modal-actions button {
+            min-width: 100px;
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* Focus states for better accessibility */
+        button:focus {
+            outline: 2px solid var(--primary);
+            outline-offset: 2px;
+        }
+
+        /* Notification */
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 25px;
+            border-radius: var(--radius-md);
+            color: white;
+            font-weight: 600;
+            box-shadow: var(--shadow-lg);
+            z-index: 10003;
+            opacity: 0;
+            transform: translateY(-50px);
+            transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            max-width: 350px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .notification.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .notification.success {
+            background-color: var(--success);
+        }
+
+        .notification.error {
+            background-color: var(--error);
+        }
+
+        /* Confirmation Dialog */
+        .confirmation-dialog {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0.9);
+            background: white;
+            padding: 30px;
+            border-radius: var(--radius-md);
+            box-shadow: var(--shadow-lg);
+            z-index: 10002;
+            max-width: 450px;
+            width: 90%;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .confirmation-dialog.show {
+            opacity: 1;
+            visibility: visible;
+            transform: translate(-50%, -50%) scale(1);
+        }
+
+        /* Overlay */
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 900;
+            opacity: 0;
+            visibility: hidden;
+            transition: var(--transition);
+            backdrop-filter: blur(3px);
+        }
+
+        .overlay.show {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .last-question {
+            max-width: 200px;
+            position: relative;
+        }
+
+        .last-question-content {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            padding-right: 25px;
+        }
+
+        .edit-question-btn {
+            position: absolute;
+            right: 5px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: var(--primary);
+            cursor: pointer;
+            padding: 5px;
+            font-size: 14px;
+            opacity: 0;
+            transition: var(--transition);
+        }
+
+        tr:hover .edit-question-btn {
+            opacity: 1;
+        }
+
+        .edit-question-btn:hover {
+            color: var(--primary-dark);
+        }
+
+        /* Responsive Styles */
+        @media (max-width: 992px) {
+            .container {
+                padding: 20px;
+            }
+
+            .nav-links {
+                position: fixed;
+                top: 60px;
+                left: 0;
+                right: 0;
+                background-color: var(--secondary);
+                flex-direction: column;
+                align-items: stretch;
+                padding: 0;
+                max-height: 0;
+                overflow: hidden;
+                transition: max-height 0.3s ease;
+                gap: 0;
+            }
+
+            .nav-links.active {
+                max-height: 500px;
+                padding: 15px 0;
+            }
+
+            .nav-links a {
+                padding: 15px 25px;
+                border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            }
+
+            .menu-btn {
+                display: block;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .dashboard {
+                grid-template-columns: 1fr;
+            }
+
+            .sidebar {
+                width: 100%;
+                height: auto;
+                position: relative;
+                padding: 1rem;
+            }
+
+            .nav-items {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 0.5rem;
+            }
+
+            .nav-item {
+                margin: 0;
+                padding: 0.5rem;
+                font-size: 0.9rem;
+            }
+
+            #chat-messages {
+                height: 300px;
+            }
+
+            .quick-questions .question-categories {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .quick-questions .category {
+                min-width: 100%;
+            }
+
+            th,
+            td {
+                padding: 12px;
+                font-size: 14px;
+            }
+
+            button {
+                padding: 8px 12px;
+                font-size: 14px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 15px;
+            }
+            .response-modal {
+                padding: 1.5rem;
+            }
+            
+            .modal-actions {
+                flex-direction: column;
+                gap: 0.75rem;
+            }
+            
+            .modal-actions button {
+                width: 100%;
+            }
+        }
+
+        /* Added CSS for Chatbot Interface */
+        .dashboard {
+            display: grid;
+            grid-template-columns: 250px 1fr;
+            min-height: 100vh;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            background-color: var(--secondary);
+            color: var(--light);
+            padding: 2rem 1rem;
+            position: sticky;
+            top: 0;
+            height: 100vh;
+        }
+
+        .logo {
+            color: var(--primary);
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+
+        .nav-item {
+            padding: 0.8rem 1rem;
+            margin: 0.5rem 0;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            transition: var(--transition);
+            display: block;
+            color: var(--light);
+            text-decoration: none;
+        }
+
+        .nav-item:hover,
+        .nav-item.active {
+            background-color: var(--primary-dark);
+            color: var(--light);
+        }
+
+        /* Main Content */
+        .main-content {
+            padding: 2rem;
+            overflow-x: auto;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .search-bar {
+            padding: 0.8rem 1rem;
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--gray);
+            width: 100%;
+            max-width: 400px;
+            transition: var(--transition);
+            background-color: white;
+        }
+
+        .search-bar:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid var(--primary);
+        }
+
+        #faq-container {
+            background-color: white;
+            border-radius: var(--radius-md);
+            box-shadow: var(--shadow-md);
+            padding: 25px;
+        }
+
+        #chat-messages {
+            height: 500px;
+            overflow-y: auto;
+            padding: 20px;
+            border: 1px solid var(--gray);
+            border-radius: var(--radius-sm);
+            margin-bottom: 20px;
+            background-color: var(--light);
+            scroll-behavior: smooth;
+        }
+
+        #user-input-container {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        #user-input {
+            flex-grow: 1;
+            padding: 12px 15px;
+            border: 1px solid var(--gray);
+            border-radius: var(--radius-sm);
+            font-size: 16px;
+            transition: var(--transition);
+        }
+
+        #user-input:focus {
+            border-color: var(--primary);
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+        }
+
+        #send-button {
+            padding: 12px 25px;
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 500;
+            transition: var(--transition);
+        }
+
+        #send-button:hover {
+            background-color: var(--primary-dark);
+        }
+
+        .user-message {
+            margin: 12px 0;
+            padding: 12px 18px;
+            background: #e3f2fd;
+            border-radius: 12px 12px 0 12px;
+            max-width: 75%;
+            margin-left: auto;
+            word-wrap: break-word;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .bot-message {
+            margin: 12px 0;
+            padding: 12px 18px;
+            background: var(--light);
+            border-radius: 12px 12px 12px 0;
+            max-width: 75%;
+            word-wrap: break-word;
+            box-shadow: var(--shadow-sm);
+            border-left: 3px solid var(--primary);
+        }
+
+        .quick-questions {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid var(--gray);
+        }
+
+        .quick-questions h3 {
+            color: var(--secondary);
+            margin-bottom: 15px;
+            font-size: 18px;
+        }
+
+        .quick-questions .question-categories {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .quick-questions .category {
+            flex: 1;
+            min-width: 250px;
+        }
+
+        .quick-questions h4 {
+            color: var(--primary);
+            margin-bottom: 10px;
+            font-size: 16px;
+        }
+
+        .quick-questions button {
+            background: none;
+            border: 1px solid var(--primary);
+            color: var(--primary);
+            padding: 8px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: var(--transition);
+            font-size: 14px;
+            margin: 5px;
+            display: block;
+            width: 100%;
+            text-align: left;
+        }
+
+        .quick-questions button:hover {
+            background-color: var(--primary);
+            color: white;
+        }
+
+        .link-button {
+            display: inline-block;
+            margin-top: 10px;
+            padding: 8px 15px;
+            background-color: var(--success);
+            color: white;
+            text-decoration: none;
+            border-radius: var(--radius-sm);
+            font-size: 14px;
+            transition: var(--transition);
+        }
+
+        .link-button:hover {
+            background-color: #27ae60;
+        }
+
+        .feature-highlight {
+            background-color: #fff9e6;
+            padding: 15px;
+            border-radius: var(--radius-sm);
+            margin: 15px 0;
+            border-left: 4px solid var(--warning);
+        }
+
+        .troubleshooting-section {
+            background-color: #f0f7ff;
+            padding: 15px;
+            border-radius: var(--radius-sm);
+            margin: 15px 0;
+            border-left: 4px solid var(--primary);
+        }
+
+        .troubleshooting-item {
+            margin-bottom: 10px;
+        }
+
+        .troubleshooting-item strong {
+            color: var(--secondary);
+        }
+
+        .response-form-group select {
+            width: 100%;
+            padding: 0.8rem;
+            margin-bottom: 1rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+            background-color: white;
+            transition: var(--transition);
+        }
+
+        .response-form-group select:focus {
+            border-color: var(--primary);
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+        }
+    </style>
+</head>
+
+<body>
+    <div id="notification" class="notification"></div>
+
+    <div id="confirmationDialog" class="confirmation-dialog">
+        <p id="dialogMessage">Are you sure you want to delete this response?</p>
+        <div class="confirmation-buttons">
+            <button id="cancelAction" class="cancel-btn"><i class="fas fa-times"></i> Cancel</button>
+            <button id="confirmAction" class="approve-btn"><i class="fas fa-check"></i> Confirm</button>
+        </div>
+    </div>
+
+    <div id="overlay" class="overlay"></div>
+
+    <nav>
+        <div class="nav-header">
+            <ul class="nav-links">
+                <li><a href="/admin/html/admin_dashboard.html"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+                <li><a href="/admin/html/admin_pendingshops.html"><i class="fas fa-clock"></i> Pending Shops</a></li>
+                <li><a href="/admin/html/admin_approvedshops.html"><i class="fas fa-check-circle"></i> Approved Shops</a></li>
+                <li><a href="/admin/html/admin_rejectedshops.html"><i class="fas fa-times-circle"></i> Rejected Shops</a></li>
+                <li><a href="/admin/html/admin_orders.html"><i class="fas fa-shopping-bag"></i> Orders</a></li>
+                <li><a href="/admin/html/admin_shoeverification.html"><i class="fas fa-check-circle"></i> <span>Shoe Validation</span></a></li>
+                <li><a href="/chatbot/html/responses.html" class="active"><i class="fas fa-robot"></i> Chatbot Manager</a></li>
+                <li><a href="/admin/html/censoredWords.html"><i class="fas fa-ban"></i> Censored Words</a></li>
+                <li><a href="/admin/html/admin_login.html"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
+            </ul>
+            <div class="right-menu">
+                <span class="username-display">Admin</span>
+                <div class="menu-btn"><i class="fas fa-bars"></i></div>
+            </div>
+        </div>
+    </nav>
+
+    <div id="responseModal" class="response-modal">
+        <div class="modal-header">
+            <h3 id="modalTitle">Add New Response</h3>
+            <button class="close-modal">&times;</button>
+        </div>
+        
+        <div class="modal-body">
+            <div class="response-form-group">
+                <select id="modalCategory" class="response-input">
+                    <option value="feature">Feature</option>
+                    <option value="orders">Orders</option>
+                    <option value="help">Help</option>
+                    <option value="other">Other</option>
+                </select>
+                <input type="text" id="modalKeyword" class="response-input" placeholder="Enter keyword (single word)">
+                <div class="response-list" id="responseList">
+                    <textarea id="responseTextarea" class="response-input"
+                        placeholder="Enter responses (one per line)"></textarea>
+                    <div class="clear-container">
+                        <button class="clear-btn" id="clearResponses">
+                            <i class="fas fa-eraser"></i> Clear
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button class="cancel-btn" id="cancelModal">Cancel</button>
+                <button class="approve-btn" id="saveModalResponse">Save Response</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <h1 class="animate-slide"><i class="fas fa-robot"></i> Chatbot Response Manager</h1>
+
+        <section id="chatbot-crud" class="animate-fade">
+            <button class="add-response-btn" id="openResponseModal">
+                <i class="fas fa-plus"></i> Add Response
+            </button>
+
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th><i class="fas fa-id-badge"></i> ID</th>
+                            <th><i class="fas fa-tag"></i> Category</th>
+                            <th><i class="fas fa-key"></i> Keyword</th>
+                            <th><i class="fas fa-comment-dots"></i> Responses</th>
+                            <th><i class="fas fa-chart-line"></i> Popularity</th>
+                            <th><i class="fas fa-comment-alt"></i> Last Question</th>
+                            <th><i class="fas fa-tools"></i> Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="chatbotTableBody">
+                        <!-- Responses populated here -->
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </div>
+
+    <script src="/chatbot/html/responses.js" type="module"></script>
+</body>
+
+</html>

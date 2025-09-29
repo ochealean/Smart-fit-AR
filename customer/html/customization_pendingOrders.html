@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Custom Orders</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="icon" href="../../images/smartfitImages/smartfitAR-logo.png" type="image/x-icon">
+    <link rel="stylesheet" href="../css/customization_pendingOrders.css">
+</head>
+<body>
+    <div class="dashboard">
+        <!-- Sidebar - Purple Theme -->
+        <div class="sidebar">
+            <div class="logo">
+                <div class="logo-icon">
+                    <i class="fas fa-store"></i>
+                </div>
+                <span>SHOE PORTAL</span>
+            </div>
+            <div class="nav-items">
+                <a href="/customer/html/customer_dashboard.html" class="nav-item">
+                    <i class="fas fa-home"></i> Dashboard
+                </a>
+                <a href="/customer/html/browse.html" class="nav-item">
+                    <i class="fas fa-shopping-bag"></i> Browse Shoes
+                </a>
+                <a href="/customer/html/shoevalidator.html" class="nav-item">
+                    <i class="fas fa-check-circle"></i> Shoe Validation
+                </a>
+                <a href="/customer/html/pickshoe.html" class="nav-item">
+                    <i class="fas fa-shoe-prints"></i> Customize Shoes
+                </a>
+                <a href="/customer/html/customization_pendingOrders.html" class="nav-item active">
+                    <i class="fas fa-tools"></i> My Custom Orders
+                </a>
+                <a href="/customer/html/orders.html" class="nav-item">
+                    <i class="fas fa-receipt"></i> My Orders
+                </a>
+                <a href="/customer/html/add_to_cart.html" class="nav-item">
+                    <i class="fas fa-shopping-cart"></i> My Cart
+                </a>
+                <a href="/customer/html/history.html" class="nav-item">
+                    <i class="fas fa-history"></i> Order History
+                </a>
+                <a href="/customer/html/issue_response.html" class="nav-item">
+                    <i class="fas fa-reply"></i> Issue Response
+                </a>
+                <a href="/customer/html/wishlist.html" class="nav-item">
+                    <i class="fas fa-heart"></i> Wishlist
+                </a>
+                <a href="/chatbot/html/chatbot.html" class="nav-item">
+                    <i class="fas fa-comment"></i> Chatbot
+                </a>
+                <a href="/customer/html/customerprofile.html" class="nav-item">
+                    <i class="fas fa-cog"></i> Settings
+                </a>
+                <a id="logout_btn" class="nav-item">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </a>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <div class="header">
+                <div class="mobile-menu-toggle">
+                    <i class="fas fa-bars"></i>
+                </div>
+                <h1><i class="fas fa-receipt"></i> My Custom Orders</h1>
+                <div class="user-profile">
+                    <img id="imageProfile" src="#" alt="Profile" class="user-avatar">
+                    <span id="userName_display2">Customer name</span>
+                </div>
+            </div>
+
+            <!-- Order Tabs -->
+            <div class="order-tabs">
+                <div class="order-tab active" data-tab="pending">
+                    <i class="fas fa-clock"></i> Pending
+                </div>
+                <div class="order-tab" data-tab="processing">
+                    <i class="fas fa-cog"></i> In Process
+                </div>
+                <div class="order-tab" data-tab="history">
+                    <i class="fas fa-check-circle"></i> Order History
+                </div>
+            </div>
+
+            <div class="orders-container" id="ordersContainer">
+                <!-- Orders will be inserted here by JavaScript -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Sidebar Overlay -->
+    <div class="sidebar-overlay"></div>
+
+    <!-- Order Details Modal -->
+    <div class="modal-overlay" id="orderModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Order Details - <span id="modalOrderId">CS-20230810-001</span></h2>
+                <button class="close-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="order-details-grid">
+                    <div>
+                        <div class="detail-section">
+                            <h3><i class="fas fa-info-circle"></i> Order Information</h3>
+                            <div class="detail-row">
+                                <div class="detail-label">Order Date:</div>
+                                <div class="detail-value" id="modalOrderDate">Aug 10, 2023</div>
+                            </div>
+                            <div class="detail-row">
+                                <div class="detail-label">Order Status:</div>
+                                <div class="detail-value"><span class="status-badge status-pending" id="modalOrderStatus">Pending Payment</span></div>
+                            </div>
+                            <div class="detail-row">
+                                <div class="detail-label">Payment Method:</div>
+                                <div class="detail-value" id="modalPaymentMethod">GCash</div>
+                            </div>
+                        </div>
+                        
+                        <div class="detail-section">
+                            <h3><i class="fas fa-truck"></i> Shipping Information</h3>
+                            <div class="detail-row">
+                                <div class="detail-label">Name:</div>
+                                <div class="detail-value" id="modalCustomerName">John Doe</div>
+                            </div>
+                            <div class="detail-row">
+                                <div class="detail-label">Address:</div>
+                                <div class="detail-value" id="modalCustomerAddress">123 Main St, Quezon City, Metro Manila</div>
+                            </div>
+                            <div class="detail-row">
+                                <div class="detail-label">Contact:</div>
+                                <div class="detail-value" id="modalCustomerContact">+63 912 345 6789</div>
+                            </div>
+                            <div class="detail-row">
+                                <div class="detail-label">Est. Delivery:</div>
+                                <div class="detail-value" id="modalEstDelivery">Aug 20, 2023</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <div class="detail-section">
+                            <h3><i class="fas fa-shoe-prints"></i> Custom Design</h3>
+                            <div class="shoe-carousel" id="shoeCarousel">
+                                <div class="carousel-container">
+                                    <div class="carousel-slide active" data-view="main">
+                                        <img src="" alt="Main view" class="component-preview">
+                                    </div>
+                                    <div class="carousel-slide" data-view="front">
+                                        <img src="" alt="Front view" class="component-preview">
+                                    </div>
+                                    <div class="carousel-slide" data-view="side">
+                                        <img src="" alt="Side view" class="component-preview">
+                                    </div>
+                                    <div class="carousel-slide" data-view="back">
+                                        <img src="" alt="Back view" class="component-preview">
+                                    </div>
+                                </div>
+                                <button class="carousel-nav carousel-prev">
+                                    <i class="fas fa-chevron-left"></i>
+                                </button>
+                                <button class="carousel-nav carousel-next">
+                                    <i class="fas fa-chevron-right"></i>
+                                </button>
+                                <div class="carousel-controls">
+                                    <div class="carousel-dot active" data-index="0"></div>
+                                    <div class="carousel-dot" data-index="1"></div>
+                                    <div class="carousel-dot" data-index="2"></div>
+                                    <div class="carousel-dot" data-index="3"></div>
+                                </div>
+                            </div>
+                            
+                            <div class="detail-row">
+                                <div class="detail-label">Model:</div>
+                                <div class="detail-value" id="modalShoeModel">Classic Sneaker</div>
+                            </div>
+                            <div class="detail-row">
+                                <div class="detail-label">Size:</div>
+                                <div class="detail-value" id="modalShoeSize">9</div>
+                            </div>
+                            <div class="detail-row">
+                                <div class="detail-label">Color:</div>
+                                <div class="detail-value" id="modalShoeColor">White/Black</div>
+                            </div>
+                        </div>
+                        
+                        <div class="detail-section">
+                            <h3><i class="fas fa-palette"></i> Customization Details</h3>
+                            <div class="detail-row">
+                                <div class="detail-label">Sole Type:</div>
+                                <div class="detail-value" id="modalSoleType">Premium (+₱500)</div>
+                            </div>
+                            <div class="detail-row">
+                                <div class="detail-label">Laces Type:</div>
+                                <div class="detail-value" id="modalLacesType">Elastic (+₱200)</div>
+                            </div>
+                            <div class="detail-row">
+                                <div class="detail-label">Additional Features:</div>
+                                <div class="detail-value" id="modalAdditionalFeatures">Custom logo embroidery</div>
+                            </div>
+                        </div>
+                        
+                        <div class="detail-section">
+                            <h3><i class="fas fa-receipt"></i> Order Summary</h3>
+                            <div class="detail-row">
+                                <div class="detail-label">Base Price:</div>
+                                <div class="detail-value" id="modalBasePrice">₱2,499.00</div>
+                            </div>
+                            <div class="detail-row">
+                                <div class="detail-label">Customization:</div>
+                                <div class="detail-value" id="modalCustomizationPrice">+₱1,100.00</div>
+                            </div>
+                            <div class="detail-row">
+                                <div class="detail-label">VAT (12%):</div>
+                                <div class="detail-value" id="modalVat">+₱431.88</div>
+                            </div>
+                            <div class="detail-row">
+                                <div class="detail-label">Shipping:</div>
+                                <div class="detail-value" id="modalShipping">₱200.00</div>
+                            </div>
+                            <div class="detail-row" style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--gray-light);">
+                                <div class="detail-label" style="font-weight: 600;">Total:</div>
+                                <div class="detail-value" style="font-weight: 600;" id="modalTotalPrice">₱3,799.00</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="modal-actions">
+                    <button class="btn btn-view" id="closeModalBtn">
+                        <i class="fas fa-times"></i> Close
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="/customer/js/customization_pendingOrders.js"></script>
+</body>
+</html>

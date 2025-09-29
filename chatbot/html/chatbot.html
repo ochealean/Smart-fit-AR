@@ -1,0 +1,1104 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chatbot - Customer</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #a777e3;
+            --primary-dark: #8e5fd5;
+            --secondary: #8a4fff;
+            --accent: #ff6b6b;
+            --success: #48cfad;
+            --warning: #ffaa00;
+            --error: #ff6b6b;
+            --light: #f8f9fa;
+            --dark: #2c3e50;
+            --gray: #bdc3c7;
+            --gray-light: #ecf0f1;
+            --gray-dark: #7f8c8d;
+            --text-primary: #2c3e50;
+            --text-secondary: #34495e;
+            --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08);
+            --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
+            --transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            --radius-sm: 6px;
+            --radius-md: 10px;
+            --radius-lg: 14px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+
+        body {
+            background-color: #f5f7fa;
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+
+        .dashboard {
+            display: grid;
+            grid-template-columns: 280px 1fr;
+            min-height: 100vh;
+        }
+
+        /* Sidebar - Purple Theme */
+        .sidebar {
+            background: linear-gradient(180deg, var(--secondary) 0%, var(--primary-dark) 100%);
+            color: white;
+            padding: 1.5rem 1rem;
+            position: sticky;
+            top: 0;
+            height: 100vh;
+            box-shadow: var(--shadow-lg);
+            z-index: 10;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.5rem 1rem;
+            margin-bottom: 2rem;
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: white;
+        }
+
+        .logo-icon {
+            background: rgba(255, 255, 255, 0.2);
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .nav-items {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .nav-item {
+            padding: 0.75rem 1rem;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            color: rgba(255, 255, 255, 0.9);
+            text-decoration: none;
+            font-size: 0.95rem;
+            font-weight: 500;
+        }
+
+        .nav-item:hover {
+            background: rgba(255, 255, 255, 0.15);
+            color: white;
+            transform: translateX(4px);
+        }
+
+        .nav-item.active {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            font-weight: 600;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .nav-item i {
+            width: 24px;
+            text-align: center;
+            font-size: 1.1rem;
+        }
+
+        /* Main Content */
+        .main-content {
+            padding: 2rem;
+            overflow-x: auto;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .header h1 {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: var(--dark);
+        }
+
+        .search-bar {
+            padding: 0.8rem 1.5rem;
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--gray-light);
+            width: 100%;
+            max-width: 400px;
+            transition: var(--transition);
+            font-size: 0.95rem;
+            background-color: white;
+        }
+
+        .search-bar:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(167, 119, 227, 0.2);
+        }
+
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .user-avatar {
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid var(--primary);
+            box-shadow: var(--shadow-sm);
+        }
+
+        /* Chat Container */
+        #faq-container {
+            background-color: white;
+            border-radius: var(--radius-md);
+            box-shadow: var(--shadow-md);
+            padding: 1.5rem;
+            height: calc(150vh - 200px);
+            display: flex;
+            flex-direction: column;
+        }
+
+        #chat-messages {
+            flex-grow: 1;
+            overflow-y: auto;
+            padding: 20px;
+            border: 1px solid var(--gray-light);
+            border-radius: var(--radius-md);
+            margin-bottom: 20px;
+            background-color: var(--light);
+            scroll-behavior: smooth;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        /* Message Styles */
+        .message {
+            margin: 0;
+            padding: 12px 18px;
+            word-wrap: break-word;
+            box-shadow: var(--shadow-sm);
+            border-radius: var(--radius-md);
+            max-width: 75%;
+            opacity: 0;
+            transform: translateY(10px);
+            animation: fadeIn 0.3s ease-out forwards;
+        }
+
+        @keyframes fadeIn {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .user-message {
+            background: #e3f2fd;
+            border-radius: 12px 12px 0 12px;
+            margin-left: auto;
+            border-right: 3px solid var(--primary);
+        }
+
+        .assistant-message,
+        .bot-message {
+            background: white;
+            border-radius: 12px 12px 12px 0;
+            border-left: 3px solid var(--primary);
+        }
+
+        .message-content a {
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .message-content a:hover {
+            text-decoration: underline;
+        }
+
+        /* Typing Indicator */
+        #typing-indicator {
+            font-style: italic;
+            color: var(--gray-dark);
+            margin: 0;
+            padding: 12px 18px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .typing-dots {
+            display: inline-flex;
+            gap: 4px;
+        }
+
+        .typing-dots span {
+            animation: bounce 1.4s infinite ease-in-out;
+            display: inline-block;
+            font-size: 24px;
+            line-height: 0;
+        }
+
+        .typing-dots span:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .typing-dots span:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes bounce {
+
+            0%,
+            60%,
+            100% {
+                transform: translateY(0);
+            }
+
+            30% {
+                transform: translateY(-4px);
+            }
+        }
+
+        /* Input Container */
+        #user-input-container {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+            background: white;
+            padding: 15px;
+            border-radius: var(--radius-md);
+            box-shadow: var(--shadow-sm);
+        }
+
+        #user-input {
+            flex-grow: 1;
+            padding: 12px 15px;
+            border: 1px solid var(--gray-light);
+            border-radius: var(--radius-sm);
+            font-size: 16px;
+            transition: var(--transition);
+        }
+
+        #user-input:focus {
+            border-color: var(--primary);
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(167, 119, 227, 0.2);
+        }
+
+        #send-button {
+            padding: 12px 25px;
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 500;
+            transition: var(--transition);
+        }
+
+        #send-button:hover {
+            background-color: var(--primary-dark);
+            transform: translateY(-2px);
+        }
+
+        /* Quick Questions */
+        .quick-questions {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid var(--gray-light);
+        }
+
+        .quick-questions h3 {
+            color: var(--dark);
+            margin-bottom: 15px;
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .quick-questions .question-categories {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .quick-questions .category {
+            background: var(--gray-light);
+            padding: 15px;
+            border-radius: var(--radius-md);
+        }
+
+        .quick-questions h4 {
+            color: var(--primary);
+            margin-bottom: 10px;
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .quick-questions button {
+            background: none;
+            border: 1px solid var(--primary);
+            color: var(--primary);
+            padding: 8px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: var(--transition);
+            font-size: 14px;
+            margin: 5px 0;
+            display: block;
+            width: 100%;
+            text-align: left;
+        }
+
+        .quick-questions button:hover {
+            background-color: var(--primary);
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        /* Link Buttons */
+        .link-button {
+            display: inline-block;
+            margin-top: 10px;
+            padding: 8px 15px;
+            background-color: var(--success);
+            color: white;
+            text-decoration: none;
+            border-radius: var(--radius-sm);
+            font-size: 14px;
+            transition: var(--transition);
+        }
+
+        .link-button:hover {
+            background-color: #27ae60;
+        }
+
+        /* Special Content Blocks */
+        .feature-highlight {
+            background-color: #fff9e6;
+            padding: 15px;
+            border-radius: var(--radius-sm);
+            margin: 15px 0;
+            border-left: 4px solid var(--warning);
+        }
+
+        .troubleshooting-section {
+            background-color: #f0f7ff;
+            padding: 15px;
+            border-radius: var(--radius-sm);
+            margin: 15px 0;
+            border-left: 4px solid var(--primary);
+        }
+
+        .troubleshooting-item {
+            margin-bottom: 10px;
+        }
+
+        .troubleshooting-item strong {
+            color: var(--secondary);
+        }
+
+        .message-content {
+            white-space: pre-wrap;
+        }
+
+        .message-content strong {
+            font-weight: bold;
+            color: var(--secondary);
+        }
+
+        .message-content a {
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .message-content a:hover {
+            text-decoration: underline;
+        }
+
+        /* mobile navigation */
+        .mobile-menu-toggle {
+            display: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 0.5rem;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 1200px) {
+            .dashboard {
+                grid-template-columns: 240px 1fr;
+            }
+        }
+
+        @media (max-width: 992px) {
+            .dashboard {
+                grid-template-columns: 220px 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .dashboard {
+                grid-template-columns: 1fr;
+            }
+
+            .sidebar {
+                position: fixed;
+                left: -350px;
+                transition: var(--transition);
+                z-index: 100;
+                height: 100vh;
+            }
+
+            .sidebar.active {
+                left: 0;
+            }
+
+            .mobile-menu-toggle {
+                display: block;
+                font-size: 1.5rem;
+                cursor: pointer;
+                padding: 0.5rem;
+                color: var(--dark);
+            }
+
+            .sidebar-overlay {
+                display: none;
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba(0, 0, 0, 0.5);
+                z-index: 99;
+            }
+
+            .sidebar-overlay.active {
+                display: block;
+            }
+
+            #chat-messages {
+                height: 300px;
+            }
+
+            .quick-questions .question-categories {
+                grid-template-columns: 1fr;
+            }
+
+            .message {
+                max-width: 90%;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .search-bar {
+                max-width: 100%;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="dashboard">
+        <!-- Sidebar - Purple Theme -->
+        <div class="sidebar">
+            <div class="logo">
+                <div class="logo-icon">
+                    <i class="fas fa-store"></i>
+                </div>
+                <span>SHOE PORTAL</span>
+            </div>
+            <div class="nav-items">
+                <a href="/customer/html/customer_dashboard.html" class="nav-item">
+                    <i class="fas fa-home"></i> Dashboard
+                </a>
+                <a href="/customer/html/browse.html" class="nav-item">
+                    <i class="fas fa-shopping-bag"></i> Browse Shoes
+                </a>
+                <a href="/customer/html/shoevalidator.html" class="nav-item">
+                    <i class="fas fa-check-circle"></i> Shoe Validation
+                </a>
+                <a href="/customer/html/pickshoe.html" class="nav-item">
+                    <i class="fas fa-shoe-prints"></i> Customize Shoes
+                </a>
+                <a href="/customer/html/customization_pendingOrders.html" class="nav-item">
+                    <i class="fas fa-tools"></i> My Custom Orders
+                </a>
+                <a href="/customer/html/orders.html" class="nav-item">
+                    <i class="fas fa-receipt"></i> My Orders
+                </a>
+                <a href="/customer/html/add_to_cart.html" class="nav-item">
+                    <i class="fas fa-shopping-cart"></i> My Cart
+                </a>
+                <a href="/customer/html/history.html" class="nav-item">
+                    <i class="fas fa-history"></i> Order History
+                </a>
+                <a href="/customer/html/issue_response.html" class="nav-item">
+                    <i class="fas fa-reply"></i> Issue Response
+                </a>
+                <a href="/customer/html/wishlist.html" class="nav-item">
+                    <i class="fas fa-heart"></i> Wishlist
+                </a>
+                <a href="/chatbot/html/chatbot.html" class="nav-item active">
+                    <i class="fas fa-comment"></i> Chatbot
+                </a>
+                <a href="/customer/html/customerprofile.html" class="nav-item">
+                    <i class="fas fa-cog"></i> Settings
+                </a>
+                <a id="logout_btn" class="nav-item">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </a>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <div class="header">
+                <div class="mobile-menu-toggle">
+                    <i class="fas fa-bars"></i>
+                </div>
+                <h1>Chatbot Assistant</h1>
+                <div class="user-profile">
+                    <img id="imageProfile" src="https://randomuser.me/api/portraits/men/32.jpg" alt="Profile"
+                        class="user-avatar">
+                    <span id="userName_display2">Alex Johnson</span>
+                </div>
+            </div>
+
+            <div id="faq-container">
+                <div id="chat-messages">
+                    <div class="message bot-message">
+                        <div class="message-content">
+                            Hi there! 👋 I'm your Shoe Portal assistant. How can I help you today?
+                        </div>
+                    </div>
+                </div>
+
+                <div id="user-input-container">
+                    <input type="text" id="user-input"
+                        placeholder="Ask about products, AR, customization, or issues...">
+                    <button id="send-button">Send</button>
+                </div>
+
+                <div class="quick-questions">
+                    <h3>Quick Questions:</h3>
+                    <div class="question-categories">
+                        <div class="category">
+                            <h4>Features</h4>
+                            <button>How does the AR try-on work?</button>
+                            <button>Can I customize my shoes?</button>
+                            <button>What products do you offer?</button>
+                        </div>
+                        <div class="category">
+                            <h4>Orders</h4>
+                            <button>What are my shipping options?</button>
+                            <button>How do returns work?</button>
+                            <button>What payment methods do you accept?</button>
+                        </div>
+                        <div class="category">
+                            <h4>Help</h4>
+                            <button>I have an issue with my order</button>
+                            <button>My product has a problem</button>
+                            <button>I need sizing help</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sidebar Overlay -->
+    <div class="sidebar-overlay"></div>
+
+    <!-- Firebase and Chatbot Scripts -->
+     <!-- GAWA NI MACMACPALO -->
+    <!-- <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-app.js";
+        import { getDatabase, ref, onValue, get, update } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-database.js";
+        import { getAuth, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-auth.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyAuPALylh11cTArigeGJZmLwrFwoAsNPSI",
+            authDomain: "opportunity-9d3bf.firebaseapp.com",
+            databaseURL: "https://opportunity-9d3bf-default-rtdb.firebaseio.com",
+            projectId: "opportunity-9d3bf",
+            storageBucket: "opportunity-9d3bf.appspot.com",
+            messagingSenderId: "57906230058",
+            appId: "1:57906230058:web:2d7cd9cc68354722536453",
+            measurementId: "G-QC2JSR1FJW"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth();
+        const db = getDatabase(app);
+        const chatbotResponsesRef = ref(db, 'AR_shoe_users/chatbot/responses');
+
+        // Backend server URL for ChatGPT API
+        const BackendServer = 'https://github-chat-backend.onrender.com/api/chat';
+
+        // DOM Elements
+        const inputField = document.getElementById('user-input');
+        const sendButton = document.getElementById('send-button');
+        const chatMessages = document.getElementById('chat-messages');
+        const quickQuestionsContainer = document.querySelector('.quick-questions .question-categories');
+
+        let faqResponses = {};
+        let responseKeys = {};
+
+        // Chat messages array
+        let messages = [
+            {
+                role: "system",
+                content: "You are a helpful assistant for SmartFit Shoes. Help customers with:" +
+                    "\n- AR shoe try-on features" +
+                    "\n- Product customization options" +
+                    "\n- Order status and shipping" +
+                    "\n- Returns and exchanges" +
+                    "\n- Product information and sizing" +
+                    "\n\nAlways be polite, helpful, and provide detailed answers."
+            }
+        ];
+
+        // Quick questions data
+        const quickQuestions = {
+            "Features": [
+                "How does the AR try-on work?",
+                "Can I customize my shoes?",
+                "What products do you offer?"
+            ],
+            "Orders": [
+                "What are my shipping options?",
+                "How do returns work?",
+                "What payment methods do you accept?"
+            ],
+            "Help": [
+                "I have an issue with my order",
+                "My product has a problem",
+                "I need sizing help"
+            ]
+        };
+
+        function createDefaultResponse() {
+            return `<div class="troubleshooting-section">
+                I'm sorry, I couldn't find an answer to that question. Here are some topics I can help with:
+                Features: AR try-on, Customization, Products
+                Orders: Shipping, Returns, Payments
+                Help: Issues, Problems, Troubleshooting
+                Try asking about one of these topics or click any quick question above!
+                </div>`;
+        }
+
+        // Initialize the chatbot
+        async function initChatbot() {
+            await loadResponsesFromFirebase(); // Wait for Firebase data to load
+            setupEventListeners();
+            updateQuickQuestions();
+
+            // Show welcome message after a short delay
+            setTimeout(() => {
+                addMessageToChat('assistant', `Welcome to SmartFit's Help Center! 👟
+                    How can I assist you today? Try asking about:<br>
+                    - AR shoe try-on
+                    - Order status
+                    - Returns policy
+                    - Product customization`);
+            }, 1000);
+        }
+
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                get(ref(db, `AR_shoe_users/customer/${user.uid}`))
+                    .then((snapshot) => {
+                        if (!snapshot.exists()) {
+                            alert("Account does not exist");
+                            auth.signOut();
+                        } else {
+                            loadUserProfile(user.uid);
+                        }
+                    });
+            } else {
+                window.location.href = "/user_login.html";
+            }
+        });
+
+        // Load user profile
+        function loadUserProfile(userId) {
+            const userRef = ref(db, `AR_shoe_users/customer/${userId}`);
+
+            let userNameDisplay = document.getElementById('userName_display2');
+            let userAvatar = document.getElementById('imageProfile');
+
+            get(userRef).then(snapshot => {
+                if (snapshot.exists()) {
+                    const userData = snapshot.val();
+                    userNameDisplay.textContent = `${userData.firstName} ${userData.lastName}`;
+
+                    // Set user avatar if available
+                    if (userData.profilePhoto) {
+                        userAvatar.src = userData.profilePhoto.profilePhoto.url;
+                    } else {
+                        userAvatar.src = "https://randomuser.me/api/portraits/men/32.jpg";
+                    }
+                }
+            }).catch(error => {
+                console.error("Error loading user profile:", error);
+            });
+        }
+
+        function loadResponsesFromFirebase() {
+            return new Promise((resolve) => {
+                onValue(chatbotResponsesRef, (snapshot) => {
+                    const responses = snapshot.val() || {};
+
+                    responseKeys = responses;
+                    faqResponses = Object.entries(responses).reduce((acc, [key, response]) => {
+                        if (response.keyword && response.responses) {
+                            const keyword = response.keyword.toLowerCase();
+                            acc[keyword] = {
+                                response: Array.isArray(response.responses)
+                                    ? response.responses.join('<br>')
+                                    : response.responses,
+                                firebaseKey: key,
+                                popularity: response.popularity || 0,
+                                lastQuestionSentence: response.lastQuestionSentence || response.keyword,
+                                category: response.category || 'general'
+                            };
+                        }
+                        return acc;
+                    }, {});
+
+                    faqResponses.default = {
+                        response: createDefaultResponse(),
+                        firebaseKey: null,
+                        popularity: 0,
+                        lastQuestionSentence: "Help topics",
+                        category: 'general'
+                    };
+
+                    updateQuickQuestions();
+                    resolve(); // Resolve the promise when data is loaded
+
+                }, (error) => {
+                    console.error("Error loading responses:", error);
+                    resolve(); // Still resolve even if there's an error
+                });
+            });
+        }
+
+        // Get the best response from Firebase or AI
+        async function askQuestion(question) {
+            // First check Firebase for a response
+            const firebaseResponse = getBestResponse(question);
+
+            if (firebaseResponse && firebaseResponse !== faqResponses.default.response) {
+                // If found in Firebase, use that
+                addMessageToChat('user', question);
+                addMessageToChat('assistant', firebaseResponse);
+            } else {
+                // If not found, use AI
+                addMessageToChat("user", question);
+                messages.push({ role: "user", content: question });
+
+                // Show typing indicator
+                const typingIndicator = document.createElement('div');
+                typingIndicator.id = "typing-indicator";
+                typingIndicator.innerHTML = `
+                    <div style="display: flex; align-items: center; gap: 6px;">
+                        <span>Assistant is typing</span>
+                        <div class="typing-dots">
+                            <span>.</span><span>.</span><span>.</span>
+                        </div>
+                    </div>
+                `;
+                chatMessages.appendChild(typingIndicator);
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+
+                try {
+                    const response = await fetch(BackendServer, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ messages })
+                    });
+
+                    const data = await response.json();
+
+                    // Remove typing indicator
+                    chatMessages.removeChild(typingIndicator);
+
+                    // Add assistant response
+                    addMessageToChat("assistant", data.response);
+                    messages.push({ role: "assistant", content: data.response });
+
+                } catch (error) {
+                    console.error("Error:", error);
+                    chatMessages.removeChild(typingIndicator);
+                    addMessageToChat("assistant", firebaseResponse); // Fallback to default Firebase response
+                }
+            }
+        }
+
+        function updateQuickQuestions() {
+            quickQuestionsContainer.innerHTML = '';
+
+            for (const [category, questions] of Object.entries(quickQuestions)) {
+                const categoryDiv = document.createElement('div');
+                categoryDiv.className = 'category';
+
+                const header = document.createElement('h4');
+                header.textContent = category;
+                categoryDiv.appendChild(header);
+
+                questions.forEach(question => {
+                    const button = document.createElement('button');
+                    button.textContent = question;
+                    button.addEventListener('click', () => askQuestion(question));
+                    categoryDiv.appendChild(button);
+                });
+
+                quickQuestionsContainer.appendChild(categoryDiv);
+            }
+        }
+
+        function getBestResponse(input) {
+            if (!faqResponses || Object.keys(faqResponses).length === 0) {
+                return createDefaultResponse();
+            }
+
+            const lowerInput = input.toLowerCase().trim();
+
+            if (faqResponses[lowerInput]) {
+                updateResponseUsage(faqResponses[lowerInput].firebaseKey, input);
+                return faqResponses[lowerInput].response;
+            }
+
+            const matchingKey = Object.keys(faqResponses).find(key =>
+                key !== 'default' && lowerInput.includes(key)
+            );
+
+            if (matchingKey) {
+                updateResponseUsage(faqResponses[matchingKey].firebaseKey, input);
+                return faqResponses[matchingKey].response;
+            }
+
+            return faqResponses.default.response;
+        }
+
+        function updateResponseUsage(responseKey, question) {
+            if (!responseKey) return;
+
+            const responseRef = ref(db, `AR_shoe_users/chatbot/responses/${responseKey}`);
+            get(responseRef).then((snapshot) => {
+                const response = snapshot.val();
+                if (response) {
+                    const currentPopularity = response.popularity || 0;
+                    update(responseRef, {
+                        popularity: currentPopularity + 1,
+                        lastQuestionSentence: question
+                    }).then(() => {
+                        loadResponsesFromFirebase();
+                    }).catch(error => {
+                        console.error("Error updating response usage:", error);
+                    });
+                }
+            });
+        }
+
+        // Send message to ChatGPT API
+        async function sendMessage() {
+            const userMessage = inputField.value.trim();
+            if (!userMessage) return;
+
+            // First check if we have a Firebase response
+            const firebaseResponse = getBestResponse(userMessage);
+
+            if (firebaseResponse && firebaseResponse !== faqResponses.default.response) {
+                // If found in Firebase, use that
+                addMessageToChat('user', userMessage);
+                addMessageToChat('assistant', firebaseResponse);
+                inputField.value = '';
+            } else {
+                // If not found, use AI
+                addMessageToChat("user", userMessage);
+                messages.push({ role: "user", content: userMessage });
+                inputField.value = '';
+
+                // Show typing indicator
+                const typingIndicator = document.createElement('div');
+                typingIndicator.id = "typing-indicator";
+                typingIndicator.innerHTML = `
+                    <div style="display: flex; align-items: center; gap: 6px;">
+                        <span>Assistant is typing</span>
+                        <div class="typing-dots">
+                            <span>.</span><span>.</span><span>.</span>
+                        </div>
+                    </div>
+                `;
+                chatMessages.appendChild(typingIndicator);
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+
+                try {
+                    const response = await fetch(BackendServer, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ messages })
+                    });
+
+                    const data = await response.json();
+
+                    // Remove typing indicator
+                    chatMessages.removeChild(typingIndicator);
+
+                    // Add assistant response
+                    addMessageToChat("assistant", data.response);
+                    messages.push({ role: "assistant", content: data.response });
+
+                } catch (error) {
+                    console.error("Error:", error);
+                    chatMessages.removeChild(typingIndicator);
+                    addMessageToChat("assistant", firebaseResponse); // Fallback to default Firebase response
+                }
+            }
+        }
+
+        // Set up event listeners
+        function setupEventListeners() {
+            inputField.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') sendMessage();
+            });
+
+            sendButton.addEventListener('click', sendMessage);
+
+            document.getElementById('logout_btn').addEventListener('click', () => {
+                auth.signOut().then(() => {
+                    console.log("User signed out");
+                }).catch((error) => {
+                    console.error("Error signing out: ", error);
+                });
+            });
+        }
+
+        // Format message text with bold support and prevent XSS
+        function formatMessageText(text) {
+            // Convert Markdown-style formatting to HTML
+            let formatted = text
+                // Convert **bold** to <strong>
+                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                // Convert #### headers to <h4>
+                .replace(/####\s?(.*)/g, '<h4>$1</h4>')
+                // Convert newlines to <br>
+                .replace(/\n/g, '<br>');
+
+            // Basic HTML safety - only allow certain tags
+            formatted = formatted.replace(/<\/?(?!br|strong|h4|a\b)[^>]+>/g, '');
+
+            return formatted;
+        }
+
+        function addMessageToChat(role, content) {
+            const messageDiv = document.createElement('div');
+            messageDiv.classList.add('message', `${role}-message`);
+
+            const contentWrapper = document.createElement('div');
+            contentWrapper.classList.add('message-content');
+
+            // Process the content through our simplified formatter
+            contentWrapper.innerHTML = formatMessageText(content);
+
+            messageDiv.appendChild(contentWrapper);
+            chatMessages.appendChild(messageDiv);
+
+            // Animation effects
+            messageDiv.style.opacity = '0';
+            messageDiv.style.transform = 'translateY(10px)';
+            messageDiv.style.transition = 'all 0.3s ease-out';
+
+            setTimeout(() => {
+                messageDiv.style.opacity = '1';
+                messageDiv.style.transform = 'translateY(0)';
+                chatMessages.scrollTo({
+                    top: chatMessages.scrollHeight,
+                    behavior: 'smooth'
+                });
+            }, 10);
+        }
+
+        // Mobile sidebar toggle
+        document.addEventListener('DOMContentLoaded', function () {
+            const mobileToggle = document.querySelector('.mobile-menu-toggle');
+            const sidebar = document.querySelector('.sidebar');
+            const overlay = document.querySelector('.sidebar-overlay');
+
+            if (mobileToggle && sidebar && overlay) {
+                mobileToggle.addEventListener('click', () => {
+                    sidebar.classList.toggle('active');
+                    overlay.classList.toggle('active');
+                });
+
+                overlay.addEventListener('click', () => {
+                    sidebar.classList.remove('active');
+                    overlay.classList.remove('active');
+                });
+            }
+
+            // Initialize with sample data
+            document.getElementById('userName_display2').textContent = 'Alex Johnson';
+
+            // Add event listeners for quick question buttons
+            document.querySelectorAll('.quick-questions button').forEach(button => {
+                button.addEventListener('click', function () {
+                    document.getElementById('user-input').value = this.textContent;
+                    document.getElementById('send-button').click();
+                });
+            });
+
+            // Initialize the chatbot
+            initChatbot();
+        });
+
+        window.askQuestion = askQuestion;
+    </script> -->
+    
+    <script src="../html/chatbot.js" type="module"></script>
+</body>
+
+</html>

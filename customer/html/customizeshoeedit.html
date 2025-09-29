@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Customize Your Shoes</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="icon" href="../../images/smartfitImages/smartfitAR-logo.png" type="image/x-icon">
+    <link rel="stylesheet" href="../css/customizeshoe.css">
+</head>
+
+<body>
+    <div class="dashboard">
+        <!-- Sidebar - Purple Theme -->
+        <div class="sidebar">
+            <div class="logo">
+                <div class="logo-icon">
+                    <i class="fas fa-store"></i>
+                </div>
+                <span>SHOE PORTAL</span>
+            </div>
+            <div class="nav-items">
+                <a href="/customer/html/customer_dashboard.html" class="nav-item">
+                    <i class="fas fa-home"></i> Dashboard
+                </a>
+                <a href="/customer/html/browse.html" class="nav-item">
+                    <i class="fas fa-shopping-bag"></i> Browse Shoes
+                </a>
+                <a href="/customer/html/shoevalidator.html" class="nav-item">
+                    <i class="fas fa-check-circle"></i> Shoe Validation
+                </a>
+                <a href="pickshoe.html" class="nav-item active">
+                    <i class="fas fa-shoe-prints"></i> Customize Shoes
+                </a>
+                <a href="/customer/html/customization_pendingOrders.html" class="nav-item">
+                    <i class="fas fa-tools"></i> My Custom Orders
+                </a>
+                <a href="/customer/html/orders.html" class="nav-item">
+                    <i class="fas fa-receipt"></i> My Orders
+                </a>
+                <a href="/customer/html/add_to_cart.html" class="nav-item">
+                    <i class="fas fa-shopping-cart"></i> My Cart
+                </a>
+                <a href="/customer/html/history.html" class="nav-item">
+                    <i class="fas fa-history"></i> Order History
+                </a>
+                <a href="/customer/html/issue_response.html" class="nav-item">
+                    <i class="fas fa-reply"></i> Issue Response
+                </a>
+                <a href="/customer/html/wishlist.html" class="nav-item">
+                    <i class="fas fa-heart"></i> Wishlist
+                </a>
+                <a href="/chatbot/html/chatbot.html" class="nav-item">
+                    <i class="fas fa-comment"></i> Chatbot
+                </a>
+                <a href="/customer/html/customerprofile.html" class="nav-item">
+                    <i class="fas fa-cog"></i> Settings
+                </a>
+                <a id="logout_btn" class="nav-item">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </a>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <div class="header">
+                <div class="mobile-menu-toggle">
+                    <i class="fas fa-bars"></i>
+                </div>
+                <a href="/customer/html/pickshoe.html" class="back-button">
+                    <i class="fas fa-arrow-left"></i>
+                </a>
+                <h1>Customize Your Shoes</h1>
+                <div class="user-profile">
+                    <img id="imageProfile" src="#" alt="Profile" class="user-avatar">
+                    <span id="userName_display2">Customer name</span>
+                </div>
+            </div>
+
+            <!-- Model Selection -->
+            <div class="model-selection" id="modelSelection">
+                <div class="model-option selected" data-model="classic" data-price="2499">
+                    <img src="/images/shoemodel1.png" alt="Classic Sneaker" class="model-image"
+                        onerror="this.onerror=null; this.src='https://via.placeholder.com/200x120?text=Classic+Sneaker';">
+                    <div class="model-name">Classic Sneaker</div>
+                    <div class="model-price">₱2,499.00</div>
+                </div>
+                <div class="model-option" data-model="runner" data-price="2799">
+                    <img src="/images/shoemodel2.png" alt="Performance Runner" class="model-image"
+                        onerror="this.onerror=null; this.src='https://via.placeholder.com/200x120?text=Performance+Runner';">
+                    <div class="model-name">Performance Runner</div>
+                    <div class="model-price">₱2,799.00</div>
+                </div>
+                <div class="model-option" data-model="basketball" data-price="2999">
+                    <img src="/images/shoemodel3.png" alt="High-Top Basketball" class="model-image"
+                        onerror="this.onerror=null; this.src='https://via.placeholder.com/200x120?text=High-Top+Basketball';">
+                    <div class="model-name">High-Top Basketball</div>
+                    <div class="model-price">₱2,999.00</div>
+                </div>
+            </div>
+
+            <div class="customizer-container">
+                <!-- Shoe Preview Section -->
+                <div class="shoe-preview">
+                    <h2>Your Custom Design</h2>
+
+                    <div class="shoe-image-container">
+                        <!-- Component images will be layered here -->
+                        <img src="#" alt="Shoe_Main_Position" class="component-image" id="soleImage"
+                            onerror="this.onerror=null; this.src='https://via.placeholder.com/150x100?text=Front+View';">
+                    </div>
+
+                    <!-- Additional Views -->
+                    <div class="additional-views">
+                        <div class="additional-view">
+                            <img src="errorimage.jpg" alt="Front View" id="frontViewImage"
+                                onerror="this.onerror=null; this.src='https://via.placeholder.com/150x100?text=Front+View';">
+                            <div class="additional-view-label">Front View</div>
+                        </div>
+                        <div class="additional-view">
+                            <img src="errorimage.jpg" alt="Side View" id="sideViewImage"
+                                onerror="this.onerror=null; this.src='https://via.placeholder.com/150x100?text=Side+View';">
+                            <div class="additional-view-label">Side View</div>
+                        </div>
+                        <div class="additional-view">
+                            <img src="errorimage.jpg" alt="Back View" id="backViewImage"
+                                onerror="this.onerror=null; this.src='https://via.placeholder.com/150x100?text=Back+View';">
+                            <div class="additional-view-label">Back View</div>
+                        </div>
+                    </div>
+
+                    <!-- Info Buttons -->
+                    <div class="info-buttons">
+                        <button class="info-btn" id="partsInfoBtn">
+                            <i class="fas fa-info-circle"></i> Shoe Parts
+                        </button>
+                        <button class="info-btn" id="sizeInfoBtn">
+                            <i class="fas fa-ruler"></i> Size Reference
+                        </button>
+                    </div>
+
+                    <div class="summary-panel">
+                        <div class="summary-row">
+                            <span class="summary-label">Base Price:</span>
+                            <span class="summary-value" id="basePrice">₱2,499.00</span>
+                        </div>
+                        <hr>
+                        <div class="summary-row">
+                            <span class="summary-label">Laces:</span>
+                            <span class="summary-value" id="lacesPrice">+₱0.00</span>
+                        </div>
+                        <div class="summary-row">
+                            <span class="summary-label">Insole:</span>
+                            <span class="summary-value" id="insolePrice">+₱0.00</span>
+                        </div>
+                        <div class="summary-row">
+                            <span class="summary-label">Customization:</span>
+                            <span class="summary-value" id="customizationPrice">+₱0.00</span>
+                        </div>
+                        <hr>
+                        <div class="summary-row">
+                            <span class="summary-label">VAT (12%):</span>
+                            <span class="summary-value" id="vatPrice">+₱0.00</span>
+                        </div>
+                        <div class="summary-row">
+                            <span class="summary-label">Production Time:</span>
+                            <span class="summary-value" id="productionTime">7-10 days</span>
+                        </div>
+                        <div class="summary-row" style="margin-top: 1.5rem;">
+                            <span class="summary-label">Total Price:</span>
+                            <span class="total-price" id="totalPrice">₱2,499.00</span>
+                        </div>
+
+                        <div class="action-buttons">
+                            <button class="btn btn-outline">
+                                <i class="fas fa-heart"></i> Save Design
+                            </button>
+                            <!-- <button class="btn btn-primary">
+                                <i class="fas fa-cart-plus"></i> Add to Cart
+                            </button> -->
+                            <button class="btn btn-buy btn-sm">
+                                <i class="fas fa-basket-shopping"></i> Buy Now
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Customization Controls -->
+                <div class="customizer-controls" id="customizerControls">
+                    <!-- Classic Sneaker Options (default visible) -->
+                    <div class="component-section model-specific classic">
+                        <h4 class="component-title"> <i class="fas fa-ruler"></i> Shoe Size</h4>
+                        <div class="component-options" id="sizeOptions">
+                            <button type="button" class="component-option selected" data-size="5">5</button>
+                            <button type="button" class="component-option" data-size="6">6</button>
+                            <button type="button" class="component-option" data-size="7">7</button>
+                            <button type="button" class="component-option" data-size="8">8</button>
+                            <button type="button" class="component-option" data-size="9">9</button>
+                            <button type="button" class="component-option" data-size="10">10</button>
+                            <button type="button" class="component-option" data-size="11">11</button>
+                            <button type="button" class="component-option" data-size="12">12</button>
+                            <button type="button" class="component-option" data-size="13">13</button>
+                            <button type="button" class="component-option" data-size="14">14</button>
+                            <button type="button" class="component-option" data-size="15">15</button>
+                        </div>
+                    </div>
+
+                    <div class="component-section model-specific classic">
+                        <h3 class="component-title"><i class="fas fa-socks"></i> Body</h3>
+                        <h4 style="margin: 1rem 0 0.5rem;">Body Color</h4>
+                        <div class="color-options" id="classicBodyColorOptions">
+                            <div class="color-option selected" style="background-color: #e2e2e2;" data-color="white"
+                                title="White"></div>
+                            <div class="color-option" style="background-color: #000000;" data-color="black"
+                                title="Black"></div>
+                            <div class="color-option" style="background-color: #112dcc;" data-color="blue" title="Blue">
+                            </div>
+                            <div class="color-option" style="background-color: #e74c3c;" data-color="red" title="Red">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="component-section model-specific classic">
+                        <h3 class="component-title"><i class="fas fa-grip-lines"></i> Laces</h3>
+                        <div class="component-options" id="classicLacesOptions">
+                            <div class="component-option selected" data-id="Standard" data-price="0" data-days="0"
+                                data-image="https://via.placeholder.com/100x20?text=Classic+Laces+1">
+                                <img src="/images/laces_standard.png" alt="Standard Laces"
+                                    class="component-option-image"
+                                    onerror="this.onerror=null; this.src='https://cdn-icons-png.flaticon.com/512/11542/11542598.png';">
+                                <div class="component-option-name">Standard</div>
+                                <div class="component-option-price">+₱0</div>
+                            </div>
+                            <div class="component-option" data-id="Flat" data-price="150" data-days="1"
+                                data-image="https://via.placeholder.com/100x20?text=Classic+Laces+2">
+                                <img src="/images/laces_flat.jpg" alt="Flat Laces" class="component-option-image"
+                                    onerror="this.onerror=null; this.src='https://cdn-icons-png.flaticon.com/512/11542/11542598.png';">
+                                <div class="component-option-name">Flat</div>
+                                <div class="component-option-price">+₱150</div>
+                            </div>
+                            <div class="component-option" data-id="Elastic" data-price="200" data-days="1"
+                                data-image="https://via.placeholder.com/100x20?text=Classic+Laces+3">
+                                <img src="/images/laces_elastic.png" alt="Elastic Laces" class="component-option-image"
+                                    onerror="this.onerror=null; this.src='https://cdn-icons-png.flaticon.com/512/11542/11542598.png';">
+                                <div class="component-option-name">Elastic</div>
+                                <div class="component-option-price">+₱200</div>
+                            </div>
+                        </div>
+
+                        <h4 style="margin: 1rem 0 0.5rem;">Laces Color</h4>
+                        <div class="color-options" id="classiscLacesColorOptions">
+                            <div class="color-option selected" style="background-color: #e2e2e2;" data-color="white"
+                                title="White"></div>
+                            <div class="color-option" style="background-color: #000000;" data-color="black"
+                                title="Black"></div>
+                            <div class="color-option" style="background-color: #2c3e50;" data-color="gray" title="Gray">
+                            </div>
+                            <div class="color-option" style="background-color: #e74c3c;" data-color="red" title="Red">
+                            </div>
+                            <div class="color-option" style="background-color: #27ae60;" data-color="green"
+                                title="Green"></div>
+                        </div>
+                    </div>
+
+                    <div class="component-section model-specific classic">
+                        <h3 class="component-title"><i class="fas fa-shoe-prints"></i> Insole / Shoe Pad</h3>
+                        <div class="component-options" id="classicInsoleOptions">
+                            <div class="component-option selected" data-id="Foam" data-price="0" data-days="0"
+                                data-image="https://via.placeholder.com/100x20?text=Classic+Insole+1">
+                                <img src="/images/insole_foam.png" alt="Foam Insole" class="component-option-image"
+                                    onerror="this.onerror=null; this.src='https://cdn-icons-png.flaticon.com/512/11542/11542598.png';">
+                                <div class="component-option-name">Foam</div>
+                                <div class="component-option-price">+₱0</div>
+                            </div>
+                            <div class="component-option" data-id="Gel" data-price="150" data-days="0"
+                                data-image="https://via.placeholder.com/100x20?text=Classic+Insole+2">
+                                <img src="/images/insole_gel.png" alt="Gel Insole" class="component-option-image"
+                                    onerror="this.onerror=null; this.src='https://cdn-icons-png.flaticon.com/512/11542/11542598.png';">
+                                <div class="component-option-name">Gel</div>
+                                <div class="component-option-price">+₱150</div>
+                            </div>
+                            <div class="component-option" data-id="MemoryFoam" data-price="200" data-days="0"
+                                data-image="https://via.placeholder.com/100x20?text=Classic+Insole+3">
+                                <img src="/images/insole_memoryfoam.png" alt="Memory Foam Insole"
+                                    class="component-option-image"
+                                    onerror="this.onerror=null; this.src='https://cdn-icons-png.flaticon.com/512/11542/11542598.png';">
+                                <div class="component-option-name">Memory Foam</div>
+                                <div class="component-option-price">+₱200</div>
+                            </div>
+                        </div>
+                    </div>
+
+
+
+                    <!-- Performance Runner Options (hidden by default) -->
+
+
+                    <div class="component-section model-specific runner" style="display: none;">
+                        <h4 class="component-title"> <i class="fas fa-ruler"></i> Shoe Size</h4>
+                        <div class="component-options" id="sizeOptions">
+                            <button type="button" class="component-option selected" data-size="5">5</button>
+                            <button type="button" class="component-option" data-size="6">6</button>
+                            <button type="button" class="component-option" data-size="7">7</button>
+                            <button type="button" class="component-option" data-size="8">8</button>
+                            <button type="button" class="component-option" data-size="9">9</button>
+                            <button type="button" class="component-option" data-size="10">10</button>
+                            <button type="button" class="component-option" data-size="11">11</button>
+                            <button type="button" class="component-option" data-size="12">12</button>
+                            <button type="button" class="component-option" data-size="13">13</button>
+                            <button type="button" class="component-option" data-size="14">14</button>
+                            <button type="button" class="component-option" data-size="15">15</button>
+                        </div>
+                    </div>
+
+                    <div class="component-section model-specific runner" style="display: none;">
+                        <h3 class="component-title"><i class="fas fa-socks"></i> Body</h3>
+                        <h4 style="margin: 1rem 0 0.5rem;">Body Color</h4>
+                        <div class="color-options" id="runnerBodyColorOptions">
+                            <div class="color-option selected" style="background-color: #e2e2e2;" data-color="white"
+                                title="White"></div>
+                            <div class="color-option" style="background-color: #000000;" data-color="black"
+                                title="Black"></div>
+                            <div class="color-option" style="background-color: #112dcc;" data-color="blue" title="Blue">
+                            </div>
+                            <div class="color-option" style="background-color: #e74c3c;" data-color="red" title="Red">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="component-section model-specific runner" style="display: none;">
+                        <h3 class="component-title"><i class="fas fa-grip-lines"></i> Laces</h3>
+                        <div class="component-options" id="runnerLacesOptions">
+                            <div class="component-option selected" data-id="Standard" data-price="0" data-days="0"
+                                data-image="https://via.placeholder.com/100x20?text=Runner+Laces+1">
+                                <img src="/images/laces_standard.png" alt="Standard Laces"
+                                    class="component-option-image"
+                                    onerror="this.onerror=null; this.src='https://cdn-icons-png.flaticon.com/512/11542/11542598.png';">
+                                <div class="component-option-name">Standard</div>
+                                <div class="component-option-price">+₱0</div>
+                            </div>
+                            <div class="component-option" data-id="Flat" data-price="150" data-days="1"
+                                data-image="https://via.placeholder.com/100x20?text=Runner+Laces+2">
+                                <img src="/images/laces_flat.jpg" alt="Flat Laces" class="component-option-image"
+                                    onerror="this.onerror=null; this.src='https://cdn-icons-png.flaticon.com/512/11542/11542598.png';">
+                                <div class="component-option-name">Flat</div>
+                                <div class="component-option-price">+₱150</div>
+                            </div>
+                            <div class="component-option" data-id="Elastic" data-price="200" data-days="1"
+                                data-image="https://via.placeholder.com/100x20?text=Runner+Laces+3">
+                                <img src="/images/laces_elastic.png" alt="Elastic Laces" class="component-option-image"
+                                    onerror="this.onerror=null; this.src='https://cdn-icons-png.flaticon.com/512/11542/11542598.png';">
+                                <div class="component-option-name">Elastic</div>
+                                <div class="component-option-price">+₱200</div>
+                            </div>
+                        </div>
+
+                        <h4 style="margin: 1rem 0 0.5rem;">Laces Color</h4>
+                        <div class="color-options" id="runnerLacesColorOptions">
+                            <div class="color-option selected" style="background-color: #e2e2e2;" data-color="white"
+                                title="White"></div>
+                            <div class="color-option" style="background-color: #000000;" data-color="black"
+                                title="Black"></div>
+                            <div class="color-option" style="background-color: #2c3e50;" data-color="gray" title="Gray">
+                            </div>
+                            <div class="color-option" style="background-color: #e74c3c;" data-color="red" title="Red">
+                            </div>
+                            <div class="color-option" style="background-color: #27ae60;" data-color="green"
+                                title="Green"></div>
+                        </div>
+                    </div>
+
+                    <div class="component-section model-specific runner" style="display: none;">
+                        <h3 class="component-title"><i class="fas fa-shoe-prints"></i> Insole / Shoe Pad</h3>
+                        <div class="component-options" id="runnerInsoleOptions">
+                            <div class="component-option selected" data-id="Foam" data-price="0" data-days="0"
+                                data-image="https://via.placeholder.com/100x20?text=Runner+Insole+1">
+                                <img src="/images/insole_foam.png" alt="Foam Insole" class="component-option-image"
+                                    onerror="this.onerror=null; this.src='https://cdn-icons-png.flaticon.com/512/11542/11542598.png';">
+                                <div class="component-option-name">Foam</div>
+                                <div class="component-option-price">+₱0</div>
+                            </div>
+                            <div class="component-option" data-id="Gel" data-price="150" data-days="0"
+                                data-image="https://via.placeholder.com/100x20?text=Runner+Insole+2">
+                                <img src="/images/insole_gel.png" alt="Gel Insole" class="component-option-image"
+                                    onerror="this.onerror=null; this.src='https://cdn-icons-png.flaticon.com/512/11542/11542598.png';">
+                                <div class="component-option-name">Gel</div>
+                                <div class="component-option-price">+₱150</div>
+                            </div>
+                            <div class="component-option" data-id="MemoryFoam" data-price="200" data-days="0"
+                                data-image="https://via.placeholder.com/100x20?text=Runner+Insole+3">
+                                <img src="/images/insole_memoryfoam.png" alt="Memory Foam Insole"
+                                    class="component-option-image"
+                                    onerror="this.onerror=null; this.src='https://cdn-icons-png.flaticon.com/512/11542/11542598.png';">
+                                <div class="component-option-name">Memory Foam</div>
+                                <div class="component-option-price">+₱200</div>
+                            </div>
+                        </div>
+                    </div>
+
+
+                    <!-- High-Top Basketball Options (hidden by default) -->
+
+
+                    <div class="component-section model-specific basketball" style="display: none;">
+                        <h4 class="component-title"> <i class="fas fa-ruler"></i> Shoe Size</h4>
+                        <div class="component-options" id="sizeOptions">
+                            <button type="button" class="component-option selected" data-size="5">5</button>
+                            <button type="button" class="component-option" data-size="6">6</button>
+                            <button type="button" class="component-option" data-size="7">7</button>
+                            <button type="button" class="component-option" data-size="8">8</button>
+                            <button type="button" class="component-option" data-size="9">9</button>
+                            <button type="button" class="component-option" data-size="10">10</button>
+                            <button type="button" class="component-option" data-size="11">11</button>
+                            <button type="button" class="component-option" data-size="12">12</button>
+                            <button type="button" class="component-option" data-size="13">13</button>
+                            <button type="button" class="component-option" data-size="14">14</button>
+                            <button type="button" class="component-option" data-size="15">15</button>
+                        </div>
+                    </div>
+
+                    <div class="component-section model-specific basketball" style="display: none;">
+                        <h3 class="component-title"><i class="fas fa-socks"></i> Body</h3>
+                        <h4 style="margin: 1rem 0 0.5rem;">Body Color</h4>
+                        <div class="color-options" id="basketballBodyColorOptions">
+                            <div class="color-option selected" style="background-color: #e2e2e2;" data-color="white"
+                                title="White"></div>
+                            <div class="color-option" style="background-color: #000000;" data-color="black"
+                                title="Black"></div>
+                            <div class="color-option" style="background-color: #112dcc;" data-color="blue" title="Blue">
+                            </div>
+                            <div class="color-option" style="background-color: #e74c3c;" data-color="red" title="Red">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="component-section model-specific basketball" style="display: none;">
+                        <h3 class="component-title"><i class="fas fa-grip-lines"></i> Laces</h3>
+                        <div class="component-options" id="basketballLacesOptions">
+                            <div class="component-option selected" data-id="Standard" data-price="0" data-days="0"
+                                data-image="https://via.placeholder.com/100x20?text=Runner+Laces+1">
+                                <img src="/images/laces_standard.png" alt="Standard Laces"
+                                    class="component-option-image"
+                                    onerror="this.onerror=null; this.src='https://cdn-icons-png.flaticon.com/512/11542/11542598.png';">
+                                <div class="component-option-name">Standard</div>
+                                <div class="component-option-price">+₱0</div>
+                            </div>
+                            <div class="component-option" data-id="Flat" data-price="150" data-days="1"
+                                data-image="https://via.placeholder.com/100x20?text=Runner+Laces+2">
+                                <img src="/images/laces_flat.jpg" alt="Flat Laces" class="component-option-image"
+                                    onerror="this.onerror=null; this.src='https://cdn-icons-png.flaticon.com/512/11542/11542598.png';">
+                                <div class="component-option-name">Flat</div>
+                                <div class="component-option-price">+₱150</div>
+                            </div>
+                            <div class="component-option" data-id="Elastic" data-price="200" data-days="1"
+                                data-image="https://via.placeholder.com/100x20?text=Runner+Laces+3">
+                                <img src="/images/laces_elastic.png" alt="Elastic Laces" class="component-option-image"
+                                    onerror="this.onerror=null; this.src='https://cdn-icons-png.flaticon.com/512/11542/11542598.png';">
+                                <div class="component-option-name">Elastic</div>
+                                <div class="component-option-price">+₱200</div>
+                            </div>
+                        </div>
+
+                        <h4 style="margin: 1rem 0 0.5rem;">Laces Color</h4>
+                        <div class="color-options" id="basketballLacesColorOptions">
+                            <div class="color-option selected" style="background-color: #e2e2e2;" data-color="white"
+                                title="White"></div>
+                            <div class="color-option" style="background-color: #000000;" data-color="black"
+                                title="Black"></div>
+                            <div class="color-option" style="background-color: #2c3e50;" data-color="gray" title="Gray">
+                            </div>
+                            <div class="color-option" style="background-color: #e74c3c;" data-color="red" title="Red">
+                            </div>
+                            <div class="color-option" style="background-color: #27ae60;" data-color="green"
+                                title="Green"></div>
+                        </div>
+                    </div>
+
+                    <div class="component-section model-specific basketball" style="display: none;">
+                        <h3 class="component-title"><i class="fas fa-shoe-prints"></i> Insole / Shoe Pad</h3>
+                        <div class="component-options" id="basketballInsoleOptions">
+                            <div class="component-option selected" data-id="Foam" data-price="0" data-days="0"
+                                data-image="https://via.placeholder.com/100x20?text=Basketball+Insole+1">
+                                <img src="/images/insole_foam.png" alt="Foam Insole" class="component-option-image"
+                                    onerror="this.onerror=null; this.src='https://cdn-icons-png.flaticon.com/512/11542/11542598.png';">
+                                <div class="component-option-name">Foam</div>
+                                <div class="component-option-price">+₱0</div>
+                            </div>
+                            <div class="component-option" data-id="Gel" data-price="150" data-days="0"
+                                data-image="https://via.placeholder.com/100x20?text=Basketball+Insole+2">
+                                <img src="/images/insole_gel.png" alt="Gel Insole" class="component-option-image"
+                                    onerror="this.onerror=null; this.src='https://cdn-icons-png.flaticon.com/512/11542/11542598.png';">
+                                <div class="component-option-name">Gel</div>
+                                <div class="component-option-price">+₱150</div>
+                            </div>
+                            <div class="component-option" data-id="MemoryFoam" data-price="200" data-days="0"
+                                data-image="https://via.placeholder.com/100x20?text=Basketball+Insole+3">
+                                <img src="/images/insole_memoryfoam.png" alt="Memory Foam Insole"
+                                    class="component-option-image"
+                                    onerror="this.onerror=null; this.src='https://cdn-icons-png.flaticon.com/512/11542/11542598.png';">
+                                <div class="component-option-name">Memory Foam</div>
+                                <div class="component-option-price">+₱200</div>
+                            </div>
+                        </div>
+                    </div>
+
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sidebar Overlay -->
+    <div class="sidebar-overlay"></div>
+
+    <!-- Info Modals -->
+    <div class="modal" id="partsInfoModal"
+        style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center;">
+        <div class="modal-content"
+            style="background: white; padding: 2rem; border-radius: var(--radius-md); max-width: 600px; width: 90%;">
+            <h3 style="margin-bottom: 1rem;">Shoe Parts Information</h3>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                <div>
+                    <p><strong>Sole:</strong> The bottom part of the shoe that provides cushioning and traction.</p>
+                    <p><strong>Upper:</strong> The part of the shoe that covers the top of the foot.</p>
+                    <p><strong>Laces:</strong> Used to secure the shoe to the foot.</p>
+                </div>
+                <div>
+                    <p><strong>Tongue:</strong> The flap under the laces that protects the top of the foot.</p>
+                    <p><strong>Heel:</strong> The back part of the shoe that supports the heel.</p>
+                    <p><strong>Toe Box:</strong> The front part that protects the toes.</p>
+                </div>
+            </div>
+            <button id="closePartsModal"
+                style="margin-top: 1.5rem; padding: 0.5rem 1rem; background: var(--primary); color: white; border: none; border-radius: var(--radius-sm); cursor: pointer;">Close</button>
+        </div>
+    </div>
+
+    <div class="modal" id="sizeInfoModal"
+        style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center;">
+        <div class="modal-content"
+            style="background: white; padding: 2rem; border-radius: var(--radius-md); max-width: 600px; width: 90%;">
+            <h3 style="margin-bottom: 1rem;">Size Reference Guide</h3>
+            <table style="width: 100%; border-collapse: collapse; margin-bottom: 1.5rem;">
+                <thead>
+                    <tr style="background: var(--gray-light);">
+                        <th style="padding: 0.5rem; text-align: left;">US Size</th>
+                        <th style="padding: 0.5rem; text-align: left;">EU Size</th>
+                        <th style="padding: 0.5rem; text-align: left;">UK Size</th>
+                        <th style="padding: 0.5rem; text-align: left;">Length (cm)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr style="border-bottom: 1px solid var(--gray-light);">
+                        <td style="padding: 0.5rem;">5</td>
+                        <td style="padding: 0.5rem;">38</td>
+                        <td style="padding: 0.5rem;">3</td>
+                        <td style="padding: 0.5rem;">23.5</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid var(--gray-light);">
+                        <td style="padding: 0.5rem;">6</td>
+                        <td style="padding: 0.5rem;">39</td>
+                        <td style="padding: 0.5rem;">4</td>
+                        <td style="padding: 0.5rem;">24.1</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid var(--gray-light);">
+                        <td style="padding: 0.5rem;">7</td>
+                        <td style="padding: 0.5rem;">40</td>
+                        <td style="padding: 0.5rem;">5</td>
+                        <td style="padding: 0.5rem;">24.8</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid var(--gray-light);">
+                        <td style="padding: 0.5rem;">8</td>
+                        <td style="padding: 0.5rem;">41</td>
+                        <td style="padding: 0.5rem;">6</td>
+                        <td style="padding: 0.5rem;">25.4</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 0.5rem;">9</td>
+                        <td style="padding: 0.5rem;">42</td>
+                        <td style="padding: 0.5rem;">7</td>
+                        <td style="padding: 0.5rem;">26.0</td>
+                    </tr>
+                </tbody>
+            </table>
+            <p style="margin-bottom: 1rem;"><strong>Note:</strong> For best fit, measure your foot length and compare
+                with our size chart.</p>
+            <button id="closeSizeModal"
+                style="margin-top: 1rem; padding: 0.5rem 1rem; background: var(--primary); color: white; border: none; border-radius: var(--radius-sm); cursor: pointer;">Close</button>
+        </div>
+    </div>
+    <script src="../js/customizeshoeedit.js" type="module"></script>
+</body>
+
+</html>
