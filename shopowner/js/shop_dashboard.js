@@ -480,11 +480,18 @@ function displayOrderModal(order) {
 
     const acceptBtn = getElement('acceptOrderBtn');
     const rejectBtn = getElement('rejectOrderBtn');
+    const trackBtn = getElement('trackOrderBtn');
 
     if (order.status === 'pending') {
         acceptBtn.style.display = 'inline-block';
         rejectBtn.style.display = 'inline-block';
-    } else {
+        trackBtn.style.display = 'none';
+    } else if(order.status === 'accepted'){
+        trackBtn.style.display = 'inline-block';
+        acceptBtn.style.display = 'none';
+        rejectBtn.style.display = 'none';
+    }
+    else {
         acceptBtn.style.display = 'none';
         rejectBtn.style.display = 'none';
     }
@@ -513,6 +520,14 @@ async function acceptOrder() {
         console.error("Error accepting order:", error);
         alert("Failed to accept order");
     }
+}
+
+// Accept order
+async function trackOrder() {
+    // these two will data will get data everytime the view button is clicked
+    console.log(currentOrderId);
+    console.log(currentUserId);
+    window.location.href = `trackform.html?orderID=${currentOrderId}&userID=${currentUserId}`;
 }
 
 // Reject order
@@ -592,6 +607,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Order action buttons
     getElement('acceptOrderBtn').addEventListener('click', acceptOrder);
+    getElement('trackOrderBtn').addEventListener('click', trackOrder);
     getElement('rejectOrderBtn').addEventListener('click', () => {
         getElement('rejectModal').style.display = 'block';
     });
@@ -617,4 +633,5 @@ document.addEventListener('DOMContentLoaded', function () {
 window.viewOrderDetails = viewOrderDetails;
 window.viewShoeDetails = viewShoeDetails;
 window.acceptOrder = acceptOrder;
+window.trackOrder = trackOrder;
 window.rejectOrder = rejectOrder;

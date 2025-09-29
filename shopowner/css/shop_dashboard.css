@@ -412,6 +412,11 @@
             color: var(--warning);
         }
 
+        .status.accepted {
+            background-color: rgba(219, 255, 219, 0.8);
+            color: rgb(40, 204, 40);
+        }
+
         .status.cancelled {
             background-color: rgba(239, 35, 60, 0.1);
             color: var(--error);
@@ -813,6 +818,17 @@
             box-shadow: var(--shadow-sm);
         }
 
+        .btn-track {
+            background-color: #3f37c9;
+            color: white;
+        }
+
+        .btn-track:hover {
+            background-color: #4f45ff;
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-sm);
+        }
+
         .btn-danger {
             background-color: var(--error);
             color: white;
@@ -973,3 +989,5 @@
                 display: block;
             }
         }
+
+        
