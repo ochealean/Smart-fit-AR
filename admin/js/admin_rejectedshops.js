@@ -1,12 +1,9 @@
-import { readDataRealtime, logoutUser, updateData, checkUserAuth, sendEmail } from '../../firebaseMethods.js';
+import { readDataRealtime, logoutUser, updateData, checkUserAuth } from '../../firebaseMethods.js';
 
 // Global variables
 let currentAction = null;
 let currentRow = null;
 let currentShopId = null;
-let emailCell = null;
-let email = null;
-let shopName = null;
 let currentPage = 1;
 const rowsPerPage = 10;
 let originalShops = [];
@@ -18,8 +15,7 @@ const overlay = document.getElementById("overlay");
 const logoutDialog = document.getElementById('logoutDialog');
 const menuBtn = document.querySelector(".menu-btn");
 const navLinks = document.querySelector(".nav-links");
-const modal = document.getElementById("ModalDialog");
-const tableBody = document.querySelector("#rejected-shops tbody");
+const tableBody = document.getElementById("rejectedShopsTableBody");
 const prevBtn = document.getElementById("prevBtn");
 const nextBtn = document.getElementById("nextBtn");
 const paginationContainer = document.querySelector(".pagination");
@@ -33,9 +29,8 @@ const clearSearchBtn = document.getElementById('clearSearch');
  * Checks if a table is empty and displays a message if no rows are present
  */
 function checkEmptyTable() {
-    const tbody = document.querySelector('tbody');
-    if (tbody && tbody.querySelectorAll('tr').length === 0) {
-        tbody.innerHTML = '<tr><td colspan="7">No rejected shops remaining</td></tr>';
+    if (tableBody && tableBody.querySelectorAll('tr').length === 0) {
+        tableBody.innerHTML = '<tr><td colspan="8">No rejected shops remaining</td></tr>';
     }
 }
 
@@ -70,14 +65,13 @@ function showNotification(message, type) {
  * Updates confirmation dialog content based on action type
  * @param {Object} shop - Shop data object
  * @param {string} actionType - 'approve' or 'reject'
- * @param {HTMLElement} currentRow - The table row being acted upon
  */
-function updateDialogContent(shop, actionType, currentRow) {
+function updateDialogContent(shop, actionType) {
     const dialogMessage = document.getElementById("dialogMessage");
     const confirmBtn = document.getElementById("confirmAction");
-    const rejectionInput = document.getElementById("rejectionReason");
+    const rejectionContainer = document.getElementById("rejectionReasonContainer");
 
-    if (!dialogMessage || !confirmBtn || !rejectionInput) {
+    if (!dialogMessage || !confirmBtn) {
         console.error("Confirmation dialog elements missing in DOM");
         return;
     }
@@ -85,26 +79,21 @@ function updateDialogContent(shop, actionType, currentRow) {
     const confirmIcon = confirmBtn.querySelector('i');
     const actionText = confirmBtn.querySelector('.action-text');
     
-    const username = shop.username || 'N/A';
-    shopName = shop.shopName || 'Unknown Shop';
+    // FIX: Use shop.shopName directly instead of undefined global variable
+    const shopName = shop.shopName || 'Unknown Shop';
 
-    dialogMessage.textContent = `Are you sure you want to ${actionType} "${shopName}" (${username})?`;
+    dialogMessage.textContent = `Are you sure you want to ${actionType} "${shopName}"?`;
 
     if (actionType === 'approve') {
         confirmIcon.className = 'fas fa-check';
         actionText.textContent = 'Approve';
         confirmBtn.className = 'approve-btn';
-        rejectionInput.style.display = 'none';
+        rejectionContainer.style.display = 'none';
     } else {
-        emailCell = currentRow.querySelector('td:nth-child(4)');
-        email = emailCell?.textContent?.trim() || '';
-        console.log('Email:', email);
-
         confirmIcon.className = 'fas fa-ban';
         actionText.textContent = 'Reject';
         confirmBtn.className = 'reject-btn';
-        rejectionInput.style.display = 'block';
-        rejectionInput.value = '';
+        rejectionContainer.style.display = 'block';
     }
 }
 
@@ -123,7 +112,6 @@ function hideDialog() {
     document.getElementById('shopDetailsModal')?.classList.remove('show');
     dialog?.classList.remove("show");
     overlay?.classList.remove("show");
-    modal?.classList.remove("show");
     currentAction = null;
     currentRow = null;
     currentShopId = null;
@@ -142,7 +130,7 @@ function showShopModal(e) {
     if (!viewLink) return;
 
     currentShopId = viewLink.getAttribute('data-id');
-    const shopPath = `AR_shoe_users/shop/${currentShopId}`;
+    const shopPath = `smartfit_AR_Database/shop/${currentShopId}`;
 
     // Use readDataRealtime for real-time updates
     readDataRealtime(shopPath, (result) => {
@@ -252,32 +240,15 @@ function updateShopModalContent(shop) {
         </div>
 
         <div class="modal-section">
-            <h3>Timestamps</h3>
+            <h3>Rejection Details</h3>
             <div class="info-grid">
                 <div class="info-item">
-                    <span class="info-label">Status Changed Date: </span>
-                    <span class="info-value">${formatDisplayDate(shop.dateProcessed) || 'N/A'}</span>
+                    <span class="info-label">Date Rejected: </span>
+                    <span class="info-value">${formatDisplayDate(shop.dateRejected) || 'N/A'}</span>
                 </div>
                 <div class="info-item">
-                    ${shop.status === 'approved' ? `
-                        <span class="info-label">Approval Date: </span>
-                        <span class="info-value">${formatDisplayDate(shop.dateApproved)}</span>
-                    ` : ''}
-                    
-                    ${shop.status === 'rejected' ? `
-                        <span class="info-label">Rejection Date: </span>
-                        <span class="info-value">${formatDisplayDate(shop.dateRejected)}</span>
-                    ` : ''}
-                </div>
-                <div class="info-item">
-                    ${shop.status === 'rejected' ? `
-                        <span class="info-label">Reason for Being Rejected: </span>
-                    ` : ''}
-                </div>
-                <div class="info-item">
-                    ${shop.status === 'rejected' ? `
-                        <span class="info-value">${shop.rejectionReason}</span>
-                    ` : ''}
+                    <span class="info-label">Reason for Rejection: </span>
+                    <span class="info-value">${shop.rejectionReason || 'No reason provided'}</span>
                 </div>
             </div>
         </div>
@@ -328,22 +299,21 @@ function renderDocumentItem(url, title) {
 /* SHOP MANAGEMENT FUNCTIONS */
 
 /**
- * Shows confirmation dialog for approve/reject actions
+ * Shows confirmation dialog for approve action
  * @param {Event} e - Click event
- * @param {string} actionType - 'approve' or 'reject'
  */
-function showConfirmationDialog(e, actionType) {
+function showConfirmationDialog(e) {
     e.preventDefault();
     currentShopId = e.currentTarget.getAttribute('data-id');
-    currentAction = actionType;
+    currentAction = 'approve';
     currentRow = e.currentTarget.closest("tr");
 
-    const shopPath = `AR_shoe_users/shop/${currentShopId}`;
+    const shopPath = `smartfit_AR_Database/shop/${currentShopId}`;
 
     const unsubscribe = readDataRealtime(shopPath, (result) => {
         if (result.success) {
             const shop = result.data;
-            updateDialogContent(shop, actionType, currentRow);
+            updateDialogContent(shop, 'approve');
             showDialog();
         } else {
             showNotification("Shop data not found", "error");
@@ -352,20 +322,19 @@ function showConfirmationDialog(e, actionType) {
 }
 
 /**
- * Loads shops from Firebase and populates table
+ * Loads rejected shops from Firebase and populates table
  */
 function loadShops() {
-    const shopsPath = 'AR_shoe_users/shop';
-    const tbody = document.getElementById('rejectedShopsTableBody');
+    const shopsPath = 'smartfit_AR_Database/shop';
 
-    if (!tbody) return;
+    if (!tableBody) return;
 
     const unsubscribe = readDataRealtime(shopsPath, (result) => {
-        tbody.innerHTML = '';
+        tableBody.innerHTML = '';
         originalShops = [];
 
         if (!result.success || !result.data) {
-            tbody.innerHTML = `<tr><td colspan="7">No shops found</td></tr>`;
+            tableBody.innerHTML = `<tr><td colspan="8">No rejected shops found</td></tr>`;
             return;
         }
 
@@ -378,16 +347,16 @@ function loadShops() {
                 hasShops = true;
                 const shopWithId = { ...shop, id: shopId };
                 originalShops.push(shopWithId);
-                const row = createShopRow(shopId, shop, 'rejected');
-                tbody.appendChild(row);
+                const row = createShopRow(shopId, shop);
+                tableBody.appendChild(row);
             }
         });
 
         if (!hasShops) {
-            tbody.innerHTML = `<tr><td colspan="7">No rejected shops found</td></tr>`;
+            tableBody.innerHTML = `<tr><td colspan="8">No rejected shops found</td></tr>`;
         }
 
-        // Initialize filteredShops with all shops
+        // Initialize filteredShops with all rejected shops
         filteredShops = [...originalShops];
         
         // Setup pagination after loading data
@@ -398,18 +367,17 @@ function loadShops() {
 }
 
 /**
- * Creates a table row for shop data
+ * Creates a table row for rejected shop data
  * @param {string} shopId - Firebase shop ID
  * @param {Object} shop - Shop data object
- * @param {string} status - Current shop status
  * @returns {HTMLElement} Table row element
  */
-function createShopRow(shopId, shop, status) {
+function createShopRow(shopId, shop) {
     const row = document.createElement('tr');
     row.className = 'animate-fade';
     row.setAttribute('data-id', shopId);
 
-    const maxLength = 10;
+    const maxLength = 20;
     const reasonText = shop.rejectionReason || 'No reason provided';
     const shortenedText = reasonText.length > maxLength ? reasonText.substring(0, maxLength) + '...' : reasonText;
 
@@ -419,20 +387,14 @@ function createShopRow(shopId, shop, status) {
         <td>${shop.ownerName || 'N/A'}</td>
         <td>${shop.email || 'N/A'}</td>
         <td><a href="#" data-id="${shopId}" class="view-link"><i class="fas fa-eye"></i> View</a></td>
-        <td>${shop.dateProcessed ? formatDisplayDate(shop.dateProcessed) : 'Pending'}</td>
-        ${status === 'rejected' ? `<td title="${reasonText}">${shortenedText || 'No reason'}</td>` : ''}
+        <td>${shop.dateRejected ? formatDisplayDate(shop.dateRejected) : 'N/A'}</td>
+        <td title="${reasonText}">${shortenedText}</td>
         <td>
-            ${status === 'pending' ?
-            `<button class="approve-btn" data-id="${shopId}"><i class="fas fa-check"></i> Approve</button>
-                 <button class="reject-btn" data-id="${shopId}"><i class="fas fa-ban"></i> Reject</button>` :
-            status === 'approved' ?
-                `<button class="reject-btn" data-id="${shopId}"><i class="fas fa-ban"></i> Reject</button>` :
-                `<button class="approve-btn" data-id="${shopId}"><i class="fas fa-check"></i> Approve</button>`}
+            <button class="approve-btn" data-id="${shopId}"><i class="fas fa-check"></i> Approve</button>
         </td>
     `;
 
-    row.querySelector('.approve-btn')?.addEventListener('click', (e) => showConfirmationDialog(e, 'approve'));
-    row.querySelector('.reject-btn')?.addEventListener('click', (e) => showConfirmationDialog(e, 'reject'));
+    row.querySelector('.approve-btn')?.addEventListener('click', (e) => showConfirmationDialog(e));
     row.querySelector('.view-link')?.addEventListener('click', (e) => e.preventDefault());
 
     return row;
@@ -575,7 +537,8 @@ function performSearch(searchTerm) {
                 (shop.id && shop.id.toLowerCase().includes(searchLower)) ||
                 (shop.shopName && shop.shopName.toLowerCase().includes(searchLower)) ||
                 (shop.ownerName && shop.ownerName.toLowerCase().includes(searchLower)) ||
-                (shop.email && shop.email.toLowerCase().includes(searchLower))
+                (shop.email && shop.email.toLowerCase().includes(searchLower)) ||
+                (shop.rejectionReason && shop.rejectionReason.toLowerCase().includes(searchLower))
             );
         });
     }
@@ -585,10 +548,10 @@ function performSearch(searchTerm) {
 
     // Display filtered results
     if (filteredShops.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="7">No matching shops found</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="8">No matching rejected shops found</td></tr>';
     } else {
         filteredShops.forEach(shop => {
-            const row = createShopRow(shop.id, shop, 'rejected');
+            const row = createShopRow(shop.id, shop);
             tbody.appendChild(row);
         });
     }
@@ -641,66 +604,27 @@ function initializeEventListeners() {
     document.getElementById("confirmAction")?.addEventListener("click", function () {
         if (!currentAction || !currentShopId) return;
 
-        const rejectionInput = document.getElementById("rejectionReason");
-        let reason = null;
-
-        if (currentAction === "reject") {
-            reason = rejectionInput.value.trim();
-            if (!reason) {
-                showNotification("Please provide a reason for rejection.", "error");
-                rejectionInput.style.border = "2px solid red";
-                rejectionInput.focus();
-                setTimeout(() => {
-                    rejectionInput.style.border = "";
-                }, 2000);
-                return;
-            }
-        }
-
-        const shopPath = `AR_shoe_users/shop/${currentShopId}`;
+        const shopPath = `smartfit_AR_Database/shop/${currentShopId}`;
 
         const updatePayload = {
-            status: currentAction === "approve" ? "approved" : "rejected",
+            status: 'approved',
             dateProcessed: new Date().toISOString(),
-            ...(currentAction === "approve" && { dateApproved: new Date().toISOString() }),
-            ...(currentAction === "reject" && { dateRejected: new Date().toISOString() }),
-            ...(reason && { rejectionReason: reason })
+            dateApproved: new Date().toISOString(),
+            rejectionReason: null // Clear rejection reason when approving
         };
 
         updateData(shopPath, updatePayload)
             .then((result) => {
                 if (result.success) {
-                    showNotification(`Shop ${currentAction}ed successfully!`, "success");
+                    showNotification(`Shop approved successfully!`, "success");
                     currentRow?.remove();
                     checkEmptyTable();
-
-                    // Email sending logic (only for rejections)
-                    if (currentAction === "reject") {
-                        if (!email) {
-                            console.warn('No email available for rejection notification');
-                            hideDialog();
-                            return;
-                        }
-
-                        sendEmail(email, reason, shopName, 'maZuEJjFTiKrGZ4vX', 'service_3vhu66j', 'template_20tf4tf')
-                            .then(result => {
-                                if (result && !result.success) {
-                                    console.warn('Email sending failed (non-critical):', result.error);
-                                } else {
-                                    console.log('Rejection email sent successfully');
-                                }
-                            })
-                            .catch(error => {
-                                console.error('Email sending error:', error);
-                            });
-                    }
-
                 } else {
                     throw new Error(result.error);
                 }
             })
             .catch((error) => {
-                showNotification(`Failed to ${currentAction} shop: ${error.message}`, "error");
+                showNotification(`Failed to approve shop: ${error.message}`, "error");
             })
             .finally(() => {
                 hideDialog();
@@ -713,9 +637,7 @@ function initializeEventListeners() {
         document.getElementById('confirmationDialog')?.classList.remove('show');
         document.getElementById('shopDetailsModal')?.classList.remove('show');
         document.getElementById('logoutDialog')?.classList.remove('show');
-        document.getElementById('ModalDialog')?.classList.remove('show');
         this.classList.remove('show');
-        document.getElementById('rejectionReason').value = '';
         currentAction = null;
         currentRow = null;
         currentShopId = null;
