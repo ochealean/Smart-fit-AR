@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Censored Words Manager - Admin</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="../css/censoredWords.css">
+    <link rel="icon" href="../../images/smartfitImages/smartfitAR-logo.png" type="image/x-icon">
+</head>
+
+<body>
+    <div id="notification" class="notification"></div>
+
+    <div id="confirmationDialog" class="confirmation-dialog">
+        <p id="dialogMessage">Are you sure you want to delete this word?</p>
+        <div class="confirmation-buttons">
+            <button id="cancelAction" class="cancel-btn"><i class="fas fa-times"></i> Cancel</button>
+            <button id="confirmAction" class="approve-btn"><i class="fas fa-check"></i> Confirm</button>
+        </div>
+    </div>
+
+    <div id="overlay" class="overlay"></div>
+
+    <div id="wordModal" class="modal">
+        <div class="modal-header">
+            <h3 id="modalTitle">Add New Censored Word</h3>
+            <button class="close-modal">&times;</button>
+        </div>
+        
+        <div class="modal-body">
+            <div class="form-group">
+                <input type="text" id="wordInput" class="form-input" placeholder="Enter word to censor">
+                <div class="form-group">
+                    <label for="severitySelect">Severity Level:</label>
+                    <select id="severitySelect" class="form-input">
+                        <option value="low">Low</option>
+                        <option value="medium">Medium</option>
+                        <option value="high">High</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button class="cancel-btn" id="cancelModal">Cancel</button>
+                <button class="approve-btn" id="saveWord">Save Word</button>
+            </div>
+        </div>
+    </div>
+
+    <nav>
+        <div class="nav-header">
+            <ul class="nav-links">
+                <li><a href="/admin/html/admin_dashboard.html"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+                <li><a href="/admin/html/admin_pendingshops.html"><i class="fas fa-clock"></i> Pending Shops</a></li>
+                <li><a href="/admin/html/admin_approvedshops.html"><i class="fas fa-check-circle"></i> Approved Shops</a></li>
+                <li><a href="/admin/html/admin_rejectedshops.html"><i class="fas fa-times-circle"></i> Rejected Shops</a></li>
+                <li><a href="/admin/html/admin_orders.html"><i class="fas fa-shopping-bag"></i> Orders</a></li>
+                <li><a href="/admin/html/admin_shoeverification.html"><i class="fas fa-check-circle"></i> <span>Shoe Validation</span></a></li>
+                <li><a href="/chatbot/html/responses.html"><i class="fas fa-robot"></i> Chatbot Manager</a></li>
+                <li><a href="/admin/html/censoredWords.html"  class="active"><i class="fas fa-ban"></i> Censored Words</a></li>
+                <li><a href="/admin/html/admin_login.html"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
+            </ul>
+            <div class="right-menu">
+                <span class="username-display">Admin</span>
+                <div class="menu-btn"><i class="fas fa-bars"></i></div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <h1 class="animate-slide"><i class="fas fa-ban"></i> Censored Words Manager</h1>
+
+        <section id="words-crud" class="animate-fade">
+            <button class="add-word-btn" id="openWordModal">
+                <i class="fas fa-plus"></i> Add Word
+            </button>
+
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th><i class="fas fa-id-badge"></i> ID</th>
+                            <th><i class="fas fa-font"></i> Word</th>
+                            <th><i class="fas fa-exclamation-triangle"></i> Severity</th>
+                            <th><i class="fas fa-calendar-alt"></i> Date Added</th>
+                            <th><i class="fas fa-tools"></i> Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="wordsTableBody">
+                        <!-- Words populated here -->
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </div>
+
+    <script src="/admin/js/censoredWords.js" type="module"></script>
+</body>
+
+</html>
