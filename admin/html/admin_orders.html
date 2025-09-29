@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order Management - Admin</title>
+    <link rel="icon" href="../../images/smartfitImages/smartfitAR-logo.png" type="image/x-icon">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="../css/admin_orders.css">
+</head>
+
+<body>
+    <!-- Navigation -->
+    <nav>
+        <div class="nav-header">
+            <ul class="nav-links">
+                <li><a href="/admin/html/admin_dashboard.html"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+                <li><a href="/admin/html/admin_pendingshops.html"><i class="fas fa-clock"></i> Pending Shops</a></li>
+                <li><a href="/admin/html/admin_approvedshops.html"><i class="fas fa-check-circle"></i> Approved
+                        Shops</a></li>
+                <li><a href="/admin/html/admin_rejectedshops.html"><i class="fas fa-times-circle"></i> Rejected
+                        Shops</a></li>
+                <li><a href="/admin/html/admin_orders.html" class="active"><i class="fas fa-shopping-bag"></i>
+                        Orders</a></li>
+                <li><a href="/admin/html/admin_shoeverification.html"><i class="fas fa-check-circle"></i> <span>Shoe
+                            Validation</span></a></li>
+                <li><a href="/chatbot/html/responses.html"><i class="fas fa-robot"></i> Chatbot Manager</a></li>
+                <li><a href="/admin/html/censoredWords.html"><i class="fas fa-ban"></i> Censored Words</a></li>
+                <li><a href="/admin/html/admin_login.html"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
+            </ul>
+            <div class="right-menu">
+                <span class="username-display">Admin</span>
+                <div class="menu-btn"><i class="fas fa-bars"></i></div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container">
+        <h1><i class="fas fa-shopping-bag"></i> Order Management</h1>
+
+        <!-- Order Tabs -->
+        <div class="order-tabs">
+            <div class="order-tab active" data-tab="pending">
+                <i class="fas fa-clock"></i> Pending Orders
+            </div>
+            <div class="order-tab" data-tab="processing">
+                <i class="fas fa-cog"></i> In Process
+            </div>
+            <div class="order-tab" data-tab="completed">
+                <i class="fas fa-check-circle"></i> Order History
+            </div>
+        </div>
+
+        <!-- Search and Filters -->
+        <div class="search-container">
+            <input type="text" id="orderSearch" placeholder="Search orders by ID, customer name, or email..."
+                class="search-input">
+            <button id="searchBtn" class="search-btn"><i class="fas fa-search"></i> Search</button>
+            <button id="clearSearch" class="clear-btn"><i class="fas fa-times"></i> Clear</button>
+        </div>
+
+        <!-- Orders Table -->
+        <div class="table-container">
+            <table id="ordersTable">
+                <thead>
+                    <tr>
+                        <th>Order ID</th>
+                        <th>Customer</th>
+                        <th>Date</th>
+                        <th>Type</th>
+                        <th>Status</th>
+                        <th>Total</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td colspan="7" style="text-align: center; padding: 30px;">
+                            <canvas id="shoe" width="300" height="200"></canvas>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        <div class="pagination">
+            <button class="pagination-btn" id="prevBtn" disabled><i class="fas fa-chevron-left"></i> Previous</button>
+            <button class="pagination-btn pagination-number active">1</button>
+            <button class="pagination-btn pagination-number">2</button>
+            <button class="pagination-btn pagination-number">3</button>
+            <button class="pagination-btn" id="nextBtn">Next <i class="fas fa-chevron-right"></i></button>
+        </div>
+    </div>
+
+    <!-- Order Details Modal -->
+    <div class="modal-overlay" id="orderModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Order Details - #ORD-1001</h2>
+                <button class="close-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="order-details-grid">
+                    <div>
+                        <div class="detail-section">
+                            <h3><i class="fas fa-user"></i> Customer Information</h3>
+                            <div class="detail-row">
+                                <div class="detail-label">Name:</div>
+                                <div class="detail-value">John Doe</div>
+                            </div>
+                            <div class="detail-row">
+                                <div class="detail-label">Email:</div>
+                                <div class="detail-value">john.doe@example.com</div>
+                            </div>
+                            <div class="detail-row">
+                                <div class="detail-label">Phone:</div>
+                                <div class="detail-value">+63 912 345 6789</div>
+                            </div>
+                        </div>
+
+                        <div class="detail-section">
+                            <h3><i class="fas fa-truck"></i> Shipping Information</h3>
+                            <div class="detail-row">
+                                <div class="detail-label">Address:</div>
+                                <div class="detail-value">123 Main St, Quezon City, Metro Manila</div>
+                            </div>
+                            <div class="detail-row">
+                                <div class="detail-label">City:</div>
+                                <div class="detail-value">Quezon City</div>
+                            </div>
+                            <div class="detail-row">
+                                <div class="detail-label">ZIP Code:</div>
+                                <div class="detail-value">1100</div>
+                            </div>
+                            <div class="detail-row">
+                                <div class="detail-label">Country:</div>
+                                <div class="detail-value">Philippines</div>
+                            </div>
+                        </div>
+
+                        <div class="detail-section">
+                            <h3><i class="fas fa-credit-card"></i> Payment Information</h3>
+                            <div class="detail-row">
+                                <div class="detail-label">Method:</div>
+                                <div class="detail-value">GCash</div>
+                            </div>
+                            <div class="detail-row">
+                                <div class="detail-label">Status:</div>
+                                <div class="detail-value">Paid</div>
+                            </div>
+                            <div class="detail-row">
+                                <div class="detail-label">Transaction ID:</div>
+                                <div class="detail-value">GC123456789</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <div class="detail-section">
+                            <h3><i class="fas fa-shopping-bag"></i> Order Summary</h3>
+                            <div class="shoe-preview-container">
+                                <img src="" alt="Sole" class="component-preview" id="modalSoleImage">
+                                <img src="" alt="Upper" class="component-preview" id="modalUpperImage">
+                                <img src="" alt="Laces" class="component-preview" id="modalLacesImage">
+                                <img src="" alt="Tongue" class="component-preview" id="modalTongueImage">
+                            </div>
+
+                            <div class="detail-row">
+                                <div class="detail-label">Order Type:</div>
+                                <div class="detail-value">Custom Shoe</div>
+                            </div>
+                            <div class="detail-row">
+                                <div class="detail-label">Model:</div>
+                                <div class="detail-value">Classic Sneaker</div>
+                            </div>
+                            <div class="detail-row">
+                                <div class="detail-label">Size:</div>
+                                <div class="detail-value">9</div>
+                            </div>
+                            <div class="detail-row">
+                                <div class="detail-label">Production Time:</div>
+                                <div class="detail-value">7-10 days</div>
+                            </div>
+
+                            <h3 style="margin-top: 1.5rem;"><i class="fas fa-palette"></i> Customization</h3>
+                            <div class="detail-row">
+                                <div class="detail-label">Sole Color:</div>
+                                <div class="detail-value">Black</div>
+                            </div>
+                            <div class="detail-row">
+                                <div class="detail-label">Upper Color:</div>
+                                <div class="detail-value">White</div>
+                            </div>
+                            <div class="detail-row">
+                                <div class="detail-label">Laces Color:</div>
+                                <div class="detail-value">Red</div>
+                            </div>
+                            <div class="detail-row">
+                                <div class="detail-label">Tongue Color:</div>
+                                <div class="detail-value">White</div>
+                            </div>
+
+                            <div class="detail-row"
+                                style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--gray-light);">
+                                <div class="detail-label" style="font-weight: 600;">Total:</div>
+                                <div class="detail-value" style="font-weight: 600;">₱2,499.00</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal-actions">
+                    <button class="action-btn btn-cancel" id="closeModalBtn"><i class="fas fa-times"></i> Close</button>
+                    <button class="action-btn btn-process" id="processOrderBtn"><i class="fas fa-cog"></i> Mark as
+                        Processing</button>
+                    <button class="action-btn btn-reject" data-order="1001"><i class="fas fa-times"></i> Reject</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Rejection Reason Modal -->
+    <div class="modal-overlay" id="rejectionModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Reject Order <span id="rejectOrderId"></span></h2>
+                <button class="close-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="rejectionForm">
+                    <div class="form-group">
+                        <label for="rejectionReason">Reason for Rejection</label>
+                        <textarea id="rejectionReason" class="form-control" rows="5" required
+                            placeholder="Please provide the reason for rejecting this order..."></textarea>
+                    </div>
+                    <div class="modal-actions">
+                        <button type="button" class="action-btn btn-cancel" id="cancelRejectionBtn"><i
+                                class="fas fa-times"></i> Cancel</button>
+                        <button type="submit" class="action-btn btn-reject"><i class="fas fa-check"></i> Confirm
+                            Rejection</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+
+    
+
+    <script src="/shoe_loader.js"></script>
+    <script src="../js/admin_orders.js" type="module"></script>
+</body>
+
+</html>
