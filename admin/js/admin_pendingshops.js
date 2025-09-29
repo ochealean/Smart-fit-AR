@@ -18,8 +18,7 @@ const overlay = document.getElementById("overlay");
 const logoutDialog = document.getElementById('logoutDialog');
 const menuBtn = document.querySelector(".menu-btn");
 const navLinks = document.querySelector(".nav-links");
-const modal = document.getElementById("ModalDialog");
-const tableBody = document.querySelector("#pending-shops tbody");
+const tableBody = document.getElementById("pendingShopsTableBody");
 const prevBtn = document.getElementById("prevBtn");
 const nextBtn = document.getElementById("nextBtn");
 const paginationContainer = document.querySelector(".pagination");
@@ -33,9 +32,8 @@ const clearSearchBtn = document.getElementById('clearSearch');
  * Checks if a table is empty and displays a message if no rows are present
  */
 function checkEmptyTable() {
-    const tbody = document.querySelector('tbody');
-    if (tbody && tbody.querySelectorAll('tr').length === 0) {
-        tbody.innerHTML = '<tr><td colspan="7">No pending shops remaining</td></tr>';
+    if (tableBody && tableBody.querySelectorAll('tr').length === 0) {
+        tableBody.innerHTML = '<tr><td colspan="7">No pending shops remaining</td></tr>';
     }
 }
 
@@ -76,6 +74,7 @@ function updateDialogContent(shop, actionType, currentRow) {
     const dialogMessage = document.getElementById("dialogMessage");
     const confirmBtn = document.getElementById("confirmAction");
     const rejectionInput = document.getElementById("rejectionReason");
+    const rejectionContainer = document.getElementById("rejectionReasonContainer");
 
     if (!dialogMessage || !confirmBtn || !rejectionInput) {
         console.error("Confirmation dialog elements missing in DOM");
@@ -94,7 +93,7 @@ function updateDialogContent(shop, actionType, currentRow) {
         confirmIcon.className = 'fas fa-check';
         actionText.textContent = 'Approve';
         confirmBtn.className = 'approve-btn';
-        rejectionInput.style.display = 'none';
+        rejectionContainer.style.display = 'none';
     } else {
         emailCell = currentRow.querySelector('td:nth-child(4)');
         email = emailCell?.textContent?.trim() || '';
@@ -103,7 +102,7 @@ function updateDialogContent(shop, actionType, currentRow) {
         confirmIcon.className = 'fas fa-ban';
         actionText.textContent = 'Reject';
         confirmBtn.className = 'reject-btn';
-        rejectionInput.style.display = 'block';
+        rejectionContainer.style.display = 'block';
         rejectionInput.value = '';
     }
 }
@@ -123,7 +122,6 @@ function hideDialog() {
     document.getElementById('shopDetailsModal')?.classList.remove('show');
     dialog?.classList.remove("show");
     overlay?.classList.remove("show");
-    modal?.classList.remove("show");
     currentAction = null;
     currentRow = null;
     currentShopId = null;
@@ -255,29 +253,12 @@ function updateShopModalContent(shop) {
             <h3>Timestamps</h3>
             <div class="info-grid">
                 <div class="info-item">
-                    <span class="info-label">Status Changed Date: </span>
+                    <span class="info-label">Date Submitted: </span>
                     <span class="info-value">${formatDisplayDate(shop.dateProcessed) || 'N/A'}</span>
                 </div>
                 <div class="info-item">
-                    ${shop.status === 'approved' ? `
-                        <span class="info-label">Approval Date: </span>
-                        <span class="info-value">${formatDisplayDate(shop.dateApproved)}</span>
-                    ` : ''}
-                    
-                    ${shop.status === 'rejected' ? `
-                        <span class="info-label">Rejection Date: </span>
-                        <span class="info-value">${formatDisplayDate(shop.dateRejected)}</span>
-                    ` : ''}
-                </div>
-                <div class="info-item">
-                    ${shop.status === 'rejected' ? `
-                        <span class="info-label">Reason for Being Rejected: </span>
-                    ` : ''}
-                </div>
-                <div class="info-item">
-                    ${shop.status === 'rejected' ? `
-                        <span class="info-value">${shop.rejectionReason}</span>
-                    ` : ''}
+                    <span class="info-label">Status: </span>
+                    <span class="info-value">Pending Review</span>
                 </div>
             </div>
         </div>
@@ -352,20 +333,19 @@ function showConfirmationDialog(e, actionType) {
 }
 
 /**
- * Loads shops from Firebase and populates table
+ * Loads pending shops from Firebase and populates table
  */
 function loadShops() {
     const shopsPath = 'smartfit_AR_Database/shop';
-    const tbody = document.getElementById('pendingShopsTableBody');
 
-    if (!tbody) return;
+    if (!tableBody) return;
 
     const unsubscribe = readDataRealtime(shopsPath, (result) => {
-        tbody.innerHTML = '';
+        tableBody.innerHTML = '';
         originalShops = [];
 
         if (!result.success || !result.data) {
-            tbody.innerHTML = `<tr><td colspan="7">No shops found</td></tr>`;
+            tableBody.innerHTML = `<tr><td colspan="8">No pending shops found</td></tr>`;
             return;
         }
 
@@ -378,16 +358,16 @@ function loadShops() {
                 hasShops = true;
                 const shopWithId = { ...shop, id: shopId };
                 originalShops.push(shopWithId);
-                const row = createShopRow(shopId, shop, 'pending');
-                tbody.appendChild(row);
+                const row = createShopRow(shopId, shop);
+                tableBody.appendChild(row);
             }
         });
 
         if (!hasShops) {
-            tbody.innerHTML = `<tr><td colspan="7">No pending shops found</td></tr>`;
+            tableBody.innerHTML = `<tr><td colspan="8">No pending shops found</td></tr>`;
         }
 
-        // Initialize filteredShops with all shops
+        // Initialize filteredShops with all pending shops
         filteredShops = [...originalShops];
         
         // Setup pagination after loading data
@@ -398,20 +378,15 @@ function loadShops() {
 }
 
 /**
- * Creates a table row for shop data
+ * Creates a table row for pending shop data
  * @param {string} shopId - Firebase shop ID
  * @param {Object} shop - Shop data object
- * @param {string} status - Current shop status
  * @returns {HTMLElement} Table row element
  */
-function createShopRow(shopId, shop, status) {
+function createShopRow(shopId, shop) {
     const row = document.createElement('tr');
     row.className = 'animate-fade';
     row.setAttribute('data-id', shopId);
-
-    const maxLength = 10;
-    const reasonText = shop.rejectionReason || 'No reason provided';
-    const shortenedText = reasonText.length > maxLength ? reasonText.substring(0, maxLength) + '...' : reasonText;
 
     row.innerHTML = `
         <td title="${shopId}">${shopId.substring(0, 6)}...</td>
@@ -420,14 +395,10 @@ function createShopRow(shopId, shop, status) {
         <td>${shop.email || 'N/A'}</td>
         <td><a href="#" data-id="${shopId}" class="view-link"><i class="fas fa-eye"></i> View</a></td>
         <td>${shop.dateProcessed ? formatDisplayDate(shop.dateProcessed) : 'Pending'}</td>
-        ${status === 'rejected' ? `<td title="${shortenedText}">${shortenedText || 'No reason'}</td>` : ''}
+        <td>Pending Review</td>
         <td>
-            ${status === 'pending' ?
-            `<button class="approve-btn" data-id="${shopId}"><i class="fas fa-check"></i> Approve</button>
-                 <button class="reject-btn" data-id="${shopId}"><i class="fas fa-ban"></i> Reject</button>` :
-            status === 'approved' ?
-                `<button class="reject-btn" data-id="${shopId}"><i class="fas fa-ban"></i> Reject</button>` :
-                `<button class="approve-btn" data-id="${shopId}"><i class="fas fa-check"></i> Approve</button>`}
+            <button class="approve-btn" data-id="${shopId}"><i class="fas fa-check"></i> Approve</button>
+            <button class="reject-btn" data-id="${shopId}"><i class="fas fa-ban"></i> Reject</button>
         </td>
     `;
 
@@ -585,10 +556,10 @@ function performSearch(searchTerm) {
 
     // Display filtered results
     if (filteredShops.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="7">No matching shops found</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="8">No matching pending shops found</td></tr>';
     } else {
         filteredShops.forEach(shop => {
-            const row = createShopRow(shop.id, shop, 'pending');
+            const row = createShopRow(shop.id, shop);
             tbody.appendChild(row);
         });
     }
@@ -713,7 +684,6 @@ function initializeEventListeners() {
         document.getElementById('confirmationDialog')?.classList.remove('show');
         document.getElementById('shopDetailsModal')?.classList.remove('show');
         document.getElementById('logoutDialog')?.classList.remove('show');
-        document.getElementById('ModalDialog')?.classList.remove('show');
         this.classList.remove('show');
         document.getElementById('rejectionReason').value = '';
         currentAction = null;
