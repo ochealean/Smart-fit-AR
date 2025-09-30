@@ -2,10 +2,8 @@ import {
     checkUserAuth,
     logoutUser,
     readDataRealtime,
-    updateData,
     createImageToFirebase,
     deleteImageFromFirebase,
-    updateImageInFirebase,
     updateProfileMethod,
     changeUserPassword,
     signInWithEmailAndPasswordWrapper
