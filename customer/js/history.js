@@ -552,8 +552,6 @@ function setupEventListeners() {
         });
     }
 
-    // Mobile menu setup
-    setupMobileMenu();
 }
 
 function handleStatusFilterChange(e) {
@@ -616,23 +614,6 @@ window.handleFindSimilar = function(orderId) {
     alert('Find similar functionality coming soon!');
 };
 
-function setupMobileMenu() {
-    const mobileToggle = document.querySelector('.mobile-menu-toggle');
-    const sidebar = document.querySelector('.sidebar');
-    const overlay = document.querySelector('.sidebar-overlay');
-
-    if (mobileToggle && sidebar && overlay) {
-        mobileToggle.addEventListener('click', () => {
-            sidebar.classList.toggle('active');
-            overlay.classList.toggle('active');
-        });
-
-        overlay.addEventListener('click', () => {
-            sidebar.classList.remove('active');
-            overlay.classList.remove('active');
-        });
-    }
-}
 
 window.displayOrderDetails = async function(orderId) {
     try {

@@ -191,19 +191,6 @@
     <script>
         // sidebar toggle for mobile view
         document.addEventListener('DOMContentLoaded', function () {
-            const mobileToggle = document.querySelector('.mobile-menu-toggle');
-            const sidebar = document.querySelector('.sidebar');
-            const overlay = document.querySelector('.sidebar-overlay');
-
-            mobileToggle.addEventListener('click', () => {
-                sidebar.classList.toggle('active');
-                overlay.classList.toggle('active');
-            });
-
-            overlay.addEventListener('click', () => {
-                sidebar.classList.remove('active');
-                overlay.classList.remove('active');
-            });
 
             // Discard modal handling
             const discardModal = document.getElementById('discardModal');
