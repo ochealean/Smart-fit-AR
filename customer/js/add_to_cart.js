@@ -50,13 +50,8 @@ async function initializeCart() {
 
 // Load user profile
 function loadUserProfile() {
-    const userNameDisplay1 = getElement('userName_display1');
-    const userNameDisplay2 = getElement('userName_display2');
+    const userNameDisplay2 = getElement('userName_display');
     const imageProfile = getElement('imageProfile');
-    
-    if (userNameDisplay1) {
-        userNameDisplay1.textContent = userData.firstName || 'Customer';
-    }
     
     if (userNameDisplay2) {
         userNameDisplay2.textContent = `${userData.firstName || ''} ${userData.lastName || ''}`.trim() || 'Customer';

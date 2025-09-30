@@ -78,10 +78,10 @@ function loadUserProfile() {
         }
         
         // Set user avatar if available
-        if (userSession.userData.profilePhoto?.url) {
-            userAvatar.src = userSession.userData.profilePhoto.url;
-        } else if (userSession.userData.uploads?.shopLogo?.url) {
-            userAvatar.src = userSession.userData.uploads.shopLogo.url;
+        if (userSession.userData.profilePhoto) {
+            userAvatar.src = userSession.userData.profilePhoto;
+        } else if (userSession.userData.uploads?.shopLogo) {
+            userAvatar.src = userSession.userData.uploads.shopLogo;
         } else {
             userAvatar.src = "https://cdn-icons-png.flaticon.com/512/11542/11542598.png";
         }
