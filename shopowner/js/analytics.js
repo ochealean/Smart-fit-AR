@@ -12,7 +12,8 @@ let userSession = {
     shopId: null,
     role: null,
     shopName: '',
-    userId: null
+    userId: null,
+    imageProfile: null
 };
 let RecentSalesFilter = 'day';
 let salesChartInstance = null;
@@ -40,6 +41,7 @@ async function initializePage() {
     userSession.shopId = user.shopId || user.userId;
     userSession.role = user.role;
     userSession.shopName = user.userData.shopName || user.userData.ownerName || 'Shop Manager';
+    userSession.imageProfile = user.userData.uploads.shopLogo.url;
 
     // Set user profile information
     setUserProfile();
@@ -63,12 +65,11 @@ function setUserProfile() {
     
     // Set profile name
     userFullname.textContent = userSession.shopName;
+    console.log(userSession);
     
     // Set profile picture
-    if (userSession.userData?.profilePhoto?.url) {
-        profilePicture.src = userSession.userData.profilePhoto.url;
-    } else if (userSession.userData?.uploads?.shopLogo?.url) {
-        profilePicture.src = userSession.userData.uploads.shopLogo.url;
+    if (userSession.imageProfile) {
+        profilePicture.src = userSession.imageProfile;
     } else {
         profilePicture.src = "https://cdn-icons-png.flaticon.com/512/11542/11542598.png";
     }
