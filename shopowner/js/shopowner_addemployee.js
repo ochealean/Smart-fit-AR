@@ -31,6 +31,21 @@ const emailDomainInput = document.getElementById('emailDomain');
 
 // Initialize the application
 function init() {
+// Mobile sidebar toggle
+    const mobileToggle = document.querySelector('.mobile-menu-toggle');
+    const sidebar = document.querySelector('.sidebar');
+    const overlay = document.querySelector('.sidebar-overlay');
+    
+    mobileToggle.addEventListener('click', () => {
+        sidebar.classList.toggle('active');
+        overlay.classList.toggle('active');
+    });
+    
+    overlay.addEventListener('click', () => {
+        sidebar.classList.remove('active');
+        overlay.classList.remove('active');
+    });
+
     setupAuthStateListener();
     setupEventListeners();
     setupPasswordValidation();

@@ -212,26 +212,6 @@
     
     <!-- Sidebar Overlay -->
     <div class="sidebar-overlay"></div>
-
-    <script>
-        // Mobile sidebar toggle - same as template
-        document.addEventListener('DOMContentLoaded', function() {
-            const mobileToggle = document.querySelector('.mobile-menu-toggle');
-            const sidebar = document.querySelector('.sidebar');
-            const overlay = document.querySelector('.sidebar-overlay');
-            
-            mobileToggle.addEventListener('click', () => {
-                sidebar.classList.toggle('active');
-                overlay.classList.toggle('active');
-            });
-            
-            overlay.addEventListener('click', () => {
-                sidebar.classList.remove('active');
-                overlay.classList.remove('active');
-            });
-        });
-    </script>
-
     <script src="/shopowner/js/shop_dashboard.js" type="module"></script>
 </body>
 </html>
