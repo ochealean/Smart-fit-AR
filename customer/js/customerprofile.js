@@ -1,4 +1,3 @@
-// customerprofile.js - Refactored to use firebaseMethods only
 import {
     checkUserAuth,
     logoutUser,
@@ -8,14 +7,19 @@ import {
     deleteImageFromFirebase,
     updateImageInFirebase,
     updateProfileMethod,
-    sendEmailVerificationWrapper,
-    changeUserPassword
+    changeUserPassword,
+    signInWithEmailAndPasswordWrapper
 } from "../../firebaseMethods.js";
 
 // State variables
 let avatarFile = null;
 let customerData = {};
 let originalEmail = '';
+let userSession = {
+    userId: null,
+    userData: null,
+    role: null
+};
 
 // DOM Elements
 const elements = {
@@ -27,7 +31,9 @@ const elements = {
     profileName: document.querySelector('.profile-name'),
     profileEmail: document.querySelector('.profile-email'),
     profileAvatar: document.getElementById('profilePhotoImg'),
-    wishlistCount: document.querySelector('.stat-item .stat-value'),
+    orderCount: document.querySelector('.stat-item:nth-child(1) .stat-value'),
+    wishlistCount: document.querySelector('.stat-item:nth-child(2) .stat-value'),
+    customOrdersCount: document.querySelector('.stat-item:nth-child(3) .stat-value'),
 
     // Form Fields
     firstName: document.getElementById('firstName'),
@@ -35,9 +41,10 @@ const elements = {
     email: document.getElementById('email'),
     phone: document.getElementById('phone'),
     birthdate: document.getElementById('birthdate'),
+    gender: document.getElementById('gender'),
     address: document.getElementById('address'),
     city: document.getElementById('city'),
-    province: document.getElementById('province'),
+    state: document.getElementById('state'),
     zipCode: document.getElementById('zipCode'),
     country: document.getElementById('country'),
 
@@ -72,20 +79,17 @@ async function initializePage() {
         return;
     }
 
-    // Set user session data
-    window.userSession = {
-        userId: user.userId,
-        userData: user.userData
-    };
+    userSession.userId = user.userId;
+    userSession.userData = user.userData;
+    userSession.role = user.role;
 
-    loadCustomerProfile(user.userId);
+    loadCustomerProfile();
     setupEventListeners();
     setupPasswordToggles();
-    setupPasswordValidation();
 }
 
-function loadCustomerProfile(userId) {
-    const customerPath = `smartfit_AR_Database/customers/${userId}`;
+function loadCustomerProfile() {
+    const customerPath = `smartfit_AR_Database/customers/${userSession.userId}`;
     
     const unsubscribe = readDataRealtime(customerPath, (result) => {
         if (result.success && result.data) {
@@ -99,7 +103,7 @@ function loadCustomerProfile(userId) {
             updateFormFields(customerData);
 
             // Load statistics
-            loadCustomerStatistics(userId);
+            loadCustomerStatistics();
         } else {
             console.error('Customer data not found');
             window.location.href = '/login.html';
@@ -117,8 +121,8 @@ function updateHeader(customerData) {
     }
 
     // Profile Image
-    if (customerData.profilePhoto?.profilePhoto?.url) {
-        elements.userProfileImage.src = customerData.profilePhoto.profilePhoto.url;
+    if (customerData.profilePhoto) {
+        elements.userProfileImage.src = customerData.profilePhoto;
     } else {
         setDefaultAvatar(elements.userProfileImage);
     }
@@ -136,8 +140,8 @@ function updateProfileSection(customerData) {
     }
 
     // Avatar
-    if (customerData.profilePhoto?.profilePhoto?.url) {
-        elements.profileAvatar.src = customerData.profilePhoto.profilePhoto.url;
+    if (customerData.profilePhoto) {
+        elements.profileAvatar.src = customerData.profilePhoto;
     } else {
         setDefaultAvatar(elements.profileAvatar);
     }
@@ -150,22 +154,35 @@ function updateFormFields(customerData) {
     if (customerData.email) elements.email.value = customerData.email;
     if (customerData.phone) elements.phone.value = customerData.phone;
     if (customerData.birthday) elements.birthdate.value = customerData.birthday;
+    if (customerData.gender) elements.gender.value = customerData.gender;
 
     // Address Info
     if (customerData.address) elements.address.value = customerData.address;
     if (customerData.city) elements.city.value = customerData.city;
-    if (customerData.state) elements.province.value = customerData.state;
+    if (customerData.state) elements.state.value = customerData.state;
     if (customerData.zip) elements.zipCode.value = customerData.zip;
     if (customerData.country) elements.country.value = customerData.country;
 }
 
-function loadCustomerStatistics(userId) {
-    // Wishlist Count
-    const wishlistPath = `smartfit_AR_Database/wishlist/${userId}`;
+function loadCustomerStatistics() {
+    // Order Count
+    const ordersPath = `smartfit_AR_Database/transactions/${userSession.userId}`;
     
-    const unsubscribe = readDataRealtime(wishlistPath, (result) => {
-        let wishlistCount = 0;
+    const ordersUnsubscribe = readDataRealtime(ordersPath, (result) => {
+        let orderCount = 0;
+        if (result.success && result.data) {
+            orderCount = Object.keys(result.data).length;
+        }
+        if (elements.orderCount) {
+            elements.orderCount.textContent = orderCount;
+        }
+    });
 
+    // Wishlist Count
+    const wishlistPath = `smartfit_AR_Database/wishlist/${userSession.userId}`;
+    
+    const wishlistUnsubscribe = readDataRealtime(wishlistPath, (result) => {
+        let wishlistCount = 0;
         if (result.success && result.data) {
             // Count all wishlist items across all shops
             const wishlistData = result.data;
@@ -174,14 +191,28 @@ function loadCustomerStatistics(userId) {
                 wishlistCount += Object.keys(shopItems).length;
             });
         }
-
         if (elements.wishlistCount) {
             elements.wishlistCount.textContent = wishlistCount;
         }
     });
 
-    // Store unsubscribe for cleanup if needed
-    window.wishlistUnsubscribe = unsubscribe;
+    // Custom Orders Count
+    const customOrdersPath = `smartfit_AR_Database/customizedtransactions/${userSession.userId}`;
+    
+    const customOrdersUnsubscribe = readDataRealtime(customOrdersPath, (result) => {
+        let customOrdersCount = 0;
+        if (result.success && result.data) {
+            customOrdersCount = Object.keys(result.data).length;
+        }
+        if (elements.customOrdersCount) {
+            elements.customOrdersCount.textContent = customOrdersCount;
+        }
+    });
+
+    // Store unsubscribes for cleanup
+    window.ordersUnsubscribe = ordersUnsubscribe;
+    window.wishlistUnsubscribe = wishlistUnsubscribe;
+    window.customOrdersUnsubscribe = customOrdersUnsubscribe;
 }
 
 function setupPasswordToggles() {
@@ -233,16 +264,10 @@ function setupEventListeners() {
 
             try {
                 showLoading(true);
-                const user = await checkUserAuth();
-                if (!user.authenticated) {
-                    throw new Error('User not authenticated');
-                }
-
                 const updates = {};
                 let passwordChanged = false;
-                let profileUpdated = false;
 
-                // Handle password change if provided
+                // Check if password changed
                 if (elements.newPassword.value) {
                     passwordChanged = await changePassword(
                         elements.currentPassword.value,
@@ -251,50 +276,30 @@ function setupEventListeners() {
                     );
                 }
 
-                // Update profile data if any changes detected
-                if (elements.firstName.value !== customerData.firstName ||
-                    elements.lastName.value !== customerData.lastName ||
-                    elements.phone.value !== customerData.phone ||
-                    elements.birthdate.value !== customerData.birthday ||
-                    elements.address.value !== customerData.address ||
-                    elements.city.value !== customerData.city ||
-                    elements.province.value !== customerData.state ||
-                    elements.zipCode.value !== customerData.zip ||
-                    elements.country.value !== customerData.country ||
-                    avatarFile) {
+                // Update customer data
+                updates.firstName = elements.firstName.value;
+                updates.lastName = elements.lastName.value;
+                updates.phone = elements.phone.value;
+                updates.birthday = elements.birthdate.value;
+                updates.gender = elements.gender.value;
+                updates.address = elements.address.value;
+                updates.city = elements.city.value;
+                updates.state = elements.state.value;
+                updates.zip = elements.zipCode.value;
+                updates.country = elements.country.value;
 
-                    updates.firstName = elements.firstName.value;
-                    updates.lastName = elements.lastName.value;
-                    updates.phone = elements.phone.value;
-                    updates.birthday = elements.birthdate.value;
-                    updates.address = elements.address.value;
-                    updates.city = elements.city.value;
-                    updates.state = elements.province.value;
-                    updates.zip = elements.zipCode.value;
-                    updates.country = elements.country.value;
+                // Upload avatar if changed
+                if (avatarFile) {
+                    const oldUrl = customerData.profilePhoto || null;
+                    const avatarUrl = await uploadFile(userSession.userId, avatarFile, 'profilePhoto', oldUrl);
+                    updates.profilePhoto = avatarUrl;
+                }
 
-                    // Upload avatar if changed
-                    if (avatarFile) {
-                        const oldUrl = customerData.profilePhoto?.profilePhoto?.url || null;
-                        const avatarUrl = await uploadFile(user.userId, avatarFile, 'customerProfile', oldUrl);
-
-                        updates.profilePhoto = {
-                            profilePhoto: {
-                                name: avatarFile.name,
-                                url: avatarUrl,
-                                uploadedAt: new Date().toISOString()
-                            }
-                        };
-                    }
-
-                    const profilePath = `smartfit_AR_Database/customers/${user.userId}`;
-                    const result = await updateProfileMethod(user.userId, updates, profilePath);
-                    
-                    if (!result.success) {
-                        throw new Error(result.error);
-                    }
-                    
-                    profileUpdated = true;
+                const customerPath = `smartfit_AR_Database/customers/${userSession.userId}`;
+                const result = await updateProfileMethod(userSession.userId, updates, customerPath);
+                
+                if (!result.success) {
+                    throw new Error(result.error);
                 }
 
                 // Update UI
@@ -308,23 +313,13 @@ function setupEventListeners() {
                     elements.userNameDisplay.textContent = `${elements.firstName.value} ${elements.lastName.value}`;
                 }
 
-                // Clear password fields if password was changed successfully
                 if (passwordChanged) {
                     if (elements.currentPassword) elements.currentPassword.value = '';
                     if (elements.newPassword) elements.newPassword.value = '';
                     if (elements.confirmPassword) elements.confirmPassword.value = '';
                 }
 
-                // Show appropriate success message
-                if (passwordChanged && profileUpdated) {
-                    showAlert('Profile and password updated successfully!', 'success');
-                } else if (passwordChanged) {
-                    showAlert('Password updated successfully!', 'success');
-                } else if (profileUpdated) {
-                    showAlert('Profile updated successfully!', 'success');
-                } else {
-                    showAlert('No changes detected.', 'info');
-                }
+                showAlert('Profile updated successfully!', 'success');
 
             } catch (error) {
                 console.error('Error updating profile:', error);
@@ -473,6 +468,7 @@ async function uploadFile(userId, file, type, oldUrl = null) {
         const uploadResult = await createImageToFirebase(file, filePath);
         
         if (uploadResult.success) {
+            console.log(`File uploaded successfully: ${filePath}`);
             return uploadResult.url;
         } else {
             throw new Error(uploadResult.error);
@@ -498,68 +494,7 @@ function getPathFromUrl(url) {
     }
 }
 
-function setupPasswordValidation() {
-    const newPassword = getElement('newPassword');
-    const confirmPassword = getElement('confirmPassword');
-    const currentPassword = getElement('currentPassword');
-    
-    if (!newPassword || !confirmPassword) return;
-    
-    const passwordError = document.createElement('div');
-    passwordError.style.color = 'var(--error)';
-    passwordError.style.fontSize = '0.8rem';
-    passwordError.style.marginTop = '0.25rem';
-    passwordError.style.display = 'none';
-    
-    confirmPassword.parentNode.appendChild(passwordError);
-    
-    function validatePasswords() {
-        // Reset styles
-        newPassword.style.borderColor = '';
-        confirmPassword.style.borderColor = '';
-        passwordError.style.display = 'none';
-        
-        if (newPassword.value && confirmPassword.value) {
-            if (newPassword.value.length < 6) {
-                passwordError.textContent = 'Password must be at least 6 characters';
-                passwordError.style.display = 'block';
-                newPassword.style.borderColor = 'var(--error)';
-                confirmPassword.style.borderColor = 'var(--error)';
-                return false;
-            } else if (newPassword.value !== confirmPassword.value) {
-                passwordError.textContent = 'Passwords do not match';
-                passwordError.style.display = 'block';
-                confirmPassword.style.borderColor = 'var(--error)';
-                return false;
-            } else {
-                passwordError.style.display = 'none';
-                newPassword.style.borderColor = 'var(--success)';
-                confirmPassword.style.borderColor = 'var(--success)';
-                return true;
-            }
-        }
-        return null;
-    }
-    
-    // Add current password requirement when new password is entered
-    function checkCurrentPasswordRequirement() {
-        if (newPassword.value && !currentPassword.value) {
-            currentPassword.style.borderColor = 'var(--error)';
-        } else {
-            currentPassword.style.borderColor = '';
-        }
-    }
-    
-    newPassword.addEventListener('input', function() {
-        validatePasswords();
-        checkCurrentPasswordRequirement();
-    });
-    
-    confirmPassword.addEventListener('input', validatePasswords);
-    currentPassword.addEventListener('input', checkCurrentPasswordRequirement);
-}
-
-// Add this function to handle password changes
+// WORKING PASSWORD CHANGE FUNCTION
 async function changePassword(currentPassword, newPassword, confirmPassword) {
     try {
         // Validate inputs
@@ -578,18 +513,49 @@ async function changePassword(currentPassword, newPassword, confirmPassword) {
         if (newPassword.length < 6) {
             throw new Error('New password must be at least 6 characters long');
         }
-        
-        // Change password with current password verification
-        const result = await changeUserPassword(currentPassword, newPassword);
-        
-        if (result.success) {
-            return true;
-        } else {
-            throw new Error(result.error);
+
+        const currentEmail = customerData.email;
+
+        if (!currentEmail) {
+            throw new Error('Unable to determine user email');
         }
+
+        console.log('Attempting to change password for:', currentEmail);
+
+        // First, reauthenticate the user by signing in again
+        console.log('Reauthenticating user...');
+        const reauthResult = await signInWithEmailAndPasswordWrapper(currentEmail, currentPassword);
+        
+        if (!reauthResult.success) {
+            throw new Error('Current password is incorrect. Please try again.');
+        }
+
+        console.log('Reauthentication successful, changing password...');
+
+        // Now change the password using the Firebase method
+        const changeResult = await changeUserPassword(newPassword);
+        
+        if (!changeResult.success) {
+            throw new Error(changeResult.error || 'Failed to change password');
+        }
+
+        console.log('Password changed successfully');
+        showAlert('Password changed successfully!', 'success');
+        return true;
+
     } catch (error) {
         console.error('Error changing password:', error);
-        throw error;
+        
+        // Provide more specific error messages
+        if (error.message.includes('auth/wrong-password')) {
+            throw new Error('Current password is incorrect. Please try again.');
+        } else if (error.message.includes('auth/requires-recent-login')) {
+            throw new Error('For security reasons, please log out and log back in before changing your password.');
+        } else if (error.message.includes('auth/weak-password')) {
+            throw new Error('New password is too weak. Please choose a stronger password.');
+        } else {
+            throw new Error(error.message || 'Failed to change password. Please try again.');
+        }
     }
 }
 
@@ -607,12 +573,10 @@ async function handleLogout() {
 
 // Cleanup function if needed
 function cleanup() {
-    if (window.customerProfileUnsubscribe) {
-        window.customerProfileUnsubscribe();
-    }
-    if (window.wishlistUnsubscribe) {
-        window.wishlistUnsubscribe();
-    }
+    if (window.customerProfileUnsubscribe) window.customerProfileUnsubscribe();
+    if (window.ordersUnsubscribe) window.ordersUnsubscribe();
+    if (window.wishlistUnsubscribe) window.wishlistUnsubscribe();
+    if (window.customOrdersUnsubscribe) window.customOrdersUnsubscribe();
 }
 
 // Export for potential cleanup

@@ -92,6 +92,20 @@
                     <div class="profile-info">
                         <h2 class="profile-name">Alex Johnson</h2>
                         <div class="profile-email">alex.johnson@example.com</div>
+                        <div class="profile-stats">
+                            <div class="stat-item">
+                                <div class="stat-value">0</div>
+                                <div class="stat-label">Orders</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-value">0</div>
+                                <div class="stat-label">Wishlist</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-value">0</div>
+                                <div class="stat-label">Custom Orders</div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -130,9 +144,21 @@
                             </div>
                         </div>
 
-                        <div class="form-group">
-                            <label for="birthdate" class="form-label">Date of Birth</label>
-                            <input type="date" id="birthdate" class="form-control" >
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="birthdate" class="form-label">Date of Birth</label>
+                                <input type="date" id="birthdate" class="form-control">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="gender" class="form-label">Gender</label>
+                                <select id="gender" class="form-select">
+                                    <option value="male">Male</option>
+                                    <option value="female">Female</option>
+                                    <option value="other">Other</option>
+                                    <option value="prefer-not-to-say">Prefer not to say</option>
+                                </select>
+                            </div>
                         </div>
                     </div>
 
@@ -152,8 +178,8 @@
                             </div>
 
                             <div class="form-group">
-                                <label for="province" class="form-label">Province</label>
-                                <input type="text" id="province" class="form-control" value="Bataan">
+                                <label for="state" class="form-label">State/Province</label>
+                                <input type="text" id="state" class="form-control" value="Bataan">
                             </div>
                         </div>
 
@@ -165,8 +191,9 @@
 
                             <div class="form-group">
                                 <label for="country" class="form-label">Country</label>
-                                <select id="country" class="form-select" value="Philippines">
+                                <select id="country" class="form-select">
                                     <option value="Philippines" selected>Philippines</option>
+                                    <option value="Other">Other</option>
                                 </select>
                             </div>
                         </div>
@@ -210,7 +237,8 @@
     <!-- Mobile Overlay -->
     <div class="sidebar-overlay"></div>
 
-    <!-- <script>
+    <script src="../js/customerprofile.js" type="module"></script>
+    <script>
         // Mobile sidebar toggle
         document.addEventListener('DOMContentLoaded', function () {
             const mobileToggle = document.querySelector('.mobile-menu-toggle');
@@ -254,33 +282,8 @@
             setupPasswordToggle('currentPassword', 'toggleCurrentPassword');
             setupPasswordToggle('newPassword', 'toggleNewPassword');
             setupPasswordToggle('confirmPassword', 'toggleConfirmPassword');
-
-            // Form submission
-            document.getElementById('profileForm').addEventListener('submit', function(e) {
-                e.preventDefault();
-                alert('Profile updated successfully!');
-            });
-
-            // Cancel button
-            document.querySelector('.btn-cancel').addEventListener('click', function() {
-                if (confirm('Are you sure you want to cancel? All unsaved changes will be lost.')) {
-                    window.location.reload();
-                }
-            });
-
-            // Profile photo upload
-            document.getElementById('profilePhotoUpload').addEventListener('change', function(e) {
-                if (this.files && this.files[0]) {
-                    const reader = new FileReader();
-                    reader.onload = function(e) {
-                        document.getElementById('profilePhotoImg').src = e.target.result;
-                    }
-                    reader.readAsDataURL(this.files[0]);
-                }
-            });
         });
-    </script> -->
-    <script src="../js/customerprofile.js" type="module"></script>
+    </script>
 </body>
 
 </html>
