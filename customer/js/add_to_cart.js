@@ -232,9 +232,6 @@ function renderCart() {
             <input type="checkbox" class="cart-item-checkbox" id="selectAllItems" checked>
             <label for="selectAllItems">Select all items</label>
         </div>
-        <div class="sort-info">
-            <i class="fas fa-sort-amount-down"></i> Sorted by newest first
-        </div>
     `;
     cartContainer.appendChild(cartHeader);
 
