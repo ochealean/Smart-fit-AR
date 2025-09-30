@@ -21,7 +21,7 @@ let userData = null;
 // Initialize the page
 async function initializeDashboard() {
     const authStatus = await checkUserAuth();
-    
+
     if (authStatus.authenticated && authStatus.role === 'shopowner') {
         console.log(`User is ${authStatus.role}`, authStatus.userData);
         window.location.href = "../../shopowner/html/shop_dashboard.html";
@@ -36,10 +36,14 @@ async function initializeDashboard() {
 
     // Load user profile
     loadUserProfile();
-    
+
+    // Load data in stat cards
+    getElement('Wishlist_Items').innerHTML = await addDataInStatCards_Wishlist(authStatus.userId);
+    getElement('Recent_Orders').innerHTML = await addDataInStatCards_RecentOrders(authStatus.userId)
+
     // Load all shoes
     await loadAllShoes();
-    
+
     // Set up event listeners
     setupEventListeners();
 }
@@ -49,20 +53,44 @@ function loadUserProfile() {
     const userNameDisplay1 = getElement('userName_display1');
     const userNameDisplay2 = getElement('userName_display2');
     const imageProfile = getElement('imageProfile');
-    
+
     if (userNameDisplay1) {
         userNameDisplay1.textContent = userData.firstName || 'Customer';
     }
-    
+
     if (userNameDisplay2) {
         userNameDisplay2.textContent = `${userData.firstName || ''} ${userData.lastName || ''}`.trim() || 'Customer';
     }
-    
+
     if (imageProfile) {
         imageProfile.src = userData.profilePhoto || "https://cdn-icons-png.flaticon.com/512/11542/11542598.png";
     }
-    
+
     document.body.style.display = '';
+}
+
+async function addDataInStatCards_Wishlist(userID) {
+    let number_of_wishlisted_item = 0;
+    const wishListObject = await readData(`smartfit_AR_Database/wishlist/${userID}`);
+    Object.entries(wishListObject).forEach(([key, value]) => {
+        Object.entries(value).forEach(([key1, value1]) => {
+            // console.log(value1);
+            number_of_wishlisted_item++;
+        });
+    });
+    return number_of_wishlisted_item;
+}
+
+async function addDataInStatCards_RecentOrders(userID) {
+    let number_of_wishlisted_item = 0;
+    const wishListObject = await readData(`smartfit_AR_Database/transactions/${userID}`);
+    Object.entries(wishListObject).forEach(([key, value]) => {
+        Object.entries(value).forEach(([key1, value1]) => {
+            // console.log(value1);
+            number_of_wishlisted_item++;
+        });
+    });
+    return number_of_wishlisted_item;
 }
 
 // Load all shoes
@@ -81,7 +109,7 @@ async function loadAllShoes() {
 
     try {
         const productResult = await readData(`smartfit_AR_Database/shoe`);
-        
+
         if (!productResult.success || !productResult.data) {
             shoeContainer.innerHTML = '<p class="no-shoes">No shoes available at the moment.</p>';
             return;
@@ -123,7 +151,7 @@ async function displayAllShoes(allShops, shoeContainer) {
             // Get first variant for display
             const firstVariantKey = Object.keys(shoe.variants || {})[0];
             const firstVariant = firstVariantKey ? shoe.variants[firstVariantKey] : {};
-            
+
             // Get lowest price
             let lowestPrice = Infinity;
             if (shoe.variants) {
@@ -173,13 +201,13 @@ function fixedDescription(description) {
 }
 
 // Product Details Modal Functions
-window.viewShoeDetails = async function(shopId, shoeId) {
+window.viewShoeDetails = async function (shopId, shoeId) {
     console.log('View shoe details:', shopId, shoeId);
-    
+
     try {
         const shoeDetails = await readData(`smartfit_AR_Database/shoe/${shopId}/${shoeId}`);
         console.log(shoeDetails.data);
-        
+
         if (!shoeDetails.success || !shoeDetails.data) {
             alert('Shoe not found');
             return;
@@ -362,7 +390,7 @@ window.closeProductModal = function () {
 window.adjustQuantity = function (change) {
     const quantityInput = getElement('quantity');
     if (!quantityInput) return;
-    
+
     let newValue = parseInt(quantityInput.value) + change;
     const max = parseInt(quantityInput.max);
 
@@ -375,7 +403,7 @@ window.adjustQuantity = function (change) {
 window.validateQuantity = function () {
     const quantityInput = getElement('quantity');
     if (!quantityInput) return;
-    
+
     let value = parseInt(quantityInput.value);
     const max = parseInt(quantityInput.max);
 
@@ -441,7 +469,7 @@ function setupEventListeners() {
     // Logout functionality
     const logoutBtn = getElement('logout_btn');
     if (logoutBtn) {
-        logoutBtn.addEventListener('click', async function() {
+        logoutBtn.addEventListener('click', async function () {
             if (confirm('Are you sure you want to logout?')) {
                 const result = await logoutUser();
                 if (result.success) {
@@ -562,7 +590,7 @@ function handleBuyNow() {
 // Set up modal events
 function setupModalEvents() {
     const modal = getElement('productDetailsModal');
-    
+
     // Close modal when clicking outside
     if (modal) {
         window.onclick = function (event) {
@@ -581,7 +609,7 @@ function setupModalEvents() {
 }
 
 // Initialize when DOM is loaded
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     // Mobile sidebar toggle (if applicable)
     const mobileToggle = document.querySelector('.mobile-menu-toggle');
     const sidebar = document.querySelector('.sidebar');
