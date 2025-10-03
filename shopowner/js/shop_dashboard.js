@@ -71,11 +71,11 @@ async function initializeDashboard() {
 }
 
 // Load all dashboard data
-function loadDashboardData() {
+async function loadDashboardData() {
     loadShopStats();
     loadRecentOrders();
     loadRecentProducts();
-    loadTopProducts();
+    loadTopProducts(); // Add await here
 }
 
 // Load shop statistics
@@ -278,14 +278,12 @@ function loadRecentProducts() {
 }
 
 // Load top products based on ratings
-function loadTopProducts() {
+async function loadTopProducts() {
     const topProductsGrid = getElement('topProductsGrid');
 
-    // For now, we'll show featured products. In a real implementation,
-    // you would query feedbacks and calculate ratings
     const productsPath = `smartfit_AR_Database/shoe/${shopLoggedin}`;
 
-    const unsubscribe = readDataRealtime(productsPath, (result) => {
+    const unsubscribe = readDataRealtime(productsPath, async (result) => {
         if (!result.success || !result.data) {
             displayEmptyTopProducts();
             return;
@@ -297,8 +295,24 @@ function loadTopProducts() {
             ...products[key]
         }));
 
-        // Show first 4 products as featured (in a real app, sort by rating)
-        const featuredProducts = productArray.slice(0, 4);
+        // Get ratings for each product
+        const productsWithRatings = await Promise.all(
+            productArray.map(async (product) => {
+                const ratings = await getProductRatings(product.id);
+                console.log(product);
+                return {
+                    ...product,
+                    averageRating: ratings.averageRating,
+                    reviewCount: ratings.reviewCount
+                };
+            })
+        );
+
+        // Sort by rating and get top 4
+        const featuredProducts = productsWithRatings
+            .sort((a, b) => b.averageRating - a.averageRating)
+            .slice(0, 4);
+
         displayProductsGrid(featuredProducts, topProductsGrid, 'top');
     });
 
@@ -333,9 +347,13 @@ function displayProductsGrid(products, container, type) {
 
         const imageUrl = product.defaultImage || (firstVariant ? firstVariant.imageUrl : null);
 
-        const badgeHtml = type === 'top' ?
+        // Use actual ratings data
+        const averageRating = product.averageRating || 0;
+        const reviewCount = product.reviewCount || 0;
+
+        const badgeHtml = type === 'top' && averageRating > 0 ?
             `<div class="product-badge">
-                4.5 <i class="fas fa-star"></i>
+                ${averageRating} <i class="fas fa-star"></i>
             </div>` : '';
 
         return `
@@ -359,7 +377,11 @@ function displayProductsGrid(products, container, type) {
                     ${type === 'top' ? `
                         <div class="product-stats">
                             <div class="product-stat">
-                                <i class="fas fa-star"></i> 4.5 (12 reviews)
+                                <i class="fas fa-star"></i> 
+                                ${averageRating > 0 ?
+                    `${averageRating} (${reviewCount} ${reviewCount === 1 ? 'review' : 'reviews'})` :
+                    'No reviews yet'
+                }
                             </div>
                         </div>
                     ` : ''}
@@ -372,6 +394,42 @@ function displayProductsGrid(products, container, type) {
     }).join('');
 
     container.innerHTML = html;
+}
+
+// Function to calculate product ratings from feedback
+async function getProductRatings(shoeId) {
+    try {
+        const feedbacksPath = 'smartfit_AR_Database/feedbacks';
+        const result = await readData(feedbacksPath);
+
+        if (!result.success || !result.data) {
+            return { averageRating: 0, reviewCount: 0 };
+        }
+        
+
+        let totalRating = 0;
+        let reviewCount = 0;
+        const feedbacks = result.data;
+
+        Object.entries(feedbacks).forEach(([outerKey, innerObj]) => {
+            Object.entries(innerObj).forEach(([innerKey, value]) => {
+                reviewCount++;
+                totalRating += value.rating;
+                console.log(reviewCount);
+            });
+        });
+
+        const averageRating = reviewCount > 0 ? (totalRating / reviewCount).toFixed(1) : 0;
+
+        console.log(averageRating);
+        return {
+            averageRating: parseFloat(averageRating),
+            reviewCount: reviewCount
+        };
+    } catch (error) {
+        console.error("Error calculating ratings:", error);
+        return { averageRating: 0, reviewCount: 0 };
+    }
 }
 
 // Display empty state for top products
@@ -480,11 +538,18 @@ function displayOrderModal(order) {
 
     const acceptBtn = getElement('acceptOrderBtn');
     const rejectBtn = getElement('rejectOrderBtn');
+    const trackBtn = getElement('trackOrderBtn');
 
     if (order.status === 'pending') {
         acceptBtn.style.display = 'inline-block';
         rejectBtn.style.display = 'inline-block';
-    } else {
+        trackBtn.style.display = 'none';
+    } else if (order.status === 'accepted') {
+        trackBtn.style.display = 'inline-block';
+        acceptBtn.style.display = 'none';
+        rejectBtn.style.display = 'none';
+    }
+    else {
         acceptBtn.style.display = 'none';
         rejectBtn.style.display = 'none';
     }
@@ -513,6 +578,14 @@ async function acceptOrder() {
         console.error("Error accepting order:", error);
         alert("Failed to accept order");
     }
+}
+
+// Accept order
+async function trackOrder() {
+    // these two will data will get data everytime the view button is clicked
+    console.log(currentOrderId);
+    console.log(currentUserId);
+    window.location.href = `trackform.html?orderID=${currentOrderId}&userID=${currentUserId}`;
 }
 
 // Reject order
@@ -592,6 +665,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Order action buttons
     getElement('acceptOrderBtn').addEventListener('click', acceptOrder);
+    getElement('trackOrderBtn').addEventListener('click', trackOrder);
     getElement('rejectOrderBtn').addEventListener('click', () => {
         getElement('rejectModal').style.display = 'block';
     });
@@ -617,4 +691,5 @@ document.addEventListener('DOMContentLoaded', function () {
 window.viewOrderDetails = viewOrderDetails;
 window.viewShoeDetails = viewShoeDetails;
 window.acceptOrder = acceptOrder;
+window.trackOrder = trackOrder;
 window.rejectOrder = rejectOrder;

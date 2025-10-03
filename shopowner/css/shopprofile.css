@@ -1,18 +1,18 @@
 :root {
-    --primary: #a777e3;
-    --primary-dark: #8e5fd5;
-    --secondary: #8a4fff;
-    --accent: #ff6b6b;
-    --success: #48cfad;
-    --warning: #ffaa00;
-    --error: #ff6b6b;
+    --primary: #4361ee;
+    --primary-dark: #3a56d4;
+    --secondary: #3f37c9;
+    --accent: #f72585;
+    --success: #4cc9f0;
+    --warning: #f8961e;
+    --error: #ef233c;
     --light: #f8f9fa;
-    --dark: #2c3e50;
-    --gray: #bdc3c7;
-    --gray-light: #ecf0f1;
-    --gray-dark: #7f8c8d;
-    --text-primary: #2c3e50;
-    --text-secondary: #34495e;
+    --dark: #212529;
+    --gray: #adb5bd;
+    --gray-light: #e9ecef;
+    --gray-dark: #495057;
+    --text-primary: #212529;
+    --text-secondary: #343a40;
     --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08);
     --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
     --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
@@ -233,6 +233,11 @@ body {
     margin-bottom: 1rem;
 }
 
+.profile-stats {
+    display: flex;
+    gap: 1.5rem;
+}
+
 .stat-item {
     text-align: center;
     padding: 0.75rem 1rem;
@@ -340,6 +345,51 @@ textarea.form-control {
     background-color: white;
 }
 
+/* Document Upload Styles */
+.document-upload {
+    margin-top: 1rem;
+}
+
+.document-preview {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-top: 1rem;
+    padding: 1rem;
+    background-color: var(--gray-light);
+    border-radius: var(--radius-sm);
+    transition: var(--transition);
+    overflow: auto;
+}
+
+.document-preview:hover {
+    background-color: #e2e6ea;
+}
+
+.document-icon {
+    font-size: 2rem;
+    color: var(--gray-dark);
+}
+
+.document-info {
+    flex: 1;
+}
+
+.document-name {
+    font-weight: 500;
+    margin-bottom: 0.3rem;
+}
+
+.document-upload-date {
+    font-size: 0.8rem;
+    color: var(--gray-dark);
+}
+
+.document-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
 /* Button Styles */
 .btn {
     padding: 0.65rem 1.25rem;
@@ -378,14 +428,14 @@ textarea.form-control {
 }
 
 .btn-save {
-    background-color: var(--primary);
+    background-color: var(--success);
     color: white;
     padding: 0.8rem 1.5rem;
     font-size: 1rem;
 }
 
 .btn-save:hover {
-    background-color: var(--primary-dark);
+    background-color: #1da1c1;
     transform: translateY(-2px);
     box-shadow: var(--shadow-sm);
 }
@@ -494,6 +544,9 @@ textarea.form-control {
         text-align: center;
     }
 
+    .profile-stats {
+        justify-content: center;
+    }
 
     .form-row {
         grid-template-columns: 1fr;
@@ -515,7 +568,27 @@ textarea.form-control {
         justify-content: center;
     }
 }
-.profile-stats{
-    display: flex;
-    
+
+/* Add to your existing CSS */
+#employeeProfileSection {
+    display: none;
+    /* Hidden by default */
+}
+
+/* For shop owners */
+.shop-owner #employeeProfileSection {
+    display: none !important;
+}
+
+.shop-owner .profile-container {
+    display: block !important;
+}
+
+/* For employees */
+.employee .profile-container {
+    display: none !important;
+}
+
+.employee #employeeProfileSection {
+    display: block !important;
 }

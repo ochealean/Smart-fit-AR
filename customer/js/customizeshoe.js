@@ -118,8 +118,8 @@ function setUserProfile() {
         }
         
         // Set user avatar if available
-        if (userSession.userData.profilePhoto?.url) {
-            userAvatar.src = userSession.userData.profilePhoto.url;
+        if (userSession.userData.profilePhoto) {
+            userAvatar.src = userSession.userData.profilePhoto;
         } else {
             userAvatar.src = "https://cdn-icons-png.flaticon.com/512/11542/11542598.png";
         }

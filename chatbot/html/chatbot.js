@@ -108,8 +108,8 @@ async function loadUserProfile(userId) {
 
             // Set user avatar if available
             if (userAvatar) {
-                if (userData.profilePhoto && userData.profilePhoto.url) {
-                    userAvatar.src = userData.profilePhoto.url;
+                if (userData.profilePhoto && userData.profilePhoto) {
+                    userAvatar.src = userData.profilePhoto;
                 } else {
                     userAvatar.src = "https://randomuser.me/api/portraits/men/32.jpg";
                 }

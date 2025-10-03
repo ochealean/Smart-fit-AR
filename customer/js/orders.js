@@ -53,7 +53,7 @@ function loadUserProfile() {
     }
 
     if (imageProfileElement) {
-        imageProfileElement.src = userData.profilePhoto?.profilePhoto?.url ||
+        imageProfileElement.src = userData.profilePhoto ||
             "https://firebasestorage.googleapis.com/v0/b/opportunity-9d3bf.appspot.com/o/profile%2Fdefault_profile.png?alt=media&token=5f1a4b8c-7e6b-4f1c-8a2d-0e5f3b7c4a2e";
     }
 

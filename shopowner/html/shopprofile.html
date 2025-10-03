@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shop Profile | Shop Owner</title>
+    <link rel="icon" type="image/png" href="/images/smartfitImages/smartfitAR-logo.png">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="../css/shopprofile.css">
+</head>
+
+<body>
+    <div class="dashboard">
+        <!-- Sidebar Navigation -->
+        <div class="sidebar">
+            <div class="logo">
+                <div class="logo-icon">
+                    <i class="fas fa-store"></i>
+                </div>
+                <span>SHOP DASHBOARD</span>
+            </div>
+            <div class="nav-items">
+                <a href="/shopowner/html/shop_dashboard.html" class="nav-item">
+                    <i class="fas fa-home"></i> Dashboard
+                </a>
+                <a href="/shopowner/html/shopowner_addshoe.html" class="nav-item">
+                    <i class="fas fa-shoe-prints"></i> Add Shoe
+                </a>
+                <a href="/shopowner/html/shoeverification.html" class="nav-item">
+                    <i class="fas fa-check-circle"></i> Shoe Verification
+                </a>
+                <a id="addemployeebtn" href="/shopowner/html/shopowner_addemployee.html" class="nav-item shopowner">
+                    <i class="fas fa-users"></i> Add Employee
+                </a>
+                <a href="/shopowner/html/shop_inventory.html" class="nav-item">
+                    <i class="fas fa-boxes"></i> Inventory
+                </a>
+                <a href="/shopowner/html/shop_order.html" class="nav-item">
+                    <i class="fas fa-shopping-cart"></i> Orders
+                </a>
+                <a id="issuereport" href="/shopowner/html/issue_report.html" class="nav-item manager">
+                    <i class="fas fa-exclamation-circle"></i> Issue Report
+                </a>
+                <a id="analyticsbtn" href="/shopowner/html/analytics.html" class="nav-item manager">
+                    <i class="fas fa-chart-line"></i> Analytics
+                </a>
+                <a href="/shopowner/html/shopprofile.html" class="nav-item active">
+                    <i class="fas fa-cog"></i> Settings
+                </a>
+                <a id="logout_btn" class="nav-item">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </a>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <div class="header">
+                <!-- Mobile Menu Toggle -->
+                <div class="mobile-menu-toggle">
+                    <i class="fas fa-bars"></i>
+                </div>
+                <h1><i class="fas fa-user-cog"></i> Profile Settings</h1>
+                <div class="user-profile">
+                    <img id="imageProfile" src="#" alt="Profile" class="user-avatar">
+                    <span id="userName_display2">Shop Name</span>
+                </div>
+            </div>
+
+            <!-- Shop Profile Container -->
+            <div class="profile-container" id="shopProfileSection">
+                <!-- Profile Header -->
+                <div class="profile-header">
+                    <div class="profile-avatar">
+                        <img src="" alt="Shop Logo" id="shopLogoImg">
+                        <label class="avatar-upload">
+                            <i class="fas fa-camera"></i> Change
+                            <input type="file" accept="image/*" id="shopLogoUpload">
+                        </label>
+                    </div>
+
+                    <div class="profile-info">
+                        <h2 class="profile-name">Shop Name</h2>
+                        <div class="profile-email">Shop Email</div>
+                        <div class="profile-stats">
+                            <div class="stat-item">
+                                <div class="stat-value">0</div>
+                                <div class="stat-label">Orders</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-value">0</div>
+                                <div class="stat-label">Products</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-value">0</div>
+                                <div class="stat-label">Rating</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Shop Profile Form -->
+                <form class="profile-form" id="profileForm">
+                    <!-- Shop Information Section -->
+                    <div class="form-section">
+                        <h3 class="section-title"><i class="fas fa-store"></i> Shop Information</h3>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="shopName" class="form-label">Shop Name</label>
+                                <input type="text" id="shopName" class="form-control" value="">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="shopCategory" class="form-label">Shop Category</label>
+                                <select id="shopCategory" class="form-select">
+                                    <option value="sneakers" selected>Sneakers</option>
+                                    <option value="formal">Formal Shoes</option>
+                                    <option value="boots">Boots</option>
+                                    <option value="sports">Sports Shoes</option>
+                                    <option value="sandals">Sandals</option>
+                                    <option value="other">Other</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="shopDescription" class="form-label">Shop Description</label>
+                            <textarea id="shopDescription" class="form-control" rows="4">Shop Description</textarea>
+                        </div>
+                    </div>
+
+                    <!-- Contact Information Section -->
+                    <div class="form-section">
+                        <h3 class="section-title"><i class="fas fa-address-card"></i> Contact Information</h3>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="ownerName" class="form-label">Owner Name</label>
+                                <input type="text" id="ownerName" class="form-control" value="Juan Dela Cruz">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="ownerEmail" class="form-label">Email</label>
+                                <input type="email" id="ownerEmail" class="form-control"
+                                    value="elitefootwear@example.com">
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="ownerPhone" class="form-label">Phone Number</label>
+                                <div style="display: flex; align-items: center;">
+                                    <span
+                                        style="padding: 0.8rem 0.5rem; background: var(--gray-light); border-radius: var(--radius-sm) 0 0 var(--radius-sm);">+63</span>
+                                    <input type="tel" id="ownerPhone" class="form-control" value="9XX XXX XXXX"
+                                        maxlength="10"
+                                        style="border-radius: 0 var(--radius-sm) var(--radius-sm) 0; margin-left: -1px;">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Location Information Section -->
+                    <div class="form-section">
+                        <h3 class="section-title"><i class="fas fa-map-marker-alt"></i> Location Information</h3>
+
+                        <div class="form-group">
+                            <label for="shopAddress" class="form-label">Shop Address</label>
+                            <input type="text" id="shopAddress" class="form-control" value="Street">
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="shopCity" class="form-label">City</label>
+                                <input type="text" id="shopCity" class="form-control" value="City">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="shopState" class="form-label">State/Province</label>
+                                <input type="text" id="shopState" class="form-control" value="Province">
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="shopZip" class="form-label">ZIP/Postal Code</label>
+                                <input type="text" id="shopZip" class="form-control" value="ZIP Code">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="shopCountry" class="form-label">Country</label>
+                                <select id="shopCountry" class="form-select">
+                                    <option value="Philippines" selected>Philippines</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Business Documents Section -->
+                    <div class="form-section">
+                        <h3 class="section-title"><i class="fas fa-file-contract"></i> Business Documents</h3>
+
+                        <div class="document-upload">
+                            <label class="form-label">Mayor's Permit / Business License</label>
+                            <div class="document-preview" id="businessLicensePreview">
+                                <i class="fas fa-file-pdf document-icon"></i>
+                                <div class="document-info">
+                                    <div class="document-name">Mayor's Permit / Business License File</div>
+                                    <div class="document-upload-date">Uploaded: When</div>
+                                </div>
+                                <div class="document-actions">
+                                    <button type="button" class="btn btn-view" data-doc-type="businessLicense"><i class="fas fa-eye"></i> View</button>
+                                    <button type="button" class="btn btn-replace" data-doc-type="businessLicense"><i class="fas fa-sync"></i> Replace</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="document-upload">
+                            <label class="form-label">Tax Identification Number</label>
+                            <input type="text" id="taxId" class="form-control" value="XXXX-XXXX-XXXX">
+                        </div>
+
+                        <div class="document-upload">
+                            <label class="form-label">Business Permit</label>
+                            <div class="document-preview" id="businessPermitPreview">
+                                <i class="fas fa-file-image document-icon"></i>
+                                <div class="document-info">
+                                    <div class="document-name">Business Permit File</div>
+                                    <div class="document-upload-date">Uploaded: When</div>
+                                </div>
+                                <div class="document-actions">
+                                    <button type="button" class="btn btn-view" data-doc-type="permitDocument"><i class="fas fa-eye"></i> View</button>
+                                    <button type="button" class="btn btn-replace" data-doc-type="permitDocument"><i class="fas fa-sync"></i> Replace</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Owner ID Front -->
+                        <div class="document-upload">
+                            <label class="form-label">Owner ID Front</label>
+                            <div class="document-preview" id="ownerIdFrontPreview">
+                                <i class="fas fa-file-image document-icon"></i>
+                                <div class="document-info">
+                                    <div class="document-name">Owner ID Front</div>
+                                    <div class="document-upload-date">Uploaded: When</div>
+                                </div>
+                                <div class="document-actions">
+                                    <button type="button" class="btn btn-view" data-doc-type="ownerIdFront"><i class="fas fa-eye"></i> View</button>
+                                    <button type="button" class="btn btn-replace" data-doc-type="ownerIdFront"><i class="fas fa-sync"></i> Replace</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Owner ID Back -->
+                        <div class="document-upload">
+                            <label class="form-label">Owner ID Back</label>
+                            <div class="document-preview" id="ownerIdBackPreview">
+                                <i class="fas fa-file-image document-icon"></i>
+                                <div class="document-info">
+                                    <div class="document-name">Owner ID Back</div>
+                                    <div class="document-upload-date">Uploaded: When</div>
+                                </div>
+                                <div class="document-actions">
+                                    <button type="button" class="btn btn-view" data-doc-type="ownerIdBack"><i class="fas fa-eye"></i> View</button>
+                                    <button type="button" class="btn btn-replace" data-doc-type="ownerIdBack"><i class="fas fa-sync"></i> Replace</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Password Change Section -->
+                    <div class="form-section">
+                        <h3 class="section-title"><i class="fas fa-lock"></i> Change Password</h3>
+
+                        <div class="form-row">
+                            <div class="form-group password-toggle">
+                                <label for="currentPassword" class="form-label">Current Password</label>
+                                <input type="password" id="currentPassword" class="form-control">
+                                <i class="fas fa-eye password-toggle-icon" id="toggleCurrentPassword"></i>
+                            </div>
+
+                            <div class="form-group password-toggle">
+                                <label for="newPassword" class="form-label">New Password</label>
+                                <input type="password" id="newPassword" class="form-control">
+                                <i class="fas fa-eye password-toggle-icon" id="toggleNewPassword"></i>
+                            </div>
+                        </div>
+
+                        <div class="form-group password-toggle">
+                            <label for="confirmPassword" class="form-label">Confirm New Password</label>
+                            <input type="password" id="confirmPassword" class="form-control">
+                            <i class="fas fa-eye password-toggle-icon" id="toggleConfirmPassword"></i>
+                        </div>
+                    </div>
+
+                    <!-- Form Actions -->
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-cancel">Cancel</button>
+                        <button type="submit" class="btn btn-save"><i class="fas fa-save"></i> Save Changes</button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Employee Profile Container -->
+            <div class="profile-container" id="employeeProfileSection">
+                <!-- Employee Profile Header -->
+                <div class="profile-header">
+                    <div class="profile-avatar">
+                        <img src="" alt="Employee Photo" id="employeePhotoImg">
+                        <label class="avatar-upload">
+                            <i class="fas fa-camera"></i> Change
+                            <input type="file" accept="image/*" id="employeePhotoUpload">
+                        </label>
+                    </div>
+
+                    <div class="profile-info">
+                        <h2 class="profile-name">Employee Name</h2>
+                        <div class="profile-email">employee@example.com</div>
+                        <div class="profile-stats">
+                            <div class="stat-item">
+                                <div class="stat-value">0</div>
+                                <div class="stat-label">Orders Processed</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-value">0</div>
+                                <div class="stat-label">Tasks Completed</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Employee Profile Form -->
+                <form class="profile-form" id="employeeProfileForm">
+                    <!-- Personal Information Section -->
+                    <div class="form-section">
+                        <h3 class="section-title"><i class="fas fa-user"></i> Personal Information</h3>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="employeeFullName" class="form-label">Full Name</label>
+                                <input type="text" id="employeeFullName" class="form-control" value="">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="employeeRole" class="form-label">Role</label>
+                                <input type="text" id="employeeRole" class="form-control" value="" readonly>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="employeeEmail" class="form-label">Email</label>
+                                <input type="email" id="employeeEmail" class="form-control" value="" readonly>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="employeePhone" class="form-label">Phone Number</label>
+                                <div style="display: flex; align-items: center;">
+                                    <span
+                                        style="padding: 0.8rem 0.5rem; background: var(--gray-light); border-radius: var(--radius-sm) 0 0 var(--radius-sm);">+63</span>
+                                    <input type="tel" id="employeePhone" class="form-control" value="" maxlength="10"
+                                        style="border-radius: 0 var(--radius-sm) var(--radius-sm) 0; margin-left: -1px;">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Emergency Contact Section -->
+                    <div class="form-section">
+                        <h3 class="section-title"><i class="fas fa-phone-alt"></i> Emergency Contact</h3>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="emergencyContactName" class="form-label">Contact Name</label>
+                                <input type="text" id="emergencyContactName" class="form-control" value="">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="emergencyContactRelation" class="form-label">Relationship</label>
+                                <input type="text" id="emergencyContactRelation" class="form-control" value="">
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="emergencyContactPhone" class="form-label">Phone Number</label>
+                                <div style="display: flex; align-items: center;">
+                                    <span
+                                        style="padding: 0.8rem 0.5rem; background: var(--gray-light); border-radius: var(--radius-sm) 0 0 var(--radius-sm);">+63</span>
+                                    <input type="tel" id="emergencyContactPhone" class="form-control" value=""
+                                        maxlength="10"
+                                        style="border-radius: 0 var(--radius-sm) var(--radius-sm) 0; margin-left: -1px;">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Password Change Section -->
+                    <div class="form-section">
+                        <h3 class="section-title"><i class="fas fa-lock"></i> Change Password</h3>
+
+                        <div class="form-row">
+                            <div class="form-group password-toggle">
+                                <label for="employeeCurrentPassword" class="form-label">Current Password</label>
+                                <input type="password" id="employeeCurrentPassword" class="form-control">
+                                <i class="fas fa-eye password-toggle-icon" id="toggleEmployeeCurrentPassword"></i>
+                            </div>
+
+                            <div class="form-group password-toggle">
+                                <label for="employeeNewPassword" class="form-label">New Password</label>
+                                <input type="password" id="employeeNewPassword" class="form-control">
+                                <i class="fas fa-eye password-toggle-icon" id="toggleEmployeeNewPassword"></i>
+                            </div>
+                        </div>
+
+                        <div class="form-group password-toggle">
+                            <label for="employeeConfirmPassword" class="form-label">Confirm New Password</label>
+                            <input type="password" id="employeeConfirmPassword" class="form-control">
+                            <i class="fas fa-eye password-toggle-icon" id="toggleEmployeeConfirmPassword"></i>
+                        </div>
+                    </div>
+
+                    <!-- Form Actions -->
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-cancel">Cancel</button>
+                        <button type="submit" class="btn btn-save"><i class="fas fa-save"></i> Save Changes</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mobile Overlay -->
+    <div class="sidebar-overlay"></div>
+
+    <script src="/shopowner/js/shopprofile.js" type="module"></script>
+    <script>
+        // Mobile sidebar toggle
+        document.addEventListener('DOMContentLoaded', function () {
+            const mobileToggle = document.querySelector('.mobile-menu-toggle');
+            const sidebar = document.querySelector('.sidebar');
+            const overlay = document.querySelector('.sidebar-overlay');
+
+            if (mobileToggle) {
+                mobileToggle.addEventListener('click', () => {
+                    sidebar.classList.toggle('active');
+                    overlay.classList.toggle('active');
+                });
+            }
+
+            if (overlay) {
+                overlay.addEventListener('click', () => {
+                    sidebar.classList.remove('active');
+                    overlay.classList.remove('active');
+                });
+            }
+
+            // Password toggle functionality
+            function setupPasswordToggle(inputId, toggleId) {
+                const passwordInput = document.getElementById(inputId);
+                const toggleIcon = document.getElementById(toggleId);
+
+                if (passwordInput && toggleIcon) {
+                    toggleIcon.addEventListener('click', function () {
+                        if (passwordInput.type === 'password') {
+                            passwordInput.type = 'text';
+                            toggleIcon.classList.remove('fa-eye');
+                            toggleIcon.classList.add('fa-eye-slash');
+                        } else {
+                            passwordInput.type = 'password';
+                            toggleIcon.classList.remove('fa-eye-slash');
+                            toggleIcon.classList.add('fa-eye');
+                        }
+                    });
+                }
+            }
+
+            setupPasswordToggle('currentPassword', 'toggleCurrentPassword');
+            setupPasswordToggle('newPassword', 'toggleNewPassword');
+            setupPasswordToggle('confirmPassword', 'toggleConfirmPassword');
+            setupPasswordToggle('employeeCurrentPassword', 'toggleEmployeeCurrentPassword');
+            setupPasswordToggle('employeeNewPassword', 'toggleEmployeeNewPassword');
+            setupPasswordToggle('employeeConfirmPassword', 'toggleEmployeeConfirmPassword');
+        });
+    </script>
+</body>
+
+</html>
