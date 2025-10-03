@@ -153,7 +153,34 @@ async function createOrderCard(order) {
     
     const status = order.status?.toLowerCase() || 'pending';
 
-    // Only show these statuses
+    // FIXED: Check for unresolved issues first - if unresolved, return null to hide the order
+    let hasUnresolvedIssue = false;
+    try {
+        // Get all issue reports for this user
+        const userIssuesResult = await readData(`smartfit_AR_Database/issueReports/${userID}`);
+        
+        if (userIssuesResult.success && userIssuesResult.data) {
+            const userIssues = userIssuesResult.data;
+            
+            // Check if any issue report matches this order ID and is unresolved
+            for (const [issueId, issueData] of Object.entries(userIssues)) {
+                if (issueData.orderID === order.orderId && !issueData.resolved) {
+                    hasUnresolvedIssue = true;
+                    break;
+                }
+            }
+        }
+    } catch (error) {
+        console.log("Error checking issue report:", error);
+    }
+
+    // FIXED: Hide orders with unresolved issues (just like completed status)
+    if (hasUnresolvedIssue) {
+        console.log(`Hiding order ${order.orderId} because it has unresolved issues`);
+        return null;
+    }
+
+    // Only show these statuses (excluding 'completed' and orders with unresolved issues)
     const allowedStatuses = [
         'pending',
         'order processed',
@@ -165,8 +192,11 @@ async function createOrderCard(order) {
         'delivered'
     ];
 
-    // Skip if status is not in allowed list
-    if (!allowedStatuses.includes(status)) return null;
+    // Skip if status is not in allowed list (including 'completed')
+    if (!allowedStatuses.includes(status)) {
+        console.log(`Hiding order ${order.orderId} with status: ${status}`);
+        return null;
+    }
 
     // Check if this order has a serial number
     let serialNumber = order.serialNumber;
@@ -183,22 +213,11 @@ async function createOrderCard(order) {
         }
     }
 
-    // Check for unresolved issues
-    let hasUnresolvedIssue = false;
-    try {
-        const issueResult = await readData(`smartfit_AR_Database/issueReports/${order.orderId}`);
-        if (issueResult.success && issueResult.data && !issueResult.data.resolved) {
-            hasUnresolvedIssue = true;
-        }
-    } catch (error) {
-        console.log("Error checking issue report:", error);
-    }
-
     const orderCard = document.createElement('div');
     orderCard.className = 'order-card';
     orderCard.dataset.status = status;
     orderCard.dataset.orderId = order.orderId;
-    orderCard.dataset.hasUnresolvedIssue = hasUnresolvedIssue;
+    orderCard.dataset.hasUnresolvedIssue = hasUnresolvedIssue; // This will always be false now since we filtered above
     if (serialNumber) {
         orderCard.dataset.serialNumber = serialNumber;
     }
@@ -238,7 +257,8 @@ async function createOrderCard(order) {
     `;
     }
 
-    const actionButtons = generateActionButtons(status, order.orderId, serialNumber, hasUnresolvedIssue);
+    // Since we've filtered out unresolved issues, hasUnresolvedIssue will always be false here
+    const actionButtons = generateActionButtons(status, order.orderId, serialNumber, false);
 
     orderCard.innerHTML = `
         <div class="order-header">
@@ -247,7 +267,6 @@ async function createOrderCard(order) {
                 <span class="order-date"> - ${formattedDate}</span>
             </div>
             <span class="order-status ${statusClass}">${statusText}</span>
-            ${hasUnresolvedIssue ? '<span class="issue-badge">Issue Reported</span>' : ''}
         </div>
         <div class="order-body">
             <div class="order-items">
@@ -494,14 +513,22 @@ window.validateShoe = function (serialNumber) {
     window.location.href = `/customer/html/shoevalidator.html?ShoeSerialNumber=${encodeURIComponent(serialNumber)}`;
 };
 
-// Mark order as received
+// Mark order as received - FIXED: Also check for unresolved issues here
 window.markAsReceived = async function (orderId) {
     // Check for unresolved issues
     let hasUnresolvedIssue = false;
     try {
-        const issueResult = await readData(`smartfit_AR_Database/issueReports/${orderId}`);
-        if (issueResult.success && issueResult.data && !issueResult.data.resolved) {
-            hasUnresolvedIssue = true;
+        const userIssuesResult = await readData(`smartfit_AR_Database/issueReports/${userID}`);
+        
+        if (userIssuesResult.success && userIssuesResult.data) {
+            const userIssues = userIssuesResult.data;
+            
+            for (const [issueId, issueData] of Object.entries(userIssues)) {
+                if (issueData.orderID === orderId && !issueData.resolved) {
+                    hasUnresolvedIssue = true;
+                    break;
+                }
+            }
         }
     } catch (error) {
         console.log("Error checking issue report:", error);
@@ -522,7 +549,7 @@ window.markAsReceived = async function (orderId) {
 
         if (updateResult.success) {
             alert('Order marked as received successfully!');
-            // Reload orders to reflect changes
+            // Reload orders to reflect changes (this will hide the order since it's now completed)
             loadOrders();
         } else {
             alert('Failed to update order status: ' + updateResult.error);

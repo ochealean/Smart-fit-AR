@@ -134,7 +134,7 @@ function getDefaultAvatar() {
     return "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' fill='%23ddd'%3E%3Crect width='100' height='100'/%3E%3Ctext x='50%' y='50%' font-size='20' text-anchor='middle' dominant-baseline='middle' fill='%23666'%3EProfile%3C/text%3E%3C/svg%3E";
 }
 
-// Load issue reports
+// Load issue reports - FIXED VERSION
 async function loadIssueReports() {
     const issuesPath = 'smartfit_AR_Database/issueReports';
     const issueTableBody = getElement("issueReportsTableBody");
@@ -157,12 +157,43 @@ async function loadIssueReports() {
             return;
         }
 
-        // Convert object to array and create rows
+        // Convert object to array and flatten the structure
         const issues = result.data;
-        console.log("Loaded issues:", issues);
-        Object.keys(issues).forEach(issueId => {
-            const issue = issues[issueId];
-            const row = createIssueRow(issueId, issue);
+        console.log("Loaded issues structure:", issues);
+        
+        // Flatten the nested structure
+        const allIssues = [];
+        Object.keys(issues).forEach(userId => {
+            const userIssues = issues[userId];
+            Object.keys(userIssues).forEach(issueId => {
+                const issue = userIssues[issueId];
+                issue.fullId = `${userId}/${issueId}`; // Store the full path for reference
+                issue.userId = userId; // Store the user ID separately
+                allIssues.push({
+                    id: issueId,
+                    userId: userId,
+                    data: issue
+                });
+            });
+        });
+
+        console.log("Flattened issues:", allIssues);
+
+        if (allIssues.length === 0) {
+            issueTableBody.innerHTML = '<tr><td colspan="9">No issue reports found</td></tr>';
+            return;
+        }
+
+        // Sort by timestamp (newest first)
+        allIssues.sort((a, b) => {
+            const timeA = a.data.timestamp || a.data.dateAdded || 0;
+            const timeB = b.data.timestamp || b.data.dateAdded || 0;
+            return timeB - timeA;
+        });
+
+        // Create rows for each issue
+        allIssues.forEach(issueObj => {
+            const row = createIssueRow(issueObj.id, issueObj.data, issueObj.userId);
             issueTableBody.appendChild(row);
         });
 
@@ -172,10 +203,11 @@ async function loadIssueReports() {
     return unsubscribe;
 }
 
-function createIssueRow(issueId, issue) {
+function createIssueRow(issueId, issue, userId) {
     const row = document.createElement('tr');
     row.className = 'animate-fade';
     row.setAttribute('data-id', issueId);
+    row.setAttribute('data-userid', userId);
 
     // Format status with appropriate class
     const statusClass = `status-${issue.status || 'pending'}`;
@@ -183,42 +215,64 @@ function createIssueRow(issueId, issue) {
         issue.status.charAt(0).toUpperCase() + issue.status.slice(1) :
         'Pending';
 
-    // Create photos preview
+    // Create photos preview - FIXED: Check for photoURLs array
     let photosHTML = 'No photos';
-    if (issue.photoURLs && issue.photoURLs.length > 0) {
+    if (issue.photoURLs && Array.isArray(issue.photoURLs) && issue.photoURLs.length > 0) {
         photosHTML = issue.photoURLs.map(photoObj => {
-            const photoUrl = typeof photoObj === 'string' ? photoObj : photoObj.url;
-            return `<img src="${photoUrl}" class="photo-thumbnail" alt="Issue photo" data-url="${photoUrl}" onerror="this.style.display='none'">`;
-        }).join('');
+            // Handle both string URLs and object with url property
+            const photoUrl = typeof photoObj === 'string' ? photoObj : (photoObj.url || '');
+            if (photoUrl) {
+                return `<img src="${photoUrl}" class="photo-thumbnail" alt="Issue photo" data-url="${photoUrl}" onerror="this.style.display='none'">`;
+            }
+            return '';
+        }).filter(html => html !== '').join('');
+        
+        if (!photosHTML) {
+            photosHTML = 'No photos';
+        }
     }
 
-    // Truncate description for table view
-    const truncatedDesc = issue.description && issue.description.length > 50 ?
-        issue.description.substring(0, 50) + '...' :
-        issue.description || 'No description';
+    // Truncate description for table view - FIXED: Handle null/undefined
+    const description = issue.description || 'No description provided';
+    const truncatedDesc = description.length > 50 ?
+        description.substring(0, 50) + '...' :
+        description;
+
+    // Format date - FIXED: Handle different date formats
+    const timestamp = issue.timestamp || issue.dateAdded;
+    const displayDate = formatDisplayDate(timestamp);
 
     row.innerHTML = `
-        <td>${issueId.substring(0, 6)}...</td>
-        <td>${issue.orderID ? issue.orderID.substring(0, 8) : 'N/A'}</td>
-        <td>${issue.userID ? issue.userID.substring(0, 6) + '...' : 'N/A'}</td>
+        <td>${issueId.substring(0, 8)}...</td>
+        <td>${issue.orderID || 'N/A'}</td>
+        <td>${userId ? userId.substring(0, 8) + '...' : 'N/A'}</td>
         <td>${getIssueTypeLabel(issue.issueType)}</td>
         <td>
-            <div class="issue-description" title="${issue.description || ''}">
+            <div class="issue-description" title="${description}">
                 ${truncatedDesc}
             </div>
         </td>
         <td>${photosHTML}</td>
         <td class="${statusClass}">${statusText}</td>
-        <td>${formatDisplayDate(issue.timestamp)}</td>
+        <td>${displayDate}</td>
         <td>
-            <button class="view-btn" data-id="${issueId}"><i class="fas fa-eye"></i> View</button>
-            <button class="response-btn" data-id="${issueId}"><i class="fas fa-reply"></i> Respond</button>
+            <button class="view-btn" data-id="${issueId}" data-userid="${userId}"><i class="fas fa-eye"></i> View</button>
+            <button class="response-btn" data-id="${issueId}" data-userid="${userId}"><i class="fas fa-reply"></i> Respond</button>
         </td>
     `;
 
-    // Add event listeners to buttons
-    row.querySelector('.view-btn')?.addEventListener('click', (e) => showIssueDetails(e, issueId));
-    row.querySelector('.response-btn')?.addEventListener('click', (e) => showResponseDialog(e, issueId));
+    // Add event listeners to buttons - FIXED: Pass userId
+    row.querySelector('.view-btn')?.addEventListener('click', (e) => {
+        const issueId = e.currentTarget.getAttribute('data-id');
+        const userId = e.currentTarget.getAttribute('data-userid');
+        showIssueDetails(e, issueId, userId);
+    });
+    
+    row.querySelector('.response-btn')?.addEventListener('click', (e) => {
+        const issueId = e.currentTarget.getAttribute('data-id');
+        const userId = e.currentTarget.getAttribute('data-userid');
+        showResponseDialog(e, issueId, userId);
+    });
 
     // Add click event to photo thumbnails to view larger
     row.querySelectorAll('.photo-thumbnail').forEach(img => {
@@ -242,7 +296,7 @@ function getIssueTypeLabel(type) {
         'quality': 'Quality Issue',
         'other': 'Other'
     };
-    return types[type] || type || 'Unknown';
+    return types[type] || (type ? type.charAt(0).toUpperCase() + type.slice(1) : 'Unknown');
 }
 
 // Set up event listeners
@@ -314,18 +368,20 @@ function setupEventListeners() {
     });
 }
 
-async function showIssueDetails(e, issueId) {
+// FIXED: Added userId parameter
+async function showIssueDetails(e, issueId, userId) {
     e.preventDefault();
     currentIssueId = issueId;
 
-    const issuePath = `smartfit_AR_Database/issueReports/${issueId}`;
+    // FIXED: Use the correct path with userId
+    const issuePath = `smartfit_AR_Database/issueReports/${userId}/${issueId}`;
 
     try {
         const result = await readData(issuePath);
 
         if (result.success) {
             const issue = result.data;
-            updateIssueModalContent(issueId, issue);
+            updateIssueModalContent(issueId, issue, userId);
             getElement('issueDetailsModal').classList.add('show');
             getElement('overlay').classList.add('show');
         } else {
@@ -336,37 +392,45 @@ async function showIssueDetails(e, issueId) {
     }
 }
 
-function updateIssueModalContent(issueId, issue) {
+// FIXED: Added userId parameter
+function updateIssueModalContent(issueId, issue, userId) {
     console.log("Issue data:", issue);
     const modalContent = getElement('modalIssueContent');
     const modalTitle = getElement('modalIssueTitle');
 
     modalTitle.textContent = `Issue Report #${issueId.substring(0, 8)}`;
 
-    // Format photos if they exist
+    // Format photos if they exist - FIXED: Better handling
     let photosHTML = '<p>No photos submitted</p>';
-    if (issue.photoURLs && issue.photoURLs.length > 0) {
-        photosHTML = issue.photoURLs.map(photoObj => {
-            const photoUrl = typeof photoObj === 'string' ? photoObj : photoObj.url;
-            return `<div class="document-item">
-                <a href="${photoUrl}" target="_blank" class="document-preview">
-                    <img src="${photoUrl}" alt="Issue photo" style="max-height: 200px;" onerror="this.style.display='none'">
-                </a>
-            </div>`;
-        }).join('');
+    if (issue.photoURLs && Array.isArray(issue.photoURLs) && issue.photoURLs.length > 0) {
+        const validPhotos = issue.photoURLs.filter(photoObj => {
+            const photoUrl = typeof photoObj === 'string' ? photoObj : (photoObj.url || '');
+            return photoUrl && photoUrl !== '';
+        });
+
+        if (validPhotos.length > 0) {
+            photosHTML = validPhotos.map(photoObj => {
+                const photoUrl = typeof photoObj === 'string' ? photoObj : photoObj.url;
+                return `<div class="document-item">
+                    <a href="${photoUrl}" target="_blank" class="document-preview">
+                        <img src="${photoUrl}" alt="Issue photo" style="max-height: 200px; max-width: 100%;" onerror="this.style.display='none'">
+                    </a>
+                </div>`;
+            }).join('');
+        }
     }
 
-    // Format admin responses if they exist
+    // Format admin responses if they exist - FIXED: Check for shopResponse
     let responsesHTML = '<p>No responses yet</p>';
-    console.log("Admin responses:", issue);
-    if (issue.shopResponse) {
+    if (issue.shopResponse && typeof issue.shopResponse === 'object') {
         responsesHTML = Object.entries(issue.shopResponse).map(([timestamp, response]) => `
             <div class="response-item">
                 <div class="response-header">
                     <span class="response-date">${formatDisplayDate(parseInt(timestamp))}</span>
-                    <span class="response-status">Status: ${response.status}</span>
+                    <span class="response-status">Status: ${response.status || 'Unknown'}</span>
                 </div>
-                <div class="response-message">${response.message}</div>
+                <div class="response-message">${response.message || 'No message'}</div>
+                <div class="response-shop">By: ${response.shopName || 'Shop'}</div>
             </div>
         `).join('');
     }
@@ -381,7 +445,11 @@ function updateIssueModalContent(issueId, issue) {
                 </div>
                 <div class="info-item">
                     <span class="info-label">User ID: </span>
-                    <span class="info-value">${issue.userID || 'N/A'}</span>
+                    <span class="info-value">${userId || 'N/A'}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Customer Email: </span>
+                    <span class="info-value">${issue.customerEmail || 'N/A'}</span>
                 </div>
                 <div class="info-item">
                     <span class="info-label">Issue Type: </span>
@@ -395,7 +463,11 @@ function updateIssueModalContent(issueId, issue) {
                 </div>
                 <div class="info-item">
                     <span class="info-label">Date Reported: </span>
-                    <span class="info-value">${formatDisplayDate(issue.timestamp)}</span>
+                    <span class="info-value">${formatDisplayDate(issue.timestamp || issue.dateAdded)}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Resolved: </span>
+                    <span class="info-value">${issue.resolved ? 'Yes' : 'No'}</span>
                 </div>
             </div>
         </div>
@@ -423,7 +495,8 @@ function updateIssueModalContent(issueId, issue) {
     `;
 }
 
-async function showResponseDialog(e, issueId) {
+// FIXED: Added userId parameter
+async function showResponseDialog(e, issueId, userId) {
     e.preventDefault();
     e.stopPropagation();
 
@@ -432,7 +505,8 @@ async function showResponseDialog(e, issueId) {
     getElement('responseStatus').value = 'processing';
 
     try {
-        const issuePath = `smartfit_AR_Database/issueReports/${issueId}`;
+        // FIXED: Use correct path with userId
+        const issuePath = `smartfit_AR_Database/issueReports/${userId}/${issueId}`;
         const issueResult = await readData(issuePath);
         console.log("Issue result:", issueResult);
 
@@ -443,20 +517,24 @@ async function showResponseDialog(e, issueId) {
 
         const issue = issueResult.data;
 
-        // Get user email from users/customer node
+        // Get user email - FIXED: Check multiple possible sources
         let userEmail = issue.customerEmail || '';
-        const userPath = `smartfit_AR_Database/customer/${issue.userID}`;
-        const userResult = await readData(userPath);
+        
+        // Also try to get email from customers node
+        if (!userEmail) {
+            const userPath = `smartfit_AR_Database/customers/${userId}`;
+            const userResult = await readData(userPath);
 
-        if (userResult.success) {
-            const userData = userResult.data;
-            userEmail = userData.email || userData.userEmail;
+            if (userResult.success) {
+                const userData = userResult.data;
+                userEmail = userData.email || '';
+            }
         }
 
         currentUserEmail = userEmail;
 
         getElement('dialogMessage').textContent =
-            `Respond to issue report for Order #${issue.orderID ? issue.orderID.substring(0, 8) : 'Unknown'}`;
+            `Respond to issue report for Order #${issue.orderID || 'Unknown'}`;
         getElement('responseDialog').classList.add('show');
         getElement('overlay').classList.add('show');
 
@@ -507,7 +585,17 @@ async function submitResponse() {
             shopName: sname || 'Admin'
         };
 
-        // Update the issue report with the new response
+        // FIXED: Need to get the userId from the current row context
+        // This is a limitation - we need to store the userId when opening the dialog
+        // For now, we'll use a workaround by finding the row with currentIssueId
+        const issueRow = document.querySelector(`tr[data-id="${currentIssueId}"]`);
+        const userId = issueRow ? issueRow.getAttribute('data-userid') : null;
+        
+        if (!userId) {
+            throw new Error("Could not determine user ID for this issue");
+        }
+
+        // Update the issue report with the new response - FIXED: Use correct path
         const updates = {
             [`shopResponse/${timestamp}`]: responseData,
             status: newStatus,
@@ -515,7 +603,7 @@ async function submitResponse() {
             lastUpdated: new Date().toISOString()
         };
 
-        const issuePath = `smartfit_AR_Database/issueReports/${currentIssueId}`;
+        const issuePath = `smartfit_AR_Database/issueReports/${userId}/${currentIssueId}`;
         const updateResult = await updateData(issuePath, updates);
 
         if (!updateResult.success) {
@@ -648,8 +736,9 @@ function updatePaginationButtons() {
 function formatDisplayDate(timestamp) {
     if (!timestamp) return 'N/A';
 
-    const date = new Date(timestamp);
-    if (isNaN(date)) return 'Invalid Date';
+    // Handle both string timestamps and numeric timestamps
+    const date = typeof timestamp === 'string' ? new Date(timestamp) : new Date(timestamp);
+    if (isNaN(date.getTime())) return 'Invalid Date';
 
     // Format time (1:19 AM)
     const timeString = date.toLocaleTimeString('en-US', {

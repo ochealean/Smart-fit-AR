@@ -186,7 +186,7 @@ function initializePage() {
                 
                 console.log('Creating database record...', reportData);
                 
-                const dataPath = `smartfit_AR_Database/issueReports/${orderID}`;
+                const dataPath = `smartfit_AR_Database/issueReports/${userID}/${orderID}`;
                 const createResult = await createData(dataPath, userID, reportData);
                 
                 if (createResult.success) {
