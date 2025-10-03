@@ -33,6 +33,83 @@ body {
     background-color: #f5f7fa;
     color: var(--text-primary);
     line-height: 1.6;
+    transition: opacity 0.3s ease;
+}
+
+/* Page Loader */
+.page-loader {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(255, 255, 255, 0.9);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+    transition: opacity 0.5s ease;
+}
+
+.shoe-loader {
+    text-align: center;
+}
+
+.shoe {
+    width: 80px;
+    height: 40px;
+    background: var(--primary);
+    border-radius: 50% 50% 0 0;
+    position: relative;
+    margin: 0 auto 20px;
+    transform-origin: center bottom;
+    animation: bounce 1s infinite alternate;
+}
+
+.shoe-lace {
+    position: absolute;
+    width: 60px;
+    height: 20px;
+    background: white;
+    border-radius: 10px;
+    top: 15px;
+    left: 10px;
+    transform: rotate(-5deg);
+}
+
+.shadow {
+    width: 60px;
+    height: 10px;
+    background: rgba(0, 0, 0, 0.1);
+    border-radius: 50%;
+    margin: 10px auto;
+    animation: shadow 1s infinite alternate;
+}
+
+.page-loader p {
+    margin-top: 20px;
+    color: var(--dark);
+    font-weight: 500;
+}
+
+@keyframes bounce {
+    0% {
+        transform: translateY(0) rotate(0deg);
+    }
+    100% {
+        transform: translateY(-20px) rotate(5deg);
+    }
+}
+
+@keyframes shadow {
+    0% {
+        transform: scale(1);
+        opacity: 0.7;
+    }
+    100% {
+        transform: scale(0.8);
+        opacity: 0.3;
+    }
 }
 
 .dashboard {
@@ -41,7 +118,7 @@ body {
     min-height: 100vh;
 }
 
-/* Sidebar */
+/* Sidebar - Modern Redesign */
 .sidebar {
     background: linear-gradient(180deg, var(--secondary) 0%, var(--primary) 100%);
     color: white;
@@ -159,6 +236,20 @@ body {
     box-shadow: var(--shadow-sm);
     margin-bottom: 2rem;
     border: 1px solid var(--gray-light);
+    position: relative;
+    overflow: hidden;
+}
+
+.tracking-container::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 80px;
+    height: 80px;
+    background: rgba(67, 97, 238, 0.1);
+    border-radius: 50%;
+    transform: translate(30%, -30%);
 }
 
 .order-header {
@@ -214,6 +305,12 @@ body {
     border: 1px solid var(--gray-light);
     border-radius: var(--radius-sm);
     margin-bottom: 2rem;
+    transition: var(--transition);
+}
+
+.order-item:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-sm);
 }
 
 .item-image {
@@ -324,6 +421,12 @@ body {
     padding: 1.25rem;
     margin-bottom: 1rem;
     box-shadow: var(--shadow-sm);
+    transition: var(--transition);
+}
+
+.update-item:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
 }
 
 .update-header {
@@ -453,6 +556,13 @@ body {
     border-radius: var(--radius-md);
     border: 1px dashed var(--gray);
     margin-top: 1rem;
+    transition: var(--transition);
+}
+
+.empty-state:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--shadow-md);
+    border-color: var(--primary);
 }
 
 .empty-icon {
@@ -471,7 +581,7 @@ body {
     margin-bottom: 1.5rem;
 }
 
-/* Modal */
+/* Modal Styles - Modern */
 .modal-overlay {
     position: fixed;
     top: 0;
@@ -487,12 +597,27 @@ body {
 }
 
 .modal-content {
-    background: white;
-    border-radius: var(--radius-md);
+    background-color: white;
+    margin: 5% auto;
     padding: 2rem;
+    border-radius: var(--radius-lg);
     width: 90%;
     max-width: 500px;
-    box-shadow: var(--shadow-lg);
+    max-height: 85vh;
+    overflow-y: auto;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    animation: modalFadeIn 0.3s ease-out;
+}
+
+@keyframes modalFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 .modal-header {
@@ -505,6 +630,13 @@ body {
 .modal-title {
     font-size: 1.25rem;
     color: var(--dark);
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.modal-title i {
+    color: var(--primary);
 }
 
 .modal-close {
@@ -513,6 +645,12 @@ body {
     font-size: 1.5rem;
     cursor: pointer;
     color: var(--gray);
+    transition: var(--transition);
+}
+
+.modal-close:hover {
+    color: var(--dark);
+    transform: rotate(90deg);
 }
 
 .modal-footer {
@@ -620,6 +758,7 @@ body {
     display: none;
     grid-template-columns: 280px 1fr;
     min-height: 100vh;
+    z-index: 1000;
 }
 
 .go-back-container {
@@ -657,4 +796,10 @@ body {
     color: white;
     width: 200px;
     height: 50px;
+}
+
+.go-back-container button:hover {
+    background-color: #3ab7d8;
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-sm);
 }
