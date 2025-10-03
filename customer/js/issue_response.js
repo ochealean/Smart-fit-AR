@@ -89,7 +89,8 @@ function loadUserProfile() {
 }
 
 function loadIssueResponses() {
-    const issuesPath = 'smartfit_AR_Database/issueReports';
+    const issuesPath = `smartfit_AR_Database/issueReports/${userSession.userId}`;
+    console.log("Loading issues from path:", issuesPath);
     
     const unsubscribe = readDataRealtime(issuesPath, (result) => {
         allIssues = [];
@@ -97,25 +98,40 @@ function loadIssueResponses() {
         
         if (result.success && result.data) {
             const issuesData = result.data;
+            console.log("Raw issues data:", issuesData);
             
             Object.keys(issuesData).forEach(issueId => {
                 const issue = issuesData[issueId];
+                console.log(`Processing issue ${issueId}:`, issue);
                 
-                // Only show issues that have admin responses
-                if (issue.adminResponses && Object.keys(issue.adminResponses).length > 0) {
-                    allIssues.push({
-                        id: issueId,
-                        ...issue
-                    });
-                }
+                // FIXED: Only show issues that are NOT resolved (resolved is false or undefined)
+                // Check if the issue is unresolved
+                const isResolved = issue.resolved === true;
+                console.log(`Issue ${issueId} resolved status:`, issue.resolved, "Is resolved:", isResolved);
+                
+                // if (!isResolved) {
+                //     allIssues.push({
+                //         id: issueId, // FIXED: Use the actual issueId from the database
+                //         ...issue
+                //     });
+                // }
+
+                // no filter
+                allIssues.push({
+                    id: issueId, 
+                    ...issue
+                });
             });
+            
+            console.log("Filtered unresolved issues:", allIssues);
             
             // Reverse to show newest first
             allIssues.reverse();
             displayIssues(allIssues);
             setupPagination();
         } else {
-            issueResponsesTable.innerHTML = '<tr><td colspan="6">No issue responses found</td></tr>';
+            console.log("No issues data found");
+            issueResponsesTable.innerHTML = '<tr><td colspan="6">No unresolved issues found</td></tr>';
         }
     });
 
@@ -127,7 +143,7 @@ function displayIssues(issues) {
     issueResponsesTable.innerHTML = '';
     
     if (issues.length === 0) {
-        issueResponsesTable.innerHTML = '<tr><td colspan="6">No issue responses found</td></tr>';
+        issueResponsesTable.innerHTML = '<tr><td colspan="6">No unresolved issues found</td></tr>';
         return;
     }
     
@@ -138,10 +154,12 @@ function displayIssues(issues) {
     paginatedIssues.forEach(issue => {
         const row = document.createElement('tr');
         
-        // Get the latest response
+        // Get the latest response (if any)
         let latestResponse = { timestamp: 0 };
-        if (issue.adminResponses) {
-            const responses = Object.values(issue.adminResponses);
+        if (issue.adminResponses || issue.shopResponse) {
+            // Check both adminResponses and shopResponse for backward compatibility
+            const responses = issue.adminResponses ? Object.values(issue.adminResponses) : 
+                            issue.shopResponse ? Object.values(issue.shopResponse) : [];
             latestResponse = responses.reduce((latest, current) => 
                 current.timestamp > latest.timestamp ? current : latest, { timestamp: 0 });
         }
@@ -152,28 +170,31 @@ function displayIssues(issues) {
             <td class="status-${issue.status || 'pending'}">${issue.status ? 
                 issue.status.charAt(0).toUpperCase() + issue.status.slice(1) : 'Pending'}</td>
             <td>${formatDisplayDate(issue.timestamp)}</td>
-            <td>${latestResponse.timestamp ? formatDisplayDate(latestResponse.timestamp) : 'No responses'}</td>
+            <td>${latestResponse.timestamp ? formatDisplayDate(latestResponse.timestamp) : 'No responses yet'}</td>
             <td>
                 <button class="action-btn view-btn" data-id="${issue.id}">
                     <i class="fas fa-eye"></i> View
                 </button>
             </td>
         `;
-        
+        console.log(issue);
         // Attach event listener
-        row.querySelector('.view-btn').addEventListener('click', () => showIssueDetails(issue.id));
+        row.querySelector('.view-btn').addEventListener('click', () => showIssueDetails(issue.orderID));
         issueResponsesTable.appendChild(row);
     });
 }
 
 async function showIssueDetails(issueId) {
-    const issuePath = `smartfit_AR_Database/issueReports/${issueId}`;
+    // FIXED: Use the correct path with userId
+    const issuePath = `smartfit_AR_Database/issueReports/${userSession.userId}/${issueId}`;
+    console.log("Fetching issue from:", issuePath);
 
     try {
         const result = await readData(issuePath);
-        
+        console.log(result);
         if (result.success) {
             const issue = result.data;
+            console.log(issue);
             updateModalContent(issueId, issue);
             getElement('issueDetailsModal').classList.add('show');
         } else {
@@ -190,29 +211,40 @@ function updateModalContent(issueId, issue) {
     // Format photos if they exist
     let photosHTML = '<p>No photos submitted</p>';
     if (issue.photoURLs && issue.photoURLs.length > 0) {
-        photosHTML = issue.photoURLs.map(url => 
-            `<div class="document-item">
-                <a href="${url}" target="_blank" class="document-preview">
-                    <img src="${url}" alt="Issue photo">
-                </a>
-            </div>`
-        ).join('');
+        photosHTML = issue.photoURLs.map(photoObj => {
+            const photoUrl = typeof photoObj === 'string' ? photoObj : (photoObj.url || '');
+            if (photoUrl) {
+                return `<div class="document-item">
+                    <a href="${photoUrl}" target="_blank" class="document-preview">
+                        <img src="${photoUrl}" alt="Issue photo" style="max-height: 200px; max-width: 100%;">
+                    </a>
+                </div>`;
+            }
+            return '';
+        }).filter(html => html !== '').join('');
+        
+        if (!photosHTML) {
+            photosHTML = '<p>No photos submitted</p>';
+        }
     }
     
-    // Format admin responses if they exist
+    // Format admin/shop responses if they exist
     let responsesHTML = '<p>No responses yet</p>';
-    if (issue.adminResponses) {
-        responsesHTML = Object.entries(issue.adminResponses)
-            .sort(([a], [b]) => b - a) // Sort by timestamp descending
+    const responses = issue.adminResponses || issue.shopResponse;
+    
+    if (responses && typeof responses === 'object') {
+        responsesHTML = Object.entries(responses)
+            .sort(([a], [b]) => parseInt(b) - parseInt(a)) // Sort by timestamp descending
             .map(([timestamp, response]) => `
                 <div class="response-item">
                     <div class="response-header">
                         <span class="response-date">${formatDisplayDate(parseInt(timestamp))}</span>
-                        <span class="response-status ${'status-' + response.status}">
-                            Status: ${response.status.charAt(0).toUpperCase() + response.status.slice(1)}
+                        <span class="response-status ${'status-' + (response.status || 'pending')}">
+                            Status: ${(response.status || 'pending').charAt(0).toUpperCase() + (response.status || 'pending').slice(1)}
                         </span>
                     </div>
-                    <div class="response-message">${response.message}</div>
+                    <div class="response-message">${response.message || 'No message provided'}</div>
+                    ${response.shopName ? `<div class="response-shop">By: ${response.shopName}</div>` : ''}
                 </div>
             `).join('');
     }
@@ -236,6 +268,10 @@ function updateModalContent(issueId, issue) {
                     </span>
                 </div>
                 <div class="info-item">
+                    <span class="info-label">Resolved: </span>
+                    <span class="info-value">${issue.resolved ? 'Yes' : 'No'}</span>
+                </div>
+                <div class="info-item">
                     <span class="info-label">Date Reported: </span>
                     <span class="info-value">${formatDisplayDate(issue.timestamp)}</span>
                 </div>
@@ -252,32 +288,14 @@ function updateModalContent(issueId, issue) {
         <div class="modal-section">
             <h3>Submitted Photos</h3>
             <div class="document-grid">
-                ${issue.photoURLs && issue.photoURLs.length > 0 ? 
-                    issue.photoURLs.map(url => 
-                        `<div class="document-item">
-                            <img src="${url}" alt="Issue photo">
-                        </div>`
-                    ).join('') : '<p>No photos submitted</p>'}
+                ${photosHTML}
             </div>
         </div>
         
         <div class="modal-section">
-            <h3>Admin Responses</h3>
+            <h3>Shop Responses</h3>
             <div class="responses-container">
-                ${issue.adminResponses ? 
-                    Object.entries(issue.adminResponses)
-                        .sort(([a], [b]) => b - a)
-                        .map(([timestamp, response]) => `
-                            <div class="response-item">
-                                <div class="response-header">
-                                    <span class="response-date">${formatDisplayDate(parseInt(timestamp))}</span>
-                                    <span class="response-status status-${response.status}">
-                                        Status: ${response.status.charAt(0).toUpperCase() + response.status.slice(1)}
-                                    </span>
-                                </div>
-                                <div class="response-message">${response.message}</div>
-                            </div>`
-                        ).join('') : '<p>No responses yet</p>'}
+                ${responsesHTML}
             </div>
         </div>
     `;
@@ -362,11 +380,12 @@ function performSearch() {
     const filteredIssues = allIssues.filter(issue => {
         return (issue.orderID && issue.orderID.toLowerCase().includes(searchTerm)) ||
             (issue.issueType && issue.issueType.toLowerCase().includes(searchTerm)) ||
-            (issue.status && issue.status.toLowerCase().includes(searchTerm));
+            (issue.status && issue.status.toLowerCase().includes(searchTerm)) ||
+            (issue.description && issue.description.toLowerCase().includes(searchTerm));
     });
     
     if (filteredIssues.length === 0) {
-        showNotification('No matching issues found', 'info');
+        showNotification('No matching unresolved issues found', 'info');
     }
     
     currentPage = 1;
@@ -426,14 +445,15 @@ function getIssueTypeLabel(type) {
         'quality': 'Quality Issue',
         'other': 'Other'
     };
-    return types[type] || type || 'Unknown';
+    return types[type] || (type ? type.charAt(0).toUpperCase() + type.slice(1) : 'Unknown');
 }
 
 function formatDisplayDate(timestamp) {
     if (!timestamp) return 'N/A';
     
-    const date = new Date(timestamp);
-    if (isNaN(date)) return 'Invalid Date';
+    // Handle both string timestamps and numeric timestamps
+    const date = typeof timestamp === 'string' ? new Date(timestamp) : new Date(timestamp);
+    if (isNaN(date.getTime())) return 'Invalid Date';
     
     // Format time (1:19 AM)
     const timeString = date.toLocaleTimeString('en-US', {
