@@ -1,6 +1,7 @@
 :root {
     /* Color Scheme */
-    --primary: #5e72e4;
+    /* --primary: #5e72e4; */
+    --primary: #000000;
     --secondary: #825ee4;
     --accent: #ff9e3f;
     --dark: #1a1a2e;
