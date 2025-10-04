@@ -747,13 +747,14 @@ button:hover::before {
         padding: 0;
         max-height: 0;
         overflow: hidden;
-        transition: max-height 0.3s ease;
+        transition: max-height 0.3s ease, opacity 0.3s ease;
         gap: 0;
+        opacity: 0;
     }
     
     .nav-links.active {
-        max-height: 500px;
-        padding: 15px 0;
+        max-height: 100%;
+        opacity: 1;
     }
     
     .nav-links li {
@@ -771,6 +772,11 @@ button:hover::before {
     
     .menu-btn {
         display: block;
+    }
+    
+    .overlay.active-nav {
+        opacity: 1;
+        visibility: visible;
     }
     
     .search-container {
