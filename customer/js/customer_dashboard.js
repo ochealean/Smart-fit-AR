@@ -70,27 +70,52 @@ function loadUserProfile() {
 }
 
 async function addDataInStatCards_Wishlist(userID) {
-    let number_of_wishlisted_item = 0;
-    const wishListObject = await readData(`smartfit_AR_Database/wishlist/${userID}`);
-    Object.entries(wishListObject).forEach(([key, value]) => {
-        Object.entries(value).forEach(([key1, value1]) => {
-            // console.log(value1);
-            number_of_wishlisted_item++;
+    try {
+        const wishListObject = await readData(`smartfit_AR_Database/wishlist/${userID}`);
+        
+        if (!wishListObject || !wishListObject.success || !wishListObject.data) {
+            return 0;
+        }
+
+        let number_of_wishlisted_items = 0;
+        
+        // Iterate through shops
+        Object.entries(wishListObject.data).forEach(([shopId, products]) => {
+            // Iterate through products in each shop
+            Object.entries(products).forEach(([productId, productData]) => {
+                // Each product entry represents one wishlisted item
+                number_of_wishlisted_items++;
+            });
         });
-    });
-    return number_of_wishlisted_item;
+        
+        return number_of_wishlisted_items;
+    } catch (error) {
+        console.error("Error counting wishlist items:", error);
+        return 0;
+    }
 }
 
 async function addDataInStatCards_RecentOrders(userID) {
-    let number_of_wishlisted_item = 0;
-    const wishListObject = await readData(`smartfit_AR_Database/transactions/${userID}`);
-    Object.entries(wishListObject).forEach(([key, value]) => {
-        Object.entries(value).forEach(([key1, value1]) => {
-            // console.log(value1);
-            number_of_wishlisted_item++;
+    try {
+        const transactionsObject = await readData(`smartfit_AR_Database/transactions/${userID}`);
+        
+        if (!transactionsObject || !transactionsObject.success || !transactionsObject.data) {
+            return 0;
+        }
+
+        let number_of_orders = 0;
+        
+        // Count each order in transactions
+        Object.entries(transactionsObject.data).forEach(([orderId, orderData]) => {
+            // Each order ID represents one order
+            number_of_orders++;
         });
-    });
-    return number_of_wishlisted_item;
+        
+        return number_of_orders;
+    } catch (error) {
+        console.error("Error counting recent orders:", error);
+        return 0;
+    }
 }
 
 // Load all shoes

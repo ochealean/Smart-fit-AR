@@ -78,16 +78,6 @@ function loadOrders() {
     const unsubscribe = readDataRealtime(
         `smartfit_AR_Database/transactions/${userID}`,
         async (result) => {
-            if (!result.success) {
-                ordersContainer.innerHTML = `
-                    <div class="no-orders">
-                        <i class="fas fa-exclamation-triangle"></i>
-                        <h3>Error Loading Orders</h3>
-                        <p>Failed to load your orders. Please try again.</p>
-                    </div>
-                `;
-                return;
-            }
 
             if (!result.data) {
                 ordersContainer.innerHTML = `
@@ -96,6 +86,17 @@ function loadOrders() {
                         <h3>No Orders Found</h3>
                         <p>You haven't placed any orders yet.</p>
                         <a href="/customer/html/browse.html" class="btn btn-shop">Browse Shoes</a>
+                    </div>
+                `;
+                return;
+            }
+            
+            if (!result.success) {
+                ordersContainer.innerHTML = `
+                    <div class="no-orders">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <h3>Error Loading Orders</h3>
+                        <p>Failed to load your orders. Please try again.</p>
                     </div>
                 `;
                 return;
