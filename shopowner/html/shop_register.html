@@ -33,18 +33,6 @@
     </div>
 
     <!-- Error Overlay -->
-    <!-- <div id="errorOverlay" class="overlay">
-        <div class="overlay-content">
-            <div class="error-icon">
-                <i class="fas fa-exclamation-circle"></i>
-            </div>
-            <h2>Registration Issues</h2>
-            <div id="errorMessages"></div>
-            <button id="closeErrorOverlay" class="overlay-btn">Back to Form</button>
-        </div>
-    </div> -->
-
-    <!-- Error Overlay -->
     <div id="errorOverlay" class="overlay">
         <div class="overlay-content">
             <div class="error-icon">
@@ -212,7 +200,8 @@
                     
                     <div class="form-group">
                         <label for="taxId">Tax Identification Number*</label>
-                        <input type="text" id="taxId" name="taxId" required placeholder="XXXX-XXXX-XXXX" maxlength="12" pattern="[0-9]*" inputmode="numeric">
+                        <input type="text" id="taxId" name="taxId" required placeholder="XXXX-XXXX-XXXX" maxlength="15" pattern="[0-9]{4}-[0-9]{4}-[0-9]{4}" inputmode="numeric">
+                        <small>Enter your 12-digit TIN (e.g., 1234-5678-9012)</small>
                     </div>
                     
                     <div class="form-group">
@@ -230,38 +219,39 @@
                     </div>
                 </div>
 
-                <div class="form-group">
-
+                <div class="form-section">
                     <h2><i class="fas fa-lock"></i> Account Security</h2>
                     <div class="form-group">
                         <label for="username">Username*</label>
                         <input type="text" id="username" name="username" required placeholder="Choose a username">
                     </div>
 
-                    <label for="password">Password*</label>
-                    <div class="password-input-container">
-                        <input type="password" id="password" name="password" required placeholder="Create a password">
-                        <button type="button" class="toggle-password" aria-label="Show password">
-                            <i class="fas fa-eye"></i>
-                        </button>
+                    <div class="form-group">
+                        <label for="password">Password*</label>
+                        <div class="password-input-container">
+                            <input type="password" id="password" name="password" required placeholder="Create a password">
+                            <button type="button" class="toggle-password" aria-label="Show password">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                        <div class="password-strength">
+                            <span class="strength-bar"></span>
+                            <span class="strength-bar"></span>
+                            <span class="strength-bar"></span>
+                            <span class="strength-text">Password strength: Weak</span>
+                        </div>
                     </div>
-                    <div class="password-strength">
-                        <span class="strength-bar"></span>
-                        <span class="strength-bar"></span>
-                        <span class="strength-bar"></span>
-                        <span class="strength-text">Password strength: Weak</span>
-                    </div>
-                </div>
                 
-                <div class="form-group">
-                    <label for="confirmPassword">Confirm Password*</label>
-                    <div class="password-input-container">
-                        <input type="password" id="confirmPassword" name="confirmPassword" required placeholder="Confirm your password">
-                        <button type="button" class="toggle-password" aria-label="Show password">
-                            <i class="fas fa-eye"></i>
-                        </button>
-                    </div>
-                </div>                
+                    <div class="form-group">
+                        <label for="confirmPassword">Confirm Password*</label>
+                        <div class="password-input-container">
+                            <input type="password" id="confirmPassword" name="confirmPassword" required placeholder="Confirm your password">
+                            <button type="button" class="toggle-password" aria-label="Show password">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                    </div>                
+                </div>
 
                 <div class="form-section terms-section">
                     <div class="form-group checkbox-group">
@@ -329,7 +319,6 @@
     </footer>
 
     <script>
-
         // Toggle password visibility
         document.querySelectorAll('.toggle-password').forEach(button => {
             button.addEventListener('click', function() {
@@ -398,6 +387,41 @@
             // Validate length (10 digits for PH numbers without country code)
             if (this.value.length > 10) {
                 this.value = this.value.slice(0, 10);
+            }
+        });
+
+        // Tax ID formatting and number-only input
+        const taxIdInput = document.getElementById('taxId');
+        
+        taxIdInput.addEventListener('input', function() {
+            // Remove non-digits (letters and special chars except hyphens)
+            let value = this.value.replace(/[^0-9-]/g, '');
+            
+            // Remove existing hyphens for processing
+            value = value.replace(/-/g, '');
+            
+            // Limit to 12 digits
+            if (value.length > 12) {
+                value = value.slice(0, 12);
+            }
+            
+            // Format as XXXX-XXXX-XXXX
+            let formattedValue = '';
+            for (let i = 0; i < value.length; i++) {
+                if (i > 0 && i % 4 === 0) {
+                    formattedValue += '-';
+                }
+                formattedValue += value[i];
+            }
+            
+            this.value = formattedValue;
+        });
+
+        // Prevent non-numeric input via keypress
+        taxIdInput.addEventListener('keypress', function(e) {
+            const char = String.fromCharCode(e.keyCode || e.which);
+            if (!/[0-9]/.test(char)) {
+                e.preventDefault();
             }
         });
 
@@ -560,7 +584,14 @@
             
             requiredFields.forEach(field => {
                 const element = document.getElementById(field.id);
-                if (!element.value.trim()) {
+                let value = element.value.trim();
+                
+                // For taxId, remove hyphens for validation
+                if (field.id === 'taxId') {
+                    value = value.replace(/-/g, '');
+                }
+                
+                if (!value) {
                     const formGroup = element.closest('.form-group');
                     formGroup.classList.add('error');
                     
@@ -585,6 +616,20 @@
                 formGroup.appendChild(errorElement);
 
                 errors.push('Please enter a valid 4-digit ZIP code');
+            }
+            
+            // Validate Tax ID (exactly 12 digits)
+            const taxId = document.getElementById('taxId').value.replace(/-/g, '');
+            if (taxId && (taxId.length !== 12 || !/^\d{12}$/.test(taxId))) {
+                const formGroup = document.getElementById('taxId').closest('.form-group');
+                formGroup.classList.add('error');
+
+                const errorElement = document.createElement('span');
+                errorElement.className = 'error-message';
+                errorElement.textContent = 'Please enter a valid 12-digit Tax ID';
+                formGroup.appendChild(errorElement);
+
+                errors.push('Please enter a valid 12-digit Tax ID');
             }
             
             // Validate password match

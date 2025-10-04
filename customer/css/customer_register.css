@@ -214,6 +214,51 @@ body {
     border-radius: 8px;
 }
 
+.form-group input[type="date"] {
+    width: 95%;
+    padding: 0.9rem 0 0.9rem 1rem;
+    border: 1px solid var(--gray-medium);
+    border-radius: 8px;
+    font-size: 0.95rem;
+    font-family: 'Poppins', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    color: var(--text-primary);
+    background-color: var(--gray-light);
+    transition: var(--transition);
+    position: relative;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+}
+
+.form-group input[type="date"]:focus {
+    border-color: var(--primary);
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(110, 142, 251, 0.2);
+    background-color: var(--light);
+}
+
+/* Style the calendar picker indicator for WebKit browsers */
+.form-group input[type="date"]::-webkit-calendar-picker-indicator {
+    width: 20px;
+    height: 20px;
+    padding: 0;
+    margin-right: 0.5rem;
+    cursor: pointer;
+    filter: invert(50%) sepia(20%) saturate(500%) hue-rotate(180deg) brightness(90%);
+    transition: var(--transition);
+}
+
+.form-group input[type="date"]:hover::-webkit-calendar-picker-indicator,
+.form-group input[type="date"]:focus::-webkit-calendar-picker-indicator {
+    filter: invert(45%) sepia(80%) saturate(600%) hue-rotate(190deg) brightness(100%);
+}
+
+/* Ensure error styling applies to date input */
+.form-group.error input[type="date"] {
+    border-color: var(--error);
+    background-color: rgba(244, 67, 54, 0.05);
+}
+
 .form-group small {
     display: block;
     margin-top: 0.5rem;
