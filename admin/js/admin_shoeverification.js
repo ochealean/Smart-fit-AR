@@ -650,6 +650,57 @@ function attachEventListeners() {
     }
 }
 
+function makeImagesClickable() {
+    const images = [
+        { id: 'modal-front', alt: 'Front View' },
+        { id: 'modal-back', alt: 'Back View' }, 
+        { id: 'modal-top', alt: 'Top View' }
+    ];
+    
+    images.forEach(imgConfig => {
+        const imgElement = document.getElementById(imgConfig.id);
+        if (imgElement) {
+            // Skip if it's still the error image
+            if (imgElement.src.includes('errorimage.jpg')) {
+                imgElement.style.cursor = 'default';
+                imgElement.title = 'Image not available';
+                return;
+            }
+            
+            // Make image clickable
+            imgElement.style.cursor = 'pointer';
+            imgElement.title = 'Click to view full size in new tab';
+            
+            // Remove existing event listeners
+            const newImg = imgElement.cloneNode(true);
+            imgElement.parentNode.replaceChild(newImg, imgElement);
+            
+            // Add click event to new image
+            newImg.addEventListener('click', function() {
+                if (this.complete && this.naturalWidth > 0) {
+                    window.open(this.src, '_blank', 'noopener,noreferrer');
+                } else {
+                    console.warn('Image not loaded properly:', this.src);
+                    alert('Image is not available for viewing.');
+                }
+            });
+            
+            // Add error handling for failed images
+            newImg.addEventListener('error', function() {
+                this.style.cursor = 'default';
+                this.title = 'Image failed to load';
+                console.error('Image failed to load:', this.src);
+            });
+            
+            // Add load handling for successful images
+            newImg.addEventListener('load', function() {
+                this.style.cursor = 'pointer';
+                this.title = 'Click to view full size in new tab';
+            });
+        }
+    });
+}
+
 function showValidationDetails(validation) {
     // Format date for display
     const submittedDate = new Date(validation.submittedDate);
@@ -701,9 +752,28 @@ function showValidationDetails(validation) {
     }
 
     // Update images
-    if (modalFront && validation.images?.front) modalFront.src = validation.images.front;
-    if (modalBack && validation.images?.back) modalBack.src = validation.images.back;
-    if (modalTop && validation.images?.top) modalTop.src = validation.images.top;
+    // if (modalFront && validation.images?.front) modalFront.src = validation.images.front;
+    // if (modalBack && validation.images?.back) modalBack.src = validation.images.back;
+    // if (modalTop && validation.images?.top) modalTop.src = validation.images.top;
+
+    // Update images
+    if (modalFront && validation.images?.front) {
+        modalFront.src = validation.images.front;
+        modalFront.alt = 'Front View - ' + validation.shoeModel;
+    }
+    if (modalBack && validation.images?.back) {
+        modalBack.src = validation.images.back;
+        modalBack.alt = 'Back View - ' + validation.shoeModel;
+    }
+    if (modalTop && validation.images?.top) {
+        modalTop.src = validation.images.top;
+        modalTop.alt = 'Top View - ' + validation.shoeModel;
+    }
+    
+    // Make images clickable after a short delay to ensure they're loaded
+    setTimeout(() => {
+        makeImagesClickable();
+    }, 200);
 
     // Show/hide rejection section and action buttons based on status
     const rejectionSection = document.getElementById('rejectionSection');
