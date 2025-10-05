@@ -31,7 +31,7 @@ const emailDomainInput = document.getElementById('emailDomain');
 
 // Initialize the application
 function init() {
-// Mobile sidebar toggle
+    // Mobile sidebar toggle
     const mobileToggle = document.querySelector('.mobile-menu-toggle');
     const sidebar = document.querySelector('.sidebar');
     const overlay = document.querySelector('.sidebar-overlay');
@@ -248,18 +248,44 @@ async function handleFormSubmit(e) {
         return;
     }
 
+    // Validate email format
+    if (!isValidEmail(employeeData.email)) {
+        alert("Please enter a valid email address.");
+        return;
+    }
+
+    // Validate password strength
+    if (employeeData.password.length < 6) {
+        alert("Password must be at least 6 characters long.");
+        return;
+    }
+
     try {
+        // Show loading state
+        const submitButton = addEmployeeForm.querySelector('button[type="submit"]');
+        const originalText = submitButton.innerHTML;
+        submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Creating...';
+        submitButton.disabled = true;
+
         // Create employee account with verification email (default behavior)
         await createEmployeeAccount(employeeData, { sendVerificationEmail: true });
         alert(`Employee ${employeeData.name} created successfully!`);
-        e.target.reset();
+        addEmployeeForm.reset();
+        
     } catch (error) {
         console.error("Error creating employee:", error);
         handleEmployeeCreationError(error);
+    } finally {
+        // Reset button state
+        const submitButton = addEmployeeForm.querySelector('button[type="submit"]');
+        if (submitButton) {
+            submitButton.innerHTML = 'Add Employee';
+            submitButton.disabled = false;
+        }
     }
 }
 
-// Create employee account
+// Create employee account - FIXED VERSION
 async function createEmployeeAccount(employeeData, options = { sendVerificationEmail: true }) {
     if (!shopOwnerUid) {
         throw new Error("Shop owner not authenticated. Please sign in first.");
@@ -274,11 +300,19 @@ async function createEmployeeAccount(employeeData, options = { sendVerificationE
             employeeData.password
         );
 
-        if (!userResult.success) {
-            throw new Error(userResult.error);
+        console.log("User creation result:", userResult);
+
+        // Check if userResult has success property or if it's the user object directly
+        if (userResult && userResult.success === false) {
+            throw new Error(userResult.error || 'Failed to create user account');
         }
 
-        const user = userResult.user;
+        // Get the user object - handle different possible return structures
+        const user = userResult.user || userResult;
+
+        if (!user || !user.uid) {
+            throw new Error('User creation failed - no user ID returned');
+        }
 
         // Only send verification email if option is true (default for single creation)
         if (options.sendVerificationEmail) {
@@ -298,15 +332,17 @@ async function createEmployeeAccount(employeeData, options = { sendVerificationE
             name: employeeData.name,
             email: employeeData.email,
             role: employeeData.role,
-            phone: employeeData.phone,
+            phone: employeeData.phone || '',
             shopId: shopOwnerUid,
             shopName: shopName,
             dateAdded: new Date().toISOString(),
             status: 'active'
         });
 
+        console.log("Save result:", saveResult);
+
         if (!saveResult.success) {
-            throw new Error(saveResult.error);
+            throw new Error(saveResult.error || 'Failed to save employee data');
         }
 
         console.log("Employee account created successfully");
@@ -314,19 +350,24 @@ async function createEmployeeAccount(employeeData, options = { sendVerificationE
     } catch (error) {
         console.error("Error during employee creation:", {
             message: error.message,
+            code: error.code,
             stack: error.stack
         });
 
         // Handle specific Firebase errors
-        if (error.message.includes('email-already-in-use')) {
+        const errorMessage = error.message || 'Unknown error occurred';
+        
+        if (errorMessage.includes('email-already-in-use') || error.code === 'auth/email-already-in-use') {
             throw new Error('This email is already registered');
-        } else if (error.message.includes('invalid-email')) {
+        } else if (errorMessage.includes('invalid-email') || error.code === 'auth/invalid-email') {
             throw new Error('Please enter a valid email address');
-        } else if (error.message.includes('weak-password')) {
+        } else if (errorMessage.includes('weak-password') || error.code === 'auth/weak-password') {
             throw new Error('Password is too weak (minimum 6 characters)');
+        } else if (errorMessage.includes('network') || error.code === 'auth/network-request-failed') {
+            throw new Error('Network error. Please check your internet connection');
         }
 
-        throw error;
+        throw new Error(errorMessage || 'Failed to create employee account');
     }
 }
 
@@ -428,19 +469,75 @@ async function createBatchEmployees() {
         const newLastNumber = lastEmployeeNumber + accounts.length;
         await updateLastEmployeeNumber(shopOwnerUid, newLastNumber);
 
+        // Reset the form and UI with download option
+        await resetBatchCreationForm();
+        
         alert(`Successfully created ${accounts.length} default employee accounts!`);
 
-        // Reset the form
-        batchPreview.innerHTML = '';
-        batchPreview.classList.remove('active');
-        createBatchEmployeesBtn.innerHTML = '<i class="fas fa-save"></i> Create All Employees';
-        createBatchEmployeesBtn.disabled = false;
     } catch (error) {
         console.error('Error creating accounts:', error);
         alert('Error creating accounts. Please check console for details.');
         createBatchEmployeesBtn.disabled = false;
         createBatchEmployeesBtn.innerHTML = '<i class="fas fa-save"></i> Create All Employees';
     }
+}
+
+// Enhanced reset function with download option
+async function resetBatchCreationForm() {
+    
+    // auto download CSV
+    downloadEmployeeCSV();
+    
+    // Clear the preview
+    batchPreview.innerHTML = '';
+    batchPreview.classList.remove('active');
+    
+    // Reset form inputs
+    employeeCountInput.value = '';
+    batchEmployeeRoleInput.value = '';
+    emailDomainInput.value = '';
+    
+    // Reset buttons
+    createBatchEmployeesBtn.disabled = true;
+    createBatchEmployeesBtn.innerHTML = '<i class="fas fa-save"></i> Create All Employees';
+    
+    // Update the last employee number in memory
+    const count = parseInt(employeeCountInput.value) || 0;
+    if (count > 0) {
+        lastEmployeeNumber += count;
+    }
+}
+
+// CSV download function
+function downloadEmployeeCSV() {
+    const accounts = [];
+    const accountDivs = batchPreview.querySelectorAll('.batch-account');
+    
+    accountDivs.forEach(div => {
+        accounts.push({
+            username: div.querySelector('input[name="batchUsername[]"]').value,
+            email: div.querySelector('input[name="batchEmail[]"]').value,
+            password: div.querySelector('input[name="batchPassword[]"]').value,
+            role: div.querySelector('input[name="batchRole[]"]').value
+        });
+    });
+    
+    // Create CSV content
+    let csvContent = "Username,Email,Password,Role\n";
+    accounts.forEach(account => {
+        csvContent += `"${account.username}","${account.email}","${account.password}","${account.role}"\n`;
+    });
+    
+    // Create and trigger download
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.setAttribute('hidden', '');
+    a.setAttribute('href', url);
+    a.setAttribute('download', `employees_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
 }
 
 // Generate random password
@@ -513,15 +610,25 @@ function formatPhoneNumber(e) {
 
 // Handle employee creation errors
 function handleEmployeeCreationError(error) {
-    if (error.message.includes('email-already-in-use')) {
-        alert('This email is already registered');
-    } else if (error.message.includes('invalid-email')) {
-        alert('Please enter a valid email address');
-    } else if (error.message.includes('weak-password')) {
-        alert('Password is too weak. Please use a stronger password.');
+    const errorMessage = error.message || 'An unknown error occurred';
+    
+    if (errorMessage.includes('email-already-in-use')) {
+        alert('This email is already registered. Please use a different email address.');
+    } else if (errorMessage.includes('invalid-email')) {
+        alert('Please enter a valid email address.');
+    } else if (errorMessage.includes('weak-password')) {
+        alert('Password is too weak. Please use a stronger password with at least 6 characters.');
+    } else if (errorMessage.includes('network')) {
+        alert('Network error. Please check your internet connection and try again.');
     } else {
-        alert('Error: ' + error.message);
+        alert('Error creating employee: ' + errorMessage);
     }
+}
+
+// Email validation helper function
+function isValidEmail(email) {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
 }
 
 // Logout functionality

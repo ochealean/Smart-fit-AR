@@ -17,6 +17,27 @@ let userSession = {
     userData: null
 };
 
+let shoeLinks = {
+    classic: {
+        red: '',
+        blue: '',
+        black: '',
+        white: '',
+    },
+    runner: {
+        red: 'https://sdk.developer.deepar.ai/effectTester/index.html?url1=https%3A%2F%2Fdeepar-temporary-resources-prod.s3.eu-west-1.amazonaws.com%2F2a4a070e-abe1-48de-ba26-75c12804098b&name1=Running-Red.deeparproj&sdkVersion=5.6.0',
+        blue: 'https://sdk.developer.deepar.ai/effectTester/index.html?url1=https%3A%2F%2Fdeepar-temporary-resources-prod.s3.eu-west-1.amazonaws.com%2F379e6e4d-8eec-46fa-93c2-1b0878b0cba7&name1=Running-Blue.deeparproj&sdkVersion=5.6.0',
+        black: 'https://sdk.developer.deepar.ai/effectTester/index.html?url1=https%3A%2F%2Fdeepar-temporary-resources-prod.s3.eu-west-1.amazonaws.com%2F204fbbd0-00d1-4d08-838f-429683710c6a&name1=Running-Black.deeparproj&sdkVersion=5.6.0',
+        white: 'https://sdk.developer.deepar.ai/effectTester/index.html?url1=https%3A%2F%2Fdeepar-temporary-resources-prod.s3.eu-west-1.amazonaws.com%2F32c3bf87-2311-4c04-8322-40da4040080d&name1=Running-White.deeparproj&sdkVersion=5.6.0',
+    },
+    basketball: {
+        red: 'https://sdk.developer.deepar.ai/effectTester/index.html?url1=https%3A%2F%2Fdeepar-temporary-resources-prod.s3.eu-west-1.amazonaws.com%2F8963b31a-0ac0-4495-a3bd-aaad5b0edca7&name1=Basketball-Red.deeparproj&sdkVersion=5.6.0',
+        blue: 'https://sdk.developer.deepar.ai/effectTester/index.html?url1=https%3A%2F%2Fdeepar-temporary-resources-prod.s3.eu-west-1.amazonaws.com%2F8ad51b0f-f101-4c38-a03c-f41bddf3f29e&name1=Basketball-Blue.deeparproj&sdkVersion=5.6.0',
+        black: 'https://sdk.developer.deepar.ai/effectTester/index.html?url1=https%3A%2F%2Fdeepar-temporary-resources-prod.s3.eu-west-1.amazonaws.com%2F1e92b432-bf36-41f9-9a6e-61067c3dcd88&name1=Basketball-Black.deeparproj&sdkVersion=5.6.0',
+        white: 'https://sdk.developer.deepar.ai/effectTester/index.html?url1=https%3A%2F%2Fdeepar-temporary-resources-prod.s3.eu-west-1.amazonaws.com%2F250456b5-7d37-4a01-b00c-bbe5a8237d83&name1=Basketball-White.deeparproj&sdkVersion=5.6.0',
+    }
+};
+
 // Initialize selections
 let selections = {
     classic: {
@@ -128,8 +149,11 @@ function setUserProfile() {
 
 // Update shoe images based on model and color
 function updateShoeImages() {
-    console.log('Updating shoe images for model:', currentModel);
+    const arExperienceLink = getElement('arExperienceLink');
+    console.log('Updating shoe images for model:', currentModel, 'with color:', selections[currentModel].bodyColor);
     const bodyColor = selections[currentModel].bodyColor;
+    console.log('Current selections:', shoeLinks[currentModel]?.[bodyColor]);
+    arExperienceLink.href = shoeLinks[currentModel]?.[bodyColor];
     
     // Update main image
     const soleImage = getElement('soleImage');
