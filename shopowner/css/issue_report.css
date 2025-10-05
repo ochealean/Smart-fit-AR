@@ -301,6 +301,7 @@ tr:hover {
 /* Buttons - New Design but keeping original classes */
 .view-btn {
     padding: 0.5rem 1rem;
+    margin-bottom: 0.25rem;
     border-radius: var(--radius-sm);
     font-weight: 500;
     display: inline-flex;
@@ -409,12 +410,12 @@ tr:hover {
     border-radius: var(--radius-lg);
     box-shadow: var(--shadow-lg);
     width: 90%;
-    max-width: 600px;
-    max-height: 90vh;
+    max-width: 750px;
     overflow-y: auto;
     transform: translateY(-30px) scale(0.95);
     transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     border: 1px solid rgba(0, 0, 0, 0.1);
+    overflow: hidden;
 }
 
 .modal-dialog.show .modal-content {
