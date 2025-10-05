@@ -506,6 +506,21 @@ function initializeEventListeners() {
         });
     }
 
+    // Image click to open in new tab
+    const images = [
+        getElement('soleImage'),
+        getElement('frontViewImage'),
+        getElement('sideViewImage'),
+        getElement('backViewImage')
+    ].filter(img => img !== null);
+
+    images.forEach(img => {
+        img.addEventListener('click', () => {
+            // Open the image's src in a new tab
+            window.open(img.src, '_blank');
+        });
+    });
+
     // Model selection
     const modelOptions = document.querySelectorAll('.model-option');
     modelOptions.forEach(option => {
