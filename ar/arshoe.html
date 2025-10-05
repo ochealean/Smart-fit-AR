@@ -90,6 +90,27 @@
             width: 100%;
         }
 
+        .back-to-landing a {
+            color: rgba(255,255,255,0.8);
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 1rem;
+            transition: var(--transition);
+            padding: 0.5rem 1rem;
+            border-radius: 50px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        .back-to-landing a:hover {
+            color: var(--white);
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateX(-5px);
+            box-shadow: var(--shadow-sm);
+        }
+
         .hero-title {
             font-size: 4rem;
             font-weight: 800;
@@ -928,6 +949,12 @@
         </div>
         
         <div class="container hero-content">
+            <div class="back-to-landing" style="margin-bottom: 1rem;">
+                <a href="/" style="color: rgba(255,255,255,0.8); text-decoration: none; display: inline-flex; align-items: center; gap: 0.5rem; font-size: 1rem;">
+                    <i class="fas fa-arrow-left"></i> Back to Landing Page
+                </a>
+            </div>
+
             <h1 class="hero-title">SmartFit</h1>
             <p class="hero-tagline">Try before you buy with our revolutionary AR technology. See how shoes look on your feet from the comfort of your home.</p>
             
