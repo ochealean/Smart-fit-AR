@@ -5,7 +5,8 @@ import {
     readData, 
     readDataRealtime, 
     updateData,
-    generate18CharID
+    generate18CharID,
+    deleteData
 } from '../../firebaseMethods.js';
 
 // Helper function to get DOM elements
@@ -554,46 +555,77 @@ async function toggleWishlist() {
     const wishlistPath = `smartfit_AR_Database/wishlist/${userId}/${shopID}/${shoeID}`;
     const icon = wishlistBtn.querySelector("i");
 
+    // Disable button during operation
+    wishlistBtn.disabled = true;
+
     try {
-        const result = await readData(wishlistPath);
-        
-        if (result.success) {
-            const removeResult = await updateData(wishlistPath, null);
-            
-            if (removeResult.success) {
+        const snapshot = await readData(wishlistPath);
+
+        if (snapshot.success && snapshot.data !== null) {
+            // Remove from wishlist - use deleteData if available, otherwise updateData with null
+            const deleteResult = await deleteData(wishlistPath); // Use deleteData if you have it
+            // If deleteData is not available, use: const deleteResult = await updateData(wishlistPath, null);
+
+            if (deleteResult && deleteResult.success) {
                 console.log("Shoe removed from wishlist");
+                
+                // Update UI immediately
                 wishlistBtn.classList.remove("active");
                 icon.classList.remove("fas");
                 icon.classList.add("far");
                 icon.style.color = "";
+                
+                // Show success message if you have toast functionality
+                if (window.showSuccess) {
+                    showSuccess("Removed from wishlist");
+                } else {
+                    console.log("Removed from wishlist");
+                }
             } else {
-                console.error("Error removing from wishlist:", removeResult.error);
+                throw new Error(deleteResult?.error || "Failed to remove from wishlist");
             }
         } else {
+            // Add to wishlist
             const wishlistData = {
-                shoeId: shoeID,
-                shopId: shopID,
-                shoeName: productData.shoeName,
-                price: productData.variants[selectedVariantKey].price,
-                image: productData.variants[selectedVariantKey].imageUrl || productData.defaultImage,
-                addedAt: new Date().toISOString()
+                lastUpdated: new Date().toISOString()
             };
 
             const addResult = await updateData(wishlistPath, wishlistData);
             
-            if (addResult.success) {
+            if (addResult && addResult.success) {
                 console.log("Shoe added to wishlist");
+                
+                // Update UI immediately
                 wishlistBtn.classList.add("active");
                 icon.classList.remove("far");
                 icon.classList.add("fas");
                 icon.style.color = "red";
+                
+                // Show success message if you have toast functionality
+                if (window.showSuccess) {
+                    showSuccess("Added to wishlist");
+                } else {
+                    console.log("Added to wishlist");
+                }
             } else {
-                console.error("Error adding to wishlist:", addResult.error);
+                throw new Error(addResult?.error || "Failed to add to wishlist");
             }
         }
     } catch (error) {
-        console.error("Error accessing wishlist:", error);
-        alert("Error accessing wishlist");
+        console.error("Error toggling wishlist:", error);
+        
+        // Show error message
+        if (window.showError) {
+            showError("Failed to update wishlist");
+        } else {
+            alert("Failed to update wishlist");
+        }
+        
+        // Re-check the actual state from database
+        await isWishlisted();
+    } finally {
+        // Re-enable button
+        wishlistBtn.disabled = false;
     }
 }
 
