@@ -20,6 +20,28 @@ let userSession = {
     userData: null
 };
 
+// Shoe links for AR experience
+let shoeLinks = {
+    classic: {
+        red: 'https://smart-fit-ar.vercel.app/extras/devonprocess.html',
+        blue: 'https://smart-fit-ar.vercel.app/extras/devonprocess.html',
+        black: 'https://smart-fit-ar.vercel.app/extras/devonprocess.html',
+        white: 'https://smart-fit-ar.vercel.app/extras/devonprocess.html',
+    },
+    runner: {
+        red: 'https://sdk.developer.deepar.ai/effectTester/index.html?url1=https%3A%2F%2Fdeepar-temporary-resources-prod.s3.eu-west-1.amazonaws.com%2F2a4a070e-abe1-48de-ba26-75c12804098b&name1=Running-Red.deeparproj&sdkVersion=5.6.0',
+        blue: 'https://sdk.developer.deepar.ai/effectTester/index.html?url1=https%3A%2F%2Fdeepar-temporary-resources-prod.s3.eu-west-1.amazonaws.com%2F379e6e4d-8eec-46fa-93c2-1b0878b0cba7&name1=Running-Blue.deeparproj&sdkVersion=5.6.0',
+        black: 'https://sdk.developer.deepar.ai/effectTester/index.html?url1=https%3A%2F%2Fdeepar-temporary-resources-prod.s3.eu-west-1.amazonaws.com%2F204fbbd0-00d1-4d08-838f-429683710c6a&name1=Running-Black.deeparproj&sdkVersion=5.6.0',
+        white: 'https://sdk.developer.deepar.ai/effectTester/index.html?url1=https%3A%2F%2Fdeepar-temporary-resources-prod.s3.eu-west-1.amazonaws.com%2F32c3bf87-2311-4c04-8322-40da4040080d&name1=Running-White.deeparproj&sdkVersion=5.6.0',
+    },
+    basketball: {
+        red: 'https://sdk.developer.deepar.ai/effectTester/index.html?url1=https%3A%2F%2Fdeepar-temporary-resources-prod.s3.eu-west-1.amazonaws.com%2F8963b31a-0ac0-4495-a3bd-aaad5b0edca7&name1=Basketball-Red.deeparproj&sdkVersion=5.6.0',
+        blue: 'https://sdk.developer.deepar.ai/effectTester/index.html?url1=https%3A%2F%2Fdeepar-temporary-resources-prod.s3.eu-west-1.amazonaws.com%2F8ad51b0f-f101-4c38-a03c-f41bddf3f29e&name1=Basketball-Blue.deeparproj&sdkVersion=5.6.0',
+        black: 'https://sdk.developer.deepar.ai/effectTester/index.html?url1=https%3A%2F%2Fdeepar-temporary-resources-prod.s3.eu-west-1.amazonaws.com%2F1e92b432-bf36-41f9-9a6e-61067c3dcd88&name1=Basketball-Black.deeparproj&sdkVersion=5.6.0',
+        white: 'https://sdk.developer.deepar.ai/effectTester/index.html?url1=https%3A%2F%2Fdeepar-temporary-resources-prod.s3.eu-west-1.amazonaws.com%2F250456b5-7d37-4a01-b00c-bbe5a8237d83&name1=Basketball-White.deeparproj&sdkVersion=5.6.0',
+    }
+};
+
 // Initialize selections with default values
 let selections = {
     classic: {
@@ -419,13 +441,26 @@ function updatePreview() {
 // Function to update shoe images based on current selections
 function updateShoeImages() {
     const modelSelections = selections[currentModel];
-    const bodyColor = modelSelections.bodyColor || 'white';
+    // Use outsoleColor for slipon, bodyColor for other models
+    const colorKey = currentModel === 'slipon' ? modelSelections.outsoleColor || 'gray' : modelSelections.bodyColor || 'white';
+
+    // Update AR experience link
+    const arExperienceLink = getElement('arExperienceLink');
+    if (arExperienceLink && shoeLinks[currentModel]?.[colorKey]) {
+        console.log('Updating AR link for model:', currentModel, 'with color:', colorKey);
+        arExperienceLink.href = shoeLinks[currentModel][colorKey];
+    } else {
+        console.warn('AR link not found or invalid for model:', currentModel, 'color:', colorKey);
+        if (arExperienceLink) {
+            arExperienceLink.href = '#'; // Fallback to prevent broken link
+        }
+    }
 
     // Set the main shoe image
     const soleImage = getElement('soleImage');
     if (soleImage) {
-        soleImage.src = `/images/angles/${currentModel}/${bodyColor}/back.png`;
-        soleImage.alt = `${currentModel} shoe - back view`;
+        soleImage.src = `/images/angles/${currentModel}/${colorKey}/main.png`;
+        soleImage.alt = `${currentModel} shoe - main view`;
     }
 
     // Set the additional view images
@@ -434,27 +469,29 @@ function updateShoeImages() {
     const backViewImage = getElement('backViewImage');
 
     if (frontViewImage) {
-        frontViewImage.src = `/images/angles/${currentModel}/${bodyColor}/front.png`;
+        frontViewImage.src = `/images/angles/${currentModel}/${colorKey}/front.png`;
         frontViewImage.alt = `${currentModel} shoe - front view`;
     }
 
     if (sideViewImage) {
-        sideViewImage.src = `/images/angles/${currentModel}/${bodyColor}/side.png`;
+        sideViewImage.src = `/images/angles/${currentModel}/${colorKey}/side.png`;
         sideViewImage.alt = `${currentModel} shoe - side view`;
     }
 
     if (backViewImage) {
-        backViewImage.src = `/images/angles/${currentModel}/${bodyColor}/back.png`;
+        backViewImage.src = `/images/angles/${currentModel}/${colorKey}/back.png`;
         backViewImage.alt = `${currentModel} shoe - back view`;
     }
 
     // Add error handling for images
     const images = [soleImage, frontViewImage, sideViewImage, backViewImage].filter(img => img !== null);
     images.forEach(img => {
-        img.onerror = function () {
-            this.src = 'https://via.placeholder.com/150x100?text=Image+Not+Found';
-            this.alt = 'Image not available';
-        };
+        if (img) {
+            img.onerror = function () {
+                this.src = 'https://via.placeholder.com/150x100?text=Image+Not+Found';
+                this.alt = 'Image not available';
+            };
+        }
     });
 }
 
@@ -645,6 +682,21 @@ function initializeEventListeners() {
             overlay.classList.remove('active');
         });
     }
+
+    // Image click to open in new tab
+    const images = [
+        getElement('soleImage'),
+        getElement('frontViewImage'),
+        getElement('sideViewImage'),
+        getElement('backViewImage')
+    ].filter(img => img !== null);
+
+    images.forEach(img => {
+        img.addEventListener('click', () => {
+            // Open the image's src in a new tab
+            window.open(img.src, '_blank');
+        });
+    });
 
     // Model selection
     const modelOptions = document.querySelectorAll('.model-option');
