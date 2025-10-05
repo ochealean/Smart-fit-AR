@@ -32,6 +32,7 @@ async function initializeIssueReports() {
         window.location.href = "/admin/html/admin_login.html";
         return;
     }
+    console.log(authStatus);
 
     userData = authStatus.userData;
     userId = authStatus.userId;
@@ -134,9 +135,10 @@ function getDefaultAvatar() {
     return "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' fill='%23ddd'%3E%3Crect width='100' height='100'/%3E%3Ctext x='50%' y='50%' font-size='20' text-anchor='middle' dominant-baseline='middle' fill='%23666'%3EProfile%3C/text%3E%3C/svg%3E";
 }
 
-// Load issue reports - FIXED VERSION
+// Load issue reports
 async function loadIssueReports() {
-    const issuesPath = 'smartfit_AR_Database/issueReports';
+    console.log("Current shopLoggedin:", shopLoggedin);
+    const issuesPath = `smartfit_AR_Database/issueReports`;
     const issueTableBody = getElement("issueReportsTableBody");
 
     // Show loading state
@@ -159,28 +161,38 @@ async function loadIssueReports() {
 
         // Convert object to array and flatten the structure
         const issues = result.data;
-        console.log("Loaded issues structure:", issues);
         
-        // Flatten the nested structure
+        // Flatten the nested structure and FILTER by shopLoggedin
         const allIssues = [];
         Object.keys(issues).forEach(userId => {
             const userIssues = issues[userId];
             Object.keys(userIssues).forEach(issueId => {
                 const issue = userIssues[issueId];
-                issue.fullId = `${userId}/${issueId}`; // Store the full path for reference
-                issue.userId = userId; // Store the user ID separately
-                allIssues.push({
-                    id: issueId,
-                    userId: userId,
-                    data: issue
-                });
+                
+                // FILTER: Only include issues where shopLoggedin matches current shop
+                if (issue.shopLoggedin === shopLoggedin) {
+                    issue.fullId = `${userId}/${issueId}`; // Store the full path for reference
+                    issue.userId = userId; // Store the user ID separately
+                    allIssues.push({
+                        id: issueId,
+                        userId: userId,
+                        data: issue
+                    });
+                }
             });
         });
 
-        console.log("Flattened issues:", allIssues);
+        console.log("Filtered issues for shop", shopLoggedin, ":", allIssues);
 
         if (allIssues.length === 0) {
-            issueTableBody.innerHTML = '<tr><td colspan="9">No issue reports found</td></tr>';
+            issueTableBody.innerHTML = `
+                <tr>
+                    <td colspan="9" class="no-issues">
+                        <i class="fas fa-info-circle"></i>
+                        No issue reports found for your shop
+                    </td>
+                </tr>
+            `;
             return;
         }
 
