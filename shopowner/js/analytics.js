@@ -331,6 +331,23 @@ function prepareChartData(transactions, filterDate) {
 }
 
 function setupEventListeners() {
+    // Mobile sidebar toggle
+    const mobileToggle = document.querySelector('.mobile-menu-toggle');
+    const sidebar = document.querySelector('.sidebar');
+    const overlay = document.querySelector('.sidebar-overlay');
+
+    if (mobileToggle && sidebar && overlay) {
+        mobileToggle.addEventListener('click', () => {
+            sidebar.classList.toggle('active');
+            overlay.classList.toggle('active');
+        });
+
+        overlay.addEventListener('click', () => {
+            sidebar.classList.remove('active');
+            overlay.classList.remove('active');
+        });
+    }
+
     // Filter buttons for recent sales
     document.querySelectorAll('[data-recent-filter]').forEach(btn => {
         btn.addEventListener('click', function () {
@@ -353,23 +370,6 @@ function setupEventListeners() {
     const logoutBtn = getElement('logout_btn');
     if (logoutBtn) {
         logoutBtn.addEventListener('click', handleLogout);
-    }
-
-    // Mobile sidebar toggle
-    const mobileToggle = document.querySelector('.mobile-menu-toggle');
-    const sidebar = document.querySelector('.sidebar');
-    const overlay = document.querySelector('.sidebar-overlay');
-
-    if (mobileToggle && sidebar && overlay) {
-        mobileToggle.addEventListener('click', () => {
-            sidebar.classList.toggle('active');
-            overlay.classList.toggle('active');
-        });
-
-        overlay.addEventListener('click', () => {
-            sidebar.classList.remove('active');
-            overlay.classList.remove('active');
-        });
     }
 }
 
