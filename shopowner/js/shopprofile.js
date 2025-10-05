@@ -104,7 +104,7 @@ async function initializePage() {
 
     loadShopProfile();
     setupEventListeners();
-    setupPasswordToggles();
+    setupPasswordToggleListeners();
     
     // Also setup event listeners for employee form
     setupEmployeeEventListeners();
@@ -1086,6 +1086,39 @@ function loadEmployeeStatistics() {
 
     // Store unsubscribe for cleanup
     window.employeeOrdersUnsubscribe = ordersUnsubscribe;
+}
+
+// Toggle password visibility
+function togglePassword(fieldId) {
+    const field = document.getElementById(fieldId);
+    const icon = field ? field.nextElementSibling : null;
+
+    if (field && icon && icon.classList.contains('password-toggle-icon')) {
+        if (field.type === 'password') {
+            field.type = 'text';
+            icon.classList.remove('fa-eye');
+            icon.classList.add('fa-eye-slash');
+            icon.setAttribute('aria-label', 'Hide password');
+        } else {
+            field.type = 'password';
+            icon.classList.remove('fa-eye-slash');
+            icon.classList.add('fa-eye');
+            icon.setAttribute('aria-label', 'Show password');
+        }
+    } else {
+        console.warn(`Password toggle failed: field or icon not found for ID ${fieldId}`);
+    }
+}
+
+// Set up password toggle event listeners
+function setupPasswordToggleListeners() {
+    const toggleIcons = document.querySelectorAll('.password-toggle-icon');
+    toggleIcons.forEach(icon => {
+        const fieldId = icon.getAttribute('data-field-id');
+        if (fieldId) {
+            icon.addEventListener('click', () => togglePassword(fieldId));
+        }
+    });
 }
 
 // Cleanup function if needed
