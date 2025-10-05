@@ -10,6 +10,7 @@ import {
 const urlParams = new URLSearchParams(window.location.search);
 const orderID = urlParams.get('orderID');
 const userID = urlParams.get('userID');
+const shopID = urlParams.get('shopID');
 var userEmail = "";
 
 // Initialize the page when auth state changes
@@ -187,7 +188,7 @@ function initializePage() {
                 console.log('Creating database record...', reportData);
                 
                 const dataPath = `smartfit_AR_Database/issueReports/${userID}/${orderID}`;
-                const createResult = await createData(dataPath, userID, reportData);
+                const createResult = await createData(dataPath, shopID, reportData);
                 
                 if (createResult.success) {
                     console.log('Issue report created successfully');

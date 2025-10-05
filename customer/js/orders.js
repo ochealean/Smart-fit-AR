@@ -151,6 +151,7 @@ async function displayOrders(orders, ordersContainer) {
 // Create order card element
 async function createOrderCard(order) {
     if (!order) return null;
+    console.log(order);
     
     const status = order.status?.toLowerCase() || 'pending';
 
@@ -258,8 +259,9 @@ async function createOrderCard(order) {
     `;
     }
 
+    console.log(order.item.shopId);
     // Since we've filtered out unresolved issues, hasUnresolvedIssue will always be false here
-    const actionButtons = generateActionButtons(status, order.orderId, serialNumber, false);
+    const actionButtons = generateActionButtons(status, order.orderId, serialNumber, false, order.item.shopId);
 
     orderCard.innerHTML = `
         <div class="order-header">
@@ -303,7 +305,7 @@ function getStatusInfo(status) {
 }
 
 // Generate action buttons based on order status
-function generateActionButtons(status, orderId, serialNumber, hasUnresolvedIssue) {
+function generateActionButtons(status, orderId, serialNumber, hasUnresolvedIssue, shopID) {
     let buttons = '';
 
     if (status === 'delivered') {
@@ -312,7 +314,7 @@ function generateActionButtons(status, orderId, serialNumber, hasUnresolvedIssue
                 <i class="fas fa-check"></i> Order Received
             </button>
             ${!hasUnresolvedIssue ? `
-            <button class="btn btn-issue" onclick="reportIssue('${orderId}')">
+            <button class="btn btn-issue" onclick="reportIssue('${orderId}', '${shopID}')">
                 <i class="fas fa-exclamation"></i> Report Issue
             </button>
             ` : ''}
@@ -562,8 +564,8 @@ window.markAsReceived = async function (orderId) {
 };
 
 // Report issue with order
-window.reportIssue = function (orderId) {
-    window.location.href = `/customer/html/reportIssue.html?orderID=${orderId}&userID=${userID}`;
+window.reportIssue = function (orderId, shopID) {
+    window.location.href = `/customer/html/reportIssue.html?orderID=${orderId}&userID=${userID}&shopID=${shopID}`;
 };
 
 // Set up event listeners
