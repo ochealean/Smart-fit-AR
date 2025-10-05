@@ -51,6 +51,18 @@ function init() {
     setupPasswordValidation();
     setupPhoneNumberFormatting();
     setupBatchCreation();
+    setupPasswordToggleListeners();
+}
+
+// Set up password toggle event listeners
+function setupPasswordToggleListeners() {
+    const toggleIcons = document.querySelectorAll('.password-toggle');
+    toggleIcons.forEach(icon => {
+        const fieldId = icon.getAttribute('data-field-id');
+        if (fieldId) {
+            icon.addEventListener('click', () => togglePassword(fieldId));
+        }
+    });
 }
 
 // Set up authentication state listener
@@ -649,16 +661,22 @@ if (document.getElementById('logout_btn')) {
 // Toggle password visibility
 function togglePassword(fieldId) {
     const field = document.getElementById(fieldId);
-    const icon = field.nextElementSibling;
+    const icon = field ? field.nextElementSibling : null;
 
-    if (field.type === "password") {
-        field.type = "text";
-        icon.classList.remove("fa-eye");
-        icon.classList.add("fa-eye-slash");
+    if (field && icon && icon.classList.contains('password-toggle')) {
+        if (field.type === 'password') {
+            field.type = 'text';
+            icon.classList.remove('fa-eye');
+            icon.classList.add('fa-eye-slash');
+            icon.setAttribute('aria-label', 'Hide password');
+        } else {
+            field.type = 'password';
+            icon.classList.remove('fa-eye-slash');
+            icon.classList.add('fa-eye');
+            icon.setAttribute('aria-label', 'Show password');
+        }
     } else {
-        field.type = "password";
-        icon.classList.remove("fa-eye-slash");
-        icon.classList.add("fa-eye");
+        console.warn(`Password toggle failed: field or icon not found for ID ${fieldId}`);
     }
 }
 
