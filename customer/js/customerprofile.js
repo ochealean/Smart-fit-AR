@@ -24,7 +24,6 @@ const elements = {
     // Header
     userNameDisplay: document.getElementById('userName_display2'),
     userProfileImage: document.getElementById('imageProfile'),
-
     // Profile Header
     profileName: document.querySelector('.profile-name'),
     profileEmail: document.querySelector('.profile-email'),
@@ -32,7 +31,6 @@ const elements = {
     orderCount: document.querySelector('.stat-item:nth-child(1) .stat-value'),
     wishlistCount: document.querySelector('.stat-item:nth-child(2) .stat-value'),
     customOrdersCount: document.querySelector('.stat-item:nth-child(3) .stat-value'),
-
     // Form Fields
     firstName: document.getElementById('firstName'),
     lastName: document.getElementById('lastName'),
@@ -45,12 +43,10 @@ const elements = {
     state: document.getElementById('state'),
     zipCode: document.getElementById('zipCode'),
     country: document.getElementById('country'),
-
     // Password Fields
     currentPassword: document.getElementById('currentPassword'),
     newPassword: document.getElementById('newPassword'),
     confirmPassword: document.getElementById('confirmPassword'),
-
     // Buttons
     logoutBtn: document.getElementById('logout_btn'),
     cancelBtn: document.querySelector('.btn-cancel'),
@@ -83,7 +79,47 @@ async function initializePage() {
 
     loadCustomerProfile();
     setupEventListeners();
-    setupPasswordToggles();
+    setupPasswordToggleListeners();
+}
+
+// Toggle password visibility
+function togglePassword(fieldId) {
+    const field = document.getElementById(fieldId);
+    const icon = field ? field.nextElementSibling : null;
+
+    if (field && icon && icon.classList.contains('password-toggle-icon')) {
+        if (field.type === 'password') {
+            field.type = 'text';
+            icon.classList.remove('fa-eye');
+            icon.classList.add('fa-eye-slash');
+            icon.setAttribute('aria-label', 'Hide password');
+        } else {
+            field.type = 'password';
+            icon.classList.remove('fa-eye-slash');
+            icon.classList.add('fa-eye');
+            icon.setAttribute('aria-label', 'Show password');
+        }
+    } else {
+        console.warn(`Password toggle failed: field or icon not found for ID ${fieldId}`);
+    }
+}
+
+// Set up password toggle event listeners
+function setupPasswordToggleListeners() {
+    const toggleIcons = document.querySelectorAll('.password-toggle-icon');
+    toggleIcons.forEach(icon => {
+        const fieldId = icon.getAttribute('data-field-id');
+        if (fieldId) {
+            icon.addEventListener('click', () => togglePassword(fieldId));
+            // Add keyboard support for accessibility
+            icon.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    togglePassword(fieldId);
+                    e.preventDefault();
+                }
+            });
+        }
+    });
 }
 
 function loadCustomerProfile() {
@@ -213,32 +249,22 @@ function loadCustomerStatistics() {
     window.customOrdersUnsubscribe = customOrdersUnsubscribe;
 }
 
-function setupPasswordToggles() {
-    function setupPasswordToggle(inputId, toggleId) {
-        const passwordInput = getElement(inputId);
-        const toggleIcon = getElement(toggleId);
-
-        if (!passwordInput || !toggleIcon) return;
-
-        toggleIcon.addEventListener('click', function () {
-            if (passwordInput.type === 'password') {
-                passwordInput.type = 'text';
-                toggleIcon.classList.remove('fa-eye');
-                toggleIcon.classList.add('fa-eye-slash');
-            } else {
-                passwordInput.type = 'password';
-                toggleIcon.classList.remove('fa-eye-slash');
-                toggleIcon.classList.add('fa-eye');
+function setupEventListeners() {
+    // Logout functionality
+    const logoutBtn = getElement('logout_btn');
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', async function () {
+            if (confirm('Are you sure you want to logout?')) {
+                const result = await logoutUser();
+                if (result.success) {
+                    window.location.href = '/login.html';
+                } else {
+                    console.error('Error signing out:', result.error);
+                }
             }
         });
     }
 
-    setupPasswordToggle('currentPassword', 'toggleCurrentPassword');
-    setupPasswordToggle('newPassword', 'toggleNewPassword');
-    setupPasswordToggle('confirmPassword', 'toggleConfirmPassword');
-}
-
-function setupEventListeners() {
     // Avatar upload
     if (elements.avatarUpload) {
         elements.avatarUpload.addEventListener('change', function (e) {
