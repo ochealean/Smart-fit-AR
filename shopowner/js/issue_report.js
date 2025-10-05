@@ -302,12 +302,19 @@ function getIssueTypeLabel(type) {
 // Set up event listeners
 function setupEventListeners() {
     // Logout functionality
-    const logoutLink = document.querySelector('a[href="/admin/html/admin_login.html"]');
-    logoutLink?.addEventListener('click', function (e) {
-        e.preventDefault();
-        getElement('logoutDialog').classList.add('show');
-        getElement('overlay').classList.add('show');
-    });
+    const logoutBtn = getElement('logout_btn');
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', async function () {
+            if (confirm('Are you sure you want to logout?')) {
+                const result = await logoutUser();
+                if (result.success) {
+                    window.location.href = '/login.html';
+                } else {
+                    console.error('Error signing out:', result.error);
+                }
+            }
+        });
+    }
 
     getElement('cancelLogout')?.addEventListener('click', function () {
         getElement('logoutDialog').classList.remove('show');
