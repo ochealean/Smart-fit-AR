@@ -154,7 +154,7 @@
                 <div class="status-updates">
                     <div class="updates-header">
                         <h3 class="updates-title"><i class="fas fa-history"></i> Status Updates</h3>
-                        <button class="btn btn-primary" id="addUpdateBtn">
+                        <button class="btn btn-primary add-update-btn" id="addUpdateBtn" aria-controls="updateModal">
                             <i class="fas fa-plus"></i> Add Update
                         </button>
                     </div>
@@ -166,7 +166,7 @@
                         </div>
                         <h4>No Tracking Updates Yet</h4>
                         <p>Add the first status update to keep your customer informed</p>
-                        <button class="btn btn-primary" id="addUpdateBtn">
+                        <button class="btn btn-primary add-update-btn" id="addFirstUpdateBtn" aria-controls="updateModal">
                             <i class="fas fa-plus"></i> Add First Tracking Update
                         </button>
                     </div>
@@ -184,7 +184,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h3 class="modal-title">Add Status Update</h3>
-                <button class="modal-close" id="closeModal">&times;</button>
+                <button class="modal-close" id="closeModal" aria-label="Close modal">&times;</button>
             </div>
             <form id="updateForm">
                 <div class="form-group">

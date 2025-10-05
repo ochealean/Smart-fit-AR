@@ -54,12 +54,10 @@ async function initializeTracking() {
     shopLoggedin = authResult.shopId || authResult.userId;
 
     // Set role-based UI elements
-    // Hide/show menu items based on role
     console.log("User role:", authResult.role);
     if (authResult.role.toLowerCase() === "customer") {
         window.location.href = "../../customer/html/customer_dashboard.html";
-    }
-    else if (authResult.role === 'employee') {
+    } else if (authResult.role === 'employee') {
         const addEmployeeBtn = getElement('addemployeebtn');
         const analyticsBtn = getElement('analyticsbtn');
         const issueReport = getElement('issuereport');
@@ -88,8 +86,8 @@ function loadUserProfile() {
     if (imageProfile) {
         if (userData.profilePhoto && userData.profilePhoto.url) {
             imageProfile.src = userData.profilePhoto.url;
-        } else if (userData.uploads && userData.uploads.shopLogo && userData.uploads.shopLogo.url) {
-            imageProfile.src = userData.uploads.shopLogo.url;
+        } else if (userData.Uploads && userData.Uploads.shopLogo && userData.Uploads.shopLogo.url) {
+            imageProfile.src = userData.Uploads.shopLogo.url;
         } else {
             imageProfile.src = "https://cdn-icons-png.flaticon.com/512/11542/11542598.png";
         }
@@ -114,11 +112,15 @@ const domElements = {
     shippingNotesInput: getElement("shippingNotes"),
     updateList: getElement("updateList"),
     addUpdateBtn: getElement("addUpdateBtn"),
+    addFirstUpdateBtn: getElement("addFirstUpdateBtn"),
     updateModal: getElement("updateModal"),
     closeModal: getElement("closeModal"),
     cancelUpdate: getElement("cancelUpdate"),
     trackingForm: getElement("trackingForm"),
-    updateForm: getElement("updateForm")
+    updateForm: getElement("updateForm"),
+    mobileToggle: document.querySelector(".mobile-menu-toggle"),
+    sidebar: document.querySelector(".sidebar"),
+    sidebarOverlay: document.querySelector(".sidebar-overlay")
 };
 
 // Initialize the application
@@ -130,9 +132,23 @@ function init() {
 
 // Set up all event listeners
 function setupEventListeners() {
-    // Modal handling
-    if (domElements.addUpdateBtn) {
-        domElements.addUpdateBtn.addEventListener("click", () => {
+    // Mobile sidebar toggle
+    if (domElements.mobileToggle && domElements.sidebar && domElements.sidebarOverlay) {
+        domElements.mobileToggle.addEventListener('click', () => {
+            domElements.sidebar.classList.toggle('active');
+            domElements.sidebarOverlay.classList.toggle('active');
+        });
+
+        domElements.sidebarOverlay.addEventListener('click', () => {
+            domElements.sidebar.classList.remove('active');
+            domElements.sidebarOverlay.classList.remove('active');
+        });
+    }
+
+    // Modal handling for both Add Update buttons
+    const addUpdateButtons = document.querySelectorAll(".add-update-btn");
+    addUpdateButtons.forEach(button => {
+        button.addEventListener("click", () => {
             if (domElements.updateModal) {
                 domElements.updateModal.style.display = "flex";
                 // Set current datetime as default
@@ -142,13 +158,22 @@ function setupEventListeners() {
                 if (updateDateInput) {
                     updateDateInput.value = datetimeLocal;
                 }
+            } else {
+                console.error("Modal element not found");
             }
         });
-    }
+    });
 
     if (domElements.closeModal) {
         domElements.closeModal.addEventListener("click", () => {
             if (domElements.updateModal) domElements.updateModal.style.display = "none";
+        });
+        // Add keyboard support for accessibility
+        domElements.closeModal.addEventListener("keypress", (e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+                if (domElements.updateModal) domElements.updateModal.style.display = "none";
+                e.preventDefault();
+            }
         });
     }
 
@@ -312,7 +337,6 @@ function renderStatusUpdates(updates) {
         addUpdateToDOM(key, value);
         console.log("Rendering update:", key, value);
     });
-
 }
 
 // Add a single update to the DOM
@@ -400,7 +424,7 @@ async function addStatusUpdate() {
         const createResult = await createData(
             `smartfit_AR_Database/transactions/${userID}/${orderID}/statusUpdates/${updateId}`,
             shopLoggedin,
-            statusUpdateData  // Use the renamed variable here
+            statusUpdateData
         );
 
         console.log("2. Status update result:", createResult);
@@ -470,24 +494,4 @@ async function deleteStatusUpdate(updateID) {
 }
 
 // Initialize when DOM is loaded
-document.addEventListener('DOMContentLoaded', function () {
-    // Mobile sidebar toggle
-    const mobileToggle = document.querySelector('.mobile-menu-toggle');
-    const sidebar = document.querySelector('.sidebar');
-    const overlay = document.querySelector('.sidebar-overlay');
-
-    if (mobileToggle && sidebar && overlay) {
-        mobileToggle.addEventListener('click', () => {
-            sidebar.classList.toggle('active');
-            overlay.classList.toggle('active');
-        });
-
-        overlay.addEventListener('click', () => {
-            sidebar.classList.remove('active');
-            overlay.classList.remove('active');
-        });
-    }
-
-    // Initialize tracking page
-    initializeTracking();
-});
+document.addEventListener('DOMContentLoaded', initializeTracking);
