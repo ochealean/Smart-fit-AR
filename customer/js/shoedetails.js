@@ -329,10 +329,11 @@ async function loadCustomerReviews() {
 }
 
 async function getCustomernameUsingID(userID) {
-    const userPath = `smartfit_AR_Database/customer/${userID}`;
+    const userPath = `smartfit_AR_Database/customers/${userID}`;
     
     try {
         const result = await readData(userPath);
+        console.log(result);
         
         if (result.success) {
             const userData = result.data;
