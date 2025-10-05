@@ -264,6 +264,7 @@
             font-weight: 500;
             display: inline-flex;
             align-items: center;
+            margin-bottom: 0.35rem;
             gap: 0.5rem;
             cursor: pointer;
             transition: var(--transition);
