@@ -135,13 +135,21 @@ function setupEventListeners() {
     // Mobile sidebar toggle
     if (domElements.mobileToggle && domElements.sidebar && domElements.sidebarOverlay) {
         domElements.mobileToggle.addEventListener('click', () => {
+            console.log('Mobile toggle clicked');
             domElements.sidebar.classList.toggle('active');
             domElements.sidebarOverlay.classList.toggle('active');
         });
 
         domElements.sidebarOverlay.addEventListener('click', () => {
+            console.log('Overlay clicked');
             domElements.sidebar.classList.remove('active');
             domElements.sidebarOverlay.classList.remove('active');
+        });
+    } else {
+        console.error('Mobile toggle elements not found:', {
+            mobileToggle: !!domElements.mobileToggle,
+            sidebar: !!domElements.sidebar,
+            sidebarOverlay: !!domElements.sidebarOverlay
         });
     }
 
