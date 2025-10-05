@@ -19,10 +19,10 @@ let userSession = {
 
 let shoeLinks = {
     classic: {
-        red: '',
-        blue: '',
-        black: '',
-        white: '',
+        red: 'https://smart-fit-ar.vercel.app/extras/devonprocess.html',
+        blue: 'https://smart-fit-ar.vercel.app/extras/devonprocess.html',
+        black: 'https://smart-fit-ar.vercel.app/extras/devonprocess.html',
+        white: 'https://smart-fit-ar.vercel.app/extras/devonprocess.html',
     },
     runner: {
         red: 'https://sdk.developer.deepar.ai/effectTester/index.html?url1=https%3A%2F%2Fdeepar-temporary-resources-prod.s3.eu-west-1.amazonaws.com%2F2a4a070e-abe1-48de-ba26-75c12804098b&name1=Running-Red.deeparproj&sdkVersion=5.6.0',
