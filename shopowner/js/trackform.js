@@ -118,6 +118,11 @@ const domElements = {
     cancelUpdate: getElement("cancelUpdate"),
     trackingForm: getElement("trackingForm"),
     updateForm: getElement("updateForm"),
+    imageValue: getElement("imageValue"),
+    itemTitleLabel: getElement("itemTitleLabel"),
+    colorItem: getElement("colorItem"),
+    sizeItem: getElement("sizeItem"),
+    qtyItem: getElement("qtyItem"),
     mobileToggle: document.querySelector(".mobile-menu-toggle"),
     sidebar: document.querySelector(".sidebar"),
     sidebarOverlay: document.querySelector(".sidebar-overlay")
@@ -254,8 +259,16 @@ function loadOrderData() {
             }
 
             const data = result.data;
+            const itemData = data.item;
+
+            domElements.imageValue.src = itemData.imageUrl;
+            domElements.itemTitleLabel.innerHTML = itemData.name;
+            domElements.colorItem.innerHTML = itemData.color;
+            domElements.sizeItem.innerHTML = itemData.size;
+            domElements.qtyItem.innerHTML = itemData.quantity;
 
             console.log(data);
+            console.log(itemData);
             if (data.status && data.status.toLowerCase() === "cancelled") {
                 if (orderCancelContainer) {
                     orderCancelContainer.style.display = "grid";
