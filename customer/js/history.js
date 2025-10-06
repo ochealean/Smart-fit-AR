@@ -447,9 +447,10 @@ function createRejectionHTML(order, status) {
 
 // Create action buttons
 function createActionButtons(order, status) {
+    console.log(order);
     if (status === 'completed') {
         return `
-            <button class="btn btn-reorder" onclick="handleReorder('${order.orderId}')">Reorder</button>
+            <button class="btn btn-reorder" onclick="handleReorder('${order.item.shoeId}', '${order.item.shopId}')">Reorder</button>
             <button class="btn btn-review" onclick="handleLeaveReview('${order.orderId}')">Leave Review</button>
         `;
     } else if (status === 'rejected' || status === 'cancelled') {
@@ -600,9 +601,8 @@ window.clearAllFilters = function() {
     applyFilters();
 };
 
-window.handleReorder = function(orderId) {
-    console.log('Reorder order:', orderId);
-    alert('Reorder functionality coming soon!');
+window.handleReorder = function(shoeID, shopID) {
+    window.location.href = `/customer/html/shoedetails.html?shoeID=${shoeID}&shopID=${shopID}`;
 };
 
 window.handleLeaveReview = function(orderId) {
