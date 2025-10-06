@@ -13,6 +13,8 @@ let userSession = {
     userId: null,
     userData: null
 };
+let savedDesigns = []; // Store designs for sorting
+let idDesigns = [];
 
 // Helper function to get DOM elements
 function getElement(id) {
@@ -26,7 +28,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 
 async function initializePage() {
     const user = await checkUserAuth();
-    
+
     if (!user.authenticated) {
         window.location.href = "/login.html";
         return;
@@ -37,13 +39,13 @@ async function initializePage() {
 
     // Set user profile information
     setUserProfile();
-    
+
     // Setup model selection
     setupModelSelection();
-    
+
     // Load saved designs
     loadSavedDesigns();
-    
+
     // Setup event listeners
     setupEventListeners();
 }
@@ -52,7 +54,7 @@ async function initializePage() {
 function setUserProfile() {
     const userNameDisplay = getElement('userName_display2');
     const userAvatar = getElement('imageProfile');
-    
+
     if (userSession.userData) {
         if (userSession.userData.firstName && userSession.userData.lastName) {
             userNameDisplay.textContent = `${userSession.userData.firstName} ${userSession.userData.lastName}`;
@@ -61,7 +63,7 @@ function setUserProfile() {
         } else {
             userNameDisplay.textContent = "User";
         }
-        
+
         // Set user avatar if available
         if (userSession.userData.profilePhoto) {
             userAvatar.src = userSession.userData.profilePhoto;
@@ -119,6 +121,8 @@ async function loadSavedDesigns() {
             container.appendChild(emptyState);
             emptyState.style.display = 'block';
             savedDesignsContainer.classList.add('hidden'); // Hide container if no designs
+            savedDesigns = []; // Clear the saved designs array
+            idDesigns = [];
         } else {
             // Show the container since we have designs
             savedDesignsContainer.classList.remove('hidden');
@@ -126,17 +130,76 @@ async function loadSavedDesigns() {
             // Hide empty state
             emptyState.style.display = 'none';
 
-            // Generate HTML for each saved design
-            const savedDesigns = result.data;
-            Object.entries(savedDesigns).forEach(([id, design]) => {
-                const designElement = createSavedDesignElement(id, design);
-                container.appendChild(designElement);
+            // Store designs in array for sorting
+            savedDesigns = Object.entries(result.data).map(([firebaseKey, design]) => ({
+                tryid: firebaseKey, // Use the Firebase key as the ID
+                ...design
+            }));
+
+            Object.entries(result).forEach(([firebaseKey, design]) => {
+                Object.entries(design).forEach(([key, data]) => {
+                    idDesigns.push({
+                        id: key,
+                        info: data
+                    });
+                });
             });
+
+
+
+            console.log(savedDesigns);
+            console.log(idDesigns);
+            console.log(result);
+
+            // Sort designs by date (newest first by default)
+            sortDesigns('desc');
         }
     } catch (error) {
         console.error('Error loading saved designs:', error);
         alert('Error loading saved designs. Please try again.');
     }
+}
+
+// Sort designs function
+function sortDesigns(sortOrder = 'desc') {
+    if (!idDesigns.length) return;
+
+    const sortedIdDesigns = [...idDesigns].sort((a, b) => {
+        const dateA = a.info?.createdAt || new Date(a.info?.dateAdded).getTime() || 0;
+        const dateB = b.info?.createdAt || new Date(b.info?.dateAdded).getTime() || 0;
+
+        if (sortOrder === 'desc') {
+            return dateB - dateA; // Newest first
+        } else {
+            return dateA - dateB; // Oldest first
+        }
+    });
+
+    // Optional: render or log the sorted list
+    console.log("Sorted idDesigns:", sortedIdDesigns);
+
+    // If you want to re-render them on the UI:
+    renderSortedDesigns(sortedIdDesigns);
+}
+
+
+// Render sorted designs to the DOM
+function renderSortedDesigns(designs) {
+    console.log(designs);
+    const container = getElement('savedDesignsList');
+    container.innerHTML = '';
+
+    if (designs.length === 0) {
+        const emptyState = getElement('emptySavedDesigns');
+        container.appendChild(emptyState);
+        emptyState.style.display = 'block';
+        return;
+    }
+
+    designs.forEach(design => {
+        const designElement = createSavedDesignElement(design.id, design.info);
+        container.appendChild(designElement);
+    });
 }
 
 function createSavedDesignElement(id, design) {
@@ -158,14 +221,14 @@ function createSavedDesignElement(id, design) {
 
     // Safely access nested properties with fallbacks
     const selections = design.selections || {};
-    
+
     // Get the model and body color for the image path
     const model = design.model || 'classic';
     const bodyColor = selections.bodyColor || 'white';
 
     // Build the main.png image path based on model and body color
     const mainImagePath = `/images/angles/${model}/${bodyColor}/main.png`;
-    
+
     // Use the main.png image or a placeholder if it fails to load
     const previewImage = mainImagePath;
 
@@ -201,7 +264,7 @@ function createSavedDesignElement(id, design) {
     const insole = selections.insole || {};
     const insoleId = insole.id || null;
     const insolePrice = insole.price || 0;
-    
+
     if (insoleId) {
         detailsHTML += createDetailRow('Insole', `${insoleId}${insolePrice ? ` (+₱${insolePrice})` : ''}`);
     }
@@ -211,11 +274,11 @@ function createSavedDesignElement(id, design) {
         detailsHTML += `
             ${createDetailRow('Body Color', bodyColor, true)}
         `;
-        
+
         const laces = selections.laces || {};
         const lacesId = laces.id || null;
         const lacesColor = laces.color || null;
-        
+
         if (lacesId) {
             detailsHTML += createDetailRow('Laces', `${lacesId}${lacesColor ? ` (${lacesColor})` : ''}`);
         }
@@ -228,7 +291,7 @@ function createSavedDesignElement(id, design) {
         const laces = selections.laces || {};
         const lacesId = laces.id || null;
         const lacesColor = laces.color || null;
-        
+
         if (lacesId) {
             detailsHTML += createDetailRow('Laces', `${lacesId}${lacesColor ? ` (${lacesColor})` : ''}`);
         }
@@ -241,7 +304,7 @@ function createSavedDesignElement(id, design) {
         const laces = selections.laces || {};
         const lacesId = laces.id || null;
         const lacesColor = laces.color || null;
-        
+
         if (lacesId) {
             detailsHTML += createDetailRow('Laces', `${lacesId}${lacesColor ? ` (${lacesColor})` : ''}`);
         }
@@ -312,6 +375,14 @@ function setupEventListeners() {
         }
     });
 
+    // Sort designs functionality
+    const sortSelect = getElement('sortDesigns');
+    if (sortSelect) {
+        sortSelect.addEventListener('change', function (e) {
+            sortDesigns(e.target.value);
+        });
+    }
+
     // Logout functionality
     getElement('logout_btn').addEventListener('click', handleLogout);
 }
@@ -334,7 +405,7 @@ async function editSavedDesign(designId) {
 
     try {
         const result = await readData(designPath);
-        
+
         if (result.success) {
             const design = result.data;
             sessionStorage.setItem('editingDesign', JSON.stringify({
@@ -358,24 +429,22 @@ async function deleteSavedDesign(designId) {
 
         try {
             const result = await deleteData(designPath);
-            
+
             if (result.success) {
-                // Remove the design element from the DOM
-                const designElement = document.querySelector(`.saved-design-actions button[data-id="${designId}"]`)?.closest('.saved-design');
-                if (designElement) {
-                    designElement.remove();
-                }
+                // Remove from both arrays
+                savedDesigns = savedDesigns.filter(design => design.id !== designId);
+                idDesigns = idDesigns.filter(design => design.id !== designId);
+
+                // Re-render the designs (keep sort order)
+                const sortSelect = getElement('sortDesigns');
+                const currentSortOrder = sortSelect ? sortSelect.value : 'desc';
+
+                // Re-sort and re-render
+                sortDesigns(currentSortOrder);
+
 
                 // Check if we need to show the empty state
-                const container = getElement('savedDesignsList');
-                if (container.children.length === 0 ||
-                    (container.children.length === 1 && container.children[0].id === 'emptySavedDesigns')) {
-                    const emptyState = getElement('emptySavedDesigns');
-                    container.innerHTML = '';
-                    container.appendChild(emptyState);
-                    emptyState.style.display = 'block';
-                    
-                    // Hide the container
+                if (savedDesigns.length === 0) {
                     const savedDesignsContainer = document.querySelector('.saved-designs-container');
                     savedDesignsContainer.classList.add('hidden');
                 }
@@ -387,45 +456,4 @@ async function deleteSavedDesign(designId) {
             alert('Error deleting design. Please try again.');
         }
     }
-}
-
-// Add design to cart (if needed in the future)
-async function addDesignToCart(designId) {
-    const designPath = `smartfit_AR_Database/saved_customShoes/${userSession.userId}/${designId}`;
-
-    try {
-        const result = await readData(designPath);
-        
-        if (result.success) {
-            const design = result.data;
-            const cartPath = `smartfit_AR_Database/customized_cart/${userSession.userId}`;
-
-            // Create a new cart item with the design data
-            const cartItem = {
-                ...design,
-                addedAt: Date.now(),
-                isCustom: true
-            };
-
-            // Push the design to the cart
-            const createResult = await createData(cartPath, userSession.userId, cartItem);
-            
-            if (createResult.success) {
-                alert('Design added to cart successfully!');
-            } else {
-                throw new Error(createResult.error);
-            }
-        } else {
-            throw new Error('Failed to load design');
-        }
-    } catch (error) {
-        console.error('Error adding to cart:', error);
-        alert('Error adding to cart. Please try again.');
-    }
-}
-
-// Buy now function (if needed in the future)
-async function buyNow(designId) {
-    await addDesignToCart(designId);
-    window.location.href = '/checkout.html';
 }
