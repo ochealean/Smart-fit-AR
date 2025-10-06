@@ -166,7 +166,16 @@ function setupEventListeners() {
                 domElements.updateModal.style.display = "flex";
                 // Set current datetime as default
                 const now = new Date();
-                const datetimeLocal = now.toISOString().slice(0, 16);
+                const minus4Hours = new Date(now.getTime() - 2 * 60 * 60); // subtract 4 hours
+
+                // Adjust for timezone offset
+                const offset = minus4Hours.getTimezoneOffset(); // in minutes
+                const localTime = new Date(minus4Hours.getTime() - offset * 60000);
+
+                // Format as datetime-local
+                const datetimeLocal = localTime.toISOString().slice(0, 16);
+                console.log(datetimeLocal);
+
                 const updateDateInput = getElement("updateDate");
                 if (updateDateInput) {
                     updateDateInput.value = datetimeLocal;
