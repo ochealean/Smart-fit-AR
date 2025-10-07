@@ -113,7 +113,7 @@
             z-index: 1000;
         }
 
-        .expand-button, .exit-button, .maximize-button {
+        .expand-button, .exit-button, .maximize-button, .switch-camera-button {
             background: rgba(255,255,255,0.8);
             border: none;
             border-radius: 50%;
@@ -127,12 +127,12 @@
             box-shadow: var(--shadow-sm);
         }
 
-        .expand-button:hover, .exit-button:hover, .maximize-button:hover {
+        .expand-button:hover, .exit-button:hover, .maximize-button:hover, .switch-camera-button:hover {
             background: white;
             transform: scale(1.1);
         }
 
-        .expand-button i, .exit-button i, .maximize-button i {
+        .expand-button i, .exit-button i, .maximize-button i, .switch-camera-button i {
             color: var(--primary);
             font-size: 14px;
         }
@@ -511,6 +511,9 @@
             <button class="exit-button" id="exit-btn" title="Exit Maximized View" style="display: none;">
                 <i class="fas fa-compress"></i>
             </button>
+            <button class="switch-camera-button" id="switchCameraButton" title="Switch Camera">
+                <i class="fa fa-camera"></i>
+            </button>
         </div>
     </div>
 
@@ -532,11 +535,6 @@
         <i class="fas fa-filter"></i>
     </button>
 
-    <button id="switchCameraButton" type="button" class="btn text-primary" data-bs-target="#switchCamera" onclick="switchCamera()">
-        <i class="fa fa-camera"></i>
-        Switch Camera
-    </button>
-
     <!-- Loader -->
     <div class="loader" id="loader">
         <div class="loader-spinner"></div>
@@ -544,6 +542,7 @@
 
     <script>
         let deepAR;
+        let isFrontCamera = false; // Track camera state
         const urlParams = new URLSearchParams(window.location.search);
         const initialModel = urlParams.get('model') || 'basketball';
         const initialColor = urlParams.get('color') || 'black';
@@ -567,6 +566,7 @@
         const exitBtn = document.getElementById('exit-btn');
         const preview = document.getElementById('deepar-div');
         const toggleFilterBtn = document.getElementById('toggle-filter-btn');
+        const switchCameraBtn = document.getElementById('switchCameraButton');
 
         (async function () {
             loader.classList.add('active');
@@ -577,7 +577,7 @@
                 }, {
                     additionalOptions: {
                         cameraConfig: {
-                            facingMode: 'environment',
+                            facingMode: 'environment', // Start with back camera
                             mirrorCamera: false
                         }
                     }
@@ -718,6 +718,27 @@
             toggleFilterBtn.style.display = 'none';
             toggleFilterBtn.classList.add('hidden');
         }
+
+        // Switch camera function
+        async function switchCamera() {
+            if (!deepAR) return;
+
+            loader.classList.add('active');
+            try {
+                isFrontCamera = !isFrontCamera;
+                const facingMode = isFrontCamera ? 'user' : 'environment';
+                await deepAR.setCameraConfig({ facingMode, mirrorCamera: isFrontCamera });
+                console.log(`✅ Switched to ${facingMode} camera.`);
+            } catch (err) {
+                console.error("❌ Failed to switch camera:", err);
+                isFrontCamera = !isFrontCamera; // Revert state on error
+            } finally {
+                loader.classList.remove('active');
+            }
+        }
+
+        // Attach switchCamera to button click
+        switchCameraBtn.addEventListener('click', switchCamera);
     </script>
 </body>
 </html>
