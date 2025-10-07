@@ -45,6 +45,7 @@
             margin-bottom: 20px;
             padding: 15px 0;
             border-bottom: 1px solid var(--gray);
+            z-index: 10;
         }
 
         header h1 {
@@ -66,6 +67,7 @@
             width: 100%;
             max-width: 640px;
             margin-bottom: 20px;
+            z-index: 1;
         }
 
         #deepar-div {
@@ -76,6 +78,18 @@
             box-shadow: var(--shadow-md);
             background-color: #fff;
             transition: var(--transition);
+        }
+
+        #deepar-div.maximized {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 80vh;
+            max-width: none;
+            aspect-ratio: unset;
+            z-index: 900;
+            border-radius: 0;
         }
 
         #deepar-div.fullscreen {
@@ -96,9 +110,10 @@
             right: 10px;
             display: flex;
             gap: 8px;
+            z-index: 1000;
         }
 
-        .expand-button, .exit-button {
+        .expand-button, .exit-button, .maximize-button {
             background: rgba(255,255,255,0.8);
             border: none;
             border-radius: 50%;
@@ -110,15 +125,14 @@
             cursor: pointer;
             transition: var(--transition);
             box-shadow: var(--shadow-sm);
-            z-index: 1001;
         }
 
-        .expand-button:hover, .exit-button:hover {
+        .expand-button:hover, .exit-button:hover, .maximize-button:hover {
             background: white;
             transform: scale(1.1);
         }
 
-        .expand-button i, .exit-button i {
+        .expand-button i, .exit-button i, .maximize-button i {
             color: var(--primary);
             font-size: 14px;
         }
@@ -129,6 +143,7 @@
             margin-bottom: 20px;
             transition: max-height 0.3s ease, opacity 0.3s ease;
             overflow: hidden;
+            z-index: 2;
         }
 
         .filter-section.minimized {
@@ -137,7 +152,7 @@
             margin-bottom: 0;
         }
 
-        .filter-section.fullscreen {
+        .filter-section.maximized {
             position: absolute;
             top: 60px;
             left: 0;
@@ -146,7 +161,22 @@
             padding: 15px;
             border-radius: 10px;
             box-shadow: var(--shadow-md);
-            z-index: 1000;
+            z-index: 910;
+            max-height: 200px;
+            overflow-y: auto;
+            display: flex;
+        }
+
+        .filter-section.fullscreen {
+            position: fixed;
+            top: 60px;
+            left: 0;
+            width: 100%;
+            background: rgba(255,255,255,0.95);
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: var(--shadow-md);
+            z-index: 1001;
             max-height: 200px;
             overflow-y: auto;
             display: flex;
@@ -171,7 +201,7 @@
             cursor: pointer;
             transition: var(--transition);
             box-shadow: var(--shadow-sm);
-            z-index: 1001;
+            z-index: 1002;
         }
 
         .toggle-filter-btn:hover {
@@ -355,6 +385,7 @@
             box-shadow: var(--shadow-sm);
             width: 100%;
             max-width: 250px;
+            z-index: 10;
         }
 
         .back-button:hover {
@@ -372,7 +403,7 @@
             display: none;
             align-items: center;
             justify-content: center;
-            z-index: 1001;
+            z-index: 1002;
         }
 
         .loader.active {
@@ -474,10 +505,10 @@
     <div class="preview-container">
         <div id="deepar-div"></div>
         <div class="control-buttons">
-            <button class="expand-button" id="expand-btn" title="Enter Fullscreen">
+            <button class="maximize-button" id="maximize-btn" title="Maximize View">
                 <i class="fas fa-expand"></i>
             </button>
-            <button class="exit-button" id="exit-btn" title="Exit Fullscreen" style="display: none;">
+            <button class="exit-button" id="exit-btn" title="Exit Maximized View" style="display: none;">
                 <i class="fas fa-compress"></i>
             </button>
         </div>
@@ -496,9 +527,14 @@
     <!-- Back button -->
     <button class="back-button" onclick="window.location.href='arshoe.html'">Back to Collection</button>
 
-    <!-- Toggle filter button for fullscreen -->
+    <!-- Toggle filter button for maximized/fullscreen -->
     <button class="toggle-filter-btn" id="toggle-filter-btn" title="Toggle Filters">
         <i class="fas fa-filter"></i>
+    </button>
+
+    <button id="switchCameraButton" type="button" class="btn text-primary" data-bs-target="#switchCamera" onclick="switchCamera()">
+        <i class="fa fa-camera"></i>
+        Switch Camera
     </button>
 
     <!-- Loader -->
@@ -527,7 +563,7 @@
         const filterSection = document.getElementById('filter-section');
         const toggleButton = document.getElementById('toggle-filters');
         const toggleIcon = toggleButton.querySelector('i');
-        const expandBtn = document.getElementById('expand-btn');
+        const maximizeBtn = document.getElementById('maximize-btn');
         const exitBtn = document.getElementById('exit-btn');
         const preview = document.getElementById('deepar-div');
         const toggleFilterBtn = document.getElementById('toggle-filter-btn');
@@ -645,16 +681,16 @@
             }
         });
 
-        // Toggle fullscreen
-        expandBtn.addEventListener('click', () => {
-            enterFullscreen();
+        // Toggle maximized/fullscreen view
+        maximizeBtn.addEventListener('click', () => {
+            enterMaximized();
         });
 
         exitBtn.addEventListener('click', () => {
-            exitFullscreen();
+            exitMaximized();
         });
 
-        // Toggle filter visibility in fullscreen
+        // Toggle filter visibility in maximized/fullscreen
         toggleFilterBtn.addEventListener('click', () => {
             filterSection.classList.toggle('hidden');
             if (filterSection.classList.contains('hidden')) {
@@ -664,43 +700,24 @@
             }
         });
 
-        function enterFullscreen() {
-            if (!document.fullscreenElement) {
-                preview.classList.add('fullscreen');
-                filterSection.classList.add('fullscreen');
-                expandBtn.style.display = 'none';
-                exitBtn.style.display = 'flex';
-                toggleFilterBtn.classList.remove('hidden');
-                toggleFilterBtn.style.display = 'flex';
-                preview.requestFullscreen().catch(err => console.error('Fullscreen error:', err));
-            }
+        function enterMaximized() {
+            preview.classList.add('maximized');
+            filterSection.classList.add('maximized');
+            maximizeBtn.style.display = 'none';
+            exitBtn.style.display = 'flex';
+            toggleFilterBtn.classList.remove('hidden');
+            toggleFilterBtn.style.display = 'flex';
         }
 
-        function exitFullscreen() {
-            if (document.fullscreenElement) {
-                document.exitFullscreen();
-                preview.classList.remove('fullscreen');
-                filterSection.classList.remove('fullscreen');
-                filterSection.classList.remove('hidden');
-                expandBtn.style.display = 'flex';
-                exitBtn.style.display = 'none';
-                toggleFilterBtn.style.display = 'none';
-                toggleFilterBtn.classList.add('hidden');
-            }
+        function exitMaximized() {
+            preview.classList.remove('maximized');
+            filterSection.classList.remove('maximized');
+            filterSection.classList.remove('hidden');
+            maximizeBtn.style.display = 'flex';
+            exitBtn.style.display = 'none';
+            toggleFilterBtn.style.display = 'none';
+            toggleFilterBtn.classList.add('hidden');
         }
-
-        // Handle fullscreen change
-        document.addEventListener('fullscreenchange', () => {
-            if (!document.fullscreenElement) {
-                preview.classList.remove('fullscreen');
-                filterSection.classList.remove('fullscreen');
-                filterSection.classList.remove('hidden');
-                expandBtn.style.display = 'flex';
-                exitBtn.style.display = 'none';
-                toggleFilterBtn.style.display = 'none';
-                toggleFilterBtn.classList.add('hidden');
-            }
-        });
     </script>
 </body>
 </html>
