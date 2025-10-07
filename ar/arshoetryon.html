@@ -110,7 +110,7 @@
             cursor: pointer;
             transition: var(--transition);
             box-shadow: var(--shadow-sm);
-            z-index: 1000;
+            z-index: 1001;
         }
 
         .expand-button:hover, .exit-button:hover {
@@ -139,7 +139,7 @@
 
         .filter-section.fullscreen {
             position: absolute;
-            top: 50px;
+            top: 60px;
             left: 0;
             width: 100%;
             background: rgba(255,255,255,0.95);
@@ -149,6 +149,43 @@
             z-index: 1000;
             max-height: 200px;
             overflow-y: auto;
+            display: flex;
+        }
+
+        .filter-section.fullscreen.hidden {
+            display: none;
+        }
+
+        .toggle-filter-btn {
+            position: absolute;
+            top: 50px;
+            right: 10px;
+            background: rgba(255,255,255,0.8);
+            border: none;
+            border-radius: 50%;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: var(--transition);
+            box-shadow: var(--shadow-sm);
+            z-index: 1001;
+        }
+
+        .toggle-filter-btn:hover {
+            background: white;
+            transform: scale(1.1);
+        }
+
+        .toggle-filter-btn i {
+            color: var(--primary);
+            font-size: 14px;
+        }
+
+        .toggle-filter-btn.hidden {
+            display: none;
         }
 
         .toggle-button {
@@ -335,7 +372,7 @@
             display: none;
             align-items: center;
             justify-content: center;
-            z-index: 1000;
+            z-index: 1001;
         }
 
         .loader.active {
@@ -459,6 +496,11 @@
     <!-- Back button -->
     <button class="back-button" onclick="window.location.href='arshoe.html'">Back to Collection</button>
 
+    <!-- Toggle filter button for fullscreen -->
+    <button class="toggle-filter-btn" id="toggle-filter-btn" title="Toggle Filters">
+        <i class="fas fa-filter"></i>
+    </button>
+
     <!-- Loader -->
     <div class="loader" id="loader">
         <div class="loader-spinner"></div>
@@ -488,6 +530,7 @@
         const expandBtn = document.getElementById('expand-btn');
         const exitBtn = document.getElementById('exit-btn');
         const preview = document.getElementById('deepar-div');
+        const toggleFilterBtn = document.getElementById('toggle-filter-btn');
 
         (async function () {
             loader.classList.add('active');
@@ -611,12 +654,24 @@
             exitFullscreen();
         });
 
+        // Toggle filter visibility in fullscreen
+        toggleFilterBtn.addEventListener('click', () => {
+            filterSection.classList.toggle('hidden');
+            if (filterSection.classList.contains('hidden')) {
+                toggleFilterBtn.innerHTML = '<i class="fas fa-filter"></i>';
+            } else {
+                toggleFilterBtn.innerHTML = '<i class="fas fa-times"></i>';
+            }
+        });
+
         function enterFullscreen() {
             if (!document.fullscreenElement) {
                 preview.classList.add('fullscreen');
                 filterSection.classList.add('fullscreen');
                 expandBtn.style.display = 'none';
                 exitBtn.style.display = 'flex';
+                toggleFilterBtn.classList.remove('hidden');
+                toggleFilterBtn.style.display = 'flex';
                 preview.requestFullscreen().catch(err => console.error('Fullscreen error:', err));
             }
         }
@@ -626,8 +681,11 @@
                 document.exitFullscreen();
                 preview.classList.remove('fullscreen');
                 filterSection.classList.remove('fullscreen');
+                filterSection.classList.remove('hidden');
                 expandBtn.style.display = 'flex';
                 exitBtn.style.display = 'none';
+                toggleFilterBtn.style.display = 'none';
+                toggleFilterBtn.classList.add('hidden');
             }
         }
 
@@ -636,8 +694,11 @@
             if (!document.fullscreenElement) {
                 preview.classList.remove('fullscreen');
                 filterSection.classList.remove('fullscreen');
+                filterSection.classList.remove('hidden');
                 expandBtn.style.display = 'flex';
                 exitBtn.style.display = 'none';
+                toggleFilterBtn.style.display = 'none';
+                toggleFilterBtn.classList.add('hidden');
             }
         });
     </script>
