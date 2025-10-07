@@ -296,7 +296,7 @@ function renderOrders() {
                 <td>${formattedDate}</td>
                 <td>${orderType}</td>
                 <td>${statusBadge}</td>
-                <td>₱${order.price?.toFixed(2) || '0.00'}</td>
+                <td>₱${order.totalAmount?.toFixed(2) || '0.00'}</td>
                 <td>${actionButtons}</td>
             </tr>
         `;
