@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SmartFit - AR Try-On</title>
+    <link href="https://fonts.googleapis.com/css2?family=Caveat&display=swap" rel="stylesheet" />
+    <!-- DeepAR browser SDK v5.6.3 (pre-deprecation for foot tracking) -->
+    <script src="https://cdn.jsdelivr.net/npm/deepar@5.6.3/js/deepar.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f8f9fa;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        #deepar-div {
+            width: 480px;
+            height: 270px;
+            border: 1px solid #e9ecef;
+            margin-bottom: 20px;
+        }
+        .filter-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+        }
+        .filter-buttons button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            background-color: #5e72e4;
+            color: white;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        .filter-buttons button:hover {
+            background-color: #4a5fd1;
+        }
+        .back-button {
+            padding: 10px 20px;
+            background-color: #ff9e3f;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            margin-top: 20px;
+        }
+        .back-button:hover {
+            background-color: #ff8c1a;
+        }
+    </style>
+</head>
+<body>
+    <!-- AR preview container -->
+    <div id="deepar-div"></div>
+    <!-- Filter selection buttons -->
+    <div class="filter-buttons" id="filter-buttons"></div>
+    <!-- Back button -->
+    <button class="back-button" onclick="window.location.href='arshoe.html'">Back to Collection</button>
+
+    <script>
+        let deepAR;
+        const urlParams = new URLSearchParams(window.location.search);
+        const initialModel = urlParams.get('model') || 'basketball';
+        const initialColor = urlParams.get('color') || 'black';
+        const effectMap = {
+            classic: { white: 'classic_white.deepar', black: 'classic_black.deepar', blue: 'classic_blue.deepar', red: 'classic_red.deepar' },
+            running: { white: 'running_white.deepar', black: 'running_black.deepar', blue: 'running_blue.deepar', red: 'running_red.deepar' },
+            basketball: { white: 'basketball_white.deepar', black: 'basketball_black.deepar', blue: 'basketball_blue.deepar', red: 'basketball_red.deepar' }
+        };
+
+        (async function () {
+            try {
+                deepAR = await deepar.initialize({
+                    licenseKey: '247704b47c32f030b2b526dde74bc7220426d3f3f390f51ed573bf0da398e590bc8f12a8923a7da4',
+                    previewElement: document.querySelector('#deepar-div'),
+                }, {
+                    additionalOptions: {
+                        cameraConfig: {
+                            facingMode: 'environment',
+                            mirrorCamera: false
+                        }
+                    }
+                });
+                console.log("✅ DeepAR initialized with back camera.");
+
+                // Load initial effect based on URL parameters
+                const initialEffect = `./effects/filters/${effectMap[initialModel][initialColor]}`;
+                await deepAR.switchEffect(initialEffect);
+                console.log(`✅ Initial shoe effect loaded: ${initialEffect}`);
+
+                deepAR.callbacks.onFeetVisibilityChanged = (visible) => {
+                    console.log(visible ? '👟 Feet detected!' : 'No feet visible.');
+                };
+
+                // Dynamically populate filter buttons
+                const buttonContainer = document.getElementById('filter-buttons');
+                for (const model in effectMap) {
+                    for (const color in effectMap[model]) {
+                        const button = document.createElement('button');
+                        button.textContent = `${model.charAt(0).toUpperCase() + model.slice(1)} ${color.charAt(0).toUpperCase() + color.slice(1)}`;
+                        button.onclick = () => switchEffect(`./effects/filters/${effectMap[model][color]}`);
+                        buttonContainer.appendChild(button);
+                    }
+                }
+            } catch (err) {
+                console.error("❌ Error:", err);
+            }
+        })();
+
+        async function switchEffect(effectPath) {
+            try {
+                if (!deepAR) throw new Error('DeepAR not initialized');
+                await deepAR.switchEffect(effectPath);
+                console.log(`✅ Switched to effect: ${effectPath}`);
+            } catch (err) {
+                console.error("❌ Failed to switch effect:", err);
+            }
+        }
+    </script>
+</body>
+</html>
