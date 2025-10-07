@@ -75,6 +75,8 @@
             basketball: { white: 'basketball_white.deepar', black: 'basketball_black.deepar', blue: 'basketball_blue.deepar', red: 'basketball_red.deepar' }
         };
 
+        console.log(`🔍 Initial model: ${initialModel}, color: ${initialColor}`);
+
         (async function () {
             try {
                 deepAR = await deepar.initialize({
