@@ -4,137 +4,327 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>SmartFit - AR Try-On</title>
-    <link href="https://fonts.googleapis.com/css2?family=Caveat&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Segoe+UI:wght@400;600;700&display=swap" rel="stylesheet" />
     <!-- DeepAR browser SDK v5.6.3 (pre-deprecation for foot tracking) -->
     <script src="https://cdn.jsdelivr.net/npm/deepar@5.6.3/js/deepar.js"></script>
     <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f8f9fa;
+        :root {
+            --primary: #5e72e4;
+            --accent: #ff9e3f;
+            --dark: #1a1a2e;
+            --light: #f8f9fa;
+            --gray: #e9ecef;
+            --shadow-sm: 0 2px 4px rgba(0,0,0,0.1);
+            --shadow-md: 0 4px 12px rgba(0,0,0,0.15);
+            --transition: all 0.3s ease;
+        }
+
+        * {
             margin: 0;
-            padding: 20px;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: linear-gradient(to bottom, var(--light), #fff);
+            min-height: 100vh;
             display: flex;
             flex-direction: column;
             align-items: center;
+            padding: 20px;
+            color: var(--dark);
+            overflow-x: hidden;
         }
+
+        header {
+            width: 100%;
+            max-width: 1200px;
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px 0;
+            border-bottom: 1px solid var(--gray);
+        }
+
+        header h1 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 10px;
+        }
+
+        header p {
+            font-size: 1rem;
+            color: #666;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
         #deepar-div {
-            width: 480px;
-            height: 270px;
-            border: 1px solid #e9ecef;
-            margin-bottom: 20px;
+            width: 100%;
+            max-width: 640px;
+            aspect-ratio: 16/9;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: var(--shadow-md);
+            margin-bottom: 30px;
+            background-color: #fff;
         }
+
+        .filter-section {
+            width: 100%;
+            max-width: 1200px;
+            margin-bottom: 30px;
+        }
+
         .filter-container {
             display: flex;
             overflow-x: auto;
-            gap: 20px;
-            padding: 10px;
-            width: 100%;
-            max-width: 800px;
-            scroll-snap-type: x mandatory;
+            gap: 30px;
+            padding: 20px 10px;
+            scroll-snap-type: x proximity;
             scrollbar-width: thin;
+            scrollbar-color: var(--primary) var(--gray);
+            position: relative;
         }
+
         .filter-container::-webkit-scrollbar {
-            height: 8px;
+            height: 6px;
         }
+
+        .filter-container::-webkit-scrollbar-track {
+            background: var(--gray);
+            border-radius: 3px;
+        }
+
         .filter-container::-webkit-scrollbar-thumb {
-            background-color: #5e72e4;
-            border-radius: 4px;
+            background: var(--primary);
+            border-radius: 3px;
         }
+
         .category-group {
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 10px;
-            min-width: 200px;
-            scroll-snap-align: start;
+            min-width: 280px;
+            padding: 15px;
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: var(--shadow-sm);
+            scroll-snap-align: center;
+            transition: var(--transition);
         }
+
+        .category-group:hover {
+            box-shadow: var(--shadow-md);
+            transform: translateY(-2px);
+        }
+
         .category-title {
-            font-weight: bold;
-            margin-bottom: 10px;
-            text-align: center;
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--dark);
+            margin-bottom: 15px;
+            text-transform: capitalize;
         }
+
         .filter-buttons {
             display: flex;
-            gap: 15px;
+            gap: 20px;
+            justify-content: center;
         }
+
         .filter-button {
             display: flex;
             flex-direction: column;
             align-items: center;
             cursor: pointer;
-            padding: 10px;
-            border-radius: 10px;
-            transition: background-color 0.3s ease, transform 0.3s ease;
+            padding: 8px;
+            border-radius: 50%;
+            transition: var(--transition);
+            position: relative;
         }
+
         .filter-button:hover {
-            background-color: #e9ecef;
             transform: scale(1.05);
         }
+
         .filter-button.selected {
-            border: 2px solid #5e72e4;
-            background-color: #e9ecef;
+            box-shadow: 0 0 0 3px var(--primary);
         }
+
+        .filter-button.selected::after {
+            content: '✓';
+            position: absolute;
+            bottom: -15px;
+            right: -15px;
+            width: 24px;
+            height: 24px;
+            background: var(--primary);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+        }
+
         .filter-image {
-            width: 80px;
-            height: 80px;
+            width: 70px;
+            height: 70px;
             border-radius: 50%;
             object-fit: cover;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            box-shadow: var(--shadow-sm);
+            border: 2px solid transparent;
+            transition: var(--transition);
         }
+
+        .filter-button:hover .filter-image {
+            border-color: var(--primary);
+        }
+
         .filter-name {
             margin-top: 8px;
-            font-size: 14px;
+            font-size: 0.9rem;
             text-align: center;
-            color: #333;
+            color: #555;
+            text-transform: capitalize;
         }
+
         .category-divider {
-            width: 1px;
-            background-color: #ddd;
-            height: auto;
-            margin: 0 10px;
+            min-width: 1px;
+            background: linear-gradient(to bottom, transparent, var(--gray), transparent);
+            height: 80%;
+            align-self: center;
         }
+
         .back-button {
-            padding: 10px 20px;
-            background-color: #ff9e3f;
+            padding: 12px 32px;
+            background: linear-gradient(to right, var(--accent), #ff8c1a);
             color: white;
             border: none;
-            border-radius: 5px;
+            border-radius: 50px;
             cursor: pointer;
-            transition: background-color 0.3s ease;
-            margin-top: 20px;
+            font-weight: 600;
+            font-size: 1rem;
+            transition: var(--transition);
+            box-shadow: var(--shadow-sm);
         }
+
         .back-button:hover {
-            background-color: #ff8c1a;
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
         }
+
+        .loader {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255,255,255,0.9);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .loader.active {
+            display: flex;
+        }
+
+        .loader-spinner {
+            border: 4px solid var(--gray);
+            border-top: 4px solid var(--primary);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
         @media (max-width: 768px) {
-            #deepar-div {
-                width: 100%;
-                height: auto;
-                aspect-ratio: 16/9;
+            body {
+                padding: 10px;
             }
-            .filter-container {
+
+            header h1 {
+                font-size: 1.5rem;
+            }
+
+            header p {
+                font-size: 0.9rem;
+            }
+
+            #deepar-div {
+                max-width: 100%;
+            }
+
+            .category-group {
+                min-width: 220px;
+            }
+
+            .filter-buttons {
                 gap: 10px;
             }
-            .category-group {
-                min-width: 150px;
-            }
+
             .filter-image {
                 width: 60px;
                 height: 60px;
             }
+
             .filter-name {
-                font-size: 12px;
+                font-size: 0.8rem;
+            }
+
+            .back-button {
+                width: 100%;
+                max-width: 300px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .category-group {
+                min-width: 100%;
+                padding: 10px;
+            }
+
+            .filter-buttons {
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            .category-divider {
+                display: none;
             }
         }
     </style>
 </head>
 <body>
+    <header>
+        <h1>SmartFit AR Try-On</h1>
+        <p>Point your camera at your feet to see the shoes in real-time. Swipe to browse options.</p>
+    </header>
+
     <!-- AR preview container -->
     <div id="deepar-div"></div>
+
     <!-- Filter selection container (horizontal scroll) -->
-    <div class="filter-container" id="filter-container"></div>
+    <section class="filter-section">
+        <div class="filter-container" id="filter-container"></div>
+    </section>
+
     <!-- Back button -->
     <button class="back-button" onclick="window.location.href='arshoe.html'">Back to Collection</button>
+
+    <!-- Loader -->
+    <div class="loader" id="loader">
+        <div class="loader-spinner"></div>
+    </div>
 
     <script>
         let deepAR;
@@ -153,8 +343,10 @@
         };
 
         let currentEffectPath = `./effects/filters/${effectMap[initialModel][initialColor]}`;
+        const loader = document.getElementById('loader');
 
         (async function () {
+            loader.classList.add('active');
             try {
                 deepAR = await deepar.initialize({
                     licenseKey: 'f0eafd99d224758bdc2c7271acd80bc7642fdb178ba74faf1c61c1ec7d25221057493e7b9b73c58d',
@@ -196,11 +388,14 @@
                         const button = document.createElement('div');
                         button.className = 'filter-button';
                         button.dataset.path = `./effects/filters/${effectMap[model][color]}`;
+                        button.setAttribute('role', 'button');
+                        button.setAttribute('tabindex', '0');
+                        button.setAttribute('aria-label', `${model} ${color}`);
 
                         const img = document.createElement('img');
                         img.src = imageMap[model][color];
                         img.className = 'filter-image';
-                        img.alt = `${model} ${color}`;
+                        img.alt = `${model} ${color} shoe`;
 
                         const name = document.createElement('span');
                         name.className = 'filter-name';
@@ -210,10 +405,15 @@
                         button.appendChild(name);
 
                         button.onclick = async () => {
+                            loader.classList.add('active');
                             await switchEffect(button.dataset.path);
-                            // Update selected
                             document.querySelectorAll('.filter-button').forEach(btn => btn.classList.remove('selected'));
                             button.classList.add('selected');
+                            loader.classList.remove('active');
+                        };
+
+                        button.onkeydown = (e) => {
+                            if (e.key === 'Enter') button.click();
                         };
 
                         buttonsDiv.appendChild(button);
@@ -232,8 +432,12 @@
                 // Highlight initial selected button
                 const initialButton = Array.from(document.querySelectorAll('.filter-button')).find(btn => btn.dataset.path === currentEffectPath);
                 if (initialButton) initialButton.classList.add('selected');
+
+                loader.classList.remove('active');
             } catch (err) {
                 console.error("❌ Error:", err);
+                loader.classList.remove('active');
+                alert('Failed to initialize AR. Please check console for details.');
             }
         })();
 
