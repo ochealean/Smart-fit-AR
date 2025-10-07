@@ -23,23 +23,75 @@
             border: 1px solid #e9ecef;
             margin-bottom: 20px;
         }
+        .filter-container {
+            display: flex;
+            overflow-x: auto;
+            gap: 20px;
+            padding: 10px;
+            width: 100%;
+            max-width: 800px;
+            scroll-snap-type: x mandatory;
+            scrollbar-width: thin;
+        }
+        .filter-container::-webkit-scrollbar {
+            height: 8px;
+        }
+        .filter-container::-webkit-scrollbar-thumb {
+            background-color: #5e72e4;
+            border-radius: 4px;
+        }
+        .category-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            min-width: 200px;
+            scroll-snap-align: start;
+        }
+        .category-title {
+            font-weight: bold;
+            margin-bottom: 10px;
+            text-align: center;
+        }
         .filter-buttons {
             display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            justify-content: center;
+            gap: 15px;
         }
-        .filter-buttons button {
-            padding: 10px 20px;
-            border: none;
-            border-radius: 5px;
-            background-color: #5e72e4;
-            color: white;
+        .filter-button {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
             cursor: pointer;
-            transition: background-color 0.3s ease;
+            padding: 10px;
+            border-radius: 10px;
+            transition: background-color 0.3s ease, transform 0.3s ease;
         }
-        .filter-buttons button:hover {
-            background-color: #4a5fd1;
+        .filter-button:hover {
+            background-color: #e9ecef;
+            transform: scale(1.05);
+        }
+        .filter-button.selected {
+            border: 2px solid #5e72e4;
+            background-color: #e9ecef;
+        }
+        .filter-image {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            object-fit: cover;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .filter-name {
+            margin-top: 8px;
+            font-size: 14px;
+            text-align: center;
+            color: #333;
+        }
+        .category-divider {
+            width: 1px;
+            background-color: #ddd;
+            height: auto;
+            margin: 0 10px;
         }
         .back-button {
             padding: 10px 20px;
@@ -54,13 +106,33 @@
         .back-button:hover {
             background-color: #ff8c1a;
         }
+        @media (max-width: 768px) {
+            #deepar-div {
+                width: 100%;
+                height: auto;
+                aspect-ratio: 16/9;
+            }
+            .filter-container {
+                gap: 10px;
+            }
+            .category-group {
+                min-width: 150px;
+            }
+            .filter-image {
+                width: 60px;
+                height: 60px;
+            }
+            .filter-name {
+                font-size: 12px;
+            }
+        }
     </style>
 </head>
 <body>
     <!-- AR preview container -->
     <div id="deepar-div"></div>
-    <!-- Filter selection buttons -->
-    <div class="filter-buttons" id="filter-buttons"></div>
+    <!-- Filter selection container (horizontal scroll) -->
+    <div class="filter-container" id="filter-container"></div>
     <!-- Back button -->
     <button class="back-button" onclick="window.location.href='arshoe.html'">Back to Collection</button>
 
@@ -74,8 +146,13 @@
             running: { white: 'running_white.deepar', black: 'running_black.deepar', blue: 'running_blue.deepar', red: 'running_red.deepar' },
             basketball: { white: 'basketball_white.deepar', black: 'basketball_black.deepar', blue: 'basketball_blue.deepar', red: 'basketball_red.deepar' }
         };
+        const imageMap = {
+            classic: { white: '/images/angles/classic/white/main.png', black: '/images/angles/classic/black/main.png', blue: '/images/angles/classic/blue/main.png', red: '/images/angles/classic/red/main.png' },
+            running: { white: '/images/angles/runner/white/main.png', black: '/images/angles/runner/black/main.png', blue: '/images/angles/runner/blue/main.png', red: '/images/angles/runner/red/main.png' },
+            basketball: { white: '/images/angles/basketball/white/main.png', black: '/images/angles/basketball/black/main.png', blue: '/images/angles/basketball/blue/main.png', red: '/images/angles/basketball/red/main.png' }
+        };
 
-        console.log(`🔍 Initial model: ${initialModel}, color: ${initialColor}`);
+        let currentEffectPath = `./effects/filters/${effectMap[initialModel][initialColor]}`;
 
         (async function () {
             try {
@@ -93,24 +170,68 @@
                 console.log("✅ DeepAR initialized with back camera.");
 
                 // Load initial effect based on URL parameters
-                const initialEffect = `./effects/filters/${effectMap[initialModel][initialColor]}`;
-                await deepAR.switchEffect(initialEffect);
-                console.log(`✅ Initial shoe effect loaded: ${initialEffect}`);
+                await deepAR.switchEffect(currentEffectPath);
+                console.log(`✅ Initial shoe effect loaded: ${currentEffectPath}`);
 
                 deepAR.callbacks.onFeetVisibilityChanged = (visible) => {
                     console.log(visible ? '👟 Feet detected!' : 'No feet visible.');
                 };
 
-                // Dynamically populate filter buttons
-                const buttonContainer = document.getElementById('filter-buttons');
-                for (const model in effectMap) {
+                // Dynamically populate filter buttons with categories and dividers
+                const container = document.getElementById('filter-container');
+                const categories = Object.keys(effectMap);
+                categories.forEach((model, catIndex) => {
+                    // Add category group
+                    const group = document.createElement('div');
+                    group.className = 'category-group';
+                    const title = document.createElement('div');
+                    title.className = 'category-title';
+                    title.textContent = model.charAt(0).toUpperCase() + model.slice(1);
+                    group.appendChild(title);
+
+                    // Add buttons for colors
+                    const buttonsDiv = document.createElement('div');
+                    buttonsDiv.className = 'filter-buttons';
                     for (const color in effectMap[model]) {
-                        const button = document.createElement('button');
-                        button.textContent = `${model.charAt(0).toUpperCase() + model.slice(1)} ${color.charAt(0).toUpperCase() + color.slice(1)}`;
-                        button.onclick = () => switchEffect(`./effects/filters/${effectMap[model][color]}`);
-                        buttonContainer.appendChild(button);
+                        const button = document.createElement('div');
+                        button.className = 'filter-button';
+                        button.dataset.path = `./effects/filters/${effectMap[model][color]}`;
+
+                        const img = document.createElement('img');
+                        img.src = imageMap[model][color];
+                        img.className = 'filter-image';
+                        img.alt = `${model} ${color}`;
+
+                        const name = document.createElement('span');
+                        name.className = 'filter-name';
+                        name.textContent = color.charAt(0).toUpperCase() + color.slice(1);
+
+                        button.appendChild(img);
+                        button.appendChild(name);
+
+                        button.onclick = async () => {
+                            await switchEffect(button.dataset.path);
+                            // Update selected
+                            document.querySelectorAll('.filter-button').forEach(btn => btn.classList.remove('selected'));
+                            button.classList.add('selected');
+                        };
+
+                        buttonsDiv.appendChild(button);
                     }
-                }
+                    group.appendChild(buttonsDiv);
+                    container.appendChild(group);
+
+                    // Add divider if not last category
+                    if (catIndex < categories.length - 1) {
+                        const divider = document.createElement('div');
+                        divider.className = 'category-divider';
+                        container.appendChild(divider);
+                    }
+                });
+
+                // Highlight initial selected button
+                const initialButton = Array.from(document.querySelectorAll('.filter-button')).find(btn => btn.dataset.path === currentEffectPath);
+                if (initialButton) initialButton.classList.add('selected');
             } catch (err) {
                 console.error("❌ Error:", err);
             }
@@ -120,6 +241,7 @@
             try {
                 if (!deepAR) throw new Error('DeepAR not initialized');
                 await deepAR.switchEffect(effectPath);
+                currentEffectPath = effectPath;
                 console.log(`✅ Switched to effect: ${effectPath}`);
             } catch (err) {
                 console.error("❌ Failed to switch effect:", err);
