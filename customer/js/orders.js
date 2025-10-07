@@ -60,25 +60,38 @@ function loadUserProfile() {
     document.body.style.display = '';
 }
 
+// Debounce utility
+function debounce(func, wait) {
+    let timeout;
+    return function (...args) {
+        clearTimeout(timeout);
+        timeout = setTimeout(() => func.apply(this, args), wait);
+    };
+}
+
 // Load orders with real-time updates
 function loadOrders() {
     const ordersContainer = document.querySelector('.purchase-history');
     if (!ordersContainer) return;
 
     // Show loading state
-    ordersContainer.innerHTML = `
-        <div class="no-orders">
-            <i class="fas fa-box-open"></i>
-            <h3>Loading Orders...</h3>
-            <p>Please wait while we load your orders</p>
-        </div>
-    `;
+    // ordersContainer.innerHTML = `
+    //     <div class="no-orders">
+    //         <i class="fas fa-box-open"></i>
+    //         <h3>Loading Orders...</h3>
+    //         <p>Please wait while we load your orders</p>
+    //     </div>
+    // `;
+
+    // Debounced display function
+    const debouncedDisplayOrders = debounce(async (orders, container) => {
+        await displayOrders(orders, container);
+    }, 300); // 300ms debounce
 
     // Use real-time data reading
     const unsubscribe = readDataRealtime(
         `smartfit_AR_Database/transactions/${userID}`,
         async (result) => {
-
             if (!result.data) {
                 ordersContainer.innerHTML = `
                     <div class="no-orders">
@@ -90,7 +103,7 @@ function loadOrders() {
                 `;
                 return;
             }
-            
+
             if (!result.success) {
                 ordersContainer.innerHTML = `
                     <div class="no-orders">
@@ -108,24 +121,71 @@ function loadOrders() {
                 if (orderData) {
                     orders.unshift({
                         id: orderId,
+                        orderId: orderId, // Ensure orderId is included
                         ...orderData
                     });
                 }
             }
 
-            // Display orders
-            await displayOrders(orders, ordersContainer);
+            // Display orders using debounced function
+            await debouncedDisplayOrders(orders, ordersContainer);
         }
     );
 
-    // Return unsubscribe function for cleanup (optional)
     return unsubscribe;
 }
 
 // Display orders in the container
 async function displayOrders(orders, ordersContainer) {
-    ordersContainer.innerHTML = '';
+    if (!ordersContainer) return;
 
+    // Create a map of existing order cards by orderId for quick lookup
+    const existingCards = new Map();
+    const orderCards = ordersContainer.querySelectorAll('.order-card');
+    orderCards.forEach(card => {
+        existingCards.set(card.dataset.orderId, card);
+    });
+
+    // Process each order
+    for (const order of orders) {
+        const existingCard = existingCards.get(order.orderId);
+
+        if (existingCard) {
+            // Update existing card
+            const status = order.status?.toLowerCase() || 'pending';
+            const { class: statusClass, text: statusText } = getStatusInfo(status);
+
+            // Update status and action buttons
+            existingCard.dataset.status = status;
+            const statusElement = existingCard.querySelector('.order-status');
+            if (statusElement) {
+                statusElement.className = `order-status ${statusClass}`;
+                statusElement.textContent = statusText;
+            }
+
+            const actionButtons = generateActionButtons(status, order.orderId, order.serialNumber, false, order.item?.shopId);
+            const actionsElement = existingCard.querySelector('.order-actions');
+            if (actionsElement) {
+                actionsElement.innerHTML = actionButtons;
+            }
+
+            // Remove from existingCards to mark as processed
+            existingCards.delete(order.orderId);
+        } else {
+            // Create new card for new order
+            const orderCard = await createOrderCard(order);
+            if (orderCard) {
+                ordersContainer.appendChild(orderCard);
+            }
+        }
+    }
+
+    // Remove any cards for orders that no longer exist or are filtered out
+    existingCards.forEach(card => {
+        card.remove();
+    });
+
+    // If no orders, show the "No Orders Found" message
     if (orders.length === 0) {
         ordersContainer.innerHTML = `
             <div class="no-orders">
@@ -135,16 +195,9 @@ async function displayOrders(orders, ordersContainer) {
                 <a href="/customer/html/browse.html" class="btn btn-shop">Browse Shoes</a>
             </div>
         `;
-        return;
     }
 
-    for (const order of orders) {
-        const orderCard = await createOrderCard(order);
-        if (orderCard) {
-            ordersContainer.appendChild(orderCard);
-        }
-    }
-
+    // Reapply filters after updating cards
     setupOrderFilters();
 }
 
