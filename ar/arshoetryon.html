@@ -488,9 +488,6 @@
             <button class="exit-button" id="exit-btn" title="Exit Fullscreen" style="display: none;">
                 <i class="fas fa-compress"></i>
             </button>
-            <button class="switch-camera-button" id="switchCameraButton" title="Switch Camera">
-                <i class="fa fa-camera"></i>
-            </button>
             <button class="mirror-button" id="mirrorButton" title="Toggle Mirror">
                 <i class="fas fa-arrows-alt-h"></i>
             </button>
@@ -547,7 +544,6 @@
         const exitBtn = document.getElementById('exit-btn');
         const preview = document.getElementById('deepar-div');
         const toggleFilterBtn = document.getElementById('toggle-filter-btn');
-        const switchCameraBtn = document.getElementById('switchCameraButton');
         const mirrorBtn = document.getElementById('mirrorButton');
 
         (async function () {
@@ -706,27 +702,6 @@
                 toggleFilterBtn.classList.add('hidden');
             }
         }
-
-        // Switch camera function
-        async function switchCamera() {
-            if (!deepAR) return;
-
-            loader.classList.add('active');
-            try {
-                isFrontCamera = !isFrontCamera;
-                const facingMode = isFrontCamera ? 'user' : 'environment';
-                await deepAR.setCameraConfig({ facingMode, mirrorCamera: isFrontCamera });
-                console.log(`✅ Switched to ${facingMode} camera.`);
-            } catch (err) {
-                console.error("❌ Failed to switch camera:", err);
-                isFrontCamera = !isFrontCamera; // Revert state on error
-            } finally {
-                loader.classList.remove('active');
-            }
-        }
-
-        // Attach switchCamera to button click
-        switchCameraBtn.addEventListener('click', switchCamera);
 
         // Toggle mirror
         mirrorBtn.addEventListener('click', () => {
