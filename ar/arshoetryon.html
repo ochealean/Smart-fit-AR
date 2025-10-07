@@ -105,7 +105,7 @@
             z-index: 1000;
         }
 
-        .expand-button, .exit-button, .switch-camera-button, .mirror-button {
+        .expand-button, .exit-button, .mirror-button {
             background: rgba(255,255,255,0.8);
             border: none;
             border-radius: 50%;
@@ -119,12 +119,12 @@
             box-shadow: var(--shadow-sm);
         }
 
-        .expand-button:hover, .exit-button:hover, .switch-camera-button:hover, .mirror-button:hover {
+        .expand-button:hover, .exit-button:hover, .mirror-button:hover {
             background: white;
             transform: scale(1.1);
         }
 
-        .expand-button i, .exit-button i, .switch-camera-button i, .mirror-button i {
+        .expand-button i, .exit-button i, .mirror-button i {
             color: var(--primary);
             font-size: 14px;
         }
@@ -527,7 +527,7 @@
         const effectMap = {
             classic: { white: 'classic_white.deepar', black: 'classic_black.deepar', blue: 'classic_blue.deepar', red: 'classic_red.deepar' },
             running: { white: 'running_white.deepar', black: 'running_black.deepar', blue: 'running_blue.deepar', red: 'running_red.deepar' },
-            basketball: { white: 'basketball/white.deepar', black: 'basketball/black.deepar', blue: 'basketball/blue.deepar', red: 'basketball/red.deepar' }
+            basketball: { white: 'basketball_white.deepar', black: 'basketball_black.deepar', blue: 'basketball_blue.deepar', red: 'basketball_red.deepar' }
         };
         const imageMap = {
             classic: { white: '/images/angles/classic/white/main.png', black: '/images/angles/classic/black/main.png', blue: '/images/angles/classic/blue/main.png', red: '/images/angles/classic/red/main.png' },
@@ -695,6 +695,11 @@
                 document.exitFullscreen();
                 preview.classList.remove('fullscreen');
                 filterSection.classList.remove('fullscreen');
+                if (isMirrored) {
+                    preview.classList.add('mirrored');
+                } else {
+                    preview.classList.remove('mirrored');
+                }
                 filterSection.classList.remove('hidden');
                 expandBtn.style.display = 'flex';
                 exitBtn.style.display = 'none';
@@ -720,6 +725,11 @@
             if (!document.fullscreenElement) {
                 preview.classList.remove('fullscreen');
                 filterSection.classList.remove('fullscreen');
+                if (isMirrored) {
+                    preview.classList.add('mirrored');
+                } else {
+                    preview.classList.remove('mirrored');
+                }
                 filterSection.classList.remove('hidden');
                 expandBtn.style.display = 'flex';
                 exitBtn.style.display = 'none';
