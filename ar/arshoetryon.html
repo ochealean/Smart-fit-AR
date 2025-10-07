@@ -7,6 +7,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Segoe+UI:wght@400;600;700&display=swap" rel="stylesheet" />
     <!-- DeepAR browser SDK v5.6.3 (pre-deprecation for foot tracking) -->
     <script src="https://cdn.jsdelivr.net/npm/deepar@5.6.3/js/deepar.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
     <style>
         :root {
             --primary: #5e72e4;
@@ -32,7 +33,7 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            padding: 20px;
+            padding: 15px;
             color: var(--dark);
             overflow-x: hidden;
         }
@@ -41,22 +42,22 @@
             width: 100%;
             max-width: 1200px;
             text-align: center;
-            margin-bottom: 30px;
-            padding: 20px 0;
+            margin-bottom: 20px;
+            padding: 15px 0;
             border-bottom: 1px solid var(--gray);
         }
 
         header h1 {
-            font-size: 1.8rem;
+            font-size: 1.6rem;
             font-weight: 700;
             color: var(--primary);
-            margin-bottom: 10px;
+            margin-bottom: 8px;
         }
 
         header p {
-            font-size: 1rem;
+            font-size: 0.9rem;
             color: #666;
-            max-width: 600px;
+            max-width: 500px;
             margin: 0 auto;
         }
 
@@ -64,17 +65,17 @@
             position: relative;
             width: 100%;
             max-width: 640px;
-            margin-bottom: 30px;
+            margin-bottom: 20px;
         }
 
         #deepar-div {
             width: 100%;
             aspect-ratio: 16/9;
-            border-radius: 12px;
+            border-radius: 10px;
             overflow: hidden;
             box-shadow: var(--shadow-md);
             background-color: #fff;
-            transition: all 0.3s ease;
+            transition: var(--transition);
         }
 
         #deepar-div.fullscreen {
@@ -89,10 +90,15 @@
             border-radius: 0;
         }
 
-        .expand-button {
+        .control-buttons {
             position: absolute;
             top: 10px;
             right: 10px;
+            display: flex;
+            gap: 8px;
+        }
+
+        .expand-button, .exit-button {
             background: rgba(255,255,255,0.8);
             border: none;
             border-radius: 50%;
@@ -104,22 +110,23 @@
             cursor: pointer;
             transition: var(--transition);
             box-shadow: var(--shadow-sm);
+            z-index: 1000;
         }
 
-        .expand-button:hover {
+        .expand-button:hover, .exit-button:hover {
             background: white;
             transform: scale(1.1);
         }
 
-        .expand-button i {
+        .expand-button i, .exit-button i {
             color: var(--primary);
-            font-size: 16px;
+            font-size: 14px;
         }
 
         .filter-section {
             width: 100%;
             max-width: 1200px;
-            margin-bottom: 30px;
+            margin-bottom: 20px;
             transition: max-height 0.3s ease, opacity 0.3s ease;
             overflow: hidden;
         }
@@ -130,8 +137,22 @@
             margin-bottom: 0;
         }
 
+        .filter-section.fullscreen {
+            position: absolute;
+            top: 50px;
+            left: 0;
+            width: 100%;
+            background: rgba(255,255,255,0.95);
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: var(--shadow-md);
+            z-index: 1000;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
         .toggle-button {
-            padding: 8px 24px;
+            padding: 8px 20px;
             background: var(--primary);
             color: white;
             border: none;
@@ -145,6 +166,9 @@
             display: flex;
             align-items: center;
             gap: 8px;
+            width: 100%;
+            max-width: 200px;
+            justify-content: center;
         }
 
         .toggle-button:hover {
@@ -164,12 +188,11 @@
         .filter-container {
             display: flex;
             overflow-x: auto;
-            gap: 30px;
-            padding: 20px 10px;
+            gap: 25px;
+            padding: 15px 10px;
             scroll-snap-type: x proximity;
             scrollbar-width: thin;
             scrollbar-color: var(--primary) var(--gray);
-            position: relative;
         }
 
         .filter-container::-webkit-scrollbar {
@@ -190,9 +213,9 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            padding: 15px 30px;
+            padding: 10px 20px;
             background: #fff;
-            border-radius: 12px;
+            border-radius: 10px;
             box-shadow: var(--shadow-sm);
             scroll-snap-align: center;
             transition: var(--transition);
@@ -204,17 +227,18 @@
         }
 
         .category-title {
-            font-size: 1.2rem;
+            font-size: 1.1rem;
             font-weight: 600;
             color: var(--dark);
-            margin-bottom: 15px;
+            margin-bottom: 10px;
             text-transform: capitalize;
         }
 
         .filter-buttons {
             display: flex;
-            gap: 20px;
+            gap: 15px;
             justify-content: center;
+            flex-wrap: wrap;
         }
 
         .filter-button {
@@ -222,7 +246,7 @@
             flex-direction: column;
             align-items: center;
             cursor: pointer;
-            padding: 8px;
+            padding: 6px;
             border-radius: 50%;
             transition: var(--transition);
             position: relative;
@@ -239,22 +263,22 @@
         .filter-button.selected::after {
             content: '✓';
             position: absolute;
-            bottom: 25px;
-            right: -10px;
-            width: 24px;
-            height: 24px;
+            bottom: 20px;
+            right: -8px;
+            width: 20px;
+            height: 20px;
             background: var(--primary);
             color: white;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 14px;
+            font-size: 12px;
         }
 
         .filter-image {
-            width: 70px;
-            height: 70px;
+            width: 60px;
+            height: 60px;
             border-radius: 50%;
             object-fit: cover;
             box-shadow: var(--shadow-sm);
@@ -267,8 +291,8 @@
         }
 
         .filter-name {
-            margin-top: 8px;
-            font-size: 0.9rem;
+            margin-top: 6px;
+            font-size: 0.8rem;
             text-align: center;
             color: #555;
             text-transform: capitalize;
@@ -277,21 +301,23 @@
         .category-divider {
             min-width: 1px;
             background: linear-gradient(to bottom, transparent, var(--gray), transparent);
-            height: 80%;
+            height: 70%;
             align-self: center;
         }
 
         .back-button {
-            padding: 12px 32px;
+            padding: 10px 28px;
             background: linear-gradient(to right, var(--accent), #ff8c1a);
             color: white;
             border: none;
             border-radius: 50px;
             cursor: pointer;
             font-weight: 600;
-            font-size: 1rem;
+            font-size: 0.9rem;
             transition: var(--transition);
             box-shadow: var(--shadow-sm);
+            width: 100%;
+            max-width: 250px;
         }
 
         .back-button:hover {
@@ -336,19 +362,23 @@
             }
 
             header h1 {
-                font-size: 1.5rem;
+                font-size: 1.4rem;
             }
 
             header p {
-                font-size: 0.9rem;
+                font-size: 0.85rem;
             }
 
-            #deepar-div {
-                max-width: 100%;
+            .preview-container {
+                margin-bottom: 15px;
+            }
+
+            .filter-section {
+                margin-bottom: 15px;
             }
 
             .category-group {
-                padding: 15px 20px;
+                padding: 10px 15px;
             }
 
             .filter-buttons {
@@ -356,32 +386,43 @@
             }
 
             .filter-image {
-                width: 60px;
-                height: 60px;
+                width: 50px;
+                height: 50px;
             }
 
             .filter-name {
-                font-size: 0.8rem;
+                font-size: 0.7rem;
             }
 
             .back-button {
-                width: 100%;
-                max-width: 300px;
+                max-width: 200px;
             }
         }
 
         @media (max-width: 480px) {
-            .category-group {
-                padding: 10px;
+            header {
+                padding: 10px 0;
+            }
+
+            header h1 {
+                font-size: 1.2rem;
+            }
+
+            header p {
+                font-size: 0.75rem;
             }
 
             .filter-buttons {
                 flex-direction: column;
-                gap: 15px;
+                gap: 10px;
             }
 
             .category-divider {
                 display: none;
+            }
+
+            .toggle-button {
+                max-width: 180px;
             }
         }
     </style>
@@ -395,9 +436,14 @@
     <!-- AR preview container -->
     <div class="preview-container">
         <div id="deepar-div"></div>
-        <button class="expand-button" id="expand-btn" title="Toggle Fullscreen">
-            <i class="fas fa-expand"></i>
-        </button>
+        <div class="control-buttons">
+            <button class="expand-button" id="expand-btn" title="Enter Fullscreen">
+                <i class="fas fa-expand"></i>
+            </button>
+            <button class="exit-button" id="exit-btn" title="Exit Fullscreen" style="display: none;">
+                <i class="fas fa-compress"></i>
+            </button>
+        </div>
     </div>
 
     <!-- Toggle button for filters -->
@@ -426,7 +472,7 @@
         const effectMap = {
             classic: { white: 'classic_white.deepar', black: 'classic_black.deepar', blue: 'classic_blue.deepar', red: 'classic_red.deepar' },
             running: { white: 'running_white.deepar', black: 'running_black.deepar', blue: 'running_blue.deepar', red: 'running_red.deepar' },
-            basketball: { white: 'basketball_white.deepar', black: 'basketball_black.deepar', blue: 'basketball_blue.deepar', red: 'basketball_red.deepar' }
+            basketball: { white: 'basketball/white.deepar', black: 'basketball/black.deepar', blue: 'basketball/blue.deepar', red: 'basketball/red.deepar' }
         };
         const imageMap = {
             classic: { white: '/images/angles/classic/white/main.png', black: '/images/angles/classic/black/main.png', blue: '/images/angles/classic/blue/main.png', red: '/images/angles/classic/red/main.png' },
@@ -440,14 +486,15 @@
         const toggleButton = document.getElementById('toggle-filters');
         const toggleIcon = toggleButton.querySelector('i');
         const expandBtn = document.getElementById('expand-btn');
-        const expandIcon = expandBtn.querySelector('i');
+        const exitBtn = document.getElementById('exit-btn');
+        const preview = document.getElementById('deepar-div');
 
         (async function () {
             loader.classList.add('active');
             try {
                 deepAR = await deepar.initialize({
                     licenseKey: 'f0eafd99d224758bdc2c7271acd80bc7642fdb178ba74faf1c61c1ec7d25221057493e7b9b73c58d',
-                    previewElement: document.querySelector('#deepar-div'),
+                    previewElement: preview,
                 }, {
                     additionalOptions: {
                         cameraConfig: {
@@ -470,7 +517,6 @@
                 const container = document.getElementById('filter-container');
                 const categories = Object.keys(effectMap);
                 categories.forEach((model, catIndex) => {
-                    // Add category group
                     const group = document.createElement('div');
                     group.className = 'category-group';
                     const title = document.createElement('div');
@@ -478,7 +524,6 @@
                     title.textContent = model.charAt(0).toUpperCase() + model.slice(1);
                     group.appendChild(title);
 
-                    // Add buttons for colors
                     const buttonsDiv = document.createElement('div');
                     buttonsDiv.className = 'filter-buttons';
                     for (const color in effectMap[model]) {
@@ -518,7 +563,6 @@
                     group.appendChild(buttonsDiv);
                     container.appendChild(group);
 
-                    // Add divider if not last category
                     if (catIndex < categories.length - 1) {
                         const divider = document.createElement('div');
                         divider.className = 'category-divider';
@@ -526,7 +570,6 @@
                     }
                 });
 
-                // Highlight initial selected button
                 const initialButton = Array.from(document.querySelectorAll('.filter-button')).find(btn => btn.dataset.path === currentEffectPath);
                 if (initialButton) initialButton.classList.add('selected');
 
@@ -561,13 +604,40 @@
 
         // Toggle fullscreen
         expandBtn.addEventListener('click', () => {
-            const preview = document.getElementById('deepar-div');
+            enterFullscreen();
+        });
+
+        exitBtn.addEventListener('click', () => {
+            exitFullscreen();
+        });
+
+        function enterFullscreen() {
             if (!document.fullscreenElement) {
+                preview.classList.add('fullscreen');
+                filterSection.classList.add('fullscreen');
+                expandBtn.style.display = 'none';
+                exitBtn.style.display = 'flex';
                 preview.requestFullscreen().catch(err => console.error('Fullscreen error:', err));
-                expandIcon.classList.replace('fa-expand', 'fa-compress');
-            } else {
+            }
+        }
+
+        function exitFullscreen() {
+            if (document.fullscreenElement) {
                 document.exitFullscreen();
-                expandIcon.classList.replace('fa-compress', 'fa-expand');
+                preview.classList.remove('fullscreen');
+                filterSection.classList.remove('fullscreen');
+                expandBtn.style.display = 'flex';
+                exitBtn.style.display = 'none';
+            }
+        }
+
+        // Handle fullscreen change
+        document.addEventListener('fullscreenchange', () => {
+            if (!document.fullscreenElement) {
+                preview.classList.remove('fullscreen');
+                filterSection.classList.remove('fullscreen');
+                expandBtn.style.display = 'flex';
+                exitBtn.style.display = 'none';
             }
         });
     </script>
