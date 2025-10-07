@@ -60,21 +60,105 @@
             margin: 0 auto;
         }
 
-        #deepar-div {
+        .preview-container {
+            position: relative;
             width: 100%;
             max-width: 640px;
+            margin-bottom: 30px;
+        }
+
+        #deepar-div {
+            width: 100%;
             aspect-ratio: 16/9;
             border-radius: 12px;
             overflow: hidden;
             box-shadow: var(--shadow-md);
-            margin-bottom: 30px;
             background-color: #fff;
+            transition: all 0.3s ease;
+        }
+
+        #deepar-div.fullscreen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            max-width: none;
+            aspect-ratio: unset;
+            z-index: 999;
+            border-radius: 0;
+        }
+
+        .expand-button {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(255,255,255,0.8);
+            border: none;
+            border-radius: 50%;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: var(--transition);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .expand-button:hover {
+            background: white;
+            transform: scale(1.1);
+        }
+
+        .expand-button i {
+            color: var(--primary);
+            font-size: 16px;
         }
 
         .filter-section {
             width: 100%;
             max-width: 1200px;
             margin-bottom: 30px;
+            transition: max-height 0.3s ease, opacity 0.3s ease;
+            overflow: hidden;
+        }
+
+        .filter-section.minimized {
+            max-height: 0;
+            opacity: 0;
+            margin-bottom: 0;
+        }
+
+        .toggle-button {
+            padding: 8px 24px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.9rem;
+            transition: var(--transition);
+            box-shadow: var(--shadow-sm);
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .toggle-button:hover {
+            background: #4a5fd1;
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .toggle-button i {
+            transition: transform 0.3s ease;
+        }
+
+        .toggle-button.minimized i {
+            transform: rotate(180deg);
         }
 
         .filter-container {
@@ -106,8 +190,7 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            min-width: 280px;
-            padding: 15px;
+            padding: 15px 30px;
             background: #fff;
             border-radius: 12px;
             box-shadow: var(--shadow-sm);
@@ -149,15 +232,15 @@
             transform: scale(1.05);
         }
 
-        .filter-button.selected {
+        .filter-button.selected .filter-image {
             box-shadow: 0 0 0 3px var(--primary);
         }
 
         .filter-button.selected::after {
             content: '✓';
             position: absolute;
-            bottom: -15px;
-            right: -15px;
+            bottom: 25px;
+            right: -10px;
             width: 24px;
             height: 24px;
             background: var(--primary);
@@ -265,7 +348,7 @@
             }
 
             .category-group {
-                min-width: 220px;
+                padding: 15px 20px;
             }
 
             .filter-buttons {
@@ -289,7 +372,6 @@
 
         @media (max-width: 480px) {
             .category-group {
-                min-width: 100%;
                 padding: 10px;
             }
 
@@ -311,10 +393,20 @@
     </header>
 
     <!-- AR preview container -->
-    <div id="deepar-div"></div>
+    <div class="preview-container">
+        <div id="deepar-div"></div>
+        <button class="expand-button" id="expand-btn" title="Toggle Fullscreen">
+            <i class="fas fa-expand"></i>
+        </button>
+    </div>
+
+    <!-- Toggle button for filters -->
+    <button class="toggle-button" id="toggle-filters">
+        <i class="fas fa-chevron-down"></i> Show Filters
+    </button>
 
     <!-- Filter selection container (horizontal scroll) -->
-    <section class="filter-section">
+    <section class="filter-section" id="filter-section">
         <div class="filter-container" id="filter-container"></div>
     </section>
 
@@ -344,6 +436,11 @@
 
         let currentEffectPath = `./effects/filters/${effectMap[initialModel][initialColor]}`;
         const loader = document.getElementById('loader');
+        const filterSection = document.getElementById('filter-section');
+        const toggleButton = document.getElementById('toggle-filters');
+        const toggleIcon = toggleButton.querySelector('i');
+        const expandBtn = document.getElementById('expand-btn');
+        const expandIcon = expandBtn.querySelector('i');
 
         (async function () {
             loader.classList.add('active');
@@ -451,6 +548,28 @@
                 console.error("❌ Failed to switch effect:", err);
             }
         }
+
+        // Toggle filters
+        toggleButton.addEventListener('click', () => {
+            filterSection.classList.toggle('minimized');
+            if (filterSection.classList.contains('minimized')) {
+                toggleButton.innerHTML = '<i class="fas fa-chevron-up"></i> Show Filters';
+            } else {
+                toggleButton.innerHTML = '<i class="fas fa-chevron-down"></i> Hide Filters';
+            }
+        });
+
+        // Toggle fullscreen
+        expandBtn.addEventListener('click', () => {
+            const preview = document.getElementById('deepar-div');
+            if (!document.fullscreenElement) {
+                preview.requestFullscreen().catch(err => console.error('Fullscreen error:', err));
+                expandIcon.classList.replace('fa-expand', 'fa-compress');
+            } else {
+                document.exitFullscreen();
+                expandIcon.classList.replace('fa-compress', 'fa-expand');
+            }
+        });
     </script>
 </body>
 </html>
