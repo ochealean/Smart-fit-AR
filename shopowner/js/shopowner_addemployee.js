@@ -24,7 +24,7 @@ const employeePasswordInput = document.getElementById('employeePassword');
 const confirmPasswordInput = document.getElementById('confirmPassword');
 const logoutBtn = document.getElementById('logout_btn');
 const generateEmployeesBtn = document.getElementById('generateEmployees');
-const createBatchEmployeesBtn = document.getElementById('createBatchEmployees');
+const downloadBatchEmployeesBtn = document.getElementById('downloadBatchEmployees');
 const batchPreview = document.getElementById('batchPreview');
 const employeeCountInput = document.getElementById('employeeCount');
 const batchEmployeeRoleInput = document.getElementById('batchEmployeeRole');
@@ -174,8 +174,8 @@ function setupEventListeners() {
         generateEmployeesBtn.addEventListener('click', generateBatchEmployees);
     }
 
-    if (createBatchEmployeesBtn) {
-        createBatchEmployeesBtn.addEventListener('click', createBatchEmployees);
+    if (downloadBatchEmployeesBtn) {
+        downloadBatchEmployeesBtn.addEventListener('click', createBatchEmployees);
     }
 }
 
@@ -422,7 +422,7 @@ async function generateBatchEmployees() {
             // Display the generated employees
             displayGeneratedEmployees(result.employees);
             batchPreview.classList.add('active');
-            createBatchEmployeesBtn.disabled = false;
+            downloadBatchEmployeesBtn.disabled = false;
         } else {
             alert('Error generating employees: ' + result.error);
         }
@@ -464,8 +464,8 @@ function displayGeneratedEmployees(employees) {
 async function createBatchEmployees() {
     try {
         // Show loading state
-        createBatchEmployeesBtn.disabled = true;
-        createBatchEmployeesBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Creating Employees...';
+        downloadBatchEmployeesBtn.disabled = true;
+        downloadBatchEmployeesBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Creating Employees...';
 
         const role = batchEmployeeRoleInput.value;
         const count = parseInt(employeeCountInput.value);
@@ -500,8 +500,8 @@ async function createBatchEmployees() {
         console.error('Error creating accounts:', error);
         alert('Error creating accounts. Please check console for details.');
     } finally {
-        createBatchEmployeesBtn.disabled = false;
-        createBatchEmployeesBtn.innerHTML = '<i class="fas fa-save"></i> Create All Employees';
+        downloadBatchEmployeesBtn.disabled = false;
+        downloadBatchEmployeesBtn.innerHTML = '<i class="fas fa-save"></i> Create All Employees';
     }
 }
 
@@ -521,8 +521,8 @@ async function resetBatchCreationForm() {
     emailDomainInput.value = '';
     
     // Reset buttons
-    createBatchEmployeesBtn.disabled = true;
-    createBatchEmployeesBtn.innerHTML = '<i class="fas fa-save"></i> Create All Employees';
+    downloadBatchEmployeesBtn.disabled = true;
+    downloadBatchEmployeesBtn.innerHTML = '<i class="fas fa-save"></i> Create All Employees';
     
     // Update the last employee number in memory
     const count = parseInt(employeeCountInput.value) || 0;
