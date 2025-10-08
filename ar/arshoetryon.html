@@ -80,20 +80,21 @@
             transition: var(--transition);
         }
 
-        #deepar-div.mirrored {
-            transform: scaleX(-1);
+        #deepar-div.expanded {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 80vw;
+            height: 80vh;
+            max-width: 90%;
+            aspect-ratio: unset;
+            border-radius: 10px;
+            z-index: 1;
         }
 
-        #deepar-div.fullscreen {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            max-width: none;
-            aspect-ratio: unset;
-            z-index: 999;
-            border-radius: 0;
+        #deepar-div.mirrored {
+            transform: translate(-50%, -50%) scaleX(-1);
         }
 
         .control-buttons {
@@ -105,7 +106,14 @@
             z-index: 1000;
         }
 
-        .expand-button, .exit-button, .mirror-button {
+        .control-buttons.expanded {
+            position: fixed;
+            top: calc(40vh + 10px);
+            right: calc(10vw + 10px);
+            z-index: 1001;
+        }
+
+        .expand-button, .exit-button, .mirror-button, .screenshot-button {
             background: rgba(255,255,255,0.8);
             border: none;
             border-radius: 50%;
@@ -119,12 +127,12 @@
             box-shadow: var(--shadow-sm);
         }
 
-        .expand-button:hover, .exit-button:hover, .mirror-button:hover {
+        .expand-button:hover, .exit-button:hover, .mirror-button:hover, .screenshot-button:hover {
             background: white;
             transform: scale(1.1);
         }
 
-        .expand-button i, .exit-button i, .mirror-button i {
+        .expand-button i, .exit-button i, .mirror-button i, .screenshot-button i {
             color: var(--primary);
             font-size: 14px;
         }
@@ -144,41 +152,65 @@
             margin-bottom: 0;
         }
 
-        .filter-section.fullscreen {
-            position: absolute;
-            top: 750px;
-            left: 0;
-            width: 100%;
+        .filter-section.expanded {
+            position: fixed;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80vw;
+            max-width: 90%;
             background: rgba(255,255,255,0.95);
             padding: 15px;
-            border-radius: 10px;
+            border-radius: 10px 10px 0 0;
             box-shadow: var(--shadow-md);
-            z-index: 1001;
+            z-index: 1002;
             max-height: 200px;
             overflow-y: auto;
             display: flex;
+            flex-direction: row;
         }
 
-        .filter-section.fullscreen.hidden {
+        .filter-section.expanded .filter-container {
+            flex-direction: row;
+            flex-wrap: nowrap;
+        }
+
+        .filter-section.expanded .category-group {
+            flex-direction: row;
+            gap: 20px;
+            min-width: auto;
+        }
+
+        .filter-section.expanded .category-title {
+            writing-mode: vertical-rl;
+            transform: rotate(180deg);
+            margin-right: 10px;
+        }
+
+        .filter-section.expanded .filter-buttons {
+            flex-direction: row;
+        }
+
+        .filter-section.expanded.hidden {
             display: none;
         }
 
         .toggle-filter-btn {
-            position: absolute;
-            top: 50px;
-            right: 10px;
+            position: fixed;
+            bottom: 20px;
+            right: 10vw;
             background: rgba(255,255,255,0.8);
             border: none;
             border-radius: 50%;
-            width: 32px;
-            height: 32px;
+            width: 40px;
+            height: 40px;
             display: flex;
             align-items: center;
             justify-content: center;
             cursor: pointer;
             transition: var(--transition);
             box-shadow: var(--shadow-sm);
-            z-index: 1002;
+            z-index: 1003;
         }
 
         .toggle-filter-btn:hover {
@@ -188,7 +220,7 @@
 
         .toggle-filter-btn i {
             color: var(--primary);
-            font-size: 14px;
+            font-size: 18px;
         }
 
         .toggle-filter-btn.hidden {
@@ -482,14 +514,17 @@
     <div class="preview-container">
         <div id="deepar-div"></div>
         <div class="control-buttons">
-            <button class="expand-button" id="expand-btn" title="Enter Fullscreen">
+            <button class="expand-button" id="expand-btn" title="Expand View">
                 <i class="fas fa-expand"></i>
             </button>
-            <button class="exit-button" id="exit-btn" title="Exit Fullscreen" style="display: none;">
+            <button class="exit-button" id="exit-btn" title="Exit Expanded View" style="display: none;">
                 <i class="fas fa-compress"></i>
             </button>
-            <button class="mirror-button" id="mirrorButton" title="Toggle Mirror">
+            <button class="mirror-button" id="mirrorBtnNormal" title="Toggle Mirror">
                 <i class="fas fa-arrows-alt-h"></i>
+            </button>
+            <button class="screenshot-button" id="screenshotBtnNormal" title="Take Screenshot">
+                <i class="fas fa-camera"></i>
             </button>
         </div>
     </div>
@@ -505,11 +540,19 @@
     </section>
 
     <!-- Back button -->
-    <button class="back-button" onclick="window.location.href='arshoe.html'">Back to Collection</button>
+    <button class="back-button" id="back-button" onclick="window.location.href='arshoe.html'">Back to Collection</button>
 
-    <!-- Toggle filter button for fullscreen -->
+    <!-- Toggle filter button for expanded view -->
     <button class="toggle-filter-btn" id="toggle-filter-btn" title="Toggle Filters">
         <i class="fas fa-filter"></i>
+    </button>
+
+    <!-- Mirror and Screenshot buttons for expanded view -->
+    <button class="mirror-button" id="mirrorBtnExpanded" title="Toggle Mirror" style="display: none; position: fixed; top: calc(40vh + 10px); right: calc(10vw + 50px); z-index: 1001;">
+        <i class="fas fa-arrows-alt-h"></i>
+    </button>
+    <button class="screenshot-button" id="screenshotBtnExpanded" title="Take Screenshot" style="display: none; position: fixed; top: calc(40vh + 10px); right: calc(10vw + 10px); z-index: 1001;">
+        <i class="fas fa-camera"></i>
     </button>
 
     <!-- Loader -->
@@ -527,7 +570,7 @@
         const effectMap = {
             classic: { white: 'classic_white.deepar', black: 'classic_black.deepar', blue: 'classic_blue.deepar', red: 'classic_red.deepar' },
             running: { white: 'running_white.deepar', black: 'running_black.deepar', blue: 'running_blue.deepar', red: 'running_red.deepar' },
-            basketball: { white: 'basketball_white.deepar', black: 'basketball_black.deepar', blue: 'basketball_blue.deepar', red: 'basketball_red.deepar' }
+            basketball: { white: 'basketball/white.deepar', black: 'basketball_black.deepar', blue: 'basketball_blue.deepar', red: 'basketball_red.deepar' }
         };
         const imageMap = {
             classic: { white: '/images/angles/classic/white/main.png', black: '/images/angles/classic/black/main.png', blue: '/images/angles/classic/blue/main.png', red: '/images/angles/classic/red/main.png' },
@@ -539,12 +582,15 @@
         const loader = document.getElementById('loader');
         const filterSection = document.getElementById('filter-section');
         const toggleButton = document.getElementById('toggle-filters');
-        const toggleIcon = toggleButton.querySelector('i');
         const expandBtn = document.getElementById('expand-btn');
         const exitBtn = document.getElementById('exit-btn');
         const preview = document.getElementById('deepar-div');
         const toggleFilterBtn = document.getElementById('toggle-filter-btn');
-        const mirrorBtn = document.getElementById('mirrorButton');
+        const mirrorBtnNormal = document.getElementById('mirrorBtnNormal');
+        const mirrorBtnExpanded = document.getElementById('mirrorBtnExpanded');
+        const screenshotBtnNormal = document.getElementById('screenshotBtnNormal');
+        const screenshotBtnExpanded = document.getElementById('screenshotBtnExpanded');
+        const backButton = document.getElementById('back-button');
 
         (async function () {
             loader.classList.add('active');
@@ -555,14 +601,13 @@
                 }, {
                     additionalOptions: {
                         cameraConfig: {
-                            facingMode: 'environment', // Start with back camera
+                            facingMode: 'environment',
                             mirrorCamera: false
                         }
                     }
                 });
                 console.log("✅ DeepAR initialized with back camera.");
 
-                // Load initial effect based on URL parameters
                 await deepAR.switchEffect(currentEffectPath);
                 console.log(`✅ Initial shoe effect loaded: ${currentEffectPath}`);
 
@@ -570,7 +615,6 @@
                     console.log(visible ? '👟 Feet detected!' : 'No feet visible.');
                 };
 
-                // Dynamically populate filter buttons with categories and dividers
                 const container = document.getElementById('filter-container');
                 const categories = Object.keys(effectMap);
                 categories.forEach((model, catIndex) => {
@@ -622,7 +666,7 @@
 
                     if (catIndex < categories.length - 1) {
                         const divider = document.createElement('div');
-                        divider.className = 'category-divider';
+                        divider.classList = 'category-divider';
                         container.appendChild(divider);
                     }
                 });
@@ -649,7 +693,6 @@
             }
         }
 
-        // Toggle filters
         toggleButton.addEventListener('click', () => {
             filterSection.classList.toggle('minimized');
             if (filterSection.classList.contains('minimized')) {
@@ -659,16 +702,14 @@
             }
         });
 
-        // Toggle fullscreen
         expandBtn.addEventListener('click', () => {
-            enterFullscreen();
+            enterExpanded();
         });
 
         exitBtn.addEventListener('click', () => {
-            exitFullscreen();
+            exitExpanded();
         });
 
-        // Toggle filter visibility in fullscreen
         toggleFilterBtn.addEventListener('click', () => {
             filterSection.classList.toggle('hidden');
             if (filterSection.classList.contains('hidden')) {
@@ -678,33 +719,36 @@
             }
         });
 
-        function enterFullscreen() {
-            if (!document.fullscreenElement) {
-                preview.classList.add('fullscreen');
-                filterSection.classList.add('fullscreen');
-                expandBtn.style.display = 'none';
-                exitBtn.style.display = 'flex';
-                toggleFilterBtn.classList.remove('hidden');
-                toggleFilterBtn.style.display = 'flex';
-                preview.requestFullscreen().catch(err => console.error('Fullscreen error:', err));
-            }
+        function enterExpanded() {
+            preview.classList.add('expanded');
+            filterSection.classList.add('expanded');
+            backButton.style.display = 'none';
+            expandBtn.style.display = 'none';
+            exitBtn.style.display = 'flex';
+            toggleFilterBtn.style.display = 'flex';
+            mirrorBtnNormal.style.display = 'none';
+            screenshotBtnNormal.style.display = 'none';
+            mirrorBtnExpanded.style.display = 'flex';
+            screenshotBtnExpanded.style.display = 'flex';
+            document.body.style.overflow = 'hidden';
         }
 
-        function exitFullscreen() {
-            if (document.fullscreenElement) {
-                document.exitFullscreen();
-                preview.classList.remove('fullscreen');
-                filterSection.classList.remove('fullscreen');
-                filterSection.classList.remove('hidden');
-                expandBtn.style.display = 'flex';
-                exitBtn.style.display = 'none';
-                toggleFilterBtn.style.display = 'none';
-                toggleFilterBtn.classList.add('hidden');
-            }
+        function exitExpanded() {
+            preview.classList.remove('expanded');
+            filterSection.classList.remove('expanded');
+            backButton.style.display = 'block';
+            expandBtn.style.display = 'flex';
+            exitBtn.style.display = 'none';
+            toggleFilterBtn.style.display = 'none';
+            filterSection.classList.remove('hidden');
+            mirrorBtnNormal.style.display = 'flex';
+            screenshotBtnNormal.style.display = 'flex';
+            mirrorBtnExpanded.style.display = 'none';
+            screenshotBtnExpanded.style.display = 'none';
+            document.body.style.overflow = 'auto';
         }
 
-        // Toggle mirror
-        mirrorBtn.addEventListener('click', () => {
+        mirrorBtnNormal.addEventListener('click', () => {
             isMirrored = !isMirrored;
             if (isMirrored) {
                 preview.classList.add('mirrored');
@@ -715,16 +759,40 @@
             }
         });
 
-        // Handle fullscreen change
-        document.addEventListener('fullscreenchange', () => {
-            if (!document.fullscreenElement) {
-                preview.classList.remove('fullscreen');
-                filterSection.classList.remove('fullscreen');
-                filterSection.classList.remove('hidden');
-                expandBtn.style.display = 'flex';
-                exitBtn.style.display = 'none';
-                toggleFilterBtn.style.display = 'none';
-                toggleFilterBtn.classList.add('hidden');
+        mirrorBtnExpanded.addEventListener('click', () => {
+            isMirrored = !isMirrored;
+            if (isMirrored) {
+                preview.classList.add('mirrored');
+                console.log('✅ Camera mirrored.');
+            } else {
+                preview.classList.remove('mirrored');
+                console.log('✅ Camera unmirrored.');
+            }
+        });
+
+        screenshotBtnNormal.addEventListener('click', async () => {
+            try {
+                const dataUrl = await deepAR.takeScreenshot();
+                const link = document.createElement('a');
+                link.href = dataUrl;
+                link.download = `screenshot_${Date.now()}.png`;
+                link.click();
+                console.log('✅ Screenshot captured.');
+            } catch (err) {
+                console.error('❌ Screenshot error:', err);
+            }
+        });
+
+        screenshotBtnExpanded.addEventListener('click', async () => {
+            try {
+                const dataUrl = await deepAR.takeScreenshot();
+                const link = document.createElement('a');
+                link.href = dataUrl;
+                link.download = `screenshot_${Date.now()}.png`;
+                link.click();
+                console.log('✅ Screenshot captured.');
+            } catch (err) {
+                console.error('❌ Screenshot error:', err);
             }
         });
     </script>
