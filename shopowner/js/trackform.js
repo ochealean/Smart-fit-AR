@@ -42,10 +42,15 @@ async function testAutoConfirmService() {
         const data = await response.json();
         console.log('✅ Auto-confirm service is running:', data);
         
-        // Also get statistics
-        const statsResponse = await fetch('https://smartfitar-auto-orderreceive.onrender.com/statistics');
-        const stats = await statsResponse.json();
-        console.log('📊 Order statistics:', stats);
+        // Test quick check
+        const quickResponse = await fetch('https://smartfitar-auto-orderreceive.onrender.com/quick-check', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        });
+        const quickData = await quickResponse.json();
+        console.log('📊 Quick check results:', quickData);
         
         return true;
     } catch (error) {
