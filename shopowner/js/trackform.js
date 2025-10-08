@@ -35,9 +35,25 @@ function getUrlParams() {
     }
 }
 
+// Test the auto-confirm service connection
+async function testAutoConfirmService() {
+    try {
+        const response = await fetch('https://smartfitar-auto-orderreceive.onrender.com/health');
+        const data = await response.json();
+        console.log('✅ Auto-confirm service is running:', data);
+        return true;
+    } catch (error) {
+        console.error('❌ Auto-confirm service is not reachable:', error);
+        return false;
+    }
+}
 // Initialize the page
 async function initializeTracking() {
     const authResult = await checkUserAuth();
+
+
+    // Call this on page load
+    await testAutoConfirmService();
 
     if (!authResult.authenticated) {
         window.location.href = "/login.html";
