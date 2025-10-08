@@ -111,6 +111,7 @@ body {
     font-size: 1.1rem;
 }
 
+/* Header - Same as template */
 .header {
     display: flex;
     justify-content: space-between;
@@ -146,6 +147,53 @@ body {
     object-fit: cover;
     border: 2px solid var(--primary);
     box-shadow: var(--shadow-sm);
+}
+
+.logo {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.5rem 1rem;
+    margin-bottom: 2rem;
+    font-size: 1.25rem;
+    font-weight: 700;
+}
+
+.logo-icon {
+    background: rgba(255, 255, 255, 0.2);
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.nav-items {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.nav-item {
+    padding: 0.75rem 1rem;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: var(--transition);
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    color: rgba(255, 255, 255, 0.9);
+    text-decoration: none;
+    font-size: 0.95rem;
+    font-weight: 500;
+}
+
+.nav-item:hover,
+.nav-item.active {
+    background: rgba(255, 255, 255, 0.15);
+    color: white;
+    transform: translateX(4px);
 }
 
 .main-content {
@@ -206,6 +254,76 @@ body {
     box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.2);
 }
 
+.phone-input-container {
+    display: flex;
+    align-items: center;
+    border: 1px solid var(--gray-light);
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+    background: white;
+}
+
+.country-code {
+    padding: 0 1rem;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    background: var(--light);
+    color: var(--gray-dark);
+    font-weight: 500;
+}
+
+.phone-input-container input {
+    border: none;
+    flex: 1;
+    padding: 0.8rem 1rem;
+}
+
+.password-toggle {
+    position: absolute;
+    right: 1rem;
+    top: 3rem;
+    cursor: pointer;
+    color: var(--gray-dark);
+    transition: var(--transition);
+}
+
+.password-toggle:hover {
+    color: var(--primary);
+}
+
+#passwordRequirements {
+    background-color: var(--light);
+    padding: 1rem;
+    border-radius: var(--radius-sm);
+    margin-top: 0.5rem;
+    border: 1px solid var(--gray-light);
+}
+
+#passwordRequirements p {
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+    color: var(--dark);
+}
+
+#passwordRequirements ul {
+    list-style-type: none;
+    padding-left: 0;
+}
+
+#passwordRequirements li {
+    margin-bottom: 0.3rem;
+    font-size: 0.9rem;
+    color: var(--gray-dark);
+}
+
+#passwordRequirements li::before {
+    content: "•";
+    color: var(--error);
+    font-weight: bold;
+    margin-right: 0.5rem;
+}
+
 .btn {
     padding: 0.65rem 1.25rem;
     border-radius: var(--radius-sm);
@@ -249,6 +367,31 @@ body {
     margin-top: 1.5rem;
     padding-top: 1.5rem;
     border-top: 1px solid var(--gray-light);
+}
+
+/* Batch Creation Styles */
+.creation-options {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--gray-light);
+}
+
+.creation-option {
+    padding: 0.75rem 1.5rem;
+    border-radius: var(--radius-sm);
+    background: var(--light);
+    cursor: pointer;
+    transition: var(--transition);
+    border: 1px solid var(--gray-light);
+    font-weight: 500;
+}
+
+.creation-option.active {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
 }
 
 .batch-controls {
@@ -317,6 +460,34 @@ body {
     border-right: none;
     border-top-left-radius: var(--radius-sm);
     border-bottom-left-radius: var(--radius-sm);
+}
+
+.email-options {
+    margin: 1rem 0;
+    padding: 1rem;
+    background: var(--light);
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--gray-light);
+}
+
+.email-options label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+    cursor: pointer;
+}
+
+.account-creation-type {
+    margin-bottom: 2rem;
+}
+
+.single-creation {
+    display: block;
+}
+
+.batch-creation {
+    display: none;
 }
 
 .batch-creation.active {
@@ -390,5 +561,10 @@ body {
 
     .batch-account {
         grid-template-columns: 1fr;
+    }
+
+    .creation-options {
+        flex-direction: column;
+        gap: 0.5rem;
     }
 }
