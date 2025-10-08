@@ -145,18 +145,40 @@
         }
 
         .filter-section.fullscreen {
-            position: absolute;
-            top: 750px;
+            position: fixed;
+            bottom: 0;
             left: 0;
             width: 100%;
             background: rgba(255,255,255,0.95);
             padding: 15px;
-            border-radius: 10px;
+            border-radius: 10px 10px 0 0;
             box-shadow: var(--shadow-md);
             z-index: 1001;
             max-height: 200px;
             overflow-y: auto;
             display: flex;
+            flex-direction: row;
+        }
+
+        .filter-section.fullscreen .filter-container {
+            flex-direction: row;
+            flex-wrap: nowrap;
+        }
+
+        .filter-section.fullscreen .category-group {
+            flex-direction: row;
+            gap: 20px;
+            min-width: auto;
+        }
+
+        .filter-section.fullscreen .category-title {
+            writing-mode: vertical-rl;
+            transform: rotate(180deg);
+            margin-right: 10px;
+        }
+
+        .filter-section.fullscreen .filter-buttons {
+            flex-direction: row;
         }
 
         .filter-section.fullscreen.hidden {
@@ -164,14 +186,14 @@
         }
 
         .toggle-filter-btn {
-            position: absolute;
-            top: 50px;
-            right: 10px;
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
             background: rgba(255,255,255,0.8);
             border: none;
             border-radius: 50%;
-            width: 32px;
-            height: 32px;
+            width: 40px;
+            height: 40px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -188,7 +210,7 @@
 
         .toggle-filter-btn i {
             color: var(--primary);
-            font-size: 14px;
+            font-size: 18px;
         }
 
         .toggle-filter-btn.hidden {
@@ -508,11 +530,19 @@
     </section>
 
     <!-- Back button -->
-    <button class="back-button" onclick="window.location.href='arshoe.html'">Back to Collection</button>
+    <button class="back-button" id="back-button" onclick="window.location.href='arshoe.html'">Back to Collection</button>
 
     <!-- Toggle filter button for fullscreen -->
     <button class="toggle-filter-btn" id="toggle-filter-btn" title="Toggle Filters">
         <i class="fas fa-filter"></i>
+    </button>
+
+    <!-- Mirror and Screenshot buttons for fullscreen -->
+    <button class="mirror-button" id="mirrorBtnFull" title="Toggle Mirror" style="display: none; position: fixed; top: 10px; right: 120px; z-index: 1001;">
+        <i class="fas fa-arrows-alt-h"></i>
+    </button>
+    <button class="screenshot-button" id="screenshotBtnFull" title="Take Screenshot" style="display: none; position: fixed; top: 10px; right: 80px; z-index: 1001;">
+        <i class="fas fa-camera"></i>
     </button>
 
     <!-- Loader -->
@@ -551,6 +581,7 @@
         const mirrorBtnFull = document.getElementById('mirrorBtnFull');
         const screenshotBtnNormal = document.getElementById('screenshotBtnNormal');
         const screenshotBtnFull = document.getElementById('screenshotBtnFull');
+        const backButton = document.getElementById('back-button');
 
         (async function () {
             loader.classList.add('active');
@@ -688,14 +719,15 @@
             if (!document.fullscreenElement) {
                 preview.classList.add('fullscreen');
                 filterSection.classList.add('fullscreen');
+                backButton.style.display = 'none';
                 expandBtn.style.display = 'none';
                 exitBtn.style.display = 'flex';
                 toggleFilterBtn.classList.remove('hidden');
                 toggleFilterBtn.style.display = 'flex';
-                mirrorBtnFull.style.display = 'flex';
-                screenshotBtnFull.style.display = 'flex';
                 mirrorBtnNormal.style.display = 'none';
                 screenshotBtnNormal.style.display = 'none';
+                mirrorBtnFull.style.display = 'flex';
+                screenshotBtnFull.style.display = 'flex';
                 preview.requestFullscreen().catch(err => console.error('Fullscreen error:', err));
             }
         }
@@ -705,15 +737,16 @@
                 document.exitFullscreen();
                 preview.classList.remove('fullscreen');
                 filterSection.classList.remove('fullscreen');
+                backButton.style.display = 'block';
                 filterSection.classList.remove('hidden');
                 expandBtn.style.display = 'flex';
                 exitBtn.style.display = 'none';
                 toggleFilterBtn.style.display = 'none';
                 toggleFilterBtn.classList.add('hidden');
-                mirrorBtnFull.style.display = 'none';
-                screenshotBtnFull.style.display = 'none';
                 mirrorBtnNormal.style.display = 'flex';
                 screenshotBtnNormal.style.display = 'flex';
+                mirrorBtnFull.style.display = 'none';
+                screenshotBtnFull.style.display = 'none';
             }
         }
 
@@ -772,15 +805,16 @@
             if (!document.fullscreenElement) {
                 preview.classList.remove('fullscreen');
                 filterSection.classList.remove('fullscreen');
+                backButton.style.display = 'block';
                 filterSection.classList.remove('hidden');
                 expandBtn.style.display = 'flex';
-                exitBtn.style.display = 'none';
+                exitBtn.style.display = 'flex';
                 toggleFilterBtn.style.display = 'none';
                 toggleFilterBtn.classList.add('hidden');
-                mirrorBtnFull.style.display = 'none';
-                screenshotBtnFull.style.display = 'none';
                 mirrorBtnNormal.style.display = 'flex';
                 screenshotBtnNormal.style.display = 'flex';
+                mirrorBtnFull.style.display = 'none';
+                screenshotBtnFull.style.display = 'none';
             }
         });
     </script>
