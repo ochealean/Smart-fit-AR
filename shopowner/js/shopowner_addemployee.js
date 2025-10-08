@@ -1,6 +1,6 @@
-import { 
-    checkUserAuth, 
-    logoutUser, 
+import {
+    checkUserAuth,
+    logoutUser,
     createUserWithEmailAndPasswordWrapper,
     sendEmailVerificationWrapper,
     updateData,
@@ -13,6 +13,7 @@ import {
 let shopOwnerUid = null;
 let shopName = null;
 let lastEmployeeNumber = 0;
+let generatedEmployees = [];
 
 // DOM Elements
 const addEmployeeForm = document.getElementById('addEmployeeForm');
@@ -36,12 +37,12 @@ function init() {
     const mobileToggle = document.querySelector('.mobile-menu-toggle');
     const sidebar = document.querySelector('.sidebar');
     const overlay = document.querySelector('.sidebar-overlay');
-    
+
     mobileToggle.addEventListener('click', () => {
         sidebar.classList.toggle('active');
         overlay.classList.toggle('active');
     });
-    
+
     overlay.addEventListener('click', () => {
         sidebar.classList.remove('active');
         overlay.classList.remove('active');
@@ -149,7 +150,7 @@ async function updateLastEmployeeNumber(shopId, newNumber) {
         const result = await updateData(`smartfit_AR_Database/shop/${shopId}`, {
             lastEmployeeNumber: newNumber
         });
-        
+
         if (result.success) {
             lastEmployeeNumber = newNumber;
         } else {
@@ -175,7 +176,7 @@ function setupEventListeners() {
     }
 
     if (downloadBatchEmployeesBtn) {
-        downloadBatchEmployeesBtn.addEventListener('click', createBatchEmployees);
+        downloadBatchEmployeesBtn.addEventListener('click', downloadBatchEmployeesCSV);
     }
 }
 
@@ -284,7 +285,7 @@ async function handleFormSubmit(e) {
         await createEmployeeAccount(employeeData, { sendVerificationEmail: true });
         alert(`Employee ${employeeData.name} created successfully!`);
         addEmployeeForm.reset();
-        
+
     } catch (error) {
         console.error("Error creating employee:", error);
         handleEmployeeCreationError(error);
@@ -306,7 +307,7 @@ async function createEmployeeAccount(employeeData, options = { sendVerificationE
 
     try {
         console.log("Attempting to create user:", employeeData.email);
-        
+
         // Use createUserWithEmailAndPasswordWrapper from firebaseMethods
         const userResult = await createUserWithEmailAndPasswordWrapper(
             employeeData.email,
@@ -339,7 +340,7 @@ async function createEmployeeAccount(employeeData, options = { sendVerificationE
         }
 
         console.log("Saving employee data to database");
-        
+
         // Use updateData method from firebaseMethods
         const saveResult = await updateData(`smartfit_AR_Database/employees/${user.uid}`, {
             name: employeeData.name,
@@ -369,7 +370,7 @@ async function createEmployeeAccount(employeeData, options = { sendVerificationE
 
         // Handle specific Firebase errors
         const errorMessage = error.message || 'Unknown error occurred';
-        
+
         if (errorMessage.includes('email-already-in-use') || error.code === 'auth/email-already-in-use') {
             throw new Error('This email is already registered');
         } else if (errorMessage.includes('invalid-email') || error.code === 'auth/invalid-email') {
@@ -419,7 +420,7 @@ async function generateBatchEmployees() {
         );
 
         if (result.success) {
-            // Display the generated employees
+            generatedEmployees = result.employees;   // store them
             displayGeneratedEmployees(result.employees);
             batchPreview.classList.add('active');
             downloadBatchEmployeesBtn.disabled = false;
@@ -461,69 +462,44 @@ function displayGeneratedEmployees(employees) {
 }
 
 // Create batch employees
-async function createBatchEmployees() {
+async function downloadBatchEmployeesCSV() {
     try {
-        // Show loading state
         downloadBatchEmployeesBtn.disabled = true;
         downloadBatchEmployeesBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Creating Employees...';
 
-        const role = batchEmployeeRoleInput.value;
-        const count = parseInt(employeeCountInput.value);
-        const domain = emailDomainInput.value.trim() || 'yourcompany.com';
-
-        // Call the backend API - UPDATED: Include count in employeeData
-        const result = await generateBatchEmployeesBackend(
-            shopOwnerUid,  // shopId
-            shopOwnerUid,  // shopOwnerId
-            {
-                department: role,
-                permissions: ['view_products', 'manage_orders', 'view_inventory'],
-                role: role,
-                count: count, // Add count to employeeData
-                domain: domain // Add domain to employeeData
-            }
-        );
-
-        if (result.success) {
-            // Download CSV with credentials
-            downloadEmployeeCSV(result.employees);
-            
-            alert(`Successfully created ${result.employees.length} employee accounts!`);
-            
-            // Reset the form
-            await resetBatchCreationForm();
+        if (generatedEmployees.length > 0) {
+            downloadEmployeeCSV(generatedEmployees);  // pass employees
         } else {
-            alert('Error creating employees: ' + result.error);
+            alert("No employees to download. Please generate first.");
         }
-
     } catch (error) {
         console.error('Error creating accounts:', error);
         alert('Error creating accounts. Please check console for details.');
     } finally {
         downloadBatchEmployeesBtn.disabled = false;
-        downloadBatchEmployeesBtn.innerHTML = '<i class="fas fa-save"></i> Create All Employees';
+        downloadBatchEmployeesBtn.innerHTML = '<i class="fas fa-save"></i> Download All Employees';
     }
 }
 
 // Enhanced reset function with download option
 async function resetBatchCreationForm() {
-    
+
     // auto download CSV
     downloadEmployeeCSV();
-    
+
     // Clear the preview
     batchPreview.innerHTML = '';
     batchPreview.classList.remove('active');
-    
+
     // Reset form inputs
     employeeCountInput.value = '';
     batchEmployeeRoleInput.value = '';
     emailDomainInput.value = '';
-    
+
     // Reset buttons
     downloadBatchEmployeesBtn.disabled = true;
     downloadBatchEmployeesBtn.innerHTML = '<i class="fas fa-save"></i> Create All Employees';
-    
+
     // Update the last employee number in memory
     const count = parseInt(employeeCountInput.value) || 0;
     if (count > 0) {
@@ -531,24 +507,11 @@ async function resetBatchCreationForm() {
     }
 }
 
-// CSV download function
 function downloadEmployeeCSV(employees) {
-    // Create CSV content
     let csvContent = "Employee ID,Email,Temporary Password,Status\n";
-    employees.forEach(emp => {
-        csvContent += `"${emp.employeeId}","${emp.email}","${emp.temporaryPassword}","${emp.status}"\n`;
+    employees.forEach(emp => {   // ❌ will crash if employees is undefined
+        csvContent += ...
     });
-    
-    // Create and trigger download
-    const blob = new Blob([csvContent], { type: 'text/csv' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.setAttribute('hidden', '');
-    a.setAttribute('href', url);
-    a.setAttribute('download', `employees_${new Date().toISOString().split('T')[0]}.csv`);
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
 }
 
 // Generate random password
@@ -622,7 +585,7 @@ function formatPhoneNumber(e) {
 // Handle employee creation errors
 function handleEmployeeCreationError(error) {
     const errorMessage = error.message || 'An unknown error occurred';
-    
+
     if (errorMessage.includes('email-already-in-use')) {
         alert('This email is already registered. Please use a different email address.');
     } else if (errorMessage.includes('invalid-email')) {
