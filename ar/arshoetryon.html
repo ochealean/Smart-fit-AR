@@ -172,28 +172,36 @@
             max-height: 200px;
             overflow-y: auto;
             display: flex;
-            flex-direction: row;
+            flex-direction: column;
+            gap: 15px;
         }
 
         .filter-section.expanded .filter-container {
-            flex-direction: row;
+            flex-direction: column;
             flex-wrap: nowrap;
         }
 
         .filter-section.expanded .category-group {
-            flex-direction: row;
-            gap: 20px;
+            flex-direction: column;
+            gap: 10px;
             min-width: auto;
+            align-items: center;
         }
 
         .filter-section.expanded .category-title {
             writing-mode: vertical-rl;
             transform: rotate(270deg);
             margin-right: 10px;
+            font-size: 1.2rem;
+            font-weight: 600;
         }
 
         .filter-section.expanded .filter-buttons {
+            display: flex;
             flex-direction: row;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
         }
 
         .filter-section.expanded.hidden {
@@ -738,6 +746,7 @@
         function enterExpanded() {
             preview.classList.add('expanded');
             filterSection.classList.add('expanded');
+            filterSection.classList.remove('minimized'); // Ensure filters are visible when entering expanded mode
             backButton.style.display = 'none';
             expandBtn.style.display = 'none';
             exitBtn.style.display = 'none';
