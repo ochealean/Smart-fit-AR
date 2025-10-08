@@ -419,7 +419,7 @@ body {
     border-radius: var(--radius-sm);
     padding: 1rem;
     background: var(--light);
-    display: block;
+    display: none;
 }
 
 .batch-preview.active {
