@@ -289,16 +289,18 @@ async function loadTopProducts() {
             return;
         }
 
+        console.log(result);
         const products = result.data;
         const productArray = Object.keys(products).map(key => ({
-            id: key,
+            pathID: key,
             ...products[key]
         }));
 
         // Get ratings for each product
         const productsWithRatings = await Promise.all(
             productArray.map(async (product) => {
-                const ratings = await getProductRatings(product.id);
+                console.log(product);
+                const ratings = await getProductRatings(product.pathID);
                 console.log(product);
                 return {
                     ...product,
@@ -398,14 +400,17 @@ function displayProductsGrid(products, container, type) {
 
 // Function to calculate product ratings from feedback
 async function getProductRatings(shoeId) {
+    console.log(shoeId);
     try {
-        const feedbacksPath = 'smartfit_AR_Database/feedbacks';
+        const feedbacksPath = `smartfit_AR_Database/feedbacks`;
+        console.log(feedbacksPath);
         const result = await readData(feedbacksPath);
 
         if (!result.success || !result.data) {
             return { averageRating: 0, reviewCount: 0 };
         }
-        
+
+        console.log(result);
 
         let totalRating = 0;
         let reviewCount = 0;
@@ -413,9 +418,11 @@ async function getProductRatings(shoeId) {
 
         Object.entries(feedbacks).forEach(([outerKey, innerObj]) => {
             Object.entries(innerObj).forEach(([innerKey, value]) => {
-                reviewCount++;
-                totalRating += value.rating;
-                console.log(reviewCount);
+                if (value.shoeID === shoeId) {
+                    reviewCount++;
+                    totalRating += value.rating;
+                    console.log(reviewCount);
+                }
             });
         });
 
