@@ -695,11 +695,6 @@
                 document.exitFullscreen();
                 preview.classList.remove('fullscreen');
                 filterSection.classList.remove('fullscreen');
-                if (isMirrored) {
-                    preview.classList.add('mirrored');
-                } else {
-                    preview.classList.remove('mirrored');
-                }
                 filterSection.classList.remove('hidden');
                 expandBtn.style.display = 'flex';
                 exitBtn.style.display = 'none';
@@ -725,11 +720,6 @@
             if (!document.fullscreenElement) {
                 preview.classList.remove('fullscreen');
                 filterSection.classList.remove('fullscreen');
-                if (isMirrored) {
-                    preview.classList.add('mirrored');
-                } else {
-                    preview.classList.remove('mirrored');
-                }
                 filterSection.classList.remove('hidden');
                 expandBtn.style.display = 'flex';
                 exitBtn.style.display = 'none';
