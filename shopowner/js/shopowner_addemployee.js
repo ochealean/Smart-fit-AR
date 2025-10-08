@@ -483,9 +483,9 @@ async function downloadBatchEmployeesCSV() {
 
 // Enhanced reset function with download option
 async function resetBatchCreationForm() {
-
-    // auto download CSV
-    downloadEmployeeCSV();
+    if (generatedEmployees.length > 0) {
+        downloadEmployeeCSV(generatedEmployees);  // pass employees
+    }
 
     // Clear the preview
     batchPreview.innerHTML = '';
@@ -499,20 +499,31 @@ async function resetBatchCreationForm() {
     // Reset buttons
     downloadBatchEmployeesBtn.disabled = true;
     downloadBatchEmployeesBtn.innerHTML = '<i class="fas fa-save"></i> Create All Employees';
-
-    // Update the last employee number in memory
-    const count = parseInt(employeeCountInput.value) || 0;
-    if (count > 0) {
-        lastEmployeeNumber += count;
-    }
 }
+
 
 function downloadEmployeeCSV(employees) {
+    if (!employees || employees.length === 0) {
+        alert("No employees to download.");
+        return;
+    }
+
     let csvContent = "Employee ID,Email,Temporary Password,Status\n";
-    employees.forEach(emp => {   // ❌ will crash if employees is undefined
-        csvContent += ...
+    employees.forEach(emp => {
+        csvContent += `${emp.employeeId},${emp.email},${emp.temporaryPassword},${emp.status}\n`;
     });
+
+    // Create CSV blob and trigger download
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement("a");
+    const url = URL.createObjectURL(blob);
+    link.setAttribute("href", url);
+    link.setAttribute("download", "batch_employees.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
 }
+
 
 // Generate random password
 function generatePassword() {
