@@ -5,7 +5,8 @@ import {
     sendEmailVerificationWrapper,
     updateData,
     readData,
-    viewProfile
+    viewProfile,
+    generateBatchEmployees as generateBatchEmployeesBackend
 } from '../../firebaseMethods.js';
 
 // Global variables
@@ -405,7 +406,7 @@ async function generateBatchEmployees() {
         generateEmployeesBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating...';
 
         // Call the backend API - UPDATED (removed count parameter)
-        const result = await generateBatchEmployees(
+        const result = await generateBatchEmployeesBackend(
             shopOwnerUid,  // shopId
             shopOwnerUid,  // shopOwnerId (same as shopId for shop owners)
             {
@@ -468,7 +469,7 @@ async function createBatchEmployees() {
         const role = batchEmployeeRoleInput.value;
 
         // Call the backend API - UPDATED (removed count parameter)
-        const result = await generateBatchEmployees(
+        const result = await generateBatchEmployeesBackend(
             shopOwnerUid,  // shopId
             shopOwnerUid,  // shopOwnerId
             {
