@@ -44,7 +44,6 @@
             text-align: center;
             margin-bottom: 20px;
             padding: 15px 0;
-            border-bottom: 1px solid var(--gray);
             z-index: 10;
         }
 
@@ -418,6 +417,28 @@
             align-self: center;
         }
 
+        .buy-now-button {
+            padding: 10px 28px;
+            background: linear-gradient(to right, var(--primary), #4a5fd1);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.9rem;
+            transition: var(--transition);
+            box-shadow: var(--shadow-sm);
+            width: 100%;
+            max-width: 250px;
+            z-index: 10;
+            margin-top: 10px;
+        }
+
+        .back-button:hover, .buy-now-button:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+
         .back-button {
             padding: 10px 28px;
             background: linear-gradient(to right, var(--accent), #ff8c1a);
@@ -508,7 +529,7 @@
                 font-size: 0.7rem;
             }
 
-            .back-button {
+            .back-button .buy-now-button{
                 max-width: 200px;
             }
         }
@@ -579,6 +600,9 @@
         <div class="filter-container" id="filter-container"></div>
     </section>
 
+    <!-- Buy Now button -->
+    <button class="buy-now-button" id="buy-now-button">Buy Now</button>
+
     <!-- Back button -->
     <button class="back-button" id="back-button" onclick="window.location.href='arshoe.html'">Back to Collection</button>
 
@@ -641,6 +665,7 @@
         const screenshotBtnExpanded = document.getElementById('screenshotBtnExpanded');
         const switchCameraBtnNormal = document.getElementById('switchCameraBtnNormal');
         const switchCameraBtnExpanded = document.getElementById('switchCameraBtnExpanded');
+        const buyNowButton = document.getElementById('buy-now-button');
         const backButton = document.getElementById('back-button');
         const expandedControls = document.getElementById('expanded-controls');
         const exitBtnExpanded = document.getElementById('exit-btn-expanded');
@@ -813,6 +838,7 @@
             preview.classList.add('expanded');
             filterSection.classList.add('expanded');
             filterSection.classList.remove('minimized'); // Ensure filters are visible when entering expanded mode
+            buyNowButton.style.display = 'none';
             backButton.style.display = 'none';
             expandBtn.style.display = 'none';
             exitBtn.style.display = 'none';
@@ -838,6 +864,7 @@
         function exitExpanded() {
             preview.classList.remove('expanded');
             filterSection.classList.remove('expanded');
+            buyNowButton.style.display = 'block';
             backButton.style.display = 'block';
             expandBtn.style.display = 'flex';
             exitBtn.style.display = 'none';
