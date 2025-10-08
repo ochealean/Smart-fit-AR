@@ -41,6 +41,12 @@ async function testAutoConfirmService() {
         const response = await fetch('https://smartfitar-auto-orderreceive.onrender.com/health');
         const data = await response.json();
         console.log('✅ Auto-confirm service is running:', data);
+        
+        // Also get statistics
+        const statsResponse = await fetch('https://smartfitar-auto-orderreceive.onrender.com/statistics');
+        const stats = await statsResponse.json();
+        console.log('📊 Order statistics:', stats);
+        
         return true;
     } catch (error) {
         console.error('❌ Auto-confirm service is not reachable:', error);
