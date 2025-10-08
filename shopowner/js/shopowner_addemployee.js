@@ -134,11 +134,11 @@ async function loadShopData(uid) {
 // Load last employee number from database
 async function loadLastEmployeeNumber(shopId) {
     try {
-        // Use readData method from firebaseMethods
         const result = await readData(`smartfit_AR_Database/shop/${shopId}/lastEmployeeNumber`);
         lastEmployeeNumber = result.success && result.data !== null ? result.data : 0;
     } catch (error) {
         console.error("Error loading last employee number:", error);
+        lastEmployeeNumber = 0;
     }
 }
 
