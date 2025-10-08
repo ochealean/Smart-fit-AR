@@ -2,15 +2,15 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-app.js";
 import { getDatabase, ref, onValue, update, set, get, push, remove } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-database.js";
 import { getStorage, ref as storageRef, uploadBytesResumable, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-storage.js";
-import { 
-  getAuth, 
-  onAuthStateChanged, 
-  signOut, 
-  createUserWithEmailAndPassword, 
-  signInWithEmailAndPassword, 
-  sendEmailVerification,
-  sendPasswordResetEmail,
-  updatePassword
+import {
+    getAuth,
+    onAuthStateChanged,
+    signOut,
+    createUserWithEmailAndPassword,
+    signInWithEmailAndPassword,
+    sendEmailVerification,
+    sendPasswordResetEmail,
+    updatePassword
 } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-auth.js";
 
 // Firebase configuration
@@ -623,9 +623,9 @@ export function sendEmailVerificationWrapper(user) {
 export function sendEmail(email, reason, shopname, publickey, serviceID, templatekey) {
     if (typeof emailjs === 'undefined') {
         console.error('EmailJS not loaded');
-        return Promise.resolve({ 
-            success: false, 
-            error: 'EmailJS library not loaded. Please refresh the page.' 
+        return Promise.resolve({
+            success: false,
+            error: 'EmailJS library not loaded. Please refresh the page.'
         });
     }
 
@@ -655,19 +655,19 @@ export function sendEmail(email, reason, shopname, publickey, serviceID, templat
 }
 
 export async function changeUserPassword(newPassword) {
-  const auth = getAuth();
-  const user = auth.currentUser;
+    const auth = getAuth();
+    const user = auth.currentUser;
 
-  if (!user) {
-    return { success: false, error: "No authenticated user found." };
-  }
+    if (!user) {
+        return { success: false, error: "No authenticated user found." };
+    }
 
-  try {
-    await updatePassword(user, newPassword);
-    return { success: true, message: "Password updated successfully." };
-  } catch (error) {
-    return { success: false, error: error.message };
-  }
+    try {
+        await updatePassword(user, newPassword);
+        return { success: true, message: "Password updated successfully." };
+    } catch (error) {
+        return { success: false, error: error.message };
+    }
 }
 // Add this to your firebaseMethods.js in the AUTHENTICATION METHODS section
 
@@ -681,15 +681,15 @@ export async function reauthenticateUser(email, password) {
     try {
         const auth = getAuth();
         const user = auth.currentUser;
-        
+
         if (!user) {
             return { success: false, error: "No authenticated user found" };
         }
-        
+
         if (user.email !== email) {
             return { success: false, error: "Email does not match current user" };
         }
-        
+
         // Reauthenticate by signing in again
         await signInWithEmailAndPassword(auth, email, password);
         return { success: true, message: "User reauthenticated successfully" };
@@ -697,6 +697,135 @@ export async function reauthenticateUser(email, password) {
         return { success: false, error: error.message };
     }
 }
+
+
+// ==================== EMPLOYEE BATCH GENERATION (BACKEND) ====================
+
+const BACKEND_URL = 'https://smartfitar-batchemployee-backend.onrender.com';
+
+/**
+ * Generate batch employee accounts using backend API
+ * @param {string} shopId - Shop ID
+ * @param {number} count - Number of employees to generate
+ * @param {string} shopOwnerId - Shop owner user ID
+ * @param {Object} employeeData - Additional employee data
+ * @returns {Promise<Object>} JSON with generation result
+ */
+export async function generateBatchEmployees(shopId, shopOwnerId, employeeData = {}) {
+    try {
+        // Get count from the input field in your UI
+        const count = parseInt(document.getElementById('employeeCount').value);
+        
+        if (!count || count < 1) {
+            return { 
+                success: false, 
+                error: "Please enter a valid number of employees to generate" 
+            };
+        }
+
+        const response = await fetch(`${BACKEND_URL}/api/generate-employees`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                shopId,
+                count,
+                shopOwnerId,
+                employeeData
+            })
+        });
+
+        const result = await response.json();
+        return result;
+    } catch (error) {
+        return { 
+            success: false, 
+            error: `Failed to connect to server: ${error.message}` 
+        };
+    }
+}
+
+/**
+ * Get all employees for a shop
+ * @param {string} shopId - Shop ID
+ * @param {string} shopOwnerId - Shop owner user ID
+ * @returns {Promise<Object>} JSON with employees list
+ */
+export async function getShopEmployees(shopId, shopOwnerId) {
+    try {
+        const response = await fetch(
+            `${BACKEND_URL}/api/shop/${shopId}/employees?shopOwnerId=${shopOwnerId}`
+        );
+
+        const result = await response.json();
+        return result;
+    } catch (error) {
+        return {
+            success: false,
+            error: error.message
+        };
+    }
+}
+
+/**
+ * Update employee status
+ * @param {string} employeeId - Employee user ID
+ * @param {string} status - New status (active/inactive/suspended)
+ * @param {string} shopOwnerId - Shop owner user ID
+ * @returns {Promise<Object>} JSON with update result
+ */
+export async function updateEmployeeStatus(employeeId, status, shopOwnerId) {
+    try {
+        const response = await fetch(`${BACKEND_URL}/api/employees/${employeeId}/status`, {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                status,
+                shopOwnerId
+            })
+        });
+
+        const result = await response.json();
+        return result;
+    } catch (error) {
+        return {
+            success: false,
+            error: error.message
+        };
+    }
+}
+
+/**
+ * Reset employee password
+ * @param {string} employeeId - Employee user ID
+ * @param {string} shopOwnerId - Shop owner user ID
+ * @returns {Promise<Object>} JSON with reset result
+ */
+export async function resetEmployeePassword(employeeId, shopOwnerId) {
+    try {
+        const response = await fetch(`${BACKEND_URL}/api/employees/${employeeId}/reset-password`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                shopOwnerId
+            })
+        });
+
+        const result = await response.json();
+        return result;
+    } catch (error) {
+        return {
+            success: false,
+            error: error.message
+        };
+    }
+}
+
 
 // Export Firebase instances for advanced usage
 export { app, auth, db, storage };
@@ -707,6 +836,12 @@ export default {
     generate18CharID,
     generate6DigitCode,
     displayProducts,
+    generateBatchEmployees,
+
+    // backend functions
+    getShopEmployees,
+    updateEmployeeStatus,
+    resetEmployeePassword,
 
     // Profile Management
     viewProfile,

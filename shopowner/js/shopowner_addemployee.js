@@ -399,96 +399,101 @@ async function generateBatchEmployees() {
         return;
     }
 
+    try {
+        // Show loading state
+        generateEmployeesBtn.disabled = true;
+        generateEmployeesBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating...';
+
+        // Call the backend API - UPDATED (removed count parameter)
+        const result = await generateBatchEmployees(
+            shopOwnerUid,  // shopId
+            shopOwnerUid,  // shopOwnerId (same as shopId for shop owners)
+            {
+                department: role,
+                permissions: ['view_products', 'manage_orders', 'view_inventory'],
+                role: role
+            }
+        );
+
+        if (result.success) {
+            // Display the generated employees
+            displayGeneratedEmployees(result.employees);
+            batchPreview.classList.add('active');
+            createBatchEmployeesBtn.disabled = false;
+        } else {
+            alert('Error generating employees: ' + result.error);
+        }
+
+    } catch (error) {
+        console.error('Error generating employees:', error);
+        alert('Error generating employees. Please check console for details.');
+    } finally {
+        // Reset button state
+        generateEmployeesBtn.disabled = false;
+        generateEmployeesBtn.innerHTML = '<i class="fas fa-users"></i> Generate Employees';
+    }
+}
+
+// Helper function to display generated employees
+function displayGeneratedEmployees(employees) {
     batchPreview.innerHTML = '';
 
-    for (let i = 1; i <= count; i++) {
-        const employeeNum = (lastEmployeeNumber + i).toString().padStart(3, '0');
-        const username = `employee${employeeNum}`;
-        const email = `${username}@${domain}`;
-        const password = generatePassword();
-
+    employees.forEach(emp => {
         const accountDiv = document.createElement('div');
         accountDiv.className = 'batch-account';
         accountDiv.innerHTML = `
             <div>
-                <p><strong>Username:</strong> ${username}</p>
-                <p><strong>Email:</strong> ${email}</p>
-                <p><strong>Role:</strong> ${role}</p>
+                <p><strong>Employee ID:</strong> ${emp.employeeId}</p>
+                <p><strong>Email:</strong> ${emp.email}</p>
+                <p><strong>Temporary Password:</strong> ${emp.temporaryPassword}</p>
+                <p><strong>Status:</strong> ${emp.status}</p>
             </div>
-            <div>
-                <p><strong>Password:</strong> ${password}</p>
-                <p><small>Email will ${document.getElementById('sendEmails').checked ? '' : 'not '}be sent</small></p>
-                ${document.getElementById('sendEmails').checked && !document.getElementById('includePasswordInEmail').checked ?
-                '<p><small>Password will not be included in email</small></p>' : ''}
-            </div>
-            <input type="hidden" name="batchUsername[]" value="${username}">
-            <input type="hidden" name="batchEmail[]" value="${email}">
-            <input type="hidden" name="batchPassword[]" value="${password}">
-            <input type="hidden" name="batchRole[]" value="${role}">
+            <input type="hidden" name="batchEmail[]" value="${emp.email}">
+            <input type="hidden" name="batchPassword[]" value="${emp.temporaryPassword}">
+            <input type="hidden" name="batchEmployeeId[]" value="${emp.employeeId}">
         `;
 
         batchPreview.appendChild(accountDiv);
-    }
-
-    batchPreview.classList.add('active');
-    createBatchEmployeesBtn.disabled = false;
+    });
 }
 
 // Create batch employees
 async function createBatchEmployees() {
-    const accounts = [];
-    const accountDivs = batchPreview.querySelectorAll('.batch-account');
-
-    // Show loading state
-    createBatchEmployeesBtn.disabled = true;
-    createBatchEmployeesBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Creating Employees...';
-
-    accountDivs.forEach(div => {
-        accounts.push({
-            username: div.querySelector('input[name="batchUsername[]"]').value,
-            email: div.querySelector('input[name="batchEmail[]"]').value,
-            password: div.querySelector('input[name="batchPassword[]"]').value,
-            role: div.querySelector('input[name="batchRole[]"]').value
-        });
-    });
-
     try {
-        // Create all accounts as default accounts (not in Firebase Auth)
-        for (const account of accounts) {
-            // Generate a unique ID for the default account
-            const employeeId = `default_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
+        // Show loading state
+        createBatchEmployeesBtn.disabled = true;
+        createBatchEmployeesBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Creating Employees...';
 
-            // Use updateData method from firebaseMethods
-            const result = await updateData(`smartfit_AR_Database/employees/${employeeId}`, {
-                name: account.username,
-                email: account.email,
-                role: account.role,
-                phone: '',
-                shopId: shopOwnerUid,
-                shopName: shopName,
-                dateAdded: new Date().toISOString(),
-                status: 'default', // Mark as default account
-                tempPassword: account.password, // Store temp password for later activation
-                isDefaultAccount: true // Flag to identify default accounts
-            });
+        const count = parseInt(employeeCountInput.value);
+        const role = batchEmployeeRoleInput.value;
 
-            if (!result.success) {
-                throw new Error(result.error);
+        // Call the backend API - UPDATED (removed count parameter)
+        const result = await generateBatchEmployees(
+            shopOwnerUid,  // shopId
+            shopOwnerUid,  // shopOwnerId
+            {
+                department: role,
+                permissions: ['view_products', 'manage_orders', 'view_inventory'],
+                role: role
             }
+        );
+
+        if (result.success) {
+            // Download CSV with credentials
+            downloadEmployeeCSV(result.employees);
+            
+            alert(`Successfully created ${result.employees.length} employee accounts!`);
+            
+            // Reset the form
+            await resetBatchCreationForm();
+        } else {
+            alert('Error creating employees: ' + result.error);
         }
-
-        // Update the last employee number
-        const newLastNumber = lastEmployeeNumber + accounts.length;
-        await updateLastEmployeeNumber(shopOwnerUid, newLastNumber);
-
-        // Reset the form and UI with download option
-        await resetBatchCreationForm();
-        
-        alert(`Successfully created ${accounts.length} default employee accounts!`);
 
     } catch (error) {
         console.error('Error creating accounts:', error);
         alert('Error creating accounts. Please check console for details.');
+    } finally {
         createBatchEmployeesBtn.disabled = false;
         createBatchEmployeesBtn.innerHTML = '<i class="fas fa-save"></i> Create All Employees';
     }
@@ -521,23 +526,11 @@ async function resetBatchCreationForm() {
 }
 
 // CSV download function
-function downloadEmployeeCSV() {
-    const accounts = [];
-    const accountDivs = batchPreview.querySelectorAll('.batch-account');
-    
-    accountDivs.forEach(div => {
-        accounts.push({
-            username: div.querySelector('input[name="batchUsername[]"]').value,
-            email: div.querySelector('input[name="batchEmail[]"]').value,
-            password: div.querySelector('input[name="batchPassword[]"]').value,
-            role: div.querySelector('input[name="batchRole[]"]').value
-        });
-    });
-    
+function downloadEmployeeCSV(employees) {
     // Create CSV content
-    let csvContent = "Username,Email,Password,Role\n";
-    accounts.forEach(account => {
-        csvContent += `"${account.username}","${account.email}","${account.password}","${account.role}"\n`;
+    let csvContent = "Employee ID,Email,Temporary Password,Status\n";
+    employees.forEach(emp => {
+        csvContent += `"${emp.employeeId}","${emp.email}","${emp.temporaryPassword}","${emp.status}"\n`;
     });
     
     // Create and trigger download
