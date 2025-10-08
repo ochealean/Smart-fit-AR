@@ -513,7 +513,7 @@ async function createBatchEmployeeAccounts(employees, role, domain, sendEmails) 
     const createdEmployees = [];
     
     for (const emp of employees) {
-        try {  
+        try {
             const employeeData = {
                 name: `Employee ${emp.employeeId}`,
                 email: emp.email,
