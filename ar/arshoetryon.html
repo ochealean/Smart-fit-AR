@@ -105,7 +105,7 @@
             z-index: 1000;
         }
 
-        .expand-button, .exit-button, .mirror-button {
+        .expand-button, .exit-button, .mirror-button, .screenshot-button {
             background: rgba(255,255,255,0.8);
             border: none;
             border-radius: 50%;
@@ -119,12 +119,12 @@
             box-shadow: var(--shadow-sm);
         }
 
-        .expand-button:hover, .exit-button:hover, .mirror-button:hover {
+        .expand-button:hover, .exit-button:hover, .mirror-button:hover, .screenshot-button:hover {
             background: white;
             transform: scale(1.1);
         }
 
-        .expand-button i, .exit-button i, .mirror-button i {
+        .expand-button i, .exit-button i, .mirror-button i, .screenshot-button i {
             color: var(--primary);
             font-size: 14px;
         }
@@ -488,8 +488,11 @@
             <button class="exit-button" id="exit-btn" title="Exit Fullscreen" style="display: none;">
                 <i class="fas fa-compress"></i>
             </button>
-            <button class="mirror-button" id="mirrorButton" title="Toggle Mirror">
+            <button class="mirror-button" id="mirrorBtnNormal" title="Toggle Mirror">
                 <i class="fas fa-arrows-alt-h"></i>
+            </button>
+            <button class="screenshot-button" id="screenshotBtnNormal" title="Take Screenshot">
+                <i class="fas fa-camera"></i>
             </button>
         </div>
     </div>
@@ -544,7 +547,10 @@
         const exitBtn = document.getElementById('exit-btn');
         const preview = document.getElementById('deepar-div');
         const toggleFilterBtn = document.getElementById('toggle-filter-btn');
-        const mirrorBtn = document.getElementById('mirrorButton');
+        const mirrorBtnNormal = document.getElementById('mirrorBtnNormal');
+        const mirrorBtnFull = document.getElementById('mirrorBtnFull');
+        const screenshotBtnNormal = document.getElementById('screenshotBtnNormal');
+        const screenshotBtnFull = document.getElementById('screenshotBtnFull');
 
         (async function () {
             loader.classList.add('active');
@@ -686,6 +692,10 @@
                 exitBtn.style.display = 'flex';
                 toggleFilterBtn.classList.remove('hidden');
                 toggleFilterBtn.style.display = 'flex';
+                mirrorBtnFull.style.display = 'flex';
+                screenshotBtnFull.style.display = 'flex';
+                mirrorBtnNormal.style.display = 'none';
+                screenshotBtnNormal.style.display = 'none';
                 preview.requestFullscreen().catch(err => console.error('Fullscreen error:', err));
             }
         }
@@ -700,11 +710,15 @@
                 exitBtn.style.display = 'none';
                 toggleFilterBtn.style.display = 'none';
                 toggleFilterBtn.classList.add('hidden');
+                mirrorBtnFull.style.display = 'none';
+                screenshotBtnFull.style.display = 'none';
+                mirrorBtnNormal.style.display = 'flex';
+                screenshotBtnNormal.style.display = 'flex';
             }
         }
 
         // Toggle mirror
-        mirrorBtn.addEventListener('click', () => {
+        mirrorBtnNormal.addEventListener('click', () => {
             isMirrored = !isMirrored;
             if (isMirrored) {
                 preview.classList.add('mirrored');
@@ -712,6 +726,44 @@
             } else {
                 preview.classList.remove('mirrored');
                 console.log('✅ Camera unmirrored.');
+            }
+        });
+
+        mirrorBtnFull.addEventListener('click', () => {
+            isMirrored = !isMirrored;
+            if (isMirrored) {
+                preview.classList.add('mirrored');
+                console.log('✅ Camera mirrored.');
+            } else {
+                preview.classList.remove('mirrored');
+                console.log('✅ Camera unmirrored.');
+            }
+        });
+
+        // Handle screenshot
+        screenshotBtnNormal.addEventListener('click', async () => {
+            try {
+                const dataUrl = await deepAR.takeScreenshot();
+                const link = document.createElement('a');
+                link.href = dataUrl;
+                link.download = `screenshot_${Date.now()}.png`;
+                link.click();
+                console.log('✅ Screenshot captured.');
+            } catch (err) {
+                console.error('❌ Screenshot error:', err);
+            }
+        });
+
+        screenshotBtnFull.addEventListener('click', async () => {
+            try {
+                const dataUrl = await deepAR.takeScreenshot();
+                const link = document.createElement('a');
+                link.href = dataUrl;
+                link.download = `screenshot_${Date.now()}.png`;
+                link.click();
+                console.log('✅ Screenshot captured.');
+            } catch (err) {
+                console.error('❌ Screenshot error:', err);
             }
         });
 
@@ -725,6 +777,10 @@
                 exitBtn.style.display = 'none';
                 toggleFilterBtn.style.display = 'none';
                 toggleFilterBtn.classList.add('hidden');
+                mirrorBtnFull.style.display = 'none';
+                screenshotBtnFull.style.display = 'none';
+                mirrorBtnNormal.style.display = 'flex';
+                screenshotBtnNormal.style.display = 'flex';
             }
         });
     </script>
