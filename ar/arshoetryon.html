@@ -1,3 +1,4 @@
+```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -38,6 +39,11 @@
             overflow-x: hidden;
         }
 
+        body.fullscreen-mode {
+            padding: 0;
+            overflow: hidden;
+        }
+
         header {
             width: 100%;
             max-width: 1200px;
@@ -46,6 +52,19 @@
             padding: 15px 0;
             border-bottom: 1px solid var(--gray);
             z-index: 10;
+        }
+
+        body.fullscreen-mode header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            background: white;
+            margin-bottom: 0;
+            padding: 10px 0;
+            border-bottom: none;
+            box-shadow: var(--shadow-sm);
+            z-index: 1001;
         }
 
         header h1 {
@@ -103,6 +122,13 @@
             display: flex;
             gap: 8px;
             z-index: 1000;
+        }
+
+        body.fullscreen-mode .control-buttons {
+            position: fixed;
+            top: 60px;
+            right: 10px;
+            z-index: 1002;
         }
 
         .expand-button, .exit-button, .mirror-button, .screenshot-button {
@@ -392,6 +418,10 @@
             box-shadow: var(--shadow-md);
         }
 
+        body.fullscreen-mode .back-button {
+            display: none;
+        }
+
         .loader {
             position: fixed;
             top: 0;
@@ -659,7 +689,7 @@
 
                     if (catIndex < categories.length - 1) {
                         const divider = document.createElement('div');
-                        divider.className = 'category-divider';
+                        divider.classList = 'category-divider';
                         container.appendChild(divider);
                     }
                 });
@@ -717,6 +747,7 @@
 
         function enterFullscreen() {
             if (!document.fullscreenElement) {
+                document.body.classList.add('fullscreen-mode');
                 preview.classList.add('fullscreen');
                 filterSection.classList.add('fullscreen');
                 backButton.style.display = 'none';
@@ -735,6 +766,7 @@
         function exitFullscreen() {
             if (document.fullscreenElement) {
                 document.exitFullscreen();
+                document.body.classList.remove('fullscreen-mode');
                 preview.classList.remove('fullscreen');
                 filterSection.classList.remove('fullscreen');
                 backButton.style.display = 'block';
@@ -803,6 +835,7 @@
         // Handle fullscreen change
         document.addEventListener('fullscreenchange', () => {
             if (!document.fullscreenElement) {
+                document.body.classList.remove('fullscreen-mode');
                 preview.classList.remove('fullscreen');
                 filterSection.classList.remove('fullscreen');
                 backButton.style.display = 'block';
@@ -820,3 +853,4 @@
     </script>
 </body>
 </html>
+```
