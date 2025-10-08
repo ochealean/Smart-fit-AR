@@ -210,4 +210,17 @@ async function generateBatchEmployees() {
     }
 }
 
-//
+// Display generated employees in the preview area
+function displayGeneratedEmployees(employees) {
+    batchPreview.innerHTML = '';
+    employees.forEach(employee => {
+        const employeeDiv = document.createElement('div');
+        employeeDiv.classList.add('batch-account');
+        employeeDiv.innerHTML = `
+            <p><strong>Name:</strong> ${employee.name}</p>
+            <p><strong>Email:</strong> ${employee.email}</p>
+            <p><strong>Role:</strong> ${employee.role}</p>
+        `;
+        batchPreview.appendChild(employeeDiv);
+    });
+}
