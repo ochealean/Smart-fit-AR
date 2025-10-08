@@ -418,7 +418,7 @@
             align-self: center;
         }
 
-        .back-button, .buy-now-button {
+        .back-button {
             padding: 10px 28px;
             background: linear-gradient(to right, var(--accent), #ff8c1a);
             color: white;
@@ -432,10 +432,9 @@
             width: 100%;
             max-width: 250px;
             z-index: 10;
-            margin-top: 10px;
         }
 
-        .back-button:hover, .buy-now-button:hover {
+        .back-button:hover {
             transform: translateY(-2px);
             box-shadow: var(--shadow-md);
         }
@@ -509,7 +508,7 @@
                 font-size: 0.7rem;
             }
 
-            .back-button, .buy-now-button {
+            .back-button {
                 max-width: 200px;
             }
         }
@@ -548,6 +547,7 @@
         <p>Point your camera at your feet to see the shoes in real-time. Swipe to browse options.</p>
     </header>
 
+    <!-- AR preview container -->
     <div class="preview-container">
         <div id="deepar-div"></div>
         <div class="control-buttons">
@@ -581,7 +581,6 @@
 
     <!-- Back button -->
     <button class="back-button" id="back-button" onclick="window.location.href='arshoe.html'">Back to Collection</button>
-    <button class="buy-now-button" id="buy-now-button">Buy Now</button>
 
     <!-- Toggle filter button for expanded view -->
     <button class="toggle-filter-btn" id="toggle-filter-btn" title="Toggle Filters">
@@ -614,8 +613,9 @@
         let isFrontCamera = false; // Track camera state
         let isMirrored = false; // Track mirror state
         let currentStream = null; // Track the active media stream
-        let currentModel = new URLSearchParams(window.location.search).get('model') || 'basketball';
-        const initialColor = new URLSearchParams(window.location.search).get('color') || 'black';
+        const urlParams = new URLSearchParams(window.location.search);
+        const initialModel = urlParams.get('model') || 'basketball';
+        const initialColor = urlParams.get('color') || 'black';
         const effectMap = {
             classic: { white: 'classic_white.deepar', black: 'classic_black.deepar', blue: 'classic_blue.deepar', red: 'classic_red.deepar' },
             running: { white: 'running_white.deepar', black: 'running_black.deepar', blue: 'running_blue.deepar', red: 'running_red.deepar' },
@@ -627,7 +627,7 @@
             basketball: { white: '/images/angles/basketball/white/main.png', black: '/images/angles/basketball/black/main.png', blue: '/images/angles/basketball/blue/main.png', red: '/images/angles/basketball/red/main.png' }
         };
 
-        let currentEffectPath = `./effects/filters/${effectMap[currentModel][initialColor]}`;
+        let currentEffectPath = `./effects/filters/${effectMap[initialModel][initialColor]}`;
         const loader = document.getElementById('loader');
         const filterSection = document.getElementById('filter-section');
         const toggleButton = document.getElementById('toggle-filters');
@@ -642,23 +642,17 @@
         const switchCameraBtnNormal = document.getElementById('switchCameraBtnNormal');
         const switchCameraBtnExpanded = document.getElementById('switchCameraBtnExpanded');
         const backButton = document.getElementById('back-button');
-        const buyNowButton = document.getElementById('buy-now-button');
         const expandedControls = document.getElementById('expanded-controls');
         const exitBtnExpanded = document.getElementById('exit-btn-expanded');
 
-        // Set Buy Now button URL
-        buyNowButton.onclick = () => {
-            window.location.href = `https://smart-fit-ar.vercel.app/customer/html/customizeshoe.html?model=${currentModel}`;
-        };
-
-        async function initializeDeepAR() {
+        (async function () {
             loader.classList.add('active');
             try {
                 deepAR = await deepar.initialize({
                     licenseKey: 'f0eafd99d224758bdc2c7271acd80bc7642fdb178ba74faf1c61c1ec7d25221057493e7b9b73c58d',
                     previewElement: preview,
                 });
-                console.log("✅ DeepAR initialized.");
+                console.log("✅ DeepAR initialized ");
 
                 // Start with back camera
                 await switchCamera('environment');
@@ -685,7 +679,6 @@
                         const button = document.createElement('div');
                         button.className = 'filter-button';
                         button.dataset.path = `./effects/filters/${effectMap[model][color]}`;
-                        button.dataset.model = model; // Store model for tracking
                         button.setAttribute('role', 'button');
                         button.setAttribute('tabindex', '0');
                         button.setAttribute('aria-label', `${model} ${color}`);
@@ -704,7 +697,6 @@
 
                         button.onclick = async () => {
                             loader.classList.add('active');
-                            currentModel = model; // Update current model
                             await switchEffect(button.dataset.path);
                             document.querySelectorAll('.filter-button').forEach(btn => btn.classList.remove('selected'));
                             button.classList.add('selected');
@@ -736,7 +728,7 @@
                 loader.classList.remove('active');
                 alert('Failed to initialize AR. Please check console for details.');
             }
-        }
+        })();
 
         async function switchCamera(facingMode) {
             try {
@@ -784,8 +776,6 @@
             }
         }
 
-        initializeDeepAR();
-
         toggleButton.addEventListener('click', () => {
             filterSection.classList.toggle('minimized');
             if (filterSection.classList.contains('minimized')) {
@@ -824,7 +814,6 @@
             filterSection.classList.add('expanded');
             filterSection.classList.remove('minimized'); // Ensure filters are visible when entering expanded mode
             backButton.style.display = 'none';
-            buyNowButton.style.display = 'none';
             expandBtn.style.display = 'none';
             exitBtn.style.display = 'none';
             toggleFilterBtn.style.display = 'flex';
@@ -850,7 +839,6 @@
             preview.classList.remove('expanded');
             filterSection.classList.remove('expanded');
             backButton.style.display = 'block';
-            buyNowButton.style.display = 'block';
             expandBtn.style.display = 'flex';
             exitBtn.style.display = 'none';
             toggleFilterBtn.style.display = 'none';
@@ -875,7 +863,6 @@
 
         mirrorBtnNormal.addEventListener('click', () => {
             isMirrored = !isMirrored;
-            if (deepAR) deepAR.setVideoElement(deepAR.videoElement, isMirrored);
             if (isMirrored) {
                 preview.classList.add('mirroredwithout80');
                 console.log('✅ Camera mirrored.');
@@ -887,7 +874,6 @@
 
         mirrorBtnExpanded.addEventListener('click', () => {
             isMirrored = !isMirrored;
-            if (deepAR) deepAR.setVideoElement(deepAR.videoElement, isMirrored);
             if (isMirrored) {
                 preview.classList.add('mirrored');
                 console.log('✅ Camera mirrored.');
