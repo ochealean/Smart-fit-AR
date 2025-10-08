@@ -97,6 +97,10 @@
             transform: translate(-50%, -50%) scaleX(-1);
         }
 
+        #deepar-div.mirroredwithout80 {
+            transform: scaleX(-1);
+        }
+
         .control-buttons {
             position: absolute;
             top: 10px;
@@ -547,13 +551,18 @@
         <i class="fas fa-filter"></i>
     </button>
 
-    <!-- Mirror and Screenshot buttons for expanded view -->
-    <button class="mirror-button" id="mirrorBtnExpanded" title="Toggle Mirror" style="display: none; position: fixed; top: calc(40vh + 10px); right: calc(10vw + 50px); z-index: 1001;">
-        <i class="fas fa-arrows-alt-h"></i>
-    </button>
-    <button class="screenshot-button" id="screenshotBtnExpanded" title="Take Screenshot" style="display: none; position: fixed; top: calc(40vh + 10px); right: calc(10vw + 10px); z-index: 1001;">
-        <i class="fas fa-camera"></i>
-    </button>
+    <!-- Control buttons for expanded view -->
+    <div class="control-buttons expanded" style="display: none;" id="expanded-controls">
+        <button class="exit-button" id="exit-btn-expanded" title="Exit Expanded View">
+            <i class="fas fa-compress"></i>
+        </button>
+        <button class="mirror-button" id="mirrorBtnExpanded" title="Toggle Mirror" style="display: none;">
+            <i class="fas fa-arrows-alt-h"></i>
+        </button>
+        <button class="screenshot-button" id="screenshotBtnExpanded" title="Take Screenshot" style="display: none;">
+            <i class="fas fa-camera"></i>
+        </button>
+    </div>
 
     <!-- Loader -->
     <div class="loader" id="loader">
@@ -591,6 +600,8 @@
         const screenshotBtnNormal = document.getElementById('screenshotBtnNormal');
         const screenshotBtnExpanded = document.getElementById('screenshotBtnExpanded');
         const backButton = document.getElementById('back-button');
+        const expandedControls = document.getElementById('expanded-controls');
+        const exitBtnExpanded = document.getElementById('exit-btn-expanded');
 
         (async function () {
             loader.classList.add('active');
@@ -710,6 +721,10 @@
             exitExpanded();
         });
 
+        exitBtnExpanded.addEventListener('click', () => {
+            exitExpanded();
+        });
+
         toggleFilterBtn.addEventListener('click', () => {
             filterSection.classList.toggle('hidden');
             if (filterSection.classList.contains('hidden')) {
@@ -724,13 +739,22 @@
             filterSection.classList.add('expanded');
             backButton.style.display = 'none';
             expandBtn.style.display = 'none';
-            exitBtn.style.display = 'flex';
+            exitBtn.style.display = 'none';
             toggleFilterBtn.style.display = 'flex';
             mirrorBtnNormal.style.display = 'none';
             screenshotBtnNormal.style.display = 'none';
+            expandedControls.style.display = 'flex';
             mirrorBtnExpanded.style.display = 'flex';
             screenshotBtnExpanded.style.display = 'flex';
             document.body.style.overflow = 'hidden';
+            // Handle mirroring transition
+            if (isMirrored) {
+                preview.classList.remove('mirroredwithout80');
+                preview.classList.add('mirrored');
+            } else {
+                preview.classList.remove('mirroredwithout80');
+                preview.classList.remove('mirrored');
+            }
         }
 
         function exitExpanded() {
@@ -743,18 +767,27 @@
             filterSection.classList.remove('hidden');
             mirrorBtnNormal.style.display = 'flex';
             screenshotBtnNormal.style.display = 'flex';
+            expandedControls.style.display = 'none';
             mirrorBtnExpanded.style.display = 'none';
             screenshotBtnExpanded.style.display = 'none';
             document.body.style.overflow = 'auto';
+            // Handle mirroring transition
+            if (isMirrored) {
+                preview.classList.remove('mirrored');
+                preview.classList.add('mirroredwithout80');
+            } else {
+                preview.classList.remove('mirrored');
+                preview.classList.remove('mirroredwithout80');
+            }
         }
 
         mirrorBtnNormal.addEventListener('click', () => {
             isMirrored = !isMirrored;
             if (isMirrored) {
-                preview.classList.add('mirrored');
+                preview.classList.add('mirroredwithout80');
                 console.log('✅ Camera mirrored.');
             } else {
-                preview.classList.remove('mirrored');
+                preview.classList.remove('mirroredwithout80');
                 console.log('✅ Camera unmirrored.');
             }
         });
