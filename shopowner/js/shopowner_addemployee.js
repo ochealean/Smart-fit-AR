@@ -405,14 +405,16 @@ async function generateBatchEmployees() {
         generateEmployeesBtn.disabled = true;
         generateEmployeesBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating...';
 
-        // Call the backend API - UPDATED (removed count parameter)
+        // Call the backend API - UPDATED: Include count in employeeData instead of as parameter
         const result = await generateBatchEmployeesBackend(
             shopOwnerUid,  // shopId
-            shopOwnerUid,  // shopOwnerId (same as shopId for shop owners)
+            shopOwnerUid,  // shopOwnerId
             {
                 department: role,
                 permissions: ['view_products', 'manage_orders', 'view_inventory'],
-                role: role
+                role: role,
+                count: count, // Add count to employeeData
+                domain: domain // Add domain to employeeData
             }
         );
 
@@ -465,17 +467,20 @@ async function createBatchEmployees() {
         createBatchEmployeesBtn.disabled = true;
         createBatchEmployeesBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Creating Employees...';
 
-        const count = parseInt(employeeCountInput.value);
         const role = batchEmployeeRoleInput.value;
+        const count = parseInt(employeeCountInput.value);
+        const domain = emailDomainInput.value.trim() || 'yourcompany.com';
 
-        // Call the backend API - UPDATED (removed count parameter)
+        // Call the backend API - UPDATED: Include count in employeeData
         const result = await generateBatchEmployeesBackend(
             shopOwnerUid,  // shopId
             shopOwnerUid,  // shopOwnerId
             {
                 department: role,
                 permissions: ['view_products', 'manage_orders', 'view_inventory'],
-                role: role
+                role: role,
+                count: count, // Add count to employeeData
+                domain: domain // Add domain to employeeData
             }
         );
 

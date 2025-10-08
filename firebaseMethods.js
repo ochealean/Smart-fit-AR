@@ -706,23 +706,13 @@ const BACKEND_URL = 'https://smartfitar-batchemployee-backend.onrender.com';
 /**
  * Generate batch employee accounts using backend API
  * @param {string} shopId - Shop ID
- * @param {number} count - Number of employees to generate
  * @param {string} shopOwnerId - Shop owner user ID
- * @param {Object} employeeData - Additional employee data
+ * @param {Object} employeeData - Additional employee data (including count)
  * @returns {Promise<Object>} JSON with generation result
  */
 export async function generateBatchEmployees(shopId, shopOwnerId, employeeData = {}) {
     try {
-        // Get count from the input field in your UI
-        const count = parseInt(document.getElementById('employeeCount').value);
-        
-        if (!count || count < 1) {
-            return { 
-                success: false, 
-                error: "Please enter a valid number of employees to generate" 
-            };
-        }
-
+        // Count is now part of employeeData, no need to get from DOM here
         const response = await fetch(`${BACKEND_URL}/api/generate-employees`, {
             method: 'POST',
             headers: {
@@ -730,9 +720,8 @@ export async function generateBatchEmployees(shopId, shopOwnerId, employeeData =
             },
             body: JSON.stringify({
                 shopId,
-                count,
                 shopOwnerId,
-                employeeData
+                employeeData // This now includes count, domain, role, etc.
             })
         });
 
