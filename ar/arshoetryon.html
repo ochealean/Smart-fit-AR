@@ -1,0 +1,742 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SmartFit - AR Try-On</title>
+    <link href="https://fonts.googleapis.com/css2?family=Segoe+UI:wght@400;600;700&display=swap" rel="stylesheet" />
+    <!-- DeepAR browser SDK v5.6.3 (pre-deprecation for foot tracking) -->
+    <script src="https://cdn.jsdelivr.net/npm/deepar@5.6.3/js/deepar.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+    <style>
+        :root {
+            --primary: #5e72e4;
+            --accent: #ff9e3f;
+            --dark: #1a1a2e;
+            --light: #f8f9fa;
+            --gray: #e9ecef;
+            --shadow-sm: 0 2px 4px rgba(0,0,0,0.1);
+            --shadow-md: 0 4px 12px rgba(0,0,0,0.15);
+            --transition: all 0.3s ease;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: linear-gradient(to bottom, var(--light), #fff);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 15px;
+            color: var(--dark);
+            overflow-x: hidden;
+        }
+
+        header {
+            width: 100%;
+            max-width: 1200px;
+            text-align: center;
+            margin-bottom: 20px;
+            padding: 15px 0;
+            border-bottom: 1px solid var(--gray);
+            z-index: 10;
+        }
+
+        header h1 {
+            font-size: 1.6rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 8px;
+        }
+
+        header p {
+            font-size: 0.9rem;
+            color: #666;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        .preview-container {
+            position: relative;
+            width: 100%;
+            max-width: 640px;
+            margin-bottom: 20px;
+            z-index: 1;
+        }
+
+        #deepar-div {
+            width: 100%;
+            aspect-ratio: 16/9;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: var(--shadow-md);
+            background-color: #fff;
+            transition: var(--transition);
+        }
+
+        #deepar-div.mirrored {
+            transform: scaleX(-1);
+        }
+
+        #deepar-div.fullscreen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            max-width: none;
+            aspect-ratio: unset;
+            z-index: 999;
+            border-radius: 0;
+        }
+
+        .control-buttons {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            display: flex;
+            gap: 8px;
+            z-index: 1000;
+        }
+
+        .expand-button, .exit-button, .mirror-button {
+            background: rgba(255,255,255,0.8);
+            border: none;
+            border-radius: 50%;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: var(--transition);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .expand-button:hover, .exit-button:hover, .mirror-button:hover {
+            background: white;
+            transform: scale(1.1);
+        }
+
+        .expand-button i, .exit-button i, .mirror-button i {
+            color: var(--primary);
+            font-size: 14px;
+        }
+
+        .filter-section {
+            width: 100%;
+            max-width: 1200px;
+            margin-bottom: 20px;
+            transition: max-height 0.3s ease, opacity 0.3s ease;
+            overflow: hidden;
+            z-index: 2;
+        }
+
+        .filter-section.minimized {
+            max-height: 0;
+            opacity: 0;
+            margin-bottom: 0;
+        }
+
+        .filter-section.fullscreen {
+            position: absolute;
+            top: 750px;
+            left: 0;
+            width: 100%;
+            background: rgba(255,255,255,0.95);
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: var(--shadow-md);
+            z-index: 1001;
+            max-height: 200px;
+            overflow-y: auto;
+            display: flex;
+        }
+
+        .filter-section.fullscreen.hidden {
+            display: none;
+        }
+
+        .toggle-filter-btn {
+            position: absolute;
+            top: 50px;
+            right: 10px;
+            background: rgba(255,255,255,0.8);
+            border: none;
+            border-radius: 50%;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: var(--transition);
+            box-shadow: var(--shadow-sm);
+            z-index: 1002;
+        }
+
+        .toggle-filter-btn:hover {
+            background: white;
+            transform: scale(1.1);
+        }
+
+        .toggle-filter-btn i {
+            color: var(--primary);
+            font-size: 14px;
+        }
+
+        .toggle-filter-btn.hidden {
+            display: none;
+        }
+
+        .toggle-button {
+            padding: 8px 20px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.9rem;
+            transition: var(--transition);
+            box-shadow: var(--shadow-sm);
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            width: 100%;
+            max-width: 200px;
+            justify-content: center;
+        }
+
+        .toggle-button:hover {
+            background: #4a5fd1;
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .toggle-button i {
+            transition: transform 0.3s ease;
+        }
+
+        .toggle-button.minimized i {
+            transform: rotate(180deg);
+        }
+
+        .filter-container {
+            display: flex;
+            overflow-x: auto;
+            gap: 25px;
+            padding: 15px 10px;
+            scroll-snap-type: x proximity;
+            scrollbar-width: thin;
+            scrollbar-color: var(--primary) var(--gray);
+        }
+
+        .filter-container::-webkit-scrollbar {
+            height: 6px;
+        }
+
+        .filter-container::-webkit-scrollbar-track {
+            background: var(--gray);
+            border-radius: 3px;
+        }
+
+        .filter-container::-webkit-scrollbar-thumb {
+            background: var(--primary);
+            border-radius: 3px;
+        }
+
+        .category-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 10px 20px;
+            background: #fff;
+            border-radius: 10px;
+            box-shadow: var(--shadow-sm);
+            scroll-snap-align: center;
+            transition: var(--transition);
+        }
+
+        .category-group:hover {
+            box-shadow: var(--shadow-md);
+            transform: translateY(-2px);
+        }
+
+        .category-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--dark);
+            margin-bottom: 10px;
+            text-transform: capitalize;
+        }
+
+        .filter-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .filter-button {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            cursor: pointer;
+            padding: 6px;
+            border-radius: 50%;
+            transition: var(--transition);
+            position: relative;
+        }
+
+        .filter-button:hover {
+            transform: scale(1.05);
+        }
+
+        .filter-button.selected .filter-image {
+            box-shadow: 0 0 0 3px var(--primary);
+        }
+
+        .filter-button.selected::after {
+            content: '✓';
+            position: absolute;
+            bottom: 20px;
+            right: -8px;
+            width: 20px;
+            height: 20px;
+            background: var(--primary);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+        }
+
+        .filter-image {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            object-fit: cover;
+            box-shadow: var(--shadow-sm);
+            border: 2px solid transparent;
+            transition: var(--transition);
+        }
+
+        .filter-button:hover .filter-image {
+            border-color: var(--primary);
+        }
+
+        .filter-name {
+            margin-top: 6px;
+            font-size: 0.8rem;
+            text-align: center;
+            color: #555;
+            text-transform: capitalize;
+        }
+
+        .category-divider {
+            min-width: 1px;
+            background: linear-gradient(to bottom, transparent, var(--gray), transparent);
+            height: 70%;
+            align-self: center;
+        }
+
+        .back-button {
+            padding: 10px 28px;
+            background: linear-gradient(to right, var(--accent), #ff8c1a);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.9rem;
+            transition: var(--transition);
+            box-shadow: var(--shadow-sm);
+            width: 100%;
+            max-width: 250px;
+            z-index: 10;
+        }
+
+        .back-button:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .loader {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255,255,255,0.9);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1002;
+        }
+
+        .loader.active {
+            display: flex;
+        }
+
+        .loader-spinner {
+            border: 4px solid var(--gray);
+            border-top: 4px solid var(--primary);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+
+            header h1 {
+                font-size: 1.4rem;
+            }
+
+            header p {
+                font-size: 0.85rem;
+            }
+
+            .preview-container {
+                margin-bottom: 15px;
+            }
+
+            .filter-section {
+                margin-bottom: 15px;
+            }
+
+            .category-group {
+                padding: 10px 15px;
+            }
+
+            .filter-buttons {
+                gap: 10px;
+            }
+
+            .filter-image {
+                width: 50px;
+                height: 50px;
+            }
+
+            .filter-name {
+                font-size: 0.7rem;
+            }
+
+            .back-button {
+                max-width: 200px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            header {
+                padding: 10px 0;
+            }
+
+            header h1 {
+                font-size: 1.2rem;
+            }
+
+            header p {
+                font-size: 0.75rem;
+            }
+
+            .filter-buttons {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .category-divider {
+                display: none;
+            }
+
+            .toggle-button {
+                max-width: 180px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>SmartFit - AR Try-On</h1>
+        <p>Point your camera at your feet to see the shoes in real-time. Swipe to browse options.</p>
+    </header>
+
+    <!-- AR preview container -->
+    <div class="preview-container">
+        <div id="deepar-div"></div>
+        <div class="control-buttons">
+            <button class="expand-button" id="expand-btn" title="Enter Fullscreen">
+                <i class="fas fa-expand"></i>
+            </button>
+            <button class="exit-button" id="exit-btn" title="Exit Fullscreen" style="display: none;">
+                <i class="fas fa-compress"></i>
+            </button>
+            <button class="mirror-button" id="mirrorButton" title="Toggle Mirror">
+                <i class="fas fa-arrows-alt-h"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- Toggle button for filters -->
+    <button class="toggle-button" id="toggle-filters">
+        <i class="fas fa-chevron-down"></i> Show Filters
+    </button>
+
+    <!-- Filter selection container (horizontal scroll) -->
+    <section class="filter-section" id="filter-section">
+        <div class="filter-container" id="filter-container"></div>
+    </section>
+
+    <!-- Back button -->
+    <button class="back-button" onclick="window.location.href='arshoe.html'">Back to Collection</button>
+
+    <!-- Toggle filter button for fullscreen -->
+    <button class="toggle-filter-btn" id="toggle-filter-btn" title="Toggle Filters">
+        <i class="fas fa-filter"></i>
+    </button>
+
+    <!-- Loader -->
+    <div class="loader" id="loader">
+        <div class="loader-spinner"></div>
+    </div>
+
+    <script>
+        let deepAR;
+        let isFrontCamera = false; // Track camera state
+        let isMirrored = false; // Track mirror state
+        const urlParams = new URLSearchParams(window.location.search);
+        const initialModel = urlParams.get('model') || 'basketball';
+        const initialColor = urlParams.get('color') || 'black';
+        const effectMap = {
+            classic: { white: 'classic_white.deepar', black: 'classic_black.deepar', blue: 'classic_blue.deepar', red: 'classic_red.deepar' },
+            running: { white: 'running_white.deepar', black: 'running_black.deepar', blue: 'running_blue.deepar', red: 'running_red.deepar' },
+            basketball: { white: 'basketball_white.deepar', black: 'basketball_black.deepar', blue: 'basketball_blue.deepar', red: 'basketball_red.deepar' }
+        };
+        const imageMap = {
+            classic: { white: '/images/angles/classic/white/main.png', black: '/images/angles/classic/black/main.png', blue: '/images/angles/classic/blue/main.png', red: '/images/angles/classic/red/main.png' },
+            running: { white: '/images/angles/runner/white/main.png', black: '/images/angles/runner/black/main.png', blue: '/images/angles/runner/blue/main.png', red: '/images/angles/runner/red/main.png' },
+            basketball: { white: '/images/angles/basketball/white/main.png', black: '/images/angles/basketball/black/main.png', blue: '/images/angles/basketball/blue/main.png', red: '/images/angles/basketball/red/main.png' }
+        };
+
+        let currentEffectPath = `./effects/filters/${effectMap[initialModel][initialColor]}`;
+        const loader = document.getElementById('loader');
+        const filterSection = document.getElementById('filter-section');
+        const toggleButton = document.getElementById('toggle-filters');
+        const toggleIcon = toggleButton.querySelector('i');
+        const expandBtn = document.getElementById('expand-btn');
+        const exitBtn = document.getElementById('exit-btn');
+        const preview = document.getElementById('deepar-div');
+        const toggleFilterBtn = document.getElementById('toggle-filter-btn');
+        const mirrorBtn = document.getElementById('mirrorButton');
+
+        (async function () {
+            loader.classList.add('active');
+            try {
+                deepAR = await deepar.initialize({
+                    licenseKey: 'f0eafd99d224758bdc2c7271acd80bc7642fdb178ba74faf1c61c1ec7d25221057493e7b9b73c58d',
+                    previewElement: preview,
+                }, {
+                    additionalOptions: {
+                        cameraConfig: {
+                            facingMode: 'environment', // Start with back camera
+                            mirrorCamera: false
+                        }
+                    }
+                });
+                console.log("✅ DeepAR initialized with back camera.");
+
+                // Load initial effect based on URL parameters
+                await deepAR.switchEffect(currentEffectPath);
+                console.log(`✅ Initial shoe effect loaded: ${currentEffectPath}`);
+
+                deepAR.callbacks.onFeetVisibilityChanged = (visible) => {
+                    console.log(visible ? '👟 Feet detected!' : 'No feet visible.');
+                };
+
+                // Dynamically populate filter buttons with categories and dividers
+                const container = document.getElementById('filter-container');
+                const categories = Object.keys(effectMap);
+                categories.forEach((model, catIndex) => {
+                    const group = document.createElement('div');
+                    group.className = 'category-group';
+                    const title = document.createElement('div');
+                    title.className = 'category-title';
+                    title.textContent = model.charAt(0).toUpperCase() + model.slice(1);
+                    group.appendChild(title);
+
+                    const buttonsDiv = document.createElement('div');
+                    buttonsDiv.className = 'filter-buttons';
+                    for (const color in effectMap[model]) {
+                        const button = document.createElement('div');
+                        button.className = 'filter-button';
+                        button.dataset.path = `./effects/filters/${effectMap[model][color]}`;
+                        button.setAttribute('role', 'button');
+                        button.setAttribute('tabindex', '0');
+                        button.setAttribute('aria-label', `${model} ${color}`);
+
+                        const img = document.createElement('img');
+                        img.src = imageMap[model][color];
+                        img.className = 'filter-image';
+                        img.alt = `${model} ${color} shoe`;
+
+                        const name = document.createElement('span');
+                        name.className = 'filter-name';
+                        name.textContent = color.charAt(0).toUpperCase() + color.slice(1);
+
+                        button.appendChild(img);
+                        button.appendChild(name);
+
+                        button.onclick = async () => {
+                            loader.classList.add('active');
+                            await switchEffect(button.dataset.path);
+                            document.querySelectorAll('.filter-button').forEach(btn => btn.classList.remove('selected'));
+                            button.classList.add('selected');
+                            loader.classList.remove('active');
+                        };
+
+                        button.onkeydown = (e) => {
+                            if (e.key === 'Enter') button.click();
+                        };
+
+                        buttonsDiv.appendChild(button);
+                    }
+                    group.appendChild(buttonsDiv);
+                    container.appendChild(group);
+
+                    if (catIndex < categories.length - 1) {
+                        const divider = document.createElement('div');
+                        divider.className = 'category-divider';
+                        container.appendChild(divider);
+                    }
+                });
+
+                const initialButton = Array.from(document.querySelectorAll('.filter-button')).find(btn => btn.dataset.path === currentEffectPath);
+                if (initialButton) initialButton.classList.add('selected');
+
+                loader.classList.remove('active');
+            } catch (err) {
+                console.error("❌ Error:", err);
+                loader.classList.remove('active');
+                alert('Failed to initialize AR. Please check console for details.');
+            }
+        })();
+
+        async function switchEffect(effectPath) {
+            try {
+                if (!deepAR) throw new Error('DeepAR not initialized');
+                await deepAR.switchEffect(effectPath);
+                currentEffectPath = effectPath;
+                console.log(`✅ Switched to effect: ${effectPath}`);
+            } catch (err) {
+                console.error("❌ Failed to switch effect:", err);
+            }
+        }
+
+        // Toggle filters
+        toggleButton.addEventListener('click', () => {
+            filterSection.classList.toggle('minimized');
+            if (filterSection.classList.contains('minimized')) {
+                toggleButton.innerHTML = '<i class="fas fa-chevron-up"></i> Show Filters';
+            } else {
+                toggleButton.innerHTML = '<i class="fas fa-chevron-down"></i> Hide Filters';
+            }
+        });
+
+        // Toggle fullscreen
+        expandBtn.addEventListener('click', () => {
+            enterFullscreen();
+        });
+
+        exitBtn.addEventListener('click', () => {
+            exitFullscreen();
+        });
+
+        // Toggle filter visibility in fullscreen
+        toggleFilterBtn.addEventListener('click', () => {
+            filterSection.classList.toggle('hidden');
+            if (filterSection.classList.contains('hidden')) {
+                toggleFilterBtn.innerHTML = '<i class="fas fa-filter"></i>';
+            } else {
+                toggleFilterBtn.innerHTML = '<i class="fas fa-times"></i>';
+            }
+        });
+
+        function enterFullscreen() {
+            if (!document.fullscreenElement) {
+                preview.classList.add('fullscreen');
+                filterSection.classList.add('fullscreen');
+                expandBtn.style.display = 'none';
+                exitBtn.style.display = 'flex';
+                toggleFilterBtn.classList.remove('hidden');
+                toggleFilterBtn.style.display = 'flex';
+                preview.requestFullscreen().catch(err => console.error('Fullscreen error:', err));
+            }
+        }
+
+        function exitFullscreen() {
+            if (document.fullscreenElement) {
+                document.exitFullscreen();
+                preview.classList.remove('fullscreen');
+                filterSection.classList.remove('fullscreen');
+                if (isMirrored) {
+                    preview.classList.add('mirrored');
+                } else {
+                    preview.classList.remove('mirrored');
+                }
+                filterSection.classList.remove('hidden');
+                expandBtn.style.display = 'flex';
+                exitBtn.style.display = 'none';
+                toggleFilterBtn.style.display = 'none';
+                toggleFilterBtn.classList.add('hidden');
+            }
+        }
+
+        // Toggle mirror
+        mirrorBtn.addEventListener('click', () => {
+            isMirrored = !isMirrored;
+            if (isMirrored) {
+                preview.classList.add('mirrored');
+                console.log('✅ Camera mirrored.');
+            } else {
+                preview.classList.remove('mirrored');
+                console.log('✅ Camera unmirrored.');
+            }
+        });
+
+        // Handle fullscreen change
+        document.addEventListener('fullscreenchange', () => {
+            if (!document.fullscreenElement) {
+                preview.classList.remove('fullscreen');
+                filterSection.classList.remove('fullscreen');
+                if (isMirrored) {
+                    preview.classList.add('mirrored');
+                } else {
+                    preview.classList.remove('mirrored');
+                }
+                filterSection.classList.remove('hidden');
+                expandBtn.style.display = 'flex';
+                exitBtn.style.display = 'none';
+                toggleFilterBtn.style.display = 'none';
+                toggleFilterBtn.classList.add('hidden');
+            }
+        });
+    </script>
+</body>
+</html>
