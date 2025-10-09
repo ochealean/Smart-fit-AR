@@ -41,7 +41,7 @@ async function testAutoConfirmService() {
         const response = await fetch('https://smartfitar-auto-orderreceive.onrender.com/health');
         const data = await response.json();
         console.log('✅ Auto-confirm service is running:', data);
-        
+
         // Test quick check
         const quickResponse = await fetch('https://smartfitar-auto-orderreceive.onrender.com/quick-check', {
             method: 'POST',
@@ -51,7 +51,7 @@ async function testAutoConfirmService() {
         });
         const quickData = await quickResponse.json();
         console.log('📊 Quick check results:', quickData);
-        
+
         return true;
     } catch (error) {
         console.error('❌ Auto-confirm service is not reachable:', error);
@@ -189,6 +189,7 @@ function setupEventListeners() {
     const addUpdateButtons = document.querySelectorAll(".add-update-btn");
     addUpdateButtons.forEach(button => {
         button.addEventListener("click", () => {
+            disablingOtherStatus();
             if (domElements.updateModal) {
                 domElements.updateModal.style.display = "flex";
                 // Set current datetime as default
@@ -448,6 +449,51 @@ async function saveShippingInfo() {
         console.error("Error saving shipping info:", error);
         alert("Failed to save shipping info");
     }
+}
+
+async function disablingOtherStatus() {
+    const domOptions = {
+        0: getElement("optionDefault"),
+        1: getElement("orderProcessed"),
+        2: getElement("shipped"),
+        3: getElement("inTransit"),
+        4: getElement("arrivedAtFacility"),
+        5: getElement("outForDelivery")
+    };
+
+    const statusOrder = [
+        "Order Processed",
+        "Shipped",
+        "In Transit",
+        "Arrived at Facility",
+        "Out for Delivery"
+    ];
+
+    const unsubscribe = readDataRealtime(
+        `smartfit_AR_Database/transactions/${userID}/${orderID}`,
+        (result) => {
+            if (!result.success) {
+                alert("Order not found");
+                return;
+            }
+
+            const data = result.data;
+            const currentStatus = data.status;
+            const currentIndex = statusOrder.indexOf(currentStatus);
+            const nextIndex = currentIndex + 1; // index in statusOrder
+            const domKeyToEnable = nextIndex + 1; // index in domOptions
+
+            Object.keys(domOptions).forEach((key) => {
+                const numericKey = parseInt(key);
+                domOptions[numericKey].disabled = numericKey !== domKeyToEnable;
+            });
+
+
+
+            console.log("Current status is:", currentStatus);
+        }
+    );
+    return unsubscribe;
 }
 
 async function addStatusUpdate() {
