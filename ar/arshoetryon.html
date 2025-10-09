@@ -44,7 +44,6 @@
             text-align: center;
             margin-bottom: 20px;
             padding: 15px 0;
-            border-bottom: 1px solid var(--gray);
             z-index: 10;
         }
 
@@ -102,6 +101,30 @@
             transform: scaleX(-1);
         }
 
+        .switch-camera-button {
+            background: rgba(255,255,255,0.8);
+            border: none;
+            border-radius: 50%;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: var(--transition);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .switch-camera-button:hover {
+            background: white;
+            transform: scale(1.1);
+        }
+
+        .switch-camera-button i {
+            color: var(--primary);
+            font-size: 14px;
+        }
+
         .control-buttons {
             position: absolute;
             top: 10px;
@@ -113,7 +136,7 @@
 
         .control-buttons.expanded {
             position: fixed;
-            top: calc(40vh + 10px);
+            top: calc(15vh + 10px);
             right: calc(10vw + 10px);
             z-index: 1001;
         }
@@ -172,28 +195,36 @@
             max-height: 200px;
             overflow-y: auto;
             display: flex;
-            flex-direction: row;
+            flex-direction: column;
+            gap: 15px;
         }
 
         .filter-section.expanded .filter-container {
-            flex-direction: row;
+            flex-direction: column;
             flex-wrap: nowrap;
         }
 
         .filter-section.expanded .category-group {
-            flex-direction: row;
-            gap: 20px;
+            flex-direction: column;
+            gap: 10px;
             min-width: auto;
+            align-items: center;
         }
 
         .filter-section.expanded .category-title {
             writing-mode: vertical-rl;
             transform: rotate(270deg);
             margin-right: 10px;
+            font-size: 1.2rem;
+            font-weight: 600;
         }
 
         .filter-section.expanded .filter-buttons {
+            display: flex;
             flex-direction: row;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
         }
 
         .filter-section.expanded.hidden {
@@ -202,6 +233,7 @@
 
         .toggle-filter-btn {
             position: fixed;
+            display: none;
             bottom: 20px;
             right: 10vw;
             background: rgba(255,255,255,0.8);
@@ -386,6 +418,28 @@
             align-self: center;
         }
 
+        .buy-now-button {
+            padding: 10px 28px;
+            background: linear-gradient(to right, var(--primary), #4a5fd1);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.9rem;
+            transition: var(--transition);
+            box-shadow: var(--shadow-sm);
+            width: 100%;
+            max-width: 250px;
+            z-index: 10;
+            margin: 10px 0;
+        }
+
+        .back-button:hover, .buy-now-button:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+
         .back-button {
             padding: 10px 28px;
             background: linear-gradient(to right, var(--accent), #ff8c1a);
@@ -476,7 +530,7 @@
                 font-size: 0.7rem;
             }
 
-            .back-button {
+            .back-button .buy-now-button{
                 max-width: 200px;
             }
         }
@@ -531,6 +585,9 @@
             <button class="screenshot-button" id="screenshotBtnNormal" title="Take Screenshot">
                 <i class="fas fa-camera"></i>
             </button>
+            <button class="switch-camera-button" id="switchCameraBtnNormal" title="Switch Camera">
+                <i class="fas fa-sync-alt"></i>
+            </button>
         </div>
     </div>
 
@@ -543,6 +600,9 @@
     <section class="filter-section" id="filter-section">
         <div class="filter-container" id="filter-container"></div>
     </section>
+
+    <!-- Buy Now button -->
+    <button class="buy-now-button" id="buy-now-button">Buy Now</button>
 
     <!-- Back button -->
     <button class="back-button" id="back-button" onclick="window.location.href='arshoe.html'">Back to Collection</button>
@@ -563,6 +623,9 @@
         <button class="screenshot-button" id="screenshotBtnExpanded" title="Take Screenshot" style="display: none;">
             <i class="fas fa-camera"></i>
         </button>
+        <button class="switch-camera-button" id="switchCameraBtnExpanded" title="Switch Camera">
+            <i class="fas fa-sync-alt"></i>
+        </button>
     </div>
 
     <!-- Loader -->
@@ -574,6 +637,7 @@
         let deepAR;
         let isFrontCamera = false; // Track camera state
         let isMirrored = false; // Track mirror state
+        let currentStream = null; // Track the active media stream
         const urlParams = new URLSearchParams(window.location.search);
         const initialModel = urlParams.get('model') || 'basketball';
         const initialColor = urlParams.get('color') || 'black';
@@ -600,6 +664,9 @@
         const mirrorBtnExpanded = document.getElementById('mirrorBtnExpanded');
         const screenshotBtnNormal = document.getElementById('screenshotBtnNormal');
         const screenshotBtnExpanded = document.getElementById('screenshotBtnExpanded');
+        const switchCameraBtnNormal = document.getElementById('switchCameraBtnNormal');
+        const switchCameraBtnExpanded = document.getElementById('switchCameraBtnExpanded');
+        const buyNowButton = document.getElementById('buy-now-button');
         const backButton = document.getElementById('back-button');
         const expandedControls = document.getElementById('expanded-controls');
         const exitBtnExpanded = document.getElementById('exit-btn-expanded');
@@ -610,16 +677,11 @@
                 deepAR = await deepar.initialize({
                     licenseKey: 'f0eafd99d224758bdc2c7271acd80bc7642fdb178ba74faf1c61c1ec7d25221057493e7b9b73c58d',
                     previewElement: preview,
-                }, {
-                    additionalOptions: {
-                        cameraConfig: {
-                            facingMode: 'environment',
-                            mirrorCamera: false
-                        }
-                    }
                 });
-                console.log("✅ DeepAR initialized with back camera.");
+                console.log("✅ DeepAR initialized ");
 
+                // Start with back camera
+                await switchCamera('environment');
                 await deepAR.switchEffect(currentEffectPath);
                 console.log(`✅ Initial shoe effect loaded: ${currentEffectPath}`);
 
@@ -694,6 +756,41 @@
             }
         })();
 
+        async function switchCamera(facingMode) {
+            try {
+                // Stop the current stream if it exists
+                if (currentStream) {
+                    currentStream.getTracks().forEach(track => track.stop());
+                }
+
+                // Request new stream
+                const stream = await navigator.mediaDevices.getUserMedia({
+                    video: { facingMode: facingMode }
+                });
+                currentStream = stream;
+
+                // Create a new video element
+                const video = document.createElement('video');
+                video.srcObject = stream;
+                video.playsInline = true;
+                video.muted = true;
+                video.play();
+
+                // Update DeepAR with the new video stream
+                deepAR.setVideoElement(video, isMirrored);
+                console.log(`✅ Switched to ${facingMode} camera.`);
+            } catch (err) {
+                console.error("❌ Failed to switch camera:", err);
+                alert('Failed to switch camera. Please ensure camera permissions are granted.');
+            }
+        }
+
+        async function toggleCamera() {
+            isFrontCamera = !isFrontCamera;
+            const facingMode = isFrontCamera ? 'user' : 'environment';
+            await switchCamera(facingMode);
+        }
+
         async function switchEffect(effectPath) {
             try {
                 if (!deepAR) throw new Error('DeepAR not initialized');
@@ -735,18 +832,25 @@
             }
         });
 
+        switchCameraBtnNormal.addEventListener('click', toggleCamera);
+        switchCameraBtnExpanded.addEventListener('click', toggleCamera);
+
         function enterExpanded() {
             preview.classList.add('expanded');
             filterSection.classList.add('expanded');
+            filterSection.classList.remove('minimized'); // Ensure filters are visible when entering expanded mode
+            buyNowButton.style.display = 'none';
             backButton.style.display = 'none';
             expandBtn.style.display = 'none';
             exitBtn.style.display = 'none';
             toggleFilterBtn.style.display = 'flex';
             mirrorBtnNormal.style.display = 'none';
             screenshotBtnNormal.style.display = 'none';
+            switchCameraBtnNormal.style.display = 'none';
             expandedControls.style.display = 'flex';
             mirrorBtnExpanded.style.display = 'flex';
             screenshotBtnExpanded.style.display = 'flex';
+            switchCameraBtnExpanded.style.display = 'flex';
             document.body.style.overflow = 'hidden';
             // Handle mirroring transition
             if (isMirrored) {
@@ -761,6 +865,7 @@
         function exitExpanded() {
             preview.classList.remove('expanded');
             filterSection.classList.remove('expanded');
+            buyNowButton.style.display = 'block';
             backButton.style.display = 'block';
             expandBtn.style.display = 'flex';
             exitBtn.style.display = 'none';
@@ -768,9 +873,11 @@
             filterSection.classList.remove('hidden');
             mirrorBtnNormal.style.display = 'flex';
             screenshotBtnNormal.style.display = 'flex';
+            switchCameraBtnNormal.style.display = 'flex';
             expandedControls.style.display = 'none';
             mirrorBtnExpanded.style.display = 'none';
             screenshotBtnExpanded.style.display = 'none';
+            switchCameraBtnExpanded.style.display = 'none';
             document.body.style.overflow = 'auto';
             // Handle mirroring transition
             if (isMirrored) {
