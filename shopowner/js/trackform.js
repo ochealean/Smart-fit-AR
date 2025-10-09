@@ -35,37 +35,9 @@ function getUrlParams() {
     }
 }
 
-// Test the auto-confirm service connection
-async function testAutoConfirmService() {
-    try {
-        const response = await fetch('https://smartfitar-auto-orderreceive.onrender.com/health');
-        const data = await response.json();
-        console.log('✅ Auto-confirm service is running:', data);
-
-        // Test quick check
-        const quickResponse = await fetch('https://smartfitar-auto-orderreceive.onrender.com/quick-check', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            }
-        });
-        const quickData = await quickResponse.json();
-        console.log('📊 Quick check results:', quickData);
-
-        return true;
-    } catch (error) {
-        console.error('❌ Auto-confirm service is not reachable:', error);
-        return false;
-    }
-}
 // Initialize the page
 async function initializeTracking() {
     const authResult = await checkUserAuth();
-
-
-    // Call this on page load
-    await testAutoConfirmService();
-
     if (!authResult.authenticated) {
         window.location.href = "/login.html";
         return;
@@ -297,7 +269,22 @@ function loadOrderData() {
 
             const data = result.data;
             const itemData = data.item;
-
+            console.log(data.shipping == null);
+            if (data.shipping == null) {
+                // pag walang laman yung shipping info
+                console.log(data.shipping);
+                domElements.addUpdateBtn.style.backgroundColor = 'var(--gray)';
+                domElements.addFirstUpdateBtn.style.backgroundColor = 'var(--gray)';
+                domElements.addUpdateBtn.disabled = true;
+                domElements.addFirstUpdateBtn.disabled = true;
+            } else {
+                // pag may laman shipping info
+                console.log(data.shipping);
+                domElements.addUpdateBtn.style.backgroundColor = 'var(--primary)';
+                domElements.addFirstUpdateBtn.style.backgroundColor = 'var(--primary)';
+                domElements.addUpdateBtn.disabled = false;
+                domElements.addFirstUpdateBtn.disabled = false;
+            }
             domElements.imageValue.src = itemData.imageUrl;
             domElements.itemTitleLabel.innerHTML = itemData.name;
             domElements.colorItem.innerHTML = itemData.color;
@@ -305,7 +292,7 @@ function loadOrderData() {
             domElements.qtyItem.innerHTML = itemData.quantity;
 
             console.log(data);
-            console.log(itemData);
+            console.log();
             if (data.status && data.status.toLowerCase() === "cancelled") {
                 if (orderCancelContainer) {
                     orderCancelContainer.style.display = "grid";
