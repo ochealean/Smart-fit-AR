@@ -361,7 +361,7 @@ function getStatusInfo(status) {
 function generateActionButtons(status, orderId, serialNumber, hasUnresolvedIssue, shopID) {
     let buttons = '';
 
-    if (status === 'delivered') {
+    if (status === 'out for delivery') {
         buttons = `
             <button class="btn btn-received" onclick="markAsReceived('${orderId}')">
                 <i class="fas fa-check"></i> Order Received
@@ -384,7 +384,7 @@ function generateActionButtons(status, orderId, serialNumber, hasUnresolvedIssue
                 <i class="fas fa-times"></i> Cancel Order
             </button>
         `;
-    } else if (['shipped', 'in transit', 'arrived at facility', 'out for delivery', 'accepted'].includes(status)) {
+    } else if (['shipped', 'in transit', 'arrived at facility', 'accepted'].includes(status)) {
         buttons = `
             <button class="btn btn-track" onclick="trackOrder('${orderId}')">
                 <i class="fas fa-truck"></i> Track Package
