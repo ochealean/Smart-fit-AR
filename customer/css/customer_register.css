@@ -560,65 +560,6 @@ body {
     box-shadow: 0 0 0 3px rgba(110, 142, 251, 0.3);
 }
 
-/* Password Requirements Container */
-.password-requirements {
-    margin-top: 0.75rem;
-    padding: 0.75rem;
-    background: var(--gray-light);
-    border-radius: 8px;
-    border: 1px solid var(--gray-medium);
-    width: 95%; /* Match the width of the input fields */
-}
-
-/* Password Requirements List */
-.password-requirements ul {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-}
-
-/* Individual Requirement Items */
-.password-requirements li {
-    font-size: 0.85rem;
-    color: var(--text-secondary);
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    transition: var(--transition);
-}
-
-/* Icon for each requirement */
-.password-requirements li::before {
-    content: '•';
-    color: var(--text-secondary);
-    font-size: 1rem;
-}
-
-/* Styling for fulfilled requirements */
-.password-requirements li[style*="color: rgb(76, 175, 80)"] {
-    color: var(--success);
-}
-
-.password-requirements li[style*="color: rgb(76, 175, 80)"]::before {
-    content: '\f00c'; /* Checkmark icon from Font Awesome */
-    font-family: 'Font Awesome 6 Free';
-    font-weight: 900;
-    color: var(--success);
-}
-
-/* Styling for unfulfilled requirements */
-.password-requirements li[style*="color: rgb(244, 67, 54)"] {
-    color: var(--error);
-}
-
-.password-requirements li[style*="color: rgb(244, 67, 54)"]::before {
-    content: '•';
-    color: var(--error);
-}
-
 /* Password Strength */
 .password-strength {
     margin-top: 0.75rem;
