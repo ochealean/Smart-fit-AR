@@ -13,6 +13,7 @@ function getElement(id) {
 
 let userID;
 let userData;
+let currentUnsubscribe;
 
 // Initialize the page
 async function initializeOrders() {
@@ -74,10 +75,15 @@ function loadOrders() {
     const ordersContainer = document.querySelector('.purchase-history');
     if (!ordersContainer) return;
 
-    // Show loading state
+    // Clear any existing real-time listener
+    if (currentUnsubscribe) {
+        currentUnsubscribe();
+    }
+
+    // Show loading state initially
     // ordersContainer.innerHTML = `
     //     <div class="no-orders">
-    //         <i class="fas fa-box-open"></i>
+    //         <i class="fas fa-spinner fa-spin"></i>
     //         <h3>Loading Orders...</h3>
     //         <p>Please wait while we load your orders</p>
     //     </div>
@@ -86,10 +92,10 @@ function loadOrders() {
     // Debounced display function
     const debouncedDisplayOrders = debounce(async (orders, container) => {
         await displayOrders(orders, container);
-    }, 300); // 300ms debounce
+    }, 500); // Increased debounce time to prevent flickering
 
     // Use real-time data reading
-    const unsubscribe = readDataRealtime(
+    currentUnsubscribe = readDataRealtime(
         `smartfit_AR_Database/transactions/${userID}`,
         async (result) => {
             if (!result.data) {
@@ -121,23 +127,64 @@ function loadOrders() {
                 if (orderData) {
                     orders.unshift({
                         id: orderId,
-                        orderId: orderId, // Ensure orderId is included
+                        orderId: orderId,
                         ...orderData
                     });
                 }
             }
 
+            console.log(`Processing ${orders.length} orders`);
             // Display orders using debounced function
             await debouncedDisplayOrders(orders, ordersContainer);
         }
     );
 
-    return unsubscribe;
+    return currentUnsubscribe;
+}
+
+// Check if order should be displayed
+async function shouldDisplayOrder(order) {
+    const status = order.status?.toLowerCase() || 'pending';
+    
+    // Always hide completed orders
+    if (status === 'completed') {
+        return false;
+    }
+
+    // Check for unresolved issues
+    try {
+        const userIssuesResult = await readData(`smartfit_AR_Database/issueReports/${userID}`);
+        if (userIssuesResult.success && userIssuesResult.data) {
+            const userIssues = userIssuesResult.data;
+            for (const [issueId, issueData] of Object.entries(userIssues)) {
+                if (issueData.orderID === order.orderId && !issueData.resolved) {
+                    return false; // Hide orders with unresolved issues
+                }
+            }
+        }
+    } catch (error) {
+        console.log("Error checking issue report:", error);
+    }
+
+    // Only show these statuses
+    const allowedStatuses = [
+        'pending',
+        'order processed',
+        'shipped',
+        'accepted',
+        'in transit',
+        'arrived at facility',
+        'out for delivery'
+    ];
+
+    return allowedStatuses.includes(status);
 }
 
 // Display orders in the container
 async function displayOrders(orders, ordersContainer) {
     if (!ordersContainer) return;
+
+    console.log(`Displaying ${orders.length} orders after filtering`);
 
     // Create a map of existing order cards by orderId for quick lookup
     const existingCards = new Map();
@@ -146,33 +193,37 @@ async function displayOrders(orders, ordersContainer) {
         existingCards.set(card.dataset.orderId, card);
     });
 
-    // Process each order
-    for (const order of orders) {
-        const existingCard = existingCards.get(order.orderId);
+    // Process each order to determine if it should be displayed
+    const ordersToDisplay = [];
+    const ordersToRemove = new Set(existingCards.keys());
 
+    for (const order of orders) {
+        const shouldDisplay = await shouldDisplayOrder(order);
+        
+        if (shouldDisplay) {
+            ordersToDisplay.push(order);
+            ordersToRemove.delete(order.orderId);
+        }
+    }
+
+    // Remove orders that should no longer be displayed
+    ordersToRemove.forEach(orderId => {
+        const card = existingCards.get(orderId);
+        if (card) {
+            card.remove();
+            existingCards.delete(orderId);
+        }
+    });
+
+    // Update or create cards for orders that should be displayed
+    for (const order of ordersToDisplay) {
+        const existingCard = existingCards.get(order.orderId);
+        
         if (existingCard) {
             // Update existing card
-            const status = order.status?.toLowerCase() || 'pending';
-            const { class: statusClass, text: statusText } = getStatusInfo(status);
-
-            // Update status and action buttons
-            existingCard.dataset.status = status;
-            const statusElement = existingCard.querySelector('.order-status');
-            if (statusElement) {
-                statusElement.className = `order-status ${statusClass}`;
-                statusElement.textContent = statusText;
-            }
-
-            const actionButtons = generateActionButtons(status, order.orderId, order.serialNumber, false, order.item?.shopId);
-            const actionsElement = existingCard.querySelector('.order-actions');
-            if (actionsElement) {
-                actionsElement.innerHTML = actionButtons;
-            }
-
-            // Remove from existingCards to mark as processed
-            existingCards.delete(order.orderId);
+            await updateOrderCard(existingCard, order);
         } else {
-            // Create new card for new order
+            // Create new card
             const orderCard = await createOrderCard(order);
             if (orderCard) {
                 ordersContainer.appendChild(orderCard);
@@ -180,18 +231,14 @@ async function displayOrders(orders, ordersContainer) {
         }
     }
 
-    // Remove any cards for orders that no longer exist or are filtered out
-    existingCards.forEach(card => {
-        card.remove();
-    });
-
-    // If no orders, show the "No Orders Found" message
-    if (orders.length === 0) {
+    // Show no orders message if applicable
+    const visibleOrderCards = ordersContainer.querySelectorAll('.order-card');
+    if (visibleOrderCards.length === 0) {
         ordersContainer.innerHTML = `
             <div class="no-orders">
                 <i class="fas fa-box-open"></i>
-                <h3>No Orders Found</h3>
-                <p>You haven't placed any orders yet.</p>
+                <h3>No Active Orders</h3>
+                <p>You don't have any active orders at the moment.</p>
                 <a href="/customer/html/browse.html" class="btn btn-shop">Browse Shoes</a>
             </div>
         `;
@@ -201,57 +248,80 @@ async function displayOrders(orders, ordersContainer) {
     setupOrderFilters();
 }
 
-// Create order card element
-async function createOrderCard(order) {
-    if (!order) return null;
-    console.log(order);
-    
+// Update existing order card
+async function updateOrderCard(card, order) {
     const status = order.status?.toLowerCase() || 'pending';
+    const { class: statusClass, text: statusText } = getStatusInfo(status);
 
-    // FIXED: Check for unresolved issues first - if unresolved, return null to hide the order
-    let hasUnresolvedIssue = false;
-    try {
-        // Get all issue reports for this user
-        const userIssuesResult = await readData(`smartfit_AR_Database/issueReports/${userID}`);
-        
-        if (userIssuesResult.success && userIssuesResult.data) {
-            const userIssues = userIssuesResult.data;
+    // Update status
+    card.dataset.status = status;
+    const statusElement = card.querySelector('.order-status');
+    if (statusElement) {
+        statusElement.className = `order-status ${statusClass}`;
+        statusElement.textContent = statusText;
+    }
+
+    // Update serial number in real-time
+    let serialNumber = order.serialNumber;
+    if (!serialNumber) {
+        const serialNumberData = await getSerialNumberFromVerification(order.orderId);
+        if (serialNumberData) {
+            serialNumber = serialNumberData.serialNumber;
+            card.dataset.serialNumber = serialNumber;
             
-            // Check if any issue report matches this order ID and is unresolved
-            for (const [issueId, issueData] of Object.entries(userIssues)) {
-                if (issueData.orderID === order.orderId && !issueData.resolved) {
-                    hasUnresolvedIssue = true;
-                    break;
+            // Update the serial number display
+            const serialElement = card.querySelector('.item-serial');
+            if (serialElement) {
+                serialElement.innerHTML = `Serial Number: <strong>${serialNumber}</strong>`;
+            } else {
+                // Create serial number element if it doesn't exist
+                const itemDetails = card.querySelector('.item-details');
+                if (itemDetails) {
+                    const newSerialElement = document.createElement('div');
+                    newSerialElement.className = 'item-serial';
+                    newSerialElement.innerHTML = `Serial Number: <strong>${serialNumber}</strong>`;
+                    itemDetails.appendChild(newSerialElement);
+                }
+            }
+
+            // Add validate button if it doesn't exist
+            const validateBtn = card.querySelector('.btn-verify');
+            if (!validateBtn) {
+                const actionsElement = card.querySelector('.order-actions');
+                if (actionsElement) {
+                    const newValidateBtn = document.createElement('button');
+                    newValidateBtn.className = 'btn btn-verify';
+                    newValidateBtn.innerHTML = '<i class="fas fa-check-circle"></i> Validate Shoe';
+                    newValidateBtn.onclick = () => validateShoe(serialNumber);
+                    actionsElement.appendChild(newValidateBtn);
                 }
             }
         }
-    } catch (error) {
-        console.log("Error checking issue report:", error);
     }
 
-    // FIXED: Hide orders with unresolved issues (just like completed status)
-    if (hasUnresolvedIssue) {
-        console.log(`Hiding order ${order.orderId} because it has unresolved issues`);
+    // Update action buttons
+    const hasUnresolvedIssue = false; // We already filtered these out
+    const actionButtons = generateActionButtons(status, order.orderId, serialNumber, hasUnresolvedIssue, order.item?.shopId);
+    const actionsElement = card.querySelector('.order-actions');
+    if (actionsElement) {
+        actionsElement.innerHTML = actionButtons;
+    }
+}
+
+// Create order card element
+async function createOrderCard(order) {
+    if (!order) return null;
+    
+    const status = order.status?.toLowerCase() || 'pending';
+    
+    // Double-check if order should be displayed (in case of race conditions)
+    const shouldDisplay = await shouldDisplayOrder(order);
+    if (!shouldDisplay) {
+        console.log(`Skipping creation of order ${order.orderId} with status: ${status}`);
         return null;
     }
 
-    // Only show these statuses (excluding 'completed' and orders with unresolved issues)
-    const allowedStatuses = [
-        'pending',
-        'order processed',
-        'shipped',
-        'accepted',
-        'in transit',
-        'arrived at facility',
-        'out for delivery',
-        'delivered'
-    ];
-
-    // Skip if status is not in allowed list (including 'completed')
-    if (!allowedStatuses.includes(status)) {
-        console.log(`Hiding order ${order.orderId} with status: ${status}`);
-        return null;
-    }
+    console.log(`Creating card for order ${order.orderId} with status: ${status}`);
 
     // Check if this order has a serial number
     let serialNumber = order.serialNumber;
@@ -272,7 +342,6 @@ async function createOrderCard(order) {
     orderCard.className = 'order-card';
     orderCard.dataset.status = status;
     orderCard.dataset.orderId = order.orderId;
-    orderCard.dataset.hasUnresolvedIssue = hasUnresolvedIssue; // This will always be false now since we filtered above
     if (serialNumber) {
         orderCard.dataset.serialNumber = serialNumber;
     }
@@ -287,7 +356,6 @@ async function createOrderCard(order) {
     });
 
     const { class: statusClass, text: statusText } = getStatusInfo(status);
-    console.log("Order status:", statusClass, statusText);
 
     let orderItemHTML = '';
     if (order.item) {
@@ -312,9 +380,7 @@ async function createOrderCard(order) {
     `;
     }
 
-    console.log(order.item.shopId);
-    // Since we've filtered out unresolved issues, hasUnresolvedIssue will always be false here
-    const actionButtons = generateActionButtons(status, order.orderId, serialNumber, false, order.item.shopId);
+    const actionButtons = generateActionButtons(status, order.orderId, serialNumber, false, order.item?.shopId);
 
     orderCard.innerHTML = `
         <div class="order-header">
@@ -342,7 +408,6 @@ async function createOrderCard(order) {
 
 // Get status information
 function getStatusInfo(status) {
-    console.log("Getting status info for:", status);
     const statusMap = {
         'pending': { class: 'status-pending', text: 'Pending' },
         'accepted': { class: 'status-accepted', text: 'Accepted' },
@@ -351,7 +416,7 @@ function getStatusInfo(status) {
         'in transit': { class: 'status-transit', text: 'In Transit' },
         'arrived at facility': { class: 'status-arrived', text: 'Arrived at Facility' },
         'out for delivery': { class: 'status-out-for-delivery', text: 'Out for Delivery' },
-        'delivered': { class: 'status-delivered', text: 'Delivered' }
+        'completed': { class: 'status-completed', text: 'Completed' }
     };
 
     return statusMap[status] || { class: 'status-pending', text: 'Pending' };
@@ -376,15 +441,6 @@ function generateActionButtons(status, orderId, serialNumber, hasUnresolvedIssue
             </button>
         `;
     } else if (status === 'pending') {
-        buttons = `
-            <button class="btn btn-track" onclick="trackOrder('${orderId}')">
-                <i class="fas fa-truck"></i> Track Package
-            </button>
-            <button class="btn btn-cancel" onclick="cancelOrder('${orderId}')">
-                <i class="fas fa-times"></i> Cancel Order
-            </button>
-        `;
-    } else if (['shipped', 'in transit', 'arrived at facility', 'accepted'].includes(status)) {
         buttons = `
             <button class="btn btn-track" onclick="trackOrder('${orderId}')">
                 <i class="fas fa-truck"></i> Track Package
@@ -572,7 +628,7 @@ window.validateShoe = function (serialNumber) {
     window.location.href = `/customer/html/shoevalidator.html?ShoeSerialNumber=${encodeURIComponent(serialNumber)}`;
 };
 
-// Mark order as received - FIXED: Also check for unresolved issues here
+// Mark order as received
 window.markAsReceived = async function (orderId) {
     // Check for unresolved issues
     let hasUnresolvedIssue = false;
@@ -608,8 +664,7 @@ window.markAsReceived = async function (orderId) {
 
         if (updateResult.success) {
             alert('Order marked as received successfully!');
-            // Reload orders to reflect changes (this will hide the order since it's now completed)
-            loadOrders();
+            // The order will automatically hide due to real-time updates
         } else {
             alert('Failed to update order status: ' + updateResult.error);
         }
@@ -631,6 +686,10 @@ function setupEventListeners() {
     if (logoutBtn) {
         logoutBtn.addEventListener('click', async function () {
             if (confirm('Are you sure you want to logout?')) {
+                // Unsubscribe from real-time updates
+                if (currentUnsubscribe) {
+                    currentUnsubscribe();
+                }
                 const result = await logoutUser();
                 if (result.success) {
                     window.location.href = '/login.html';
