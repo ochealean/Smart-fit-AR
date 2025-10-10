@@ -389,6 +389,9 @@ function generateActionButtons(status, orderId, serialNumber, hasUnresolvedIssue
             <button class="btn btn-track" onclick="trackOrder('${orderId}')">
                 <i class="fas fa-truck"></i> Track Package
             </button>
+            <button class="btn btn-cancel" onclick="cancelOrder('${orderId}')">
+                <i class="fas fa-times"></i> Cancel Order
+            </button>
         `;
     } else {
         buttons = `
