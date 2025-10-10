@@ -38,6 +38,47 @@ const dateProcessed = new Date().toLocaleDateString('en-US', {
 
 const registerButton = getElement('registerButton');
 
+// Initialize Google Map
+let map, marker, geocoder;
+
+function initMap() {
+    map = new google.maps.Map(document.getElementById('map'), {
+        center: { lat: 14.5995, lng: 120.9842 }, // Default center: Philippines
+        zoom: 8
+    });
+    marker = new google.maps.Marker({
+        map: map,
+        draggable: true,
+        visible: false // Initially hidden until address is geocoded
+    });
+    geocoder = new google.maps.Geocoder();
+
+    // Update hidden inputs when marker is dragged
+    google.maps.event.addListener(marker, 'dragend', function() {
+        const position = marker.getPosition();
+        document.getElementById('latitude').value = position.lat();
+        document.getElementById('longitude').value = position.lng();
+    });
+
+    // Handle "Locate on Map" button
+    document.getElementById('locateMapBtn').addEventListener('click', function() {
+        const address = `${shopAddress.value}, ${shopCity.value}, ${shopState.value}, ${shopZip.value}, ${shopCountry.value}`;
+        geocoder.geocode({ address: address }, function(results, status) {
+            if (status === google.maps.GeocoderStatus.OK) {
+                const location = results[0].geometry.location;
+                map.setCenter(location);
+                map.setZoom(15);
+                marker.setPosition(location);
+                marker.setVisible(true);
+                document.getElementById('latitude').value = location.lat();
+                document.getElementById('longitude').value = location.lng();
+            } else {
+                showErrorOverlay(['Unable to locate the address. Please check the address or manually adjust the marker.']);
+            }
+        });
+    });
+}
+
 function setButtonDisable() {
     registerButton.style.background = "linear-gradient(135deg, #43579d, #694c8d)";
     registerButton.style.color = "#838383";
@@ -121,6 +162,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if (closeErrorOverlayBtn) {
         closeErrorOverlayBtn.addEventListener('click', closeOverlays);
     }
+    initMap(); // Initialize map on page load
 });
 
 // Helper function to show field errors
@@ -155,7 +197,7 @@ async function uploadFilesWithProgress(userId, permitFile, licenseFile, frontSid
             const birPath = `uploads/${userId}/bir_${Date.now()}_${birFile.name}`;
 
             let completedUploads = 0;
-            const totalUploads = 6;  // Six files: Permit, License, ID Front, ID Back, DTI, BIR
+            const totalUploads = 6; // Six files: Permit, License, ID Front, ID Back, DTI, BIR
             const uploadResults = {};
 
             // Function to update progress
@@ -203,9 +245,9 @@ async function uploadFilesWithProgress(userId, permitFile, licenseFile, frontSid
             await Promise.all(uploadPromises);
 
             // Check if all uploads were successful
-            if (!uploadResults.permitDocument.success || 
-                !uploadResults.businessLicense.success || 
-                !uploadResults.ownerIdFront.success || 
+            if (!uploadResults.permitDocument.success ||
+                !uploadResults.businessLicense.success ||
+                !uploadResults.ownerIdFront.success ||
                 !uploadResults.ownerIdBack.success ||
                 !uploadResults.dtiDocument.success ||
                 !uploadResults.birDocument.success) {
@@ -251,7 +293,6 @@ async function uploadFilesWithProgress(userId, permitFile, licenseFile, frontSid
                     uploadedAt: new Date().toISOString()
                 }
             });
-
         } catch (error) {
             console.error('File upload error:', error);
             reject(new Error('Failed to upload files: ' + error.message));
@@ -338,6 +379,15 @@ registerButton.addEventListener('click', async (event) => {
             showFieldError(zipField, 'Please enter a valid 4-digit ZIP code');
         }
 
+        // Validate map location
+        const latitudeField = getElement('latitude');
+        const longitudeField = getElement('longitude');
+        if (!latitudeField.value || !longitudeField.value) {
+            errors.push('Shop location on map is required');
+            const mapGroup = document.getElementById('map').closest('.form-group');
+            showFieldError(mapGroup.querySelector('label'), 'Please set a location on the map');
+        }
+
         // Validate password match
         const passwordVal = getElement('password')?.value;
         const confirmPasswordVal = getElement('confirmPassword')?.value;
@@ -406,6 +456,14 @@ registerButton.addEventListener('click', async (event) => {
             }
         }
 
+        // Validate Tax ID (exactly 12 digits)
+        const taxIdField = getElement('taxId');
+        const taxId = taxIdField.value.replace(/-/g, '');
+        if (taxId && (taxId.length !== 12 || !/^\d{12}$/.test(taxId))) {
+            errors.push('Tax ID must be exactly 12 digits');
+            showFieldError(taxIdField, 'Tax ID must be exactly 12 digits');
+        }
+
         // If any errors, stop here
         if (errors.length > 0) {
             hideLoader();
@@ -453,6 +511,8 @@ registerButton.addEventListener('click', async (event) => {
             shopZip: shopZip.value,
             shopCountry: shopCountry.value,
             taxId: getElement('taxId').value,
+            latitude: getElement('latitude').value, // Added
+            longitude: getElement('longitude').value, // Added
             dateProcessed: dateProcessed,
             dateApproved: '',
             dateRejected: '',
@@ -460,8 +520,8 @@ registerButton.addEventListener('click', async (event) => {
         };
 
         const createResult = await createData(
-            `smartfit_AR_Database/shop/${user.uid}`, 
-            user.uid, 
+            `smartfit_AR_Database/shop/${user.uid}`,
+            user.uid,
             shopData
         );
 

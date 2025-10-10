@@ -7,6 +7,8 @@
     <link rel="icon" href="../../images/smartfitImages/smartfitAR-logo.png" type="image/x-icon">
     <link rel="stylesheet" href="/shopowner/css/shop_register.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <!-- Google Maps JavaScript API - Replace YOUR_API_KEY with your actual Google Maps API key -->
+    <script async src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBiw-3TrRkU1hSU0_dEsn3fjUxXAZWcLrg&libraries=places"></script>
 </head>
 <body style="padding: 0;">
 
@@ -108,7 +110,7 @@
                     <div class="form-group">
                         <label for="yearsInBusiness">Years in Business</label>
                         <select id="yearsInBusiness" name="yearsInBusiness">
-                            <option value="" disabled selected>Select...</option>
+                            <option value="">Select...</option>
                             <option value="less_than_1">Less than 1 year</option>
                             <!-- Options for 1 to 99 -->
                             <script>
@@ -206,6 +208,16 @@
                                 <option value="Philippines" selected>Philippines</option>
                             </select>
                         </div>
+                    </div>
+
+                    <!-- Map Location Section -->
+                    <div class="form-group">
+                        <label>Shop Location on Map*</label>
+                        <small class="instruction">Click 'Locate on Map' to automatically pin your location based on the address. You can drag the marker to adjust.</small>
+                        <button type="button" id="locateMapBtn" class="overlay-btn" style="margin-bottom: 1rem;">Locate on Map</button>
+                        <div id="map" style="height: 300px; width: 100%; border-radius: 8px; border: 1px solid var(--gray-medium);"></div>
+                        <input type="hidden" id="latitude" name="latitude">
+                        <input type="hidden" id="longitude" name="longitude">
                     </div>
                 </div>
 
@@ -487,11 +499,6 @@
             }
             
             this.value = formattedValue;
-
-            if (taxId && (taxId.length !== 12 || !/^\d{12}$/.test(taxId))) {
-                errors.push('Tax ID must be exactly 12 digits');
-                showFieldError(taxIdField, 'Tax ID must be exactly 12 digits. If your TIN doesn\'t have 12 digits, please put zero/s to make it 12 digits.');
-            }
         });
 
         // Prevent non-numeric input via keypress
@@ -621,10 +628,6 @@
             initializeAllFilePreviews();
         });
 
-        // Initialize previews for both ID uploads
-        setupFilePreview('ownerIdFront', 'frontPreview');
-        setupFilePreview('ownerIdBack', 'backPreview');
-
         // Form validation
         document.getElementById('shopRegistrationForm').addEventListener('submit', function(e) {
             e.preventDefault();
@@ -641,8 +644,8 @@
             // Validate required fields
             const requiredFields = [
                 { id: 'shopName', name: 'Shop Name' },
-                { id: 'shopCategory', name: 'Shop Category' },
                 { id: 'shopDescription', name: 'Shop Description' },
+                { id: 'yearsInBusiness', name: 'Years in Business' },
                 { id: 'ownerName', name: 'Owner Name' },
                 { id: 'ownerEmail', name: 'Email' },
                 { id: 'ownerPhone', name: 'Phone Number' },
@@ -656,6 +659,8 @@
                 { id: 'businessLicense', name: 'Business License' },
                 { id: 'taxId', name: 'Tax ID' },
                 { id: 'permitDocument', name: 'Business Permit' },
+                { id: 'dtiDocument', name: 'DTI Registration Document' },
+                { id: 'birDocument', name: 'BIR Registration Document' },
                 { id: 'username', name: 'Username' },
                 { id: 'password', name: 'Password' },
                 { id: 'confirmPassword', name: 'Confirm Password' }
