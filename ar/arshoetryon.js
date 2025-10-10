@@ -164,20 +164,52 @@ async function toggleCamera() {
     await switchCamera(facingMode);
 }
 
+let currentModelBlobUrl = null; // Add this at the top with other variables
+
 async function switchEffect(firebasePath) {
     try {
         if (!deepAR) throw new Error('DeepAR not initialized');
+        
+        console.log('🔄 Switching effect, Firebase path:', firebasePath);
+        
         const result = await readFile(firebasePath);
         if (!result.success) {
             throw new Error(`Failed to read file from Firebase: ${result.error}`);
         }
+        
+        console.log('✅ File loaded successfully, switching effect...');
+        
+        // Clean up previous blob URL if exists
+        if (currentModelBlobUrl && currentModelBlobUrl !== result.url) {
+            URL.revokeObjectURL(currentModelBlobUrl);
+        }
+        
         await deepAR.switchEffect(result.url);
         currentEffectPath = firebasePath;
-        console.log(`✅ Switched to effect: ${result.url}`);
+        currentModelBlobUrl = result.blobUrl || null; // Store blob URL for cleanup
+        
+        console.log(`✅ Successfully switched to effect: ${firebasePath}`);
+        
     } catch (err) {
         console.error("❌ Failed to switch effect:", err);
+        
+        // More detailed error information
+        if (err.message.includes('Failed to fetch')) {
+            console.error('🌐 Network/CORS issue detected');
+        }
     }
 }
+
+// Add cleanup function
+function cleanupAR() {
+    if (currentModelBlobUrl) {
+        URL.revokeObjectURL(currentModelBlobUrl);
+        currentModelBlobUrl = null;
+    }
+}
+
+// Call cleanup when leaving the page
+window.addEventListener('beforeunload', cleanupAR);
 
 toggleButton.addEventListener('click', () => {
     filterSection.classList.toggle('minimized');
