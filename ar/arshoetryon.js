@@ -184,6 +184,7 @@ async function switchEffect(firebasePath) {
             URL.revokeObjectURL(currentModelBlobUrl);
         }
         
+        console.log(result);
         await deepAR.switchEffect(result.url);
         currentEffectPath = firebasePath;
         currentModelBlobUrl = result.blobUrl || null; // Store blob URL for cleanup
