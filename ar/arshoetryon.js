@@ -20,7 +20,7 @@ const imageMap = {
     basketball: { white: '/images/angles/basketball/white/main.png', black: '/images/angles/basketball/black/main.png', blue: '/images/angles/basketball/blue/main.png', red: '/images/angles/basketball/red/main.png' }
 };
 
-let currentEffectPath = `deeparShoeModelFiles/${effectMap[initialModel][initialColor]}`;
+let currentEffectPath = `deeparShoeModelFiles/basketball_black.deepar`;
 const loader = document.getElementById('loader');
 const filterSection = document.getElementById('filter-section');
 const toggleButton = document.getElementById('toggle-filters');
@@ -55,6 +55,8 @@ const exitBtnExpanded = document.getElementById('exit-btn-expanded');
         const result = await readFile(currentEffectPath);
         console.log("✅ Read initial effect file from Firebase");
 
+        console.log(result);
+        console.log(result.url);
         await deepAR.switchEffect(result.url);
         console.log(`✅ Initial shoe effect loaded: ${result.url}`);
 
@@ -164,20 +166,53 @@ async function toggleCamera() {
     await switchCamera(facingMode);
 }
 
+let currentModelBlobUrl = null; // Add this at the top with other variables
+
 async function switchEffect(firebasePath) {
     try {
         if (!deepAR) throw new Error('DeepAR not initialized');
+        
+        console.log('🔄 Switching effect, Firebase path:', firebasePath);
+        
         const result = await readFile(firebasePath);
         if (!result.success) {
             throw new Error(`Failed to read file from Firebase: ${result.error}`);
         }
+        
+        console.log('✅ File loaded successfully, switching effect...');
+        
+        // Clean up previous blob URL if exists
+        if (currentModelBlobUrl && currentModelBlobUrl !== result.url) {
+            URL.revokeObjectURL(currentModelBlobUrl);
+        }
+        
+        console.log(result);
         await deepAR.switchEffect(result.url);
         currentEffectPath = firebasePath;
-        console.log(`✅ Switched to effect: ${result.url}`);
+        currentModelBlobUrl = result.blobUrl || null; // Store blob URL for cleanup
+        
+        console.log(`✅ Successfully switched to effect: ${firebasePath}`);
+        
     } catch (err) {
         console.error("❌ Failed to switch effect:", err);
+        
+        // More detailed error information
+        if (err.message.includes('Failed to fetch')) {
+            console.error('🌐 Network/CORS issue detected');
+        }
     }
 }
+
+// Add cleanup function
+function cleanupAR() {
+    if (currentModelBlobUrl) {
+        URL.revokeObjectURL(currentModelBlobUrl);
+        currentModelBlobUrl = null;
+    }
+}
+
+// Call cleanup when leaving the page
+window.addEventListener('beforeunload', cleanupAR);
 
 toggleButton.addEventListener('click', () => {
     filterSection.classList.toggle('minimized');
