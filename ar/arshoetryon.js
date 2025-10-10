@@ -20,7 +20,7 @@ const imageMap = {
     basketball: { white: '/images/angles/basketball/white/main.png', black: '/images/angles/basketball/black/main.png', blue: '/images/angles/basketball/blue/main.png', red: '/images/angles/basketball/red/main.png' }
 };
 
-let currentEffectPath = `deeparShoeModelFiles/${effectMap[initialModel][initialColor]}`;
+let currentEffectPath = `deeparShoeModelFiles/basketball_black.deepar`;
 const loader = document.getElementById('loader');
 const filterSection = document.getElementById('filter-section');
 const toggleButton = document.getElementById('toggle-filters');
@@ -55,6 +55,8 @@ const exitBtnExpanded = document.getElementById('exit-btn-expanded');
         const result = await readFile(currentEffectPath);
         console.log("✅ Read initial effect file from Firebase");
 
+        console.log(result);
+        console.log(result.url);
         await deepAR.switchEffect(result.url);
         console.log(`✅ Initial shoe effect loaded: ${result.url}`);
 
