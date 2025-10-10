@@ -70,7 +70,7 @@ function setupPasswordToggleListeners() {
 // Set up authentication state listener
 function setupAuthStateListener() {
     checkUserAuth().then((authResult) => {
-        if (authResult.authenticated && authResult.role === "shopowner") {
+        if (authResult.authenticated && authResult.role === "shopowner" || authResult.authenticated && authResult.role === "shoemaker") {
             shopOwnerUid = authResult.userId;
             updateProfileHeader(authResult.userId);
             loadShopData(authResult.userId);

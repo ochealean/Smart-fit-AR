@@ -11,6 +11,7 @@ function redirectToDashboard(role) {
     switch (role) {
         case 'customer': window.location.href = "customer/html/customer_dashboard.html"; break;
         case 'shopowner': window.location.href = "shopowner/html/shop_dashboard.html"; break;
+        case 'shoemaker': window.location.href = "shopowner/html/shop_dashboard.html"; break;
         case 'employee': window.location.href = "shopowner/html/shop_dashboard.html"; break;
         default: console.error("Unknown role:", role);
     }

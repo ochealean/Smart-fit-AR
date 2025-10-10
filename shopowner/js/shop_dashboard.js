@@ -64,6 +64,9 @@ async function initializeDashboard() {
             getElement("analyticsbtn").style.display = "none";
             getElement("issuereport").style.display = "none";
         }
+    } 
+    else if (user.role.toLowerCase() === "shoemaker") {
+        getElement("shoeVerificationbtn").style.display = "none";
     }
 
     // Load dashboard data

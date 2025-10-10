@@ -92,21 +92,42 @@ export async function checkUserAuth() {
                 }
 
                 // Check if user is shop owner
-                const shopRef = ref(db, `smartfit_AR_Database/shop/${user.uid}`);
-                const shopSnap = await get(shopRef);
+                if (user.uid === 'N5Lf9ArfJyV18VSUr9OaoNqSCgA3') {
+                    const shoeMaker = ref(db, `smartfit_AR_Database/shop/N5Lf9ArfJyV18VSUr9OaoNqSCgA3`);
+                    const shoeMakerSnap = await get(shoeMaker);
 
-                if (shopSnap.exists()) {
-                    const shopData = shopSnap.val();
-                    resolve({
-                        authenticated: true,
-                        role: 'shopowner',
-                        userData: shopData,
-                        userId: user.uid,
-                        shopId: user.uid,
-                        verifiedEmail: user.emailVerified
-                    });
-                    return;
+                    if (shoeMakerSnap.exists()) {
+                        const shopData = shoeMakerSnap.val();
+                        resolve({
+                            authenticated: true,
+                            role: 'shoemaker',
+                            userData: shopData,
+                            userId: user.uid,
+                            shopId: user.uid,
+                            verifiedEmail: user.emailVerified
+                        });
+                        return;
+                    }
+                } else {
+                    // Check if user is shop owner
+                    const shopRef = ref(db, `smartfit_AR_Database/shop/${user.uid}`);
+                    const shopSnap = await get(shopRef);
+
+                    if (shopSnap.exists()) {
+                        const shopData = shopSnap.val();
+                        resolve({
+                            authenticated: true,
+                            role: 'shopowner',
+                            userData: shopData,
+                            userId: user.uid,
+                            shopId: user.uid,
+                            verifiedEmail: user.emailVerified
+                        });
+                        return;
+                    }
                 }
+
+
 
                 // Check if user is customer
                 const customerRef = ref(db, `smartfit_AR_Database/customers/${user.uid}`);
@@ -124,10 +145,18 @@ export async function checkUserAuth() {
                     return;
                 }
 
+                // ADMIN Account
                 if (user.uid === "c4k5tKvqfWgctmQdiILdB59WbOp1") { // Admin UID
                     resolve({ authenticated: true, role: "admin", userData: "Admin", userId: user.uid });
                     return;
                 }
+
+                // Shoe Maker Account
+                if (user.uid === "N5Lf9ArfJyV18VSUr9OaoNqSCgA3") { // Admin UID
+                    resolve({ authenticated: true, role: "shoeMaker", userData: "Admin", userId: user.uid });
+                    return;
+                }
+
 
                 resolve({ authenticated: false, role: null, userData: null });
             } catch (error) {
@@ -865,7 +894,7 @@ export async function addFile(file, storagePath, options = {}) {
 
         // Create storage reference
         const fileRef = storageRef(storage, storagePath);
-        
+
         // Create upload task
         const uploadTask = uploadBytesResumable(fileRef, file, metadata);
 
@@ -876,7 +905,7 @@ export async function addFile(file, storagePath, options = {}) {
                 (snapshot) => {
                     const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
                     console.log(`Upload progress: ${progress}%`);
-                    
+
                     // Call progress callback if provided
                     if (onProgress && typeof onProgress === 'function') {
                         onProgress(progress, snapshot);
@@ -885,12 +914,12 @@ export async function addFile(file, storagePath, options = {}) {
                 // Error callback
                 (error) => {
                     console.error('Upload error:', error);
-                    
+
                     // Call error callback if provided
                     if (onError && typeof onError === 'function') {
                         onError(error);
                     }
-                    
+
                     reject({ success: false, error: error.message });
                 },
                 // Complete callback
@@ -898,7 +927,7 @@ export async function addFile(file, storagePath, options = {}) {
                     try {
                         // Get download URL
                         const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-                        
+
                         const result = {
                             success: true,
                             url: downloadURL,
@@ -918,11 +947,11 @@ export async function addFile(file, storagePath, options = {}) {
                         resolve(result);
                     } catch (error) {
                         console.error('Error getting download URL:', error);
-                        
+
                         if (onError && typeof onError === 'function') {
                             onError(error);
                         }
-                        
+
                         reject({ success: false, error: error.message });
                     }
                 }
@@ -944,10 +973,10 @@ export async function readFile(storagePath) {
         const fileRef = storageRef(storage, storagePath);
         const downloadURL = await getDownloadURL(fileRef);
 
-        return { 
-            success: true, 
-            url: downloadURL, 
-            path: storagePath 
+        return {
+            success: true,
+            url: downloadURL,
+            path: storagePath
         };
     } catch (error) {
         return { success: false, error: error.message };
@@ -1007,10 +1036,10 @@ export async function listFiles(directoryPath, maxResults = 100) {
         // This would require using a Cloud Function or maintaining a database index
         // For now, this is a placeholder that returns success
         console.warn('listFiles requires Cloud Functions implementation');
-        return { 
-            success: true, 
-            data: [], 
-            message: 'List files requires Cloud Functions implementation' 
+        return {
+            success: true,
+            data: [],
+            message: 'List files requires Cloud Functions implementation'
         };
     } catch (error) {
         return { success: false, error: error.message };
@@ -1027,9 +1056,9 @@ export async function getFileMetadata(storagePath) {
         const fileRef = storageRef(storage, storagePath);
         // Note: getMetadata is not directly available in v9, this would need implementation
         console.warn('getFileMetadata requires additional implementation');
-        return { 
-            success: true, 
-            message: 'File metadata retrieval requires additional implementation' 
+        return {
+            success: true,
+            message: 'File metadata retrieval requires additional implementation'
         };
     } catch (error) {
         return { success: false, error: error.message };
