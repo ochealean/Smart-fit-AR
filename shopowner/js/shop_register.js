@@ -276,6 +276,7 @@ registerButton.addEventListener('click', async (event) => {
         const requiredFields = [
             { id: 'shopName', name: 'Shop Name' },
             { id: 'shopDescription', name: 'Shop Description' },
+            { id: 'yearsInBusiness', name: 'Years in Business' },
             { id: 'ownerName', name: 'Owner Name' },
             { id: 'ownerEmail', name: 'Email' },
             { id: 'ownerPhone', name: 'Phone Number' },
@@ -384,6 +385,25 @@ registerButton.addEventListener('click', async (event) => {
         if (!agreeTerms || !agreeTerms.checked) {
             errors.push('You must agree to the Terms of Service and Privacy Policy');
             if (agreeTerms) showFieldError(agreeTerms, 'You must agree to the Terms of Service and Privacy Policy');
+        }
+
+        // Validate password requirements
+        if (passwordVal) {
+            if (passwordVal.length < 8) {
+                errors.push('Password must be at least 8 characters');
+            }
+            if (!/[A-Z]/.test(passwordVal)) {
+                errors.push('Password must contain at least one uppercase letter');
+            }
+            if (!/\d/.test(passwordVal)) {
+                errors.push('Password must contain at least one number');
+            }
+            if (!/[^a-zA-Z0-9]/.test(passwordVal)) {
+                errors.push('Password must contain at least one special character');
+            }
+            if (errors.length > 0 && errors.some(e => e.includes('Password must'))) {
+                showFieldError(getElement('password'), 'Password does not meet requirements');
+            }
         }
 
         // If any errors, stop here

@@ -107,7 +107,17 @@
                     
                     <div class="form-group">
                         <label for="yearsInBusiness">Years in Business</label>
-                        <input type="number" id="yearsInBusiness" name="yearsInBusiness" min="0" placeholder="e.g. 5" max="200">
+                        <select id="yearsInBusiness" name="yearsInBusiness">
+                            <option value="" disabled selected>Select...</option>
+                            <option value="less_than_1">Less than 1 year</option>
+                            <!-- Options for 1 to 99 -->
+                            <script>
+                                for (let i = 1; i <= 99; i++) {
+                                    document.write('<option value="' + i + '">' + i + '</option>');
+                                }
+                            </script>
+                            <option value="more_than_99">More than 99 years</option>
+                        </select>
                     </div>
                 </div>
 
@@ -280,6 +290,14 @@
                                 <i class="fas fa-eye"></i>
                             </button>
                         </div>
+                        <div class="password-requirements">
+                            <ul>
+                                <li id="req-length">At least 8 characters</li>
+                                <li id="req-uppercase">At least one uppercase letter</li>
+                                <li id="req-number">At least one number</li>
+                                <li id="req-special">At least one special character</li>
+                            </ul>
+                        </div>
                         <div class="password-strength">
                             <span class="strength-bar"></span>
                             <span class="strength-bar"></span>
@@ -303,11 +321,6 @@
                     <div class="form-group checkbox-group">
                         <input type="checkbox" id="agreeTerms" name="agreeTerms" required>
                         <label for="agreeTerms">I agree to the <a href="/extras/termsofservice.html" target="_blank">Terms of Service</a> and <a href="/extras/privacypolicy.html" target="_blank">Privacy Policy</a>*</label>
-                    </div>
-                    
-                    <div class="form-group checkbox-group">
-                        <input type="checkbox" id="receiveUpdates" name="receiveUpdates">
-                        <label for="receiveUpdates">I want to receive updates and promotional offers</label>
                     </div>
                 </div>
 
@@ -385,36 +398,49 @@
             });
         });
 
-        // Password strength indicator
+        // Password strength indicator and requirements
         const passwordInput = document.getElementById('password');
         const strengthBars = document.querySelectorAll('.strength-bar');
         const strengthText = document.querySelector('.strength-text');
+        const reqLength = document.getElementById('req-length');
+        const reqUppercase = document.getElementById('req-uppercase');
+        const reqNumber = document.getElementById('req-number');
+        const reqSpecial = document.getElementById('req-special');
         
         passwordInput.addEventListener('input', function() {
             const password = this.value;
             let strength = 0;
             
-            // Check length
-            if (password.length >= 8) strength++;
-            if (password.length >= 12) strength++;
+            // Check length >= 8
+            const hasLength = password.length >= 8;
+            reqLength.style.color = hasLength ? '#4CAF50' : '#f44336';
+            if (hasLength) strength++;
             
-            // Check for mixed case
-            if (/[a-z]/.test(password) && /[A-Z]/.test(password)) strength++;
+            // Check uppercase
+            const hasUppercase = /[A-Z]/.test(password);
+            reqUppercase.style.color = hasUppercase ? '#4CAF50' : '#f44336';
+            if (hasUppercase) strength++;
             
-            // Check for numbers and special chars
-            if (/\d/.test(password)) strength++;
-            if (/[^a-zA-Z0-9]/.test(password)) strength++;
+            // Check number
+            const hasNumber = /\d/.test(password);
+            reqNumber.style.color = hasNumber ? '#4CAF50' : '#f44336';
+            if (hasNumber) strength++;
             
-            // Update UI
+            // Check special character
+            const hasSpecial = /[^a-zA-Z0-9]/.test(password);
+            reqSpecial.style.color = hasSpecial ? '#4CAF50' : '#f44336';
+            if (hasSpecial) strength++;
+            
+            // Update strength bars
             strengthBars.forEach((bar, index) => {
                 bar.style.backgroundColor = index < strength ? '#4CAF50' : '#e0e0e0';
             });
             
             // Update text
-            if (strength <= 2) {
+            if (strength <= 1) {
                 strengthText.textContent = 'Password strength: Weak';
                 strengthText.style.color = '#f44336';
-            } else if (strength <= 4) {
+            } else if (strength <= 3) {
                 strengthText.textContent = 'Password strength: Good';
                 strengthText.style.color = '#FFC107';
             } else {
@@ -461,6 +487,11 @@
             }
             
             this.value = formattedValue;
+
+            if (taxId && (taxId.length !== 12 || !/^\d{12}$/.test(taxId))) {
+                errors.push('Tax ID must be exactly 12 digits');
+                showFieldError(taxIdField, 'Tax ID must be exactly 12 digits. If your TIN doesn\'t have 12 digits, please put zero/s to make it 12 digits.');
+            }
         });
 
         // Prevent non-numeric input via keypress
