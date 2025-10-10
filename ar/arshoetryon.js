@@ -52,7 +52,7 @@ const exitBtnExpanded = document.getElementById('exit-btn-expanded');
         await switchCamera('environment');
         
         // Load initial effect
-        const result = await readFile(currentEffectPath);
+        const result = await readFile(result.url);
         console.log("✅ Read initial effect file from Firebase");
 
         await deepAR.switchEffect(result.url);
