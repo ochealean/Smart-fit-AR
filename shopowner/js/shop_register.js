@@ -12,7 +12,6 @@ function getElement(id) {
 
 // Get all form elements
 const shopName = getElement('shopName');
-const shopCategory = getElement('shopCategory');
 const shopDescription = getElement('shopDescription');
 const yearsInBusiness = getElement('yearsInBusiness');
 const ownerName = getElement('ownerName');
@@ -144,7 +143,7 @@ function showFieldError(field, message) {
 }
 
 // Enhanced file upload function with progress tracking
-async function uploadFilesWithProgress(userId, permitFile, licenseFile, frontSideFile, backSideFile) {
+async function uploadFilesWithProgress(userId, permitFile, licenseFile, frontSideFile, backSideFile, dtiFile, birFile) {
     return new Promise(async (resolve, reject) => {
         try {
             // Create storage paths
@@ -152,9 +151,11 @@ async function uploadFilesWithProgress(userId, permitFile, licenseFile, frontSid
             const licensePath = `uploads/${userId}/license_${Date.now()}_${licenseFile.name}`;
             const frontSidePath = `uploads/${userId}/frontSide_${Date.now()}_${frontSideFile.name}`;
             const backSidePath = `uploads/${userId}/backSide_${Date.now()}_${backSideFile.name}`;
+            const dtiPath = `uploads/${userId}/dti_${Date.now()}_${dtiFile.name}`;
+            const birPath = `uploads/${userId}/bir_${Date.now()}_${birFile.name}`;
 
             let completedUploads = 0;
-            const totalUploads = 4;
+            const totalUploads = 6;  // Six files: Permit, License, ID Front, ID Back, DTI, BIR
             const uploadResults = {};
 
             // Function to update progress
@@ -185,6 +186,16 @@ async function uploadFilesWithProgress(userId, permitFile, licenseFile, frontSid
                     uploadResults.ownerIdBack = result;
                     updateProgress();
                     return result;
+                }),
+                createImageToFirebase(dtiFile, dtiPath).then(result => {
+                    uploadResults.dtiDocument = result;
+                    updateProgress();
+                    return result;
+                }),
+                createImageToFirebase(birFile, birPath).then(result => {
+                    uploadResults.birDocument = result;
+                    updateProgress();
+                    return result;
                 })
             ];
 
@@ -195,7 +206,9 @@ async function uploadFilesWithProgress(userId, permitFile, licenseFile, frontSid
             if (!uploadResults.permitDocument.success || 
                 !uploadResults.businessLicense.success || 
                 !uploadResults.ownerIdFront.success || 
-                !uploadResults.ownerIdBack.success) {
+                !uploadResults.ownerIdBack.success ||
+                !uploadResults.dtiDocument.success ||
+                !uploadResults.birDocument.success) {
                 throw new Error('File upload failed');
             }
 
@@ -224,6 +237,18 @@ async function uploadFilesWithProgress(userId, permitFile, licenseFile, frontSid
                     url: uploadResults.ownerIdBack.url,
                     path: uploadResults.ownerIdBack.path,
                     uploadedAt: new Date().toISOString()
+                },
+                dtiDocument: {
+                    name: dtiFile.name,
+                    url: uploadResults.dtiDocument.url,
+                    path: uploadResults.dtiDocument.path,
+                    uploadedAt: new Date().toISOString()
+                },
+                birDocument: {
+                    name: birFile.name,
+                    url: uploadResults.birDocument.url,
+                    path: uploadResults.birDocument.path,
+                    uploadedAt: new Date().toISOString()
                 }
             });
 
@@ -250,7 +275,6 @@ registerButton.addEventListener('click', async (event) => {
         const errors = [];
         const requiredFields = [
             { id: 'shopName', name: 'Shop Name' },
-            { id: 'shopCategory', name: 'Shop Category' },
             { id: 'shopDescription', name: 'Shop Description' },
             { id: 'ownerName', name: 'Owner Name' },
             { id: 'ownerEmail', name: 'Email' },
@@ -265,6 +289,8 @@ registerButton.addEventListener('click', async (event) => {
             { id: 'businessLicense', name: 'Business License' },
             { id: 'taxId', name: 'Tax ID' },
             { id: 'permitDocument', name: 'Business Permit' },
+            { id: 'dtiDocument', name: 'DTI Registration Document' },
+            { id: 'birDocument', name: 'BIR Registration Document' },
             { id: 'username', name: 'Username' },
             { id: 'password', name: 'Password' },
             { id: 'confirmPassword', name: 'Confirm Password' }
@@ -278,6 +304,17 @@ registerButton.addEventListener('click', async (event) => {
                 if (field) showFieldError(field, `${name} is required`);
             }
         });
+
+        // Validate categories (at least one selected)
+        const categoryCheckboxes = document.querySelectorAll('input[name="shopCategories"]');
+        const selectedCategories = Array.from(categoryCheckboxes).filter(cb => cb.checked).map(cb => cb.value);
+        if (selectedCategories.length === 0) {
+            errors.push('At least one Shop Category is required');
+            const categoryGroup = categoryCheckboxes[0]?.closest('.form-group');
+            if (categoryGroup) {
+                showFieldError(categoryGroup.querySelector('label'), 'At least one category is required');
+            }
+        }
 
         // Validate email format
         const emailField = getElement('ownerEmail');
@@ -339,6 +376,8 @@ registerButton.addEventListener('click', async (event) => {
         validateFileUpload('ownerIdBack', 'Back ID');
         validateFileUpload('businessLicense', 'Business License');
         validateFileUpload('permitDocument', 'Business Permit');
+        validateFileUpload('dtiDocument', 'DTI Registration Document');
+        validateFileUpload('birDocument', 'BIR Registration Document');
 
         // Validate terms agreement
         const agreeTerms = getElement('agreeTerms');
@@ -359,11 +398,13 @@ registerButton.addEventListener('click', async (event) => {
         // Proceed with registration
         const usernameVal = username.value;
         const passwordVal1 = password.value;
-        const ownerEmailVal = emailField.value;
+        const ownerEmailVal = ownerEmail.value;
         const permitDocumentFile = getElement("permitDocument").files[0];
         const businessLicenseFile = getElement("businessLicense").files[0];
         const frontSideFile = getElement("ownerIdFront").files[0];
         const backSideFile = getElement("ownerIdBack").files[0];
+        const dtiFile = getElement("dtiDocument").files[0];
+        const birFile = getElement("birDocument").files[0];
 
         // Step 1: Create user account
         updateLoaderProgress('creatingAccount');
@@ -372,7 +413,7 @@ registerButton.addEventListener('click', async (event) => {
 
         // Step 2: Upload files with progress
         updateLoaderProgress('uploadingFiles', 0);
-        const uploadsData = await uploadFilesWithProgress(user.uid, permitDocumentFile, businessLicenseFile, frontSideFile, backSideFile);
+        const uploadsData = await uploadFilesWithProgress(user.uid, permitDocumentFile, businessLicenseFile, frontSideFile, backSideFile, dtiFile, birFile);
 
         // Step 3: Save shop data
         updateLoaderProgress('savingData');
@@ -382,7 +423,7 @@ registerButton.addEventListener('click', async (event) => {
             status: 'pending',
             ownerName: ownerName.value,
             shopName: shopName.value,
-            shopCategory: shopCategory.value,
+            shopCategories: selectedCategories,
             shopDescription: shopDescription.value,
             yearsInBusiness: yearsInBusiness.value || '',
             ownerPhone: ownerPhone.value,

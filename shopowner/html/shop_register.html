@@ -71,17 +71,34 @@
                     </div>
                     
                     <div class="form-group">
-                        <label for="shopCategory">Shop Category*</label>
-                        <select id="shopCategory" name="shopCategory" required>
-                            <option value="">Select category</option>
-                            <option value="sneakers">Sneakers</option>
-                            <option value="formal">Formal Shoes</option>
-                            <option value="boots">Boots</option>
-                            <option value="sports">Sports Shoes</option>
-                            <option value="sandals">Sandals</option>
-                            <option value="other">Other</option>
-                        </select>
+                    <label>Shop Categories* (Select all that apply)</label>
+                    <div class="categories-container">  <!-- Wrapper for styling -->
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="category-sneakers" name="shopCategories" value="sneakers">
+                            <label for="category-sneakers">Sneakers</label>
+                        </div>
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="category-formal" name="shopCategories" value="formal">
+                            <label for="category-formal">Formal Shoes</label>
+                        </div>
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="category-boots" name="shopCategories" value="boots">
+                            <label for="category-boots">Boots</label>
+                        </div>
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="category-sports" name="shopCategories" value="sports">
+                            <label for="category-sports">Sports Shoes</label>
+                        </div>
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="category-sandals" name="shopCategories" value="sandals">
+                            <label for="category-sandals">Sandals</label>
+                        </div>
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="category-other" name="shopCategories" value="other">
+                            <label for="category-other">Other</label>
+                        </div>
                     </div>
+                </div>
                     
                     <div class="form-group">
                         <label for="shopDescription">Shop Description*</label>
@@ -90,7 +107,7 @@
                     
                     <div class="form-group">
                         <label for="yearsInBusiness">Years in Business</label>
-                        <input type="text" id="yearsInBusiness" name="yearsInBusiness" min="0" placeholder="e.g. 5" maxlength="2" pattern="[0-9]*" inputmode="numeric" max="200">
+                        <input type="number" id="yearsInBusiness" name="yearsInBusiness" min="0" placeholder="e.g. 5" max="200">
                     </div>
                 </div>
 
@@ -184,6 +201,13 @@
 
                 <div class="form-section">
                     <h2><i class="fas fa-file-alt"></i> Business Documentation</h2>
+                    
+                    <div class="form-group">
+                        <label for="taxId">Tax Identification Number*</label>
+                        <input type="text" id="taxId" name="taxId" required placeholder="XXXX-XXXX-XXXX" maxlength="15" pattern="[0-9]{4}-[0-9]{4}-[0-9]{4}" inputmode="numeric">
+                        <small>Enter your 12-digit TIN (e.g., 1234-5678-9012)</small>
+                    </div>
+                    
                     <div class="form-group">
                         <label for="businessLicense">Mayor's Permit / Business License*</label>
                         <div class="file-upload-container">
@@ -199,12 +223,6 @@
                     </div>
                     
                     <div class="form-group">
-                        <label for="taxId">Tax Identification Number*</label>
-                        <input type="text" id="taxId" name="taxId" required placeholder="XXXX-XXXX-XXXX" maxlength="15" pattern="[0-9]{4}-[0-9]{4}-[0-9]{4}" inputmode="numeric">
-                        <small>Enter your 12-digit TIN (e.g., 1234-5678-9012)</small>
-                    </div>
-                    
-                    <div class="form-group">
                         <label for="permitDocument">Business Permit*</label>
                         <div class="file-upload-container">
                             <label for="permitDocument" class="upload-label">
@@ -214,6 +232,34 @@
                                 </div>
                             </label>
                             <input type="file" id="permitDocument" name="permitDocument" accept="image/*,.pdf" required>
+                        </div>
+                        <small class="file-requirements">(JPEG, PNG, or PDF - Max 5MB)</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="dtiDocument">DTI Registration Document*</label>
+                        <div class="file-upload-container">
+                            <label for="dtiDocument" class="upload-label">
+                                <div class="upload-preview" id="dtiPreview">
+                                    <i class="fas fa-file-upload"></i>
+                                    <span>Upload File</span>
+                                </div>
+                            </label>
+                            <input type="file" id="dtiDocument" name="dtiDocument" accept="image/*,.pdf" required>
+                        </div>
+                        <small class="file-requirements">(JPEG, PNG, or PDF - Max 5MB)</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="birDocument">BIR Registration Document*</label>
+                        <div class="file-upload-container">
+                            <label for="birDocument" class="upload-label">
+                                <div class="upload-preview" id="birPreview">
+                                    <i class="fas fa-file-upload"></i>
+                                    <span>Upload File</span>
+                                </div>
+                            </label>
+                            <input type="file" id="birDocument" name="birDocument" accept="image/*,.pdf" required>
                         </div>
                         <small class="file-requirements">(JPEG, PNG, or PDF - Max 5MB)</small>
                     </div>
