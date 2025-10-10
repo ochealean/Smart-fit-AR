@@ -55,8 +55,8 @@ const exitBtnExpanded = document.getElementById('exit-btn-expanded');
         const result = await readFile('deeparShoeModelFiles/classic_white.deepar');
         console.log("✅ Read initial effect file from Firebase");
 
-        await deepAR.switchEffect(result.url);
-        console.log(`✅ Initial shoe effect loaded: ${result.url}`);
+        await deepAR.switchEffect(result);
+        console.log(`✅ Initial shoe effect loaded: ${result}`);
 
         deepAR.callbacks.onFeetVisibilityChanged = (visible) => {
             console.log(visible ? '👟 Feet detected!' : 'No feet visible.');
