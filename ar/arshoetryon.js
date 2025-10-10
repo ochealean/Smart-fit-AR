@@ -20,7 +20,7 @@ const imageMap = {
     basketball: { white: '/images/angles/basketball/white/main.png', black: '/images/angles/basketball/black/main.png', blue: '/images/angles/basketball/blue/main.png', red: '/images/angles/basketball/red/main.png' }
 };
 
-let currentEffectPath = `./effects/filters/${effectMap[initialModel][initialColor]}`;
+let currentEffectPath = `deeparShoeModelFiles/${effectMap[initialModel][initialColor]}`;
 const loader = document.getElementById('loader');
 const filterSection = document.getElementById('filter-section');
 const toggleButton = document.getElementById('toggle-filters');
@@ -52,11 +52,11 @@ const exitBtnExpanded = document.getElementById('exit-btn-expanded');
         await switchCamera('environment');
         
         // Load initial effect
-        const result = await readFile('deeparShoeModelFiles/classic_white.deepar');
+        const result = await readFile(currentEffectPath);
         console.log("✅ Read initial effect file from Firebase");
 
-        await deepAR.switchEffect(result);
-        console.log(`✅ Initial shoe effect loaded: ${result}`);
+        await deepAR.switchEffect(result.url);
+        console.log(`✅ Initial shoe effect loaded: ${result.url}`);
 
         deepAR.callbacks.onFeetVisibilityChanged = (visible) => {
             console.log(visible ? '👟 Feet detected!' : 'No feet visible.');
@@ -77,7 +77,7 @@ const exitBtnExpanded = document.getElementById('exit-btn-expanded');
             for (const color in effectMap[model]) {
                 const button = document.createElement('div');
                 button.className = 'filter-button';
-                button.dataset.path = `./effects/filters/${effectMap[model][color]}`;
+                button.dataset.path = `deeparShoeModelFiles/${effectMap[model][color]}`;
                 button.setAttribute('role', 'button');
                 button.setAttribute('tabindex', '0');
                 button.setAttribute('aria-label', `${model} ${color}`);
@@ -164,12 +164,16 @@ async function toggleCamera() {
     await switchCamera(facingMode);
 }
 
-async function switchEffect(effectPath) {
+async function switchEffect(firebasePath) {
     try {
         if (!deepAR) throw new Error('DeepAR not initialized');
-        await deepAR.switchEffect(effectPath);
-        currentEffectPath = effectPath;
-        console.log(`✅ Switched to effect: ${effectPath}`);
+        const result = await readFile(firebasePath);
+        if (!result.success) {
+            throw new Error(`Failed to read file from Firebase: ${result.error}`);
+        }
+        await deepAR.switchEffect(result.url);
+        currentEffectPath = firebasePath;
+        console.log(`✅ Switched to effect: ${result.url}`);
     } catch (err) {
         console.error("❌ Failed to switch effect:", err);
     }
