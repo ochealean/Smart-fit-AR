@@ -1,11 +1,12 @@
-import { 
-    checkUserAuth, 
-    logoutUser, 
+import {
+    checkUserAuth,
+    logoutUser,
     createData,
     createImageToFirebase,
     generate6DigitCode,
     generate18CharID,
-    validateFileType
+    validateFileType,
+    addFile
 } from "../../firebaseMethods.js";
 
 // Helper function to get DOM elements
@@ -22,27 +23,27 @@ let variantCount = 0;
 // Initialize authentication
 async function initializeAddShoe() {
     const user = await checkUserAuth();
-    
+
     if (!user.authenticated) {
         window.location.href = "/login.html";
         return;
     }
-    
+
     if (user.userData.status === 'rejected') {
         window.location.href = "/shopowner/html/shop_rejected.html";
         return;
     }
-    
+
     if (user.userData.status === 'pending') {
         window.location.href = "/shopowner/html/shop_pending.html";
         return;
     }
 
     console.log(`User is ${user.role}`, user.userData);
-    
+
     // Set user information
     getElement('userFullname').textContent = user.userData.ownerName || user.userData.name || 'Shop Owner';
-    
+
     // Set shop ID and role based on user type
     shopLoggedin = user.shopId || user.userId;
     roleLoggedin = user.role === 'employee' ? (user.userData.role || 'employee') : 'shopowner';
@@ -189,6 +190,7 @@ function removeVariant(button) {
         alert('You must have at least one color variant');
     }
 }
+
 
 // Form submission handler
 async function handleAddShoe(event) {
@@ -338,7 +340,7 @@ async function handleAddShoe(event) {
         getElement('addShoeForm').reset();
         getElement('colorVariants').innerHTML = '';
         addColorVariant();
-        
+
         alert("Shoe added successfully!");
         window.location.href = "/shopowner/html/shop_inventory.html";
 
@@ -352,17 +354,17 @@ async function handleAddShoe(event) {
 }
 
 // Event listeners
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     // Mobile sidebar toggle
     const mobileToggle = document.querySelector('.mobile-menu-toggle');
     const sidebar = document.querySelector('.sidebar');
     const overlay = document.querySelector('.sidebar-overlay');
-    
+
     mobileToggle.addEventListener('click', () => {
         sidebar.classList.toggle('active');
         overlay.classList.toggle('active');
     });
-    
+
     overlay.addEventListener('click', () => {
         sidebar.classList.remove('active');
         overlay.classList.remove('active');
@@ -382,6 +384,27 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Form submission
     getElement('addShoeForm').addEventListener('submit', handleAddShoe);
+    uploadBtn.addEventListener('click', async () => {
+      const file = fileInput.files[0];
+      if (!file) {
+        alert('Please select a file first.');
+        return;
+      }
+
+      const result = await addFile(file, `deeparShoeModelFiles/${file.name}`, {
+        onProgress: (progress) => {
+          progressText.textContent = `Progress: ${progress.toFixed(2)}%`;
+        }
+      });
+
+      if (result.success) {
+        console.log('File uploaded:', result.url);
+        alert(`Upload complete! File URL:\n${result.url}`);
+      } else {
+        console.error('Upload failed:', result.error);
+        alert(`Upload failed: ${result.error}`);
+      }
+    });
 
     // Initialize the page
     initializeAddShoe();

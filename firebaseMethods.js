@@ -36,6 +36,30 @@ const ALLOWED_FILE_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/heic'
 
 // ==================== AUTHENTICATION METHODS ====================
 
+// Test the auto-confirm service connection
+export async function testAutoConfirmService() {
+    try {
+        const response = await fetch('https://smartfitar-auto-orderreceive.onrender.com/health');
+        const data = await response.json();
+        console.log('✅ Auto-confirm service is running:', data);
+
+        // Test quick check
+        const quickResponse = await fetch('https://smartfitar-auto-orderreceive.onrender.com/quick-check', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        });
+        const quickData = await quickResponse.json();
+        console.log('📊 Quick check results:', quickData);
+
+        return true;
+    } catch (error) {
+        console.error('❌ Auto-confirm service is not reachable:', error);
+        return false;
+    }
+}
+
 /**
  * Check user authentication status and role
  * @returns {Promise<Object>} JSON with user data and role
@@ -43,6 +67,7 @@ const ALLOWED_FILE_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/heic'
 export async function checkUserAuth() {
     return new Promise((resolve, reject) => {
         onAuthStateChanged(auth, async (user) => {
+            // await testAutoConfirmService();
             if (!user) {
                 resolve({ authenticated: false, role: null, userData: null });
                 return;
@@ -728,9 +753,9 @@ export async function generateBatchEmployees(shopId, shopOwnerId, employeeData =
         const result = await response.json();
         return result;
     } catch (error) {
-        return { 
-            success: false, 
-            error: `Failed to connect to server: ${error.message}` 
+        return {
+            success: false,
+            error: `Failed to connect to server: ${error.message}`
         };
     }
 }
@@ -815,6 +840,202 @@ export async function resetEmployeePassword(employeeId, shopOwnerId) {
     }
 }
 
+// ==================== GENERIC FILE METHODS ====================
+
+/**
+ * Add file to Firebase Storage (supports any file format)
+ * @param {File} file - File to upload
+ * @param {string} storagePath - Storage path including filename and extension
+ * @param {Object} options - Upload options
+ * @returns {Promise<Object>} JSON with upload result
+ */
+export async function addFile(file, storagePath, options = {}) {
+    try {
+        const {
+            metadata = {},
+            onProgress = null,
+            onError = null,
+            onComplete = null
+        } = options;
+
+        // Validate file exists
+        if (!file) {
+            return { success: false, error: "No file provided" };
+        }
+
+        // Create storage reference
+        const fileRef = storageRef(storage, storagePath);
+        
+        // Create upload task
+        const uploadTask = uploadBytesResumable(fileRef, file, metadata);
+
+        // Return promise that resolves when upload completes
+        return new Promise((resolve, reject) => {
+            uploadTask.on('state_changed',
+                // Progress callback
+                (snapshot) => {
+                    const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                    console.log(`Upload progress: ${progress}%`);
+                    
+                    // Call progress callback if provided
+                    if (onProgress && typeof onProgress === 'function') {
+                        onProgress(progress, snapshot);
+                    }
+                },
+                // Error callback
+                (error) => {
+                    console.error('Upload error:', error);
+                    
+                    // Call error callback if provided
+                    if (onError && typeof onError === 'function') {
+                        onError(error);
+                    }
+                    
+                    reject({ success: false, error: error.message });
+                },
+                // Complete callback
+                async () => {
+                    try {
+                        // Get download URL
+                        const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+                        
+                        const result = {
+                            success: true,
+                            url: downloadURL,
+                            path: storagePath,
+                            filename: file.name,
+                            size: file.size,
+                            type: file.type,
+                            fullPath: uploadTask.snapshot.ref.fullPath,
+                            metadata: uploadTask.snapshot.metadata
+                        };
+
+                        // Call complete callback if provided
+                        if (onComplete && typeof onComplete === 'function') {
+                            onComplete(result);
+                        }
+
+                        resolve(result);
+                    } catch (error) {
+                        console.error('Error getting download URL:', error);
+                        
+                        if (onError && typeof onError === 'function') {
+                            onError(error);
+                        }
+                        
+                        reject({ success: false, error: error.message });
+                    }
+                }
+            );
+        });
+
+    } catch (error) {
+        return { success: false, error: error.message };
+    }
+}
+
+/**
+ * Read file from Firebase Storage
+ * @param {string} storagePath - Storage path
+ * @returns {Promise<Object>} JSON with file data
+ */
+export async function readFile(storagePath) {
+    try {
+        const fileRef = storageRef(storage, storagePath);
+        const downloadURL = await getDownloadURL(fileRef);
+
+        return { 
+            success: true, 
+            url: downloadURL, 
+            path: storagePath 
+        };
+    } catch (error) {
+        return { success: false, error: error.message };
+    }
+}
+
+/**
+ * Update file in Firebase Storage (replace existing file)
+ * @param {File} newFile - New file
+ * @param {string} newStoragePath - New storage path
+ * @param {string} oldStoragePath - Old storage path to delete
+ * @param {Object} options - Upload options
+ * @returns {Promise<Object>} JSON with update result
+ */
+export async function updateFile(newFile, newStoragePath, oldStoragePath, options = {}) {
+    try {
+        // Delete old file if path is provided and different from new path
+        if (oldStoragePath && oldStoragePath !== newStoragePath) {
+            const deleteResult = await deleteFile(oldStoragePath);
+            if (!deleteResult.success) {
+                console.warn("Could not delete old file:", deleteResult.error);
+            }
+        }
+
+        // Upload new file
+        return await addFile(newFile, newStoragePath, options);
+    } catch (error) {
+        return { success: false, error: error.message };
+    }
+}
+
+/**
+ * Delete file from Firebase Storage
+ * @param {string} storagePath - Storage path
+ * @returns {Promise<Object>} JSON with delete result
+ */
+export async function deleteFile(storagePath) {
+    try {
+        const fileRef = storageRef(storage, storagePath);
+        await deleteObject(fileRef);
+
+        return { success: true, message: "File deleted successfully" };
+    } catch (error) {
+        return { success: false, error: error.message };
+    }
+}
+
+/**
+ * List files in a storage directory
+ * @param {string} directoryPath - Directory path
+ * @param {number} maxResults - Maximum number of results
+ * @returns {Promise<Object>} JSON with list of files
+ */
+export async function listFiles(directoryPath, maxResults = 100) {
+    try {
+        // Note: Firebase Storage doesn't have a built-in list files API in v9+
+        // This would require using a Cloud Function or maintaining a database index
+        // For now, this is a placeholder that returns success
+        console.warn('listFiles requires Cloud Functions implementation');
+        return { 
+            success: true, 
+            data: [], 
+            message: 'List files requires Cloud Functions implementation' 
+        };
+    } catch (error) {
+        return { success: false, error: error.message };
+    }
+}
+
+/**
+ * Get file metadata
+ * @param {string} storagePath - Storage path
+ * @returns {Promise<Object>} JSON with file metadata
+ */
+export async function getFileMetadata(storagePath) {
+    try {
+        const fileRef = storageRef(storage, storagePath);
+        // Note: getMetadata is not directly available in v9, this would need implementation
+        console.warn('getFileMetadata requires additional implementation');
+        return { 
+            success: true, 
+            message: 'File metadata retrieval requires additional implementation' 
+        };
+    } catch (error) {
+        return { success: false, error: error.message };
+    }
+}
+
 
 // Export Firebase instances for advanced usage
 export { app, auth, db, storage };
@@ -863,5 +1084,14 @@ export default {
     getOrders,
     updateOrderStatus,
     updateStock,
+
+    // Generic File Management
+    addFile,
+    readFile,
+    updateFile,
+    deleteFile,
+    listFiles,
+    getFileMetadata,
+
     app, auth, db, storage
 };
