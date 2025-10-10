@@ -639,8 +639,8 @@
         let isMirrored = false; // Track mirror state
         let currentStream = null; // Track the active media stream
         const urlParams = new URLSearchParams(window.location.search);
-        const initialModel = urlParams.get('model') || 'basketball';
-        const initialColor = urlParams.get('color') || 'black';
+        const initialModel = urlParams.get('model') || 'classic';
+        const initialColor = urlParams.get('color') || 'white';
         const effectMap = {
             classic: { white: 'classic_white.deepar', black: 'classic_black.deepar', blue: 'classic_blue.deepar', red: 'classic_red.deepar' },
             running: { white: 'running_white.deepar', black: 'running_black.deepar', blue: 'running_blue.deepar', red: 'running_red.deepar' },
