@@ -397,12 +397,12 @@ function addUpdateToDOM(updateID, update) {
         </div>
         <p class="update-message">${update.message}</p>
         ${update.location ? `<p class="update-location">${update.location}</p>` : ''}
-        <div class="update-actions">
-            <button class="btn btn-danger" data-id="${updateID}">
-                <i class="fas fa-trash"></i> Delete
-            </button>
-        </div>
     `;
+        // <div class="update-actions">
+        //     <button class="btn btn-danger" data-id="${updateID}">
+        //         <i class="fas fa-trash"></i> Delete
+        //     </button>
+        // </div>
     domElements.updateList.appendChild(item);
 }
 
