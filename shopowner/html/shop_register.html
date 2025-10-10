@@ -7,17 +7,16 @@
     <link rel="icon" href="../../images/smartfitImages/smartfitAR-logo.png" type="image/x-icon">
     <link rel="stylesheet" href="/shopowner/css/shop_register.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <!-- Google Maps JavaScript API - Replace YOUR_API_KEY with your actual Google Maps API key -->
-    <script async src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBiw-3TrRkU1hSU0_dEsn3fjUxXAZWcLrg&libraries=places"></script>
+    <!-- Google Maps JavaScript API - Replace YOUR_NEW_API_KEY with your new restricted API key -->
+    <script async src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBiw-3TrRkU1hSU0_dEsn3fjUxXAZWcLrg&libraries=places,marker"></script>
 </head>
 <body style="padding: 0;">
-
     <!-- Loading Overlay -->
     <div id="loadingOverlay" class="overlay">
         <div class="overlay-content">
             <canvas id="shoe" width="300" height="200"></canvas>
             <h2>Processing Registration...</h2>
-            <p>Please wait while we submit your application</p>
+            <p>Please wait while we process your registration</p>
         </div>
     </div>
 
@@ -73,34 +72,34 @@
                     </div>
                     
                     <div class="form-group">
-                    <label>Shop Categories* (Select all that apply)</label>
-                    <div class="categories-container">  <!-- Wrapper for styling -->
-                        <div class="checkbox-group">
-                            <input type="checkbox" id="category-sneakers" name="shopCategories" value="sneakers">
-                            <label for="category-sneakers">Sneakers</label>
-                        </div>
-                        <div class="checkbox-group">
-                            <input type="checkbox" id="category-formal" name="shopCategories" value="formal">
-                            <label for="category-formal">Formal Shoes</label>
-                        </div>
-                        <div class="checkbox-group">
-                            <input type="checkbox" id="category-boots" name="shopCategories" value="boots">
-                            <label for="category-boots">Boots</label>
-                        </div>
-                        <div class="checkbox-group">
-                            <input type="checkbox" id="category-sports" name="shopCategories" value="sports">
-                            <label for="category-sports">Sports Shoes</label>
-                        </div>
-                        <div class="checkbox-group">
-                            <input type="checkbox" id="category-sandals" name="shopCategories" value="sandals">
-                            <label for="category-sandals">Sandals</label>
-                        </div>
-                        <div class="checkbox-group">
-                            <input type="checkbox" id="category-other" name="shopCategories" value="other">
-                            <label for="category-other">Other</label>
+                        <label>Shop Categories* (Select all that apply)</label>
+                        <div class="categories-container">
+                            <div class="checkbox-group">
+                                <input type="checkbox" id="category-sneakers" name="shopCategories" value="sneakers">
+                                <label for="category-sneakers">Sneakers</label>
+                            </div>
+                            <div class="checkbox-group">
+                                <input type="checkbox" id="category-formal" name="shopCategories" value="formal">
+                                <label for="category-formal">Formal Shoes</label>
+                            </div>
+                            <div class="checkbox-group">
+                                <input type="checkbox" id="category-boots" name="shopCategories" value="boots">
+                                <label for="category-boots">Boots</label>
+                            </div>
+                            <div class="checkbox-group">
+                                <input type="checkbox" id="category-sports" name="shopCategories" value="sports">
+                                <label for="category-sports">Sports Shoes</label>
+                            </div>
+                            <div class="checkbox-group">
+                                <input type="checkbox" id="category-sandals" name="shopCategories" value="sandals">
+                                <label for="category-sandals">Sandals</label>
+                            </div>
+                            <div class="checkbox-group">
+                                <input type="checkbox" id="category-other" name="shopCategories" value="other">
+                                <label for="category-other">Other</label>
+                            </div>
                         </div>
                     </div>
-                </div>
                     
                     <div class="form-group">
                         <label for="shopDescription">Shop Description*</label>
@@ -112,12 +111,7 @@
                         <select id="yearsInBusiness" name="yearsInBusiness">
                             <option value="">Select...</option>
                             <option value="less_than_1">Less than 1 year</option>
-                            <!-- Options for 1 to 99 -->
-                            <script>
-                                for (let i = 1; i <= 99; i++) {
-                                    document.write('<option value="' + i + '">' + i + '</option>');
-                                }
-                            </script>
+                            <!-- Options will be populated dynamically in shop_register.js -->
                             <option value="more_than_99">More than 99 years</option>
                         </select>
                     </div>
@@ -186,22 +180,19 @@
                             <label for="shopCity">City*</label>
                             <input type="text" id="shopCity" name="shopCity" required placeholder="City">
                         </div>
-
                         <div class="form-group">
                             <label for="shopZip">ZIP/Postal Code*</label>
-                            <input type="text" id="shopZip" name="shopZip" required placeholder="ZIP code" maxlength="4" pattern="[0-9]*" inputmode="numeric" max="9999">
+                            <input type="text" id="shopZip" name="shopZip" required placeholder="ZIP code" maxlength="4" pattern="[0-9]*" inputmode="numeric">
                         </div>
-                        
                     </div>
                     
                     <div class="form-row">
                         <div class="form-group">
                             <label for="shopState">Province*</label>
-                            <select type="text" id="shopState" name="shopState" required placeholder="State">
+                            <select id="shopState" name="shopState" required>
                                 <option value="Bataan" selected>Bataan</option>
                             </select>
                         </div>
-                        
                         <div class="form-group">
                             <label for="shopCountry">Country*</label>
                             <select id="shopCountry" name="shopCountry" required>
@@ -223,7 +214,6 @@
 
                 <div class="form-section">
                     <h2><i class="fas fa-file-alt"></i> Business Documentation</h2>
-                    
                     <div class="form-group">
                         <label for="taxId">Tax Identification Number*</label>
                         <input type="text" id="taxId" name="taxId" required placeholder="XXXX-XXXX-XXXX" maxlength="15" pattern="[0-9]{4}-[0-9]{4}-[0-9]{4}" inputmode="numeric">
@@ -521,41 +511,11 @@
                 this.value = this.value.slice(0, 4);
             }
         });
-        
-        // Success overlay
-        function showSuccessOverlay() {
-            document.getElementById('successOverlay').classList.add('active');
-        }
-
-        function showErrorOverlay(errors) {
-            const errorContainer = document.getElementById('errorMessages');
-            errorContainer.innerHTML = '';
-            
-            errors.forEach(error => {
-                const errorElement = document.createElement('p');
-                errorElement.textContent = error;
-                errorContainer.appendChild(errorElement);
-            });
-            
-            document.getElementById('errorOverlay').classList.add('active');
-        }
-
-        function closeOverlays() {
-            document.getElementById('successOverlay').classList.remove('active');
-            document.getElementById('errorOverlay').classList.remove('active');
-        }
-
-        // Add event listeners for overlay buttons
-        document.getElementById('closeOverlay').addEventListener('click', closeOverlays);
-        document.getElementById('closeErrorOverlay').addEventListener('click', closeOverlays);
 
         // Initialize all file upload previews
         function initializeAllFilePreviews() {
-            // ID Uploads
             setupFilePreview('ownerIdFront', 'frontPreview', 'Front Side');
             setupFilePreview('ownerIdBack', 'backPreview', 'Back Side');
-            
-            // Business Documentation
             setupFilePreview('businessLicense', 'licensePreview', 'Business License');
             setupFilePreview('permitDocument', 'permitPreview', 'Business Permit');
             setupFilePreview('dtiDocument', 'dtiPreview', 'DTI Document');
@@ -626,151 +586,6 @@
         // Initialize all previews when DOM is loaded
         document.addEventListener('DOMContentLoaded', function() {
             initializeAllFilePreviews();
-        });
-
-        // Form validation
-        document.getElementById('shopRegistrationForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            
-            // Clear previous errors
-            document.querySelectorAll('.form-group').forEach(group => {
-                group.classList.remove('error');
-                const errorMessage = group.querySelector('.error-message');
-                if (errorMessage) errorMessage.remove();
-            });
-            
-            const errors = [];
-            
-            // Validate required fields
-            const requiredFields = [
-                { id: 'shopName', name: 'Shop Name' },
-                { id: 'shopDescription', name: 'Shop Description' },
-                { id: 'yearsInBusiness', name: 'Years in Business' },
-                { id: 'ownerName', name: 'Owner Name' },
-                { id: 'ownerEmail', name: 'Email' },
-                { id: 'ownerPhone', name: 'Phone Number' },
-                { id: 'ownerIdFront', name: 'ID Front' },
-                { id: 'ownerIdBack', name: 'ID Back' },
-                { id: 'shopAddress', name: 'Shop Address' },
-                { id: 'shopCity', name: 'City' },
-                { id: 'shopState', name: 'State/Province' },
-                { id: 'shopZip', name: 'ZIP/Postal Code' },
-                { id: 'shopCountry', name: 'Country' },
-                { id: 'businessLicense', name: 'Business License' },
-                { id: 'taxId', name: 'Tax ID' },
-                { id: 'permitDocument', name: 'Business Permit' },
-                { id: 'dtiDocument', name: 'DTI Registration Document' },
-                { id: 'birDocument', name: 'BIR Registration Document' },
-                { id: 'username', name: 'Username' },
-                { id: 'password', name: 'Password' },
-                { id: 'confirmPassword', name: 'Confirm Password' }
-            ];
-            
-            requiredFields.forEach(field => {
-                const element = document.getElementById(field.id);
-                let value = element.value.trim();
-                
-                // For taxId, remove hyphens for validation
-                if (field.id === 'taxId') {
-                    value = value.replace(/-/g, '');
-                }
-                
-                if (!value) {
-                    const formGroup = element.closest('.form-group');
-                    formGroup.classList.add('error');
-                    
-                    const errorElement = document.createElement('span');
-                    errorElement.className = 'error-message';
-                    errorElement.textContent = `${field.name} is required`;
-                    formGroup.appendChild(errorElement);
-                    
-                    errors.push(`${field.name} is required`);
-                }
-            });
-
-            // Validate ZIP code (exactly 4 digits)
-            const zipCode = document.getElementById('shopZip').value;
-            if (zipCode && (zipCode.length !== 4 || !/^\d{4}$/.test(zipCode))) {
-                const formGroup = document.getElementById('shopZip').closest('.form-group');
-                formGroup.classList.add('error');
-
-                const errorElement = document.createElement('span');
-                errorElement.className = 'error-message';
-                errorElement.textContent = 'Please enter a valid 4-digit ZIP code';
-                formGroup.appendChild(errorElement);
-
-                errors.push('Please enter a valid 4-digit ZIP code');
-            }
-            
-            // Validate Tax ID (exactly 12 digits)
-            const taxId = document.getElementById('taxId').value.replace(/-/g, '');
-            if (taxId && (taxId.length !== 12 || !/^\d{12}$/.test(taxId))) {
-                const formGroup = document.getElementById('taxId').closest('.form-group');
-                formGroup.classList.add('error');
-
-                const errorElement = document.createElement('span');
-                errorElement.className = 'error-message';
-                errorElement.textContent = 'Please enter a valid 12-digit Tax ID';
-                formGroup.appendChild(errorElement);
-
-                errors.push('Please enter a valid 12-digit Tax ID');
-            }
-            
-            // Validate password match
-            const password = document.getElementById('password').value;
-            const confirmPassword = document.getElementById('confirmPassword').value;
-            if (password !== confirmPassword) {
-                const formGroup = document.getElementById('confirmPassword').closest('.form-group');
-                formGroup.classList.add('error');
-                
-                const errorElement = document.createElement('span');
-                errorElement.className = 'error-message';
-                errorElement.textContent = 'Passwords do not match';
-                formGroup.appendChild(errorElement);
-                
-                errors.push('Passwords do not match');
-            }
-            
-            // Validate phone number
-            const phoneNumber = document.getElementById('ownerPhone').value;
-            if (phoneNumber.length !== 10) {
-                const formGroup = document.getElementById('ownerPhone').closest('.form-group');
-                formGroup.classList.add('error');
-                
-                const errorElement = document.createElement('span');
-                errorElement.className = 'error-message';
-                errorElement.textContent = 'Please enter a valid 10-digit Philippine mobile number';
-                formGroup.appendChild(errorElement);
-                
-                errors.push('Please enter a valid 10-digit Philippine mobile number');
-            }
-            
-            // Validate terms agreement
-            if (!document.getElementById('agreeTerms').checked) {
-                const formGroup = document.getElementById('agreeTerms').closest('.form-group');
-                formGroup.classList.add('error');
-                
-                const errorElement = document.createElement('span');
-                errorElement.className = 'error-message';
-                errorElement.textContent = 'You must agree to the Terms of Service and Privacy Policy';
-                formGroup.appendChild(errorElement);
-                
-                errors.push('You must agree to the Terms of Service and Privacy Policy');
-            }
-            
-            // Show appropriate overlay
-            if (errors.length > 0) {
-                showErrorOverlay(errors);
-                // Scroll to first error
-                document.querySelector('.form-group.error')?.scrollIntoView({
-                    behavior: 'smooth',
-                    block: 'center'
-                });
-            } else {
-                // In a real app, you would submit to server here
-                showSuccessOverlay();
-                this.reset();
-            }
         });
     </script>
     <script src="/shopowner/js/shop_register.js" type="module"></script>

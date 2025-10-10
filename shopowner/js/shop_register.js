@@ -38,42 +38,73 @@ const dateProcessed = new Date().toLocaleDateString('en-US', {
 
 const registerButton = getElement('registerButton');
 
+// Populate yearsInBusiness options
+function populateYearsInBusiness() {
+    for (let i = 1; i <= 99; i++) {
+        const option = document.createElement('option');
+        option.value = i;
+        option.textContent = i;
+        yearsInBusiness.insertBefore(option, yearsInBusiness.lastElementChild);
+    }
+}
+
 // Initialize Google Map
 let map, marker, geocoder;
 
 function initMap() {
     map = new google.maps.Map(document.getElementById('map'), {
         center: { lat: 14.5995, lng: 120.9842 }, // Default center: Philippines
-        zoom: 8
-    });
-    marker = new google.maps.Marker({
-        map: map,
-        draggable: true,
-        visible: false // Initially hidden until address is geocoded
+        zoom: 8,
+        mapTypeControl: false,
+        streetViewControl: false
     });
     geocoder = new google.maps.Geocoder();
 
+    // Use AdvancedMarkerElement instead of deprecated Marker
+    marker = new google.maps.marker.AdvancedMarkerElement({
+        map: map,
+        position: null, // Initially no position
+        gmpDraggable: true
+    });
+
     // Update hidden inputs when marker is dragged
-    google.maps.event.addListener(marker, 'dragend', function() {
-        const position = marker.getPosition();
+    marker.addListener('dragend', function(event) {
+        const position = event.latLng;
         document.getElementById('latitude').value = position.lat();
         document.getElementById('longitude').value = position.lng();
     });
 
     // Handle "Locate on Map" button
     document.getElementById('locateMapBtn').addEventListener('click', function() {
-        const address = `${shopAddress.value}, ${shopCity.value}, ${shopState.value}, ${shopZip.value}, ${shopCountry.value}`;
-        geocoder.geocode({ address: address }, function(results, status) {
-            if (status === google.maps.GeocoderStatus.OK) {
+        // Improved address formatting for better geocoding accuracy
+        const addressComponents = [
+            shopAddress.value,
+            shopCity.value,
+            shopState.value,
+            shopZip.value,
+            shopCountry.value
+        ].filter(component => component.trim()).join(', ');
+        
+        // Show loading state on button
+        this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Locating...';
+        this.disabled = true;
+
+        geocoder.geocode({ 
+            address: addressComponents,
+            componentRestrictions: { country: 'PH' } // Restrict to Philippines
+        }, (results, status) => {
+            this.innerHTML = 'Locate on Map';
+            this.disabled = false;
+
+            if (status === google.maps.GeocoderStatus.OK && results.length > 0) {
                 const location = results[0].geometry.location;
                 map.setCenter(location);
                 map.setZoom(15);
-                marker.setPosition(location);
-                marker.setVisible(true);
+                marker.position = location;
                 document.getElementById('latitude').value = location.lat();
                 document.getElementById('longitude').value = location.lng();
             } else {
-                showErrorOverlay(['Unable to locate the address. Please check the address or manually adjust the marker.']);
+                showErrorOverlay(['Unable to locate the address. Please verify the address details or drag the marker to the correct location.']);
             }
         });
     });
@@ -150,7 +181,7 @@ function closeOverlays() {
     getElement('errorOverlay').classList.remove('active');
 }
 
-// Add event listeners for overlay buttons
+// Add event listeners for overlay buttons and initialize map
 document.addEventListener('DOMContentLoaded', function() {
     const closeOverlayBtn = getElement('closeOverlay');
     const closeErrorOverlayBtn = getElement('closeErrorOverlay');
@@ -162,7 +193,9 @@ document.addEventListener('DOMContentLoaded', function() {
     if (closeErrorOverlayBtn) {
         closeErrorOverlayBtn.addEventListener('click', closeOverlays);
     }
-    initMap(); // Initialize map on page load
+    
+    populateYearsInBusiness(); // Populate yearsInBusiness options
+    initMap(); // Initialize map
 });
 
 // Helper function to show field errors
@@ -317,7 +350,7 @@ registerButton.addEventListener('click', async (event) => {
         const requiredFields = [
             { id: 'shopName', name: 'Shop Name' },
             { id: 'shopDescription', name: 'Shop Description' },
-            { id: 'yearsInBusiness', name: 'Years in Business' },
+            // Removed yearsInBusiness from required fields
             { id: 'ownerName', name: 'Owner Name' },
             { id: 'ownerEmail', name: 'Email' },
             { id: 'ownerPhone', name: 'Phone Number' },
@@ -511,8 +544,8 @@ registerButton.addEventListener('click', async (event) => {
             shopZip: shopZip.value,
             shopCountry: shopCountry.value,
             taxId: getElement('taxId').value,
-            latitude: getElement('latitude').value, // Added
-            longitude: getElement('longitude').value, // Added
+            latitude: getElement('latitude').value,
+            longitude: getElement('longitude').value,
             dateProcessed: dateProcessed,
             dateApproved: '',
             dateRejected: '',
