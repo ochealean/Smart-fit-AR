@@ -224,6 +224,24 @@ body {
     color: var(--text-secondary);
 }
 
+/* Character Count Styling */
+.char-count {
+    text-align: right;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    margin-top: 0.5rem;
+    font-weight: 500;
+}
+
+.char-count.warning {
+    color: var(--warning);
+}
+
+.char-count.error {
+    color: var(--error);
+    font-weight: 600;
+}
+
 /* Phone Input Styling */
 .phone-input-container {
     display: flex;

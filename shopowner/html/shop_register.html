@@ -148,38 +148,39 @@
                     </div>
                     
                     <div class="form-group">
-                    <label>Shop Categories* (Select all that apply)</label>
-                    <div class="categories-container">  <!-- Wrapper for styling -->
-                        <div class="checkbox-group">
-                            <input type="checkbox" id="category-sneakers" name="shopCategories" value="sneakers">
-                            <label for="category-sneakers">Sneakers</label>
-                        </div>
-                        <div class="checkbox-group">
-                            <input type="checkbox" id="category-formal" name="shopCategories" value="formal">
-                            <label for="category-formal">Formal Shoes</label>
-                        </div>
-                        <div class="checkbox-group">
-                            <input type="checkbox" id="category-boots" name="shopCategories" value="boots">
-                            <label for="category-boots">Boots</label>
-                        </div>
-                        <div class="checkbox-group">
-                            <input type="checkbox" id="category-sports" name="shopCategories" value="sports">
-                            <label for="category-sports">Sports Shoes</label>
-                        </div>
-                        <div class="checkbox-group">
-                            <input type="checkbox" id="category-sandals" name="shopCategories" value="sandals">
-                            <label for="category-sandals">Sandals</label>
-                        </div>
-                        <div class="checkbox-group">
-                            <input type="checkbox" id="category-other" name="shopCategories" value="other">
-                            <label for="category-other">Other</label>
+                        <label>Shop Categories* (Select all that apply)</label>
+                        <div class="categories-container">  <!-- Wrapper for styling -->
+                            <div class="checkbox-group">
+                                <input type="checkbox" id="category-sneakers" name="shopCategories" value="sneakers">
+                                <label for="category-sneakers">Sneakers</label>
+                            </div>
+                            <div class="checkbox-group">
+                                <input type="checkbox" id="category-formal" name="shopCategories" value="formal">
+                                <label for="category-formal">Formal Shoes</label>
+                            </div>
+                            <div class="checkbox-group">
+                                <input type="checkbox" id="category-boots" name="shopCategories" value="boots">
+                                <label for="category-boots">Boots</label>
+                            </div>
+                            <div class="checkbox-group">
+                                <input type="checkbox" id="category-sports" name="shopCategories" value="sports">
+                                <label for="category-sports">Sports Shoes</label>
+                            </div>
+                            <div class="checkbox-group">
+                                <input type="checkbox" id="category-sandals" name="shopCategories" value="sandals">
+                                <label for="category-sandals">Sandals</label>
+                            </div>
+                            <div class="checkbox-group">
+                                <input type="checkbox" id="category-other" name="shopCategories" value="other">
+                                <label for="category-other">Other</label>
+                            </div>
                         </div>
                     </div>
-                </div>
                     
                     <div class="form-group">
                         <label for="shopDescription">Shop Description*</label>
-                        <textarea id="shopDescription" name="shopDescription" required placeholder="Tell us about your shop (50-200 words)"></textarea>
+                        <textarea id="shopDescription" name="shopDescription" required placeholder="Tell us about your shop (350 words)" maxlength="350"></textarea>
+                        <p id="charCount" class="char-count">0 / 350 characters</p>
                     </div>
                     
                     <div class="form-group">
@@ -307,7 +308,7 @@
                     <div class="form-group">
                         <label for="taxId">Tax Identification Number*</label>
                         <input type="text" id="taxId" name="taxId" required placeholder="XXXX-XXXX-XXXX" maxlength="15" pattern="[0-9]{4}-[0-9]{4}-[0-9]{4}" inputmode="numeric">
-                        <small>Enter your 12-digit TIN (e.g., 1234-5678-9012)</small>
+                        <small>Enter your 12-digit TIN (e.g., 1234-5678-9012). If your TIN has fewer than 12 digits, add zeros at the beginning to make it 12 digits long.</small>
                     </div>
                     
                     <div class="form-group">
@@ -785,6 +786,31 @@
                 this.reset();
             }
         });
+
+        // Character count for shop description
+        const textarea = document.getElementById("shopDescription");
+        const charCount = document.getElementById("charCount");
+
+        if (textarea && charCount) {
+            textarea.addEventListener("input", () => {
+                const currentLength = textarea.value.length;
+                const maxLength = textarea.maxLength;
+                charCount.textContent = `${currentLength} / ${maxLength} characters`;
+                
+                // Add warning colors
+                charCount.classList.remove('warning', 'error');
+                if (currentLength > maxLength * 0.8) {
+                    charCount.classList.add('warning');
+                }
+                if (currentLength > maxLength * 0.95) {
+                    charCount.classList.add('error');
+                }
+            });
+
+            // Initialize count on page load
+            charCount.textContent = `${textarea.value.length} / ${textarea.maxLength} characters`;
+        }
+
     </script>
     <script src="/shopowner/js/shop_register.js" type="module"></script>
 </body>
