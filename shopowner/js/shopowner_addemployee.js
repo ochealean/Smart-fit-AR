@@ -76,11 +76,11 @@ function setupAuthStateListener() {
             loadShopData(authResult.userId);
             loadLastEmployeeNumber(authResult.userId);
         } else {
-            window.location.href = '/user_login.html';
+            window.location.href = '/login.html';
         }
     }).catch((error) => {
         console.error('Auth error:', error);
-        window.location.href = "/user_login.html";
+        window.location.href = "/login.html";
     });
 }
 
@@ -225,7 +225,7 @@ function handleLogout() {
     if (confirm('Are you sure you want to logout?')) {
         logoutUser().then((result) => {
             if (result.success) {
-                window.location.href = '/user_login.html';
+                window.location.href = '/login.html';
             } else {
                 alert('Logout error: ' + result.error);
             }
@@ -622,7 +622,7 @@ if (document.getElementById('logout_btn')) {
         if (confirm('Are you sure you want to logout?')) {
             logoutUser().then((result) => {
                 if (result.success) {
-                    window.location.href = '/user_login.html';
+                    window.location.href = '/login.html';
                 } else {
                     alert('Logout error: ' + result.error);
                 }

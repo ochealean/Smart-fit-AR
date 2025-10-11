@@ -132,7 +132,7 @@ function initializeAppFunctionality() {
             if (confirm('Are you sure you want to logout?')) {
                 logoutUser().then((result) => {
                     if (result.success) {
-                        window.location.href = '/user_login.html';
+                        window.location.href = '/login.html';
                     } else {
                         console.error('Logout error:', result.error);
                     }
@@ -163,11 +163,11 @@ function setupAuthStateListener() {
                 }
             }
         } else {
-            window.location.href = "/user_login.html";
+            window.location.href = "/login.html";
         }
     }).catch((error) => {
         console.error('Auth check error:', error);
-        window.location.href = "/user_login.html";
+        window.location.href = "/login.html";
     });
 }
 
