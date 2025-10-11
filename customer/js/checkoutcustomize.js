@@ -28,6 +28,13 @@ let userSession = {
     userData: null
 };
 
+// Store customization data from database
+let customizationData = {
+    classic: null,
+    runner: null,
+    basketball: null
+};
+
 // Helper function to get DOM elements
 function getElement(id) {
     return document.getElementById(id);
@@ -53,6 +60,9 @@ async function initializePage() {
     // Set user profile information
     setUserProfile();
     
+    // Load customization data from database
+    await loadCustomizationData();
+    
     // Load order data from URL parameters
     if (orderId && orderDataString) {
         console.log('Order data found in URL parameters');
@@ -67,6 +77,23 @@ async function initializePage() {
     
     // Add beforeunload event to handle browser/tab closing
     window.addEventListener('beforeunload', handleBeforeUnload);
+}
+
+// Load customization data from Firebase Database
+async function loadCustomizationData() {
+    try {
+        const modelsPath = 'smartfit_AR_Database/ar_customization_models';
+        const result = await readData(modelsPath);
+        
+        if (result.success && result.data) {
+            customizationData = result.data;
+            console.log('Loaded customization data for checkout:', customizationData);
+        } else {
+            console.warn('No customization data found in database for checkout');
+        }
+    } catch (error) {
+        console.error('Error loading customization data for checkout:', error);
+    }
 }
 
 // Handle beforeunload event
@@ -185,6 +212,72 @@ function prefillShippingForm() {
     console.log('Form pre-filled successfully');
 }
 
+// Get image URLs from database based on model and color
+function getImageUrlsFromDatabase(model, bodyColor) {
+    const modelData = customizationData[model];
+    if (!modelData || !modelData.bodyColors || !modelData.bodyColors[bodyColor]) {
+        console.warn(`No image data found for ${model} - ${bodyColor}`);
+        return getFallbackImages(model, bodyColor);
+    }
+    
+    const colorData = modelData.bodyColors[bodyColor];
+    
+    // Check if images object exists with multiple views
+    if (colorData.images) {
+        return {
+            main: colorData.images.main || getFallbackImage(model, bodyColor, 'main'),
+            front: colorData.images.front || getFallbackImage(model, bodyColor, 'front'),
+            side: colorData.images.side || getFallbackImage(model, bodyColor, 'side'),
+            back: colorData.images.back || getFallbackImage(model, bodyColor, 'back')
+        };
+    }
+    
+    // Fallback to single image if images object doesn't exist
+    const singleImage = colorData.image || getFallbackImage(model, bodyColor, 'main');
+    return {
+        main: singleImage,
+        front: singleImage,
+        side: singleImage,
+        back: singleImage
+    };
+}
+
+// Get fallback images if database images are not available
+function getFallbackImages(model, bodyColor) {
+    const colorMap = {
+        'white': '#ffffff',
+        'black': '#000000',
+        'blue': '#0000ff',
+        'red': '#ff0000',
+        'green': '#00ff00'
+    };
+    
+    const color = colorMap[bodyColor] || '#667eea';
+    const colorHex = color.replace('#', '');
+    
+    return {
+        main: `https://via.placeholder.com/400x300/${colorHex}/white?text=${model}+${bodyColor}`,
+        front: `https://via.placeholder.com/400x300/${colorHex}/white?text=Front+View`,
+        side: `https://via.placeholder.com/400x300/${colorHex}/white?text=Side+View`,
+        back: `https://via.placeholder.com/400x300/${colorHex}/white?text=Back+View`
+    };
+}
+
+function getFallbackImage(model, bodyColor, view) {
+    const colorMap = {
+        'white': '#ffffff',
+        'black': '#000000',
+        'blue': '#0000ff',
+        'red': '#ff0000',
+        'green': '#00ff00'
+    };
+    
+    const color = colorMap[bodyColor] || '#667eea';
+    const colorHex = color.replace('#', '');
+    
+    return `https://via.placeholder.com/400x300/${colorHex}/white?text=${model}+${view}`;
+}
+
 function initializeCarousel() {
     // Prevent multiple initializations
     if (window.carouselInitialized) return;
@@ -219,7 +312,7 @@ function initializeCarousel() {
     carousel.addEventListener('touchend', handleTouchEnd, false);
     
     window.carouselInitialized = true;
-    console.log('Carousel initialized');
+    console.log('Carousel initialized with database images');
 }
 
 // Carousel navigation functions
@@ -316,9 +409,13 @@ function displayOrderDetails(order) {
     if (modalOrderTotal) modalOrderTotal.textContent = `₱${totalPrice.toFixed(2)}`;
     if (modalDeliveryDate) modalDeliveryDate.textContent = order.productionTime || '7-10 days';
     
-    // Load shoe images based on model and body color
+    // Load shoe images based on model and body color from database
     const bodyColor = order.selections?.bodyColor || 'white';
     const model = order.model;
+    
+    // Get image URLs from database
+    const imageUrls = getImageUrlsFromDatabase(model, bodyColor);
+    console.log('Image URLs from database:', imageUrls);
     
     // Set image sources
     const mainImage = getElement('checkoutMainImage');
@@ -326,23 +423,36 @@ function displayOrderDetails(order) {
     const sideImage = getElement('checkoutSideImage');
     const backImage = getElement('checkoutBackImage');
     
-    if (mainImage) mainImage.src = `/images/angles/${model}/${bodyColor}/main.png`;
-    if (frontImage) frontImage.src = `/images/angles/${model}/${bodyColor}/front.png`;
-    if (sideImage) sideImage.src = `/images/angles/${model}/${bodyColor}/side.png`;
-    if (backImage) backImage.src = `/images/angles/${model}/${bodyColor}/back.png`;
+    if (mainImage) mainImage.src = imageUrls.main;
+    if (frontImage) frontImage.src = imageUrls.front;
+    if (sideImage) sideImage.src = imageUrls.side;
+    if (backImage) backImage.src = imageUrls.back;
     
     // Add error handling for images
     const images = [mainImage, frontImage, sideImage, backImage].filter(img => img !== null);
+    let loadedImages = 0;
+    
     images.forEach(img => {
         img.onerror = function() {
-            this.src = 'https://cdn-icons-png.flaticon.com/512/11542/11542598.png';
+            console.error(`Failed to load image: ${this.src}`);
+            // Use fallback image
+            const view = this.id.replace('checkout', '').replace('Image', '').toLowerCase() || 'main';
+            this.src = getFallbackImage(model, bodyColor, view);
+            
+            loadedImages++;
+            if (loadedImages === images.length && !window.carouselInitialized) {
+                initializeCarousel();
+                window.carouselInitialized = true;
+            }
         };
         
         // Wait for images to load before initializing carousel
         img.onload = function() {
+            console.log(`Successfully loaded image: ${this.src}`);
+            loadedImages++;
+            
             // Check if all images are loaded
-            const allLoaded = images.every(img => img.complete && img.naturalHeight !== 0);
-            if (allLoaded && !window.carouselInitialized) {
+            if (loadedImages === images.length && !window.carouselInitialized) {
                 initializeCarousel();
                 window.carouselInitialized = true;
             }
@@ -444,7 +554,7 @@ function addColorDetail(container, label, color) {
     detailRow.innerHTML = `
         <span class="detail-label">${label}:</span>
         <span class="detail-value">
-            <span class="color-indicator" style="background-color: ${color};"></span>
+            <span class="color-indicator" style="background-color: ${getColorValue(color)};"></span>
             ${color}
         </span>
     `;
@@ -452,13 +562,31 @@ function addColorDetail(container, label, color) {
     container.appendChild(detailRow);
 }
 
+// Helper function to get color value for display
+function getColorValue(colorName) {
+    const colorMap = {
+        'white': '#e2e2e2',
+        'black': '#000000',
+        'blue': '#112dcc',
+        'red': '#e74c3c',
+        'green': '#27ae60',
+        'gray': '#2c3e50',
+        'yellow': '#f1c40f',
+        'purple': '#9b59b6',
+        'pink': '#e84393',
+        'orange': '#e67e22',
+        'brown': '#795548'
+    };
+    
+    return colorMap[colorName] || '#cccccc';
+}
+
 // Helper function to get display name for model
 function getModelDisplayName(model) {
     const modelNames = {
         'classic': 'Classic Sneaker',
-        'runner': 'Running Shoe',
-        'basketball': 'Basketball Shoe',
-        'slipon': 'Slip-On Shoe'
+        'runner': 'Performance Runner',
+        'basketball': 'High-Top Basketball'
     };
     return modelNames[model] || model;
 }
@@ -637,7 +765,7 @@ async function saveOrderToDatabase() {
             quantity: 1,
             size: orderData.size,
             isCustom: true,
-            image: getPreviewImageUrl(orderData.model)
+            image: getPreviewImageUrl(orderData.model, orderData.selections?.bodyColor)
         },
         status: "pending",
         totalAmount: totalPrice
@@ -652,12 +780,8 @@ async function saveOrderToDatabase() {
     }
 }
 
-// Get preview image URL
-function getPreviewImageUrl(model) {
-    const modelImages = {
-        'classic': 'https://via.placeholder.com/200x120?text=Classic+Sneaker',
-        'runner': 'https://via.placeholder.com/200x120?text=Performance+Runner',
-        'basketball': 'https://via.placeholder.com/200x120?text=High-Top+Basketball'
-    };
-    return modelImages[model] || 'https://via.placeholder.com/200x120?text=Shoe+Image';
+// Get preview image URL from database
+function getPreviewImageUrl(model, bodyColor = 'white') {
+    const imageUrls = getImageUrlsFromDatabase(model, bodyColor);
+    return imageUrls.main;
 }

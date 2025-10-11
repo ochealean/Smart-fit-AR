@@ -175,21 +175,9 @@ function renderOrders(orders, status) {
         // Determine product name based on whether it's a custom order
         let productName = `Custom ${order.model || "Design"} Shoe`;
         
-        // Extract color from selections if available
-        let shoeColor = "default";
-        if (order.selections) {
-            if (order.selections.bodyColor) {
-                shoeColor = order.selections.bodyColor;
-            } else if (order.selections.midsoleColor) {
-                shoeColor = order.selections.midsoleColor;
-            } else if (order.selections.heelColor) {
-                shoeColor = order.selections.heelColor;
-            }
-        }
+        // Get image URL from database structure
+        const productImage = getOrderImageUrl(order);
         
-        // Generate image path
-        const productImage = `/images/angles/${order.model}/${shoeColor}/main.png`;
-
         // Determine status badge
         let statusBadge = '';
         if (order.status === 'pending') {
@@ -301,6 +289,56 @@ function renderOrders(orders, status) {
     });
 }
 
+// Function to get the correct image URL from database structure
+function getOrderImageUrl(order) {
+    // Default fallback image
+    const defaultImage = "https://cdn-icons-png.flaticon.com/512/11542/11542598.png";
+    
+    // If order has a direct image property, use it
+    if (order.image) {
+        return order.image;
+    }
+    
+    // If order has item with image, use it
+    if (order.item && order.item.image) {
+        return order.item.image;
+    }
+    
+    // Try to get image from AR customization models in database structure
+    if (order.model && order.selections && order.selections.bodyColor) {
+        const model = order.model;
+        const color = order.selections.bodyColor;
+        
+        // Based on the database structure, try different image paths
+        // For classic model with multiple images
+        if (model === 'classic') {
+            // Check if classic model has images object in database
+            if (order.selections.bodyColor === 'blue' || order.selections.bodyColor === 'black') {
+                return `/images/angles/classic/${color}/main.png`;
+            }
+        }
+        
+        // For other models, use the default path structure
+        return `/images/angles/default/${color}/main.png`;
+    }
+    
+    // If no specific image found, use placeholder based on model
+    if (order.model) {
+        switch (order.model) {
+            case 'basketball':
+                return '/images/basketballshoe3d.png';
+            case 'classic':
+                return '/images/classicshoe3d.png';
+            case 'runner':
+                return '/images/runningshoe3d.png';
+            default:
+                return defaultImage;
+        }
+    }
+    
+    return defaultImage;
+}
+
 function showOrderDetails(order) {
     const modal = getElement("orderModal");
     if (!modal) return;
@@ -358,8 +396,8 @@ function showOrderDetails(order) {
         }
     }
     
-    // Set up carousel with all four views
-    setupCarousel(order.model, shoeColor);
+    // Set up carousel with images from database structure
+    setupCarousel(order);
     
     setTextContent("modalShoeModel", productName);
     setTextContent("modalShoeSize", order.size || "N/A");
@@ -438,18 +476,23 @@ function showOrderDetails(order) {
     modal.style.display = "flex";
 }
 
-function setupCarousel(model, color) {
+function setupCarousel(order) {
     // Define the four views
     const views = ['main', 'front', 'side', 'back'];
     
-    // Generate image paths
-    carouselImages = views.map(view => `/images/angles/${model}/${color}/${view}.png`);
+    // Generate image paths based on database structure
+    carouselImages = getCarouselImages(order, views);
     
     // Set up carousel slides
     const slides = document.querySelectorAll('.carousel-slide');
     slides.forEach((slide, index) => {
         const img = slide.querySelector('img');
-        img.src = carouselImages[index];
+        if (carouselImages[index]) {
+            img.src = carouselImages[index];
+        } else {
+            // Use the main order image as fallback for all slides
+            img.src = getOrderImageUrl(order);
+        }
         img.onerror = function() {
             this.src = 'https://cdn-icons-png.flaticon.com/512/11542/11542598.png';
         };
@@ -489,6 +532,36 @@ function setupCarousel(model, color) {
         
         carouselListenersAdded = true;
     }
+}
+
+// Function to get carousel images from database structure
+function getCarouselImages(order, views) {
+    const images = [];
+    const model = order.model;
+    const color = order.selections?.bodyColor || 'default';
+    
+    // Based on the database structure, generate image URLs
+    if (model === 'classic') {
+        // Classic model has multiple images in database
+        if (color === 'blue' || color === 'black') {
+            // Use the actual image URLs from database structure
+            views.forEach(view => {
+                images.push(`/images/angles/classic/${color}/${view}.png`);
+            });
+        } else {
+            // For other colors, use default structure
+            views.forEach(view => {
+                images.push(`/images/angles/default/${color}/${view}.png`);
+            });
+        }
+    } else {
+        // For basketball and runner models, use default structure
+        views.forEach(view => {
+            images.push(`/images/angles/default/${color}/${view}.png`);
+        });
+    }
+    
+    return images;
 }
 
 function updateCarousel() {

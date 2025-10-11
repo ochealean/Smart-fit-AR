@@ -184,7 +184,7 @@ function setupAllCustomizationOptions() {
         setupInsoleOptions(model);
         setupLacesOptions(model);
         setupColorOptions('bodyColor', getElement(`${model}BodyColorOptions`), model);
-        setupColorOptions('lacesColor', getElement(`${model}LacesColorOptions`), model);
+        setupLaceColorOptions(model); // Use the new function for lace colors
     });
 }
 
@@ -435,7 +435,7 @@ function setupInsoleOptions(model) {
     });
 }
 
-// Setup laces options dynamically from database
+// Setup laces options dynamically from database - UPDATED VERSION
 function setupLacesOptions(model) {
     const optionsContainer = getElement(`${model}LacesOptions`);
     if (!optionsContainer) return;
@@ -477,13 +477,19 @@ function setupLacesOptions(model) {
         option.addEventListener('click', function () {
             optionsContainer.querySelectorAll('.component-option').forEach(opt => opt.classList.remove('selected'));
             this.classList.add('selected');
+            
+            // Update lace selection
             selections[model].laces = {
                 id: this.dataset.id,
                 price: parseFloat(this.dataset.price),
                 days: parseInt(this.dataset.days),
                 image: this.dataset.image,
-                color: selections[model].laces.color // Keep current color
+                color: null // Reset color when lace type changes
             };
+            
+            // Refresh lace color options for the new lace type
+            setupLaceColorOptions(model);
+            
             updatePreview();
         });
         
@@ -491,9 +497,90 @@ function setupLacesOptions(model) {
     });
 }
 
-// Setup color options dynamically from database
+// NEW FUNCTION: Setup lace color options specifically
+function setupLaceColorOptions(model) {
+    const optionsContainer = getElement(`${model}LacesColorOptions`);
+    if (!optionsContainer) {
+        console.error(`Lace color container not found for model: ${model}`);
+        return;
+    }
+    
+    const modelData = customizationData[model];
+    const currentLaceId = selections[model].laces.id;
+    
+    let colors = [];
+    
+    if (modelData && modelData.laces && modelData.laces[currentLaceId]) {
+        colors = modelData.laces[currentLaceId].colors || [];
+        console.log(`Found ${colors.length} colors for lace type ${currentLaceId} in model ${model}:`, colors);
+    } else {
+        console.warn(`No lace data found for ${currentLaceId} in model ${model}`);
+    }
+    
+    if (colors.length === 0) {
+        optionsContainer.innerHTML = '<div class="no-options">No color options available for this lace type</div>';
+        // Set default color to null
+        selections[model].laces.color = null;
+        return;
+    }
+
+    optionsContainer.innerHTML = '';
+    
+    colors.forEach((color, index) => {
+        const option = document.createElement('div');
+        option.className = `color-option ${index === 0 ? 'selected' : ''}`;
+        option.dataset.color = color;
+        option.style.backgroundColor = getColorValue(color);
+        
+        // Add tooltip with color name
+        const colorName = color.charAt(0).toUpperCase() + color.slice(1);
+        option.title = colorName;
+        
+        // Add checkmark for selected state
+        if (index === 0) {
+            const checkmark = document.createElement('div');
+            checkmark.className = 'color-checkmark';
+            checkmark.innerHTML = '✓';
+            option.appendChild(checkmark);
+            
+            // Set as default selection
+            selections[model].laces.color = color;
+        }
+        
+        option.addEventListener('click', function () {
+            console.log(`Lace color selected: ${color} for model ${model}`);
+            optionsContainer.querySelectorAll('.color-option').forEach(opt => {
+                opt.classList.remove('selected');
+                // Remove existing checkmarks
+                const existingCheckmark = opt.querySelector('.color-checkmark');
+                if (existingCheckmark) {
+                    existingCheckmark.remove();
+                }
+            });
+            this.classList.add('selected');
+            
+            // Add checkmark to selected color
+            const checkmark = document.createElement('div');
+            checkmark.className = 'color-checkmark';
+            checkmark.innerHTML = '✓';
+            this.appendChild(checkmark);
+            
+            // Update the lace color selection
+            selections[model].laces.color = this.dataset.color;
+            console.log(`Updated selections for ${model}:`, selections[model]);
+            updatePreview();
+        });
+        
+        optionsContainer.appendChild(option);
+    });
+}
+
+// Setup body color options dynamically from database
 function setupColorOptions(colorType, optionsContainer, model) {
-    if (!optionsContainer) return;
+    if (!optionsContainer) {
+        console.error(`Color container not found for ${colorType} in model ${model}`);
+        return;
+    }
     
     const modelData = customizationData[model];
     let colors = [];
@@ -501,11 +588,7 @@ function setupColorOptions(colorType, optionsContainer, model) {
     if (colorType === 'bodyColor') {
         if (modelData && modelData.bodyColors) {
             colors = Object.keys(modelData.bodyColors);
-        }
-    } else if (colorType === 'lacesColor') {
-        const currentLaceId = selections[model].laces.id;
-        if (modelData && modelData.laces && modelData.laces[currentLaceId]) {
-            colors = modelData.laces[currentLaceId].colors || [];
+            console.log(`Found ${colors.length} body colors for model ${model}:`, colors);
         }
     }
     
@@ -535,6 +618,7 @@ function setupColorOptions(colorType, optionsContainer, model) {
         }
         
         option.addEventListener('click', function () {
+            console.log(`Body color selected: ${color} for model ${model}`);
             optionsContainer.querySelectorAll('.color-option').forEach(opt => {
                 opt.classList.remove('selected');
                 // Remove existing checkmarks
@@ -553,8 +637,6 @@ function setupColorOptions(colorType, optionsContainer, model) {
             
             if (colorType === 'bodyColor') {
                 selections[model].bodyColor = this.dataset.color;
-            } else if (colorType === 'lacesColor') {
-                selections[model].laces.color = this.dataset.color;
             }
             updatePreview();
         });
@@ -761,7 +843,7 @@ function refreshCustomizationOptions(model) {
     setupInsoleOptions(model);
     setupLacesOptions(model);
     setupColorOptions('bodyColor', getElement(`${model}BodyColorOptions`), model);
-    setupColorOptions('lacesColor', getElement(`${model}LacesColorOptions`), model);
+    setupLaceColorOptions(model);
 }
 
 // Initialize all event listeners
@@ -854,6 +936,12 @@ function initializeEventListeners() {
         });
     }
 
+    // Add to cart button
+    const addToCartBtn = document.querySelector('.btn-add-to-cart');
+    if (addToCartBtn) {
+        addToCartBtn.addEventListener('click', addToCart);
+    }
+
     // Buy now button
     const buyNowBtn = document.querySelector('.btn-buy');
     if (buyNowBtn) {
@@ -913,4 +1001,13 @@ async function handleLogout() {
             alert('Logout failed: ' + result.error);
         }
     }
+}
+
+// Helper function to log current selections (for debugging)
+function logCurrentSelections() {
+    console.log('Current Model:', currentModel);
+    console.log('Current Selections:', selections[currentModel]);
+    console.log('Body Color:', selections[currentModel].bodyColor);
+    console.log('Laces:', selections[currentModel].laces);
+    console.log('Insole:', selections[currentModel].insole);
 }
