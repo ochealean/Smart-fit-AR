@@ -169,7 +169,7 @@ function showShopModal(e) {
  */
 function updateShopModalContent(shop) {
     const modalContent = document.getElementById('modalShopContent');
-    const getDocUrl = (doc) => shop.uploads?.[doc]?.url || 'no-document.png';
+    const getDocUrl = (doc) => shop.uploads?.[doc]?.url || '/images/unloadshoepic.png';
     
     // Format categories for display
     const categories = Array.isArray(shop.shopCategories) 
@@ -413,7 +413,7 @@ function renderDocumentItem(url, title) {
         <div class="document-title">${title}</div>
         <a href="${url}" target="_blank" class="document-preview">
             <img src="${url}" alt="${title}" 
-                 onerror="this.onerror=null;this.src='/images/no-document.png'">
+                 onerror="this.onerror=null;this.src='/images/unloadshoepic.png'">
         </a>
     </div>`;
 }
