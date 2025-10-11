@@ -221,7 +221,7 @@ function initializePage() {
             if (confirm('Are you sure you want to logout?')) {
                 logoutUser().then(result => {
                     if (result.success) {
-                        window.location.href = '/user_login.html';
+                        window.location.href = '/login.html';
                     } else {
                         console.error('Error signing out:', result.error);
                         alert('Logout failed. Please try again.');
