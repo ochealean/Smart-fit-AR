@@ -12,6 +12,8 @@ class ShopDetailsPage {
         this.currentUser = null;
         this.shopData = null;
         this.products = [];
+        this.feedbacks = [];
+        this.customers = {}; // Store customer data
         this.currentPage = 1;
         this.productsPerPage = 12;
         this.currentFilters = {
@@ -37,7 +39,7 @@ class ShopDetailsPage {
         await this.checkAuthentication();
         await this.loadShopData();
         this.setupEventListeners();
-        this.initializeMap(); // Initialize map here
+        this.initializeMap();
     }
 
     async checkAuthentication() {
@@ -112,17 +114,40 @@ class ShopDetailsPage {
             this.renderDocumentsSection();
             this.renderLocationSection();
             
-            // Load products
-            await this.loadProducts();
-            
-            // Load reviews
-            await this.loadReviews();
+            // Load products, customers, and feedbacks
+            await Promise.all([
+                this.loadProducts(),
+                this.loadCustomers(),
+                this.loadFeedbacks()
+            ]);
             
         } catch (error) {
             console.error('❌ Error loading shop data:', error);
             this.showError('Failed to load shop details. Please try again.');
         } finally {
             this.hideLoading();
+        }
+    }
+
+    async loadCustomers() {
+        console.log('👥 Loading customers data...');
+        try {
+            const customersPath = `smartfit_AR_Database/customers`;
+            console.log('📡 Fetching customers from path:', customersPath);
+            
+            const customersResult = await readData(customersPath);
+            console.log('👤 Customers result:', customersResult);
+            
+            if (customersResult.success && customersResult.data) {
+                this.customers = customersResult.data;
+                console.log(`✅ Loaded ${Object.keys(this.customers).length} customers`);
+            } else {
+                console.log('📭 No customers data found');
+                this.customers = {};
+            }
+        } catch (error) {
+            console.error('❌ Error loading customers:', error);
+            this.customers = {};
         }
     }
 
@@ -539,6 +564,88 @@ class ShopDetailsPage {
         
         console.log(`🔄 Converted ${productsArray.length} products from object to array`);
         return productsArray;
+    }
+
+    async loadFeedbacks() {
+        console.log('💬 Loading feedbacks from Firebase...');
+        try {
+            const feedbacksPath = `smartfit_AR_Database/feedbacks`;
+            console.log('📡 Fetching feedbacks from path:', feedbacksPath);
+            
+            const feedbacksResult = await readData(feedbacksPath);
+            console.log('📝 Feedbacks result:', feedbacksResult);
+            
+            if (feedbacksResult.success && feedbacksResult.data) {
+                // Get all feedbacks for this shop's products
+                this.feedbacks = this.compileShopFeedbacks(feedbacksResult.data);
+                console.log(`✅ Compiled ${this.feedbacks.length} feedbacks for this shop:`, this.feedbacks);
+                
+                // Update shop rating with real data
+                this.updateShopRating();
+                
+                this.renderReviews(this.feedbacks);
+            } else {
+                console.log('📭 No feedbacks found, using sample data');
+                this.renderSampleReviews();
+            }
+        } catch (error) {
+            console.error('❌ Error loading feedbacks:', error);
+            this.renderSampleReviews();
+        }
+    }
+
+    compileShopFeedbacks(feedbacksData) {
+        console.log('🔄 Compiling feedbacks for shop products...');
+        const shopFeedbacks = [];
+        
+        if (!feedbacksData) {
+            console.log('❌ No feedbacks data received');
+            return shopFeedbacks;
+        }
+        
+        // Get all product IDs from this shop
+        const shopProductIds = this.products.map(product => product.id);
+        console.log('📋 Shop product IDs:', shopProductIds);
+        
+        if (shopProductIds.length === 0) {
+            console.log('❌ No products found for this shop, cannot match feedbacks');
+            return shopFeedbacks;
+        }
+        
+        // Iterate through all customer feedbacks
+        Object.entries(feedbacksData).forEach(([customerId, customerFeedbacks]) => {
+            console.log(`🔍 Checking feedbacks from customer ${customerId}:`, customerFeedbacks);
+            
+            if (customerFeedbacks && typeof customerFeedbacks === 'object') {
+                Object.entries(customerFeedbacks).forEach(([orderId, orderFeedback]) => {
+                    console.log(`📦 Checking order ${orderId}:`, orderFeedback);
+                    
+                    if (orderFeedback && typeof orderFeedback === 'object' && orderFeedback.shoeID) {
+                        console.log(`🔍 Order ${orderId} has shoeID: ${orderFeedback.shoeID}`);
+                        
+                        // Check if this feedback is for one of this shop's products
+                        if (shopProductIds.includes(orderFeedback.shoeID)) {
+                            console.log(`✅ Found matching feedback for shop product: ${orderFeedback.shoeID}`);
+                            
+                            const feedbackWithIds = {
+                                ...orderFeedback,
+                                customerId: customerId,
+                                orderId: orderId,
+                                id: `${customerId}_${orderId}` // Unique ID for the feedback
+                            };
+                            shopFeedbacks.push(feedbackWithIds);
+                        } else {
+                            console.log(`❌ Feedback shoeID ${orderFeedback.shoeID} doesn't match any shop products`);
+                        }
+                    } else {
+                        console.log(`❌ Order ${orderId} has invalid feedback structure`);
+                    }
+                });
+            }
+        });
+        
+        console.log(`📊 Total feedbacks compiled: ${shopFeedbacks.length}`);
+        return shopFeedbacks;
     }
 
     renderProducts() {
@@ -1003,51 +1110,6 @@ class ShopDetailsPage {
         alert('Add to wishlist functionality will be implemented soon!');
     }
 
-    async loadReviews() {
-        console.log('💬 Loading reviews from Firebase...');
-        try {
-            const reviewsPath = `smartfit_AR_Database/feedback/${this.shopId}`;
-            console.log('📡 Fetching reviews from path:', reviewsPath);
-            
-            const reviewsResult = await readData(reviewsPath);
-            console.log('📝 Reviews result:', reviewsResult);
-            
-            if (reviewsResult.success && reviewsResult.data) {
-                const reviews = this.convertReviewsToArray(reviewsResult.data);
-                console.log(`✅ Loaded ${reviews.length} reviews:`, reviews);
-                this.renderReviews(reviews);
-            } else {
-                console.log('📭 No reviews found, using sample data');
-                // Fallback to sample data if no reviews exist
-                this.renderSampleReviews();
-            }
-        } catch (error) {
-            console.error('❌ Error loading reviews:', error);
-            // Fallback to sample data on error
-            this.renderSampleReviews();
-        }
-    }
-
-    convertReviewsToArray(reviewsData) {
-        const reviewsArray = [];
-        
-        if (!reviewsData) return reviewsArray;
-        
-        // Convert the nested object structure to array
-        Object.entries(reviewsData).forEach(([reviewId, reviewData]) => {
-            if (reviewData && typeof reviewData === 'object') {
-                const reviewWithId = {
-                    id: reviewId,
-                    ...reviewData
-                };
-                reviewsArray.push(reviewWithId);
-            }
-        });
-        
-        console.log(`🔄 Converted ${reviewsArray.length} reviews from object to array`);
-        return reviewsArray;
-    }
-
     renderSampleReviews() {
         console.log('🎨 Rendering sample reviews...');
         const sampleReviews = [
@@ -1067,14 +1129,38 @@ class ShopDetailsPage {
             }
         ];
         
+        // Update total reviews for sample data
+        document.getElementById('totalReviews').textContent = `${sampleReviews.length} Reviews`;
+        
+        // For sample reviews, use the average of sample ratings
+        const sampleAverageRating = sampleReviews.reduce((sum, review) => sum + review.rating, 0) / sampleReviews.length;
+        this.updateShopRatingWithValue(sampleAverageRating);
         this.renderReviews(sampleReviews);
     }
 
-    renderReviews(reviews) {
-        console.log('🎨 Rendering reviews...');
+    // Helper method for sample reviews
+    updateShopRatingWithValue(rating) {
+        console.log('⭐ Updating shop rating with value:', rating);
+        
+        // Update the shop rating in the header
+        const shopRatingElement = document.getElementById('shopRating');
+        if (shopRatingElement) {
+            shopRatingElement.innerHTML = `<i class="fas fa-star"></i> ${rating.toFixed(1)}`;
+        }
+        
+        // Update the reviews summary
+        document.getElementById('averageRating').textContent = rating.toFixed(1);
+        this.updateReviewSummaryStars(rating);
+    }
+
+    renderReviews(feedbacks) {
+        console.log('🎨 Rendering reviews from feedbacks...');
         const reviewsList = document.getElementById('reviewsList');
         
-        if (reviews.length === 0) {
+        // Update total reviews count
+        document.getElementById('totalReviews').textContent = `${feedbacks.length} Review${feedbacks.length !== 1 ? 's' : ''}`;
+
+        if (feedbacks.length === 0) {
             reviewsList.innerHTML = `
                 <div class="no-results">
                     <i class="fas fa-comment"></i>
@@ -1083,35 +1169,44 @@ class ShopDetailsPage {
                 </div>
             `;
             
-            // Update summary for no reviews
             document.getElementById('averageRating').textContent = '0.0';
             document.getElementById('totalReviews').textContent = '0 Reviews';
+            
+            // Update stars for 0 rating
+            this.updateReviewSummaryStars(0);
             return;
         }
         
-        // Sort reviews by date (newest first)
-        const sortedReviews = reviews.sort((a, b) => {
-            const dateA = a.timestamp || new Date(a.date).getTime() || 0;
-            const dateB = b.timestamp || new Date(b.date).getTime() || 0;
-            return dateB - dateA;
+        // Sort feedbacks by timestamp (newest first)
+        const sortedFeedbacks = feedbacks.sort((a, b) => {
+            const timestampA = a.timestamp || a.lastUpdated || 0;
+            const timestampB = b.timestamp || b.lastUpdated || 0;
+            return timestampB - timestampA;
         });
         
         let reviewsHTML = '';
-        sortedReviews.forEach(review => {
-            // Handle different review data structures
-            const reviewerName = review.customerName || review.reviewer || review.userName || 'Anonymous Customer';
-            const rating = review.rating || review.stars || 5;
-            const comment = review.comment || review.feedback || review.reviewText || 'No comment provided.';
-            const reviewDate = review.date ? new Date(review.date).toLocaleDateString() : 
-                              review.timestamp ? new Date(review.timestamp).toLocaleDateString() : 
-                              'Recent';
+        sortedFeedbacks.forEach(feedback => {
+            // Get product details for this feedback
+            const product = this.products.find(p => p.id === feedback.shoeID);
+            const productName = product ? product.shoeName : 'Unknown Product';
+            
+            // Get real customer name from customers data
+            const customerName = this.getCustomerDisplayName(feedback.customerId);
+            const rating = feedback.rating || 5;
+            const comment = feedback.comment || 'No comment provided.';
+            const reviewDate = feedback.timestamp ? 
+                new Date(feedback.timestamp).toLocaleDateString() :
+                feedback.lastUpdated ? 
+                new Date(feedback.lastUpdated).toLocaleDateString() :
+                'Recent';
             
             reviewsHTML += `
                 <div class="review-card">
                     <div class="review-header">
                         <div class="reviewer-info">
-                            <h4>${reviewerName}</h4>
+                            <h4>${customerName}</h4>
                             <div class="review-date">${reviewDate}</div>
+                            ${product ? `<div class="reviewed-product">Reviewed: ${productName}</div>` : ''}
                         </div>
                         <div class="review-rating">
                             ${this.renderStars(rating)}
@@ -1121,21 +1216,105 @@ class ShopDetailsPage {
                     <div class="review-text">
                         ${comment}
                     </div>
+                    ${feedback.orderId ? `
+                        <div class="review-meta">
+                            <span class="order-id">Order: ${feedback.orderId}</span>
+                        </div>
+                    ` : ''}
                 </div>
             `;
         });
         
         reviewsList.innerHTML = reviewsHTML;
         
-        // Update summary with real data
-        const averageRating = reviews.reduce((sum, review) => {
-            return sum + (review.rating || review.stars || 5);
-        }, 0) / reviews.length;
+        // Update shop rating and stars
+        this.updateShopRating();
         
+        console.log(`✅ Reviews rendered from ${feedbacks.length} feedbacks`);
+    }
+
+    updateShopRating() {
+        console.log('⭐ Updating shop rating...');
+        
+        if (this.feedbacks.length === 0) {
+            console.log('📭 No feedbacks available for rating calculation');
+            // Update total reviews to 0
+            document.getElementById('totalReviews').textContent = '0 Reviews';
+            return;
+        }
+        
+        // Calculate average rating from feedbacks
+        const averageRating = this.feedbacks.reduce((sum, feedback) => {
+            return sum + (feedback.rating || 5);
+        }, 0) / this.feedbacks.length;
+        
+        console.log(`📊 Calculated average rating: ${averageRating.toFixed(1)} from ${this.feedbacks.length} reviews`);
+        
+        // Update the shop rating in the header
+        const shopRatingElement = document.getElementById('shopRating');
+        if (shopRatingElement) {
+            shopRatingElement.innerHTML = `<i class="fas fa-star"></i> ${averageRating.toFixed(1)}`;
+            console.log('✅ Shop rating updated in header');
+        }
+        
+        // Update the reviews summary rating number
         document.getElementById('averageRating').textContent = averageRating.toFixed(1);
-        document.getElementById('totalReviews').textContent = `${reviews.length} Review${reviews.length !== 1 ? 's' : ''}`;
         
-        console.log('✅ Reviews rendered');
+        // Update the total reviews count - ADD THIS
+        document.getElementById('totalReviews').textContent = `${this.feedbacks.length} Review${this.feedbacks.length !== 1 ? 's' : ''}`;
+        
+        // Update the stars in reviews summary
+        this.updateReviewSummaryStars(averageRating);
+    }
+
+    updateReviewSummaryStars(averageRating) {
+        console.log('⭐ Updating review summary stars with rating:', averageRating);
+        const starsContainer = document.querySelector('.reviews-summary .stars');
+        if (starsContainer) {
+            starsContainer.innerHTML = this.renderStars(averageRating);
+            console.log('✅ Review summary stars updated');
+        }
+    }
+
+    // Enhanced renderStars method to handle decimal ratings properly
+    renderStars(rating) {
+        let stars = '';
+        const fullStars = Math.floor(rating);
+        const hasHalfStar = rating % 1 >= 0.5;
+        const emptyStars = 5 - fullStars - (hasHalfStar ? 1 : 0);
+        
+        // Add full stars
+        for (let i = 0; i < fullStars; i++) {
+            stars += '<i class="fas fa-star"></i>';
+        }
+        
+        // Add half star if needed
+        if (hasHalfStar) {
+            stars += '<i class="fas fa-star-half-alt"></i>';
+        }
+        
+        // Add empty stars
+        for (let i = 0; i < emptyStars; i++) {
+            stars += '<i class="far fa-star"></i>';
+        }
+        
+        return stars;
+    }
+
+    getCustomerDisplayName(customerId) {
+        // Get customer data from loaded customers
+        if (this.customers && this.customers[customerId]) {
+            const customer = this.customers[customerId];
+            const firstName = customer.firstName || '';
+            const lastName = customer.lastName || '';
+            
+            if (firstName || lastName) {
+                return `${firstName} ${lastName}`.trim();
+            }
+        }
+        
+        // Fallback to generic name if customer data not found
+        return `Customer ${customerId.substring(0, 8)}...`;
     }
 
     renderStars(rating) {
