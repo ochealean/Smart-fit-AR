@@ -7,8 +7,83 @@
     <link rel="icon" href="../../images/smartfitImages/smartfitAR-logo.png" type="image/x-icon">
     <link rel="stylesheet" href="/shopowner/css/shop_register.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <!-- Google Maps JavaScript API - Replace YOUR_API_KEY with your actual Google Maps API key -->
-    <script async src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBiw-3TrRkU1hSU0_dEsn3fjUxXAZWcLrg&libraries=places"></script>
+    <!-- Google Maps JavaScript API -->
+    <script>
+        // Ensure initMap is globally available and waits for DOM
+        window.initMap = function() {
+            document.addEventListener('DOMContentLoaded', function() {
+                const mapDiv = document.getElementById('map');
+                if (!mapDiv) {
+                    console.error('Map div not found');
+                    return;
+                }
+
+                const { AdvancedMarkerElement } = google.maps.marker;
+
+                map = new google.maps.Map(mapDiv, {
+                    center: { lat: 14.5995, lng: 120.9842 }, // Default center: Philippines
+                    zoom: 8,
+                    mapId: '8ddbd8f389c81029930da3' // Your valid Map ID
+                });
+
+                marker = new AdvancedMarkerElement({
+                    map: map,
+                    position: null, // Initially no position
+                    gmpDraggable: true, // Correct property for draggability
+                    title: 'Shop Location'
+                });
+
+                // Hide marker initially until address is geocoded
+                marker.visible = false;
+
+                geocoder = new google.maps.Geocoder();
+
+                // Add dragend listener using google.maps.event
+                google.maps.event.addListener(marker, 'dragend', function() {
+                    const position = marker.position;
+                    if (position) {
+                        // FIX: AdvancedMarkerElement position is an object, not a LatLng with methods
+                        document.getElementById('latitude').value = position.lat;
+                        document.getElementById('longitude').value = position.lng;
+                        // Update display
+                        document.getElementById('displayLatitude').textContent = position.lat.toFixed(6);
+                        document.getElementById('displayLongitude').textContent = position.lng.toFixed(6);
+                    }
+                });
+
+                // Handle "Locate on Map" button
+                document.getElementById('locateMapBtn').addEventListener('click', function() {
+                    const address = `${document.getElementById('shopAddress').value}, ${document.getElementById('shopCity').value}, ${document.getElementById('shopState').value}, ${document.getElementById('shopZip').value}, ${document.getElementById('shopCountry').value}`;
+                    geocoder.geocode({ address: address }, function(results, status) {
+                        if (status === google.maps.GeocoderStatus.OK) {
+                            const location = results[0].geometry.location;
+                            map.setCenter(location);
+                            map.setZoom(15);
+                            
+                            // FIX: Convert LatLng object to literal for AdvancedMarkerElement
+                            marker.position = {
+                                lat: location.lat(),
+                                lng: location.lng()
+                            };
+                            
+                            marker.visible = true; // Show marker
+                            document.getElementById('latitude').value = location.lat();
+                            document.getElementById('longitude').value = location.lng();
+                            // Update display
+                            document.getElementById('displayLatitude').textContent = location.lat().toFixed(6);
+                            document.getElementById('displayLongitude').textContent = location.lng().toFixed(6);
+                        } else {
+                            showErrorOverlay(['Unable to locate the address. Please check the address or manually adjust the marker.']);
+                        }
+                    });
+                });
+            });
+        };
+
+        // Global variables
+        let map, marker, geocoder;
+    </script>
+    <script async src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBiw-3TrRkU1hSU0_dEsn3fjUxXAZWcLrg&libraries=places,marker&callback=initMap"></script>
 </head>
 <body style="padding: 0;">
 
@@ -73,38 +148,39 @@
                     </div>
                     
                     <div class="form-group">
-                    <label>Shop Categories* (Select all that apply)</label>
-                    <div class="categories-container">  <!-- Wrapper for styling -->
-                        <div class="checkbox-group">
-                            <input type="checkbox" id="category-sneakers" name="shopCategories" value="sneakers">
-                            <label for="category-sneakers">Sneakers</label>
-                        </div>
-                        <div class="checkbox-group">
-                            <input type="checkbox" id="category-formal" name="shopCategories" value="formal">
-                            <label for="category-formal">Formal Shoes</label>
-                        </div>
-                        <div class="checkbox-group">
-                            <input type="checkbox" id="category-boots" name="shopCategories" value="boots">
-                            <label for="category-boots">Boots</label>
-                        </div>
-                        <div class="checkbox-group">
-                            <input type="checkbox" id="category-sports" name="shopCategories" value="sports">
-                            <label for="category-sports">Sports Shoes</label>
-                        </div>
-                        <div class="checkbox-group">
-                            <input type="checkbox" id="category-sandals" name="shopCategories" value="sandals">
-                            <label for="category-sandals">Sandals</label>
-                        </div>
-                        <div class="checkbox-group">
-                            <input type="checkbox" id="category-other" name="shopCategories" value="other">
-                            <label for="category-other">Other</label>
+                        <label>Shop Categories* (Select all that apply)</label>
+                        <div class="categories-container">  <!-- Wrapper for styling -->
+                            <div class="checkbox-group">
+                                <input type="checkbox" id="category-sneakers" name="shopCategories" value="sneakers">
+                                <label for="category-sneakers">Sneakers</label>
+                            </div>
+                            <div class="checkbox-group">
+                                <input type="checkbox" id="category-formal" name="shopCategories" value="formal">
+                                <label for="category-formal">Formal Shoes</label>
+                            </div>
+                            <div class="checkbox-group">
+                                <input type="checkbox" id="category-boots" name="shopCategories" value="boots">
+                                <label for="category-boots">Boots</label>
+                            </div>
+                            <div class="checkbox-group">
+                                <input type="checkbox" id="category-sports" name="shopCategories" value="sports">
+                                <label for="category-sports">Sports Shoes</label>
+                            </div>
+                            <div class="checkbox-group">
+                                <input type="checkbox" id="category-sandals" name="shopCategories" value="sandals">
+                                <label for="category-sandals">Sandals</label>
+                            </div>
+                            <div class="checkbox-group">
+                                <input type="checkbox" id="category-other" name="shopCategories" value="other">
+                                <label for="category-other">Other</label>
+                            </div>
                         </div>
                     </div>
-                </div>
                     
                     <div class="form-group">
                         <label for="shopDescription">Shop Description*</label>
-                        <textarea id="shopDescription" name="shopDescription" required placeholder="Tell us about your shop (50-200 words)"></textarea>
+                        <textarea id="shopDescription" name="shopDescription" required placeholder="Tell us about your shop (350 words)" maxlength="350"></textarea>
+                        <p id="charCount" class="char-count">0 / 350 characters</p>
                     </div>
                     
                     <div class="form-group">
@@ -218,6 +294,11 @@
                         <div id="map" style="height: 300px; width: 100%; border-radius: 8px; border: 1px solid var(--gray-medium);"></div>
                         <input type="hidden" id="latitude" name="latitude">
                         <input type="hidden" id="longitude" name="longitude">
+                        <!-- Display Latitude and Longitude -->
+                        <div class="location-display">
+                            <p>Latitude: <span id="displayLatitude">N/A</span></p>
+                            <p>Longitude: <span id="displayLongitude">N/A</span></p>
+                        </div>
                     </div>
                 </div>
 
@@ -227,7 +308,7 @@
                     <div class="form-group">
                         <label for="taxId">Tax Identification Number*</label>
                         <input type="text" id="taxId" name="taxId" required placeholder="XXXX-XXXX-XXXX" maxlength="15" pattern="[0-9]{4}-[0-9]{4}-[0-9]{4}" inputmode="numeric">
-                        <small>Enter your 12-digit TIN (e.g., 1234-5678-9012)</small>
+                        <small>Enter your 12-digit TIN (e.g., 1234-5678-9012). If your TIN has fewer than 12 digits, add zeros at the beginning to make it 12 digits long.</small>
                     </div>
                     
                     <div class="form-group">
@@ -386,8 +467,7 @@
                 <a href="/extras/contactus.html">Contact Us</a>
                 <a href="/extras/aboutus.html">About Us</a>
             </nav>
-        </div>
-    </footer>
+        </footer>
 
     <script>
         // Toggle password visibility
@@ -465,10 +545,7 @@
         const phoneInput = document.getElementById('ownerPhone');
         
         phoneInput.addEventListener('input', function() {
-            // Remove any non-digit characters
             this.value = this.value.replace(/\D/g, '');
-            
-            // Validate length (10 digits for PH numbers without country code)
             if (this.value.length > 10) {
                 this.value = this.value.slice(0, 10);
             }
@@ -478,18 +555,11 @@
         const taxIdInput = document.getElementById('taxId');
         
         taxIdInput.addEventListener('input', function() {
-            // Remove non-digits (letters and special chars except hyphens)
             let value = this.value.replace(/[^0-9-]/g, '');
-            
-            // Remove existing hyphens for processing
             value = value.replace(/-/g, '');
-            
-            // Limit to 12 digits
             if (value.length > 12) {
                 value = value.slice(0, 12);
             }
-            
-            // Format as XXXX-XXXX-XXXX
             let formattedValue = '';
             for (let i = 0; i < value.length; i++) {
                 if (i > 0 && i % 4 === 0) {
@@ -497,11 +567,9 @@
                 }
                 formattedValue += value[i];
             }
-            
             this.value = formattedValue;
         });
 
-        // Prevent non-numeric input via keypress
         taxIdInput.addEventListener('keypress', function(e) {
             const char = String.fromCharCode(e.keyCode || e.which);
             if (!/[0-9]/.test(char)) {
@@ -513,10 +581,7 @@
         const zipInput = document.getElementById('shopZip');
 
         zipInput.addEventListener('input', function () {
-            // Remove any non-digit characters
             this.value = this.value.replace(/\D/g, '');
-
-            // Limit to 4 digits
             if (this.value.length > 4) {
                 this.value = this.value.slice(0, 4);
             }
@@ -530,13 +595,11 @@
         function showErrorOverlay(errors) {
             const errorContainer = document.getElementById('errorMessages');
             errorContainer.innerHTML = '';
-            
             errors.forEach(error => {
                 const errorElement = document.createElement('p');
                 errorElement.textContent = error;
                 errorContainer.appendChild(errorElement);
             });
-            
             document.getElementById('errorOverlay').classList.add('active');
         }
 
@@ -546,23 +609,21 @@
         }
 
         // Add event listeners for overlay buttons
-        document.getElementById('closeOverlay').addEventListener('click', closeOverlays);
-        document.getElementById('closeErrorOverlay').addEventListener('click', closeOverlays);
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('closeOverlay').addEventListener('click', closeOverlays);
+            document.getElementById('closeErrorOverlay').addEventListener('click', closeOverlays);
+        });
 
         // Initialize all file upload previews
         function initializeAllFilePreviews() {
-            // ID Uploads
             setupFilePreview('ownerIdFront', 'frontPreview', 'Front Side');
             setupFilePreview('ownerIdBack', 'backPreview', 'Back Side');
-            
-            // Business Documentation
             setupFilePreview('businessLicense', 'licensePreview', 'Business License');
             setupFilePreview('permitDocument', 'permitPreview', 'Business Permit');
             setupFilePreview('dtiDocument', 'dtiPreview', 'DTI Document');
             setupFilePreview('birDocument', 'birPreview', 'BIR Document');
         }
 
-        // Enhanced file preview function
         function setupFilePreview(inputId, previewId, defaultText) {
             const input = document.getElementById(inputId);
             const preview = document.getElementById(previewId);
@@ -570,23 +631,17 @@
             input.addEventListener('change', function() {
                 const file = this.files[0];
                 if (!file) return;
-                
-                // Check file size (5MB max)
                 if (file.size > 5 * 1024 * 1024) {
                     alert('File size exceeds 5MB limit');
                     this.value = '';
                     return;
                 }
-                
-                // Check file type
                 const validTypes = ['image/jpeg', 'image/png', 'application/pdf'];
                 if (!validTypes.includes(file.type)) {
                     alert('Only JPEG, PNG, or PDF files are allowed');
                     this.value = '';
                     return;
                 }
-                
-                // For PDF files
                 if (file.type === 'application/pdf') {
                     preview.innerHTML = `
                         <i class="fas fa-file-pdf"></i>
@@ -596,8 +651,6 @@
                     preview.classList.add('has-preview');
                     return;
                 }
-                
-                // For image files
                 const reader = new FileReader();
                 reader.onload = function(e) {
                     preview.innerHTML = `
@@ -605,11 +658,10 @@
                         <button class="remove-preview" type="button">&times;</button>
                     `;
                     preview.classList.add('has-preview');
-                }
+                };
                 reader.readAsDataURL(file);
             });
             
-            // Handle click on preview container to remove file
             preview.addEventListener('click', function(e) {
                 if (e.target.classList.contains('remove-preview')) {
                     e.stopPropagation();
@@ -623,7 +675,6 @@
             });
         }
 
-        // Initialize all previews when DOM is loaded
         document.addEventListener('DOMContentLoaded', function() {
             initializeAllFilePreviews();
         });
@@ -631,17 +682,13 @@
         // Form validation
         document.getElementById('shopRegistrationForm').addEventListener('submit', function(e) {
             e.preventDefault();
-            
             // Clear previous errors
             document.querySelectorAll('.form-group').forEach(group => {
                 group.classList.remove('error');
                 const errorMessage = group.querySelector('.error-message');
                 if (errorMessage) errorMessage.remove();
             });
-            
             const errors = [];
-            
-            // Validate required fields
             const requiredFields = [
                 { id: 'shopName', name: 'Shop Name' },
                 { id: 'shopDescription', name: 'Shop Description' },
@@ -665,113 +712,105 @@
                 { id: 'password', name: 'Password' },
                 { id: 'confirmPassword', name: 'Confirm Password' }
             ];
-            
             requiredFields.forEach(field => {
                 const element = document.getElementById(field.id);
                 let value = element.value.trim();
-                
-                // For taxId, remove hyphens for validation
                 if (field.id === 'taxId') {
                     value = value.replace(/-/g, '');
                 }
-                
                 if (!value) {
                     const formGroup = element.closest('.form-group');
                     formGroup.classList.add('error');
-                    
                     const errorElement = document.createElement('span');
                     errorElement.className = 'error-message';
                     errorElement.textContent = `${field.name} is required`;
                     formGroup.appendChild(errorElement);
-                    
                     errors.push(`${field.name} is required`);
                 }
             });
-
-            // Validate ZIP code (exactly 4 digits)
             const zipCode = document.getElementById('shopZip').value;
             if (zipCode && (zipCode.length !== 4 || !/^\d{4}$/.test(zipCode))) {
                 const formGroup = document.getElementById('shopZip').closest('.form-group');
                 formGroup.classList.add('error');
-
                 const errorElement = document.createElement('span');
                 errorElement.className = 'error-message';
                 errorElement.textContent = 'Please enter a valid 4-digit ZIP code';
                 formGroup.appendChild(errorElement);
-
                 errors.push('Please enter a valid 4-digit ZIP code');
             }
-            
-            // Validate Tax ID (exactly 12 digits)
             const taxId = document.getElementById('taxId').value.replace(/-/g, '');
             if (taxId && (taxId.length !== 12 || !/^\d{12}$/.test(taxId))) {
                 const formGroup = document.getElementById('taxId').closest('.form-group');
                 formGroup.classList.add('error');
-
                 const errorElement = document.createElement('span');
                 errorElement.className = 'error-message';
                 errorElement.textContent = 'Please enter a valid 12-digit Tax ID';
                 formGroup.appendChild(errorElement);
-
                 errors.push('Please enter a valid 12-digit Tax ID');
             }
-            
-            // Validate password match
             const password = document.getElementById('password').value;
             const confirmPassword = document.getElementById('confirmPassword').value;
             if (password !== confirmPassword) {
                 const formGroup = document.getElementById('confirmPassword').closest('.form-group');
                 formGroup.classList.add('error');
-                
                 const errorElement = document.createElement('span');
                 errorElement.className = 'error-message';
                 errorElement.textContent = 'Passwords do not match';
                 formGroup.appendChild(errorElement);
-                
                 errors.push('Passwords do not match');
             }
-            
-            // Validate phone number
             const phoneNumber = document.getElementById('ownerPhone').value;
             if (phoneNumber.length !== 10) {
                 const formGroup = document.getElementById('ownerPhone').closest('.form-group');
                 formGroup.classList.add('error');
-                
                 const errorElement = document.createElement('span');
                 errorElement.className = 'error-message';
                 errorElement.textContent = 'Please enter a valid 10-digit Philippine mobile number';
                 formGroup.appendChild(errorElement);
-                
                 errors.push('Please enter a valid 10-digit Philippine mobile number');
             }
-            
-            // Validate terms agreement
             if (!document.getElementById('agreeTerms').checked) {
                 const formGroup = document.getElementById('agreeTerms').closest('.form-group');
                 formGroup.classList.add('error');
-                
                 const errorElement = document.createElement('span');
                 errorElement.className = 'error-message';
                 errorElement.textContent = 'You must agree to the Terms of Service and Privacy Policy';
                 formGroup.appendChild(errorElement);
-                
                 errors.push('You must agree to the Terms of Service and Privacy Policy');
             }
-            
-            // Show appropriate overlay
             if (errors.length > 0) {
                 showErrorOverlay(errors);
-                // Scroll to first error
-                document.querySelector('.form-group.error')?.scrollIntoView({
-                    behavior: 'smooth',
-                    block: 'center'
-                });
+                document.querySelector('.form-group.error')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
             } else {
-                // In a real app, you would submit to server here
                 showSuccessOverlay();
                 this.reset();
             }
         });
+
+        // Character count for shop description
+        const textarea = document.getElementById("shopDescription");
+        const charCount = document.getElementById("charCount");
+
+        if (textarea && charCount) {
+            textarea.addEventListener("input", () => {
+                const currentLength = textarea.value.length;
+                const maxLength = textarea.maxLength;
+                charCount.textContent = `${currentLength} / ${maxLength} characters`;
+                
+                // Add warning colors
+                charCount.classList.remove('warning', 'error');
+                if (currentLength > maxLength * 0.8) {
+                    charCount.classList.add('warning');
+                }
+                if (currentLength > maxLength * 0.95) {
+                    charCount.classList.add('error');
+                }
+            });
+
+            // Initialize count on page load
+            charCount.textContent = `${textarea.value.length} / ${textarea.maxLength} characters`;
+        }
+
     </script>
     <script src="/shopowner/js/shop_register.js" type="module"></script>
 </body>

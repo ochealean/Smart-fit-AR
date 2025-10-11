@@ -38,47 +38,6 @@ const dateProcessed = new Date().toLocaleDateString('en-US', {
 
 const registerButton = getElement('registerButton');
 
-// Initialize Google Map
-let map, marker, geocoder;
-
-function initMap() {
-    map = new google.maps.Map(document.getElementById('map'), {
-        center: { lat: 14.5995, lng: 120.9842 }, // Default center: Philippines
-        zoom: 8
-    });
-    marker = new google.maps.Marker({
-        map: map,
-        draggable: true,
-        visible: false // Initially hidden until address is geocoded
-    });
-    geocoder = new google.maps.Geocoder();
-
-    // Update hidden inputs when marker is dragged
-    google.maps.event.addListener(marker, 'dragend', function() {
-        const position = marker.getPosition();
-        document.getElementById('latitude').value = position.lat();
-        document.getElementById('longitude').value = position.lng();
-    });
-
-    // Handle "Locate on Map" button
-    document.getElementById('locateMapBtn').addEventListener('click', function() {
-        const address = `${shopAddress.value}, ${shopCity.value}, ${shopState.value}, ${shopZip.value}, ${shopCountry.value}`;
-        geocoder.geocode({ address: address }, function(results, status) {
-            if (status === google.maps.GeocoderStatus.OK) {
-                const location = results[0].geometry.location;
-                map.setCenter(location);
-                map.setZoom(15);
-                marker.setPosition(location);
-                marker.setVisible(true);
-                document.getElementById('latitude').value = location.lat();
-                document.getElementById('longitude').value = location.lng();
-            } else {
-                showErrorOverlay(['Unable to locate the address. Please check the address or manually adjust the marker.']);
-            }
-        });
-    });
-}
-
 function setButtonDisable() {
     registerButton.style.background = "linear-gradient(135deg, #43579d, #694c8d)";
     registerButton.style.color = "#838383";
@@ -162,7 +121,6 @@ document.addEventListener('DOMContentLoaded', function() {
     if (closeErrorOverlayBtn) {
         closeErrorOverlayBtn.addEventListener('click', closeOverlays);
     }
-    initMap(); // Initialize map on page load
 });
 
 // Helper function to show field errors
@@ -176,7 +134,6 @@ function showFieldError(field, message) {
         if (existingError) {
             existingError.remove();
         }
-        
         const errorElement = document.createElement('span');
         errorElement.className = 'error-message';
         errorElement.textContent = message;
@@ -188,7 +145,6 @@ function showFieldError(field, message) {
 async function uploadFilesWithProgress(userId, permitFile, licenseFile, frontSideFile, backSideFile, dtiFile, birFile) {
     return new Promise(async (resolve, reject) => {
         try {
-            // Create storage paths
             const permitPath = `uploads/${userId}/permit_${Date.now()}_${permitFile.name}`;
             const licensePath = `uploads/${userId}/license_${Date.now()}_${licenseFile.name}`;
             const frontSidePath = `uploads/${userId}/frontSide_${Date.now()}_${frontSideFile.name}`;
@@ -197,17 +153,15 @@ async function uploadFilesWithProgress(userId, permitFile, licenseFile, frontSid
             const birPath = `uploads/${userId}/bir_${Date.now()}_${birFile.name}`;
 
             let completedUploads = 0;
-            const totalUploads = 6; // Six files: Permit, License, ID Front, ID Back, DTI, BIR
+            const totalUploads = 6;
             const uploadResults = {};
 
-            // Function to update progress
             const updateProgress = () => {
                 completedUploads++;
                 const progress = Math.round((completedUploads / totalUploads) * 100);
                 updateLoaderProgress('uploadingFiles', progress);
             };
 
-            // Upload files with individual progress tracking
             const uploadPromises = [
                 createImageToFirebase(permitFile, permitPath).then(result => {
                     uploadResults.permitDocument = result;
@@ -241,10 +195,8 @@ async function uploadFilesWithProgress(userId, permitFile, licenseFile, frontSid
                 })
             ];
 
-            // Wait for all uploads to complete
             await Promise.all(uploadPromises);
 
-            // Check if all uploads were successful
             if (!uploadResults.permitDocument.success ||
                 !uploadResults.businessLicense.success ||
                 !uploadResults.ownerIdFront.success ||
@@ -254,44 +206,13 @@ async function uploadFilesWithProgress(userId, permitFile, licenseFile, frontSid
                 throw new Error('File upload failed');
             }
 
-            // Return the upload data
             resolve({
-                permitDocument: {
-                    name: permitFile.name,
-                    url: uploadResults.permitDocument.url,
-                    path: uploadResults.permitDocument.path,
-                    uploadedAt: new Date().toISOString()
-                },
-                businessLicense: {
-                    name: licenseFile.name,
-                    url: uploadResults.businessLicense.url,
-                    path: uploadResults.businessLicense.path,
-                    uploadedAt: new Date().toISOString()
-                },
-                ownerIdFront: {
-                    name: frontSideFile.name,
-                    url: uploadResults.ownerIdFront.url,
-                    path: uploadResults.ownerIdFront.path,
-                    uploadedAt: new Date().toISOString()
-                },
-                ownerIdBack: {
-                    name: backSideFile.name,
-                    url: uploadResults.ownerIdBack.url,
-                    path: uploadResults.ownerIdBack.path,
-                    uploadedAt: new Date().toISOString()
-                },
-                dtiDocument: {
-                    name: dtiFile.name,
-                    url: uploadResults.dtiDocument.url,
-                    path: uploadResults.dtiDocument.path,
-                    uploadedAt: new Date().toISOString()
-                },
-                birDocument: {
-                    name: birFile.name,
-                    url: uploadResults.birDocument.url,
-                    path: uploadResults.birDocument.path,
-                    uploadedAt: new Date().toISOString()
-                }
+                permitDocument: { name: permitFile.name, url: uploadResults.permitDocument.url, path: uploadResults.permitDocument.path, uploadedAt: new Date().toISOString() },
+                businessLicense: { name: licenseFile.name, url: uploadResults.businessLicense.url, path: uploadResults.businessLicense.path, uploadedAt: new Date().toISOString() },
+                ownerIdFront: { name: frontSideFile.name, url: uploadResults.ownerIdFront.url, path: uploadResults.ownerIdFront.path, uploadedAt: new Date().toISOString() },
+                ownerIdBack: { name: backSideFile.name, url: uploadResults.ownerIdBack.url, path: uploadResults.ownerIdBack.path, uploadedAt: new Date().toISOString() },
+                dtiDocument: { name: dtiFile.name, url: uploadResults.dtiDocument.url, path: uploadResults.dtiDocument.path, uploadedAt: new Date().toISOString() },
+                birDocument: { name: birFile.name, url: uploadResults.birDocument.url, path: uploadResults.birDocument.path, uploadedAt: new Date().toISOString() }
             });
         } catch (error) {
             console.error('File upload error:', error);
@@ -308,11 +229,9 @@ registerButton.addEventListener('click', async (event) => {
     updateLoaderProgress('validating');
 
     try {
-        // Clear previous errors
         document.querySelectorAll('.error-message').forEach(el => el.remove());
         document.querySelectorAll('.form-group').forEach(el => el.classList.remove('error'));
 
-        // Validate all fields
         const errors = [];
         const requiredFields = [
             { id: 'shopName', name: 'Shop Name' },
@@ -338,7 +257,6 @@ registerButton.addEventListener('click', async (event) => {
             { id: 'confirmPassword', name: 'Confirm Password' }
         ];
 
-        // Check required fields
         requiredFields.forEach(({ id, name }) => {
             const field = getElement(id);
             if (!field || !field.value.trim()) {
@@ -347,7 +265,6 @@ registerButton.addEventListener('click', async (event) => {
             }
         });
 
-        // Validate categories (at least one selected)
         const categoryCheckboxes = document.querySelectorAll('input[name="shopCategories"]');
         const selectedCategories = Array.from(categoryCheckboxes).filter(cb => cb.checked).map(cb => cb.value);
         if (selectedCategories.length === 0) {
@@ -358,28 +275,24 @@ registerButton.addEventListener('click', async (event) => {
             }
         }
 
-        // Validate email format
         const emailField = getElement('ownerEmail');
         if (emailField && !/^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/.test(emailField.value)) {
             errors.push('Invalid email format');
             showFieldError(emailField, 'Please enter a valid email address');
         }
 
-        // Validate phone number
         const phoneField = getElement('ownerPhone');
         if (phoneField && (phoneField.value.length !== 10 || !/^\d+$/.test(phoneField.value))) {
             errors.push('Invalid phone number');
             showFieldError(phoneField, 'Please enter a valid 10-digit Philippine mobile number');
         }
 
-        // Validate ZIP code
         const zipField = getElement('shopZip');
         if (zipField && (zipField.value.length !== 4 || !/^\d+$/.test(zipField.value))) {
             errors.push('Invalid ZIP code');
             showFieldError(zipField, 'Please enter a valid 4-digit ZIP code');
         }
 
-        // Validate map location
         const latitudeField = getElement('latitude');
         const longitudeField = getElement('longitude');
         if (!latitudeField.value || !longitudeField.value) {
@@ -388,7 +301,6 @@ registerButton.addEventListener('click', async (event) => {
             showFieldError(mapGroup.querySelector('label'), 'Please set a location on the map');
         }
 
-        // Validate password match
         const passwordVal = getElement('password')?.value;
         const confirmPasswordVal = getElement('confirmPassword')?.value;
         if (passwordVal !== confirmPasswordVal) {
@@ -396,7 +308,6 @@ registerButton.addEventListener('click', async (event) => {
             showFieldError(getElement('confirmPassword'), 'Passwords do not match');
         }
 
-        // Validate file uploads
         const validateFileUpload = (id, name) => {
             const fileInput = getElement(id);
             if (!fileInput || fileInput.files.length === 0) {
@@ -404,25 +315,21 @@ registerButton.addEventListener('click', async (event) => {
                 if (fileInput) showFieldError(fileInput, `${name} is required`);
                 return false;
             }
-
             const file = fileInput.files[0];
             if (file.size > 5 * 1024 * 1024) {
                 errors.push(`${name} file size exceeds 5MB limit`);
                 showFieldError(fileInput, 'File size exceeds 5MB limit');
                 return false;
             }
-
             const validTypes = ['image/jpeg', 'image/png', 'application/pdf'];
             if (!validTypes.includes(file.type)) {
                 errors.push(`${name} invalid file type`);
                 showFieldError(fileInput, 'Only JPEG, PNG, or PDF files are allowed');
                 return false;
             }
-
             return true;
         };
 
-        // Validate all file uploads
         validateFileUpload('ownerIdFront', 'Front ID');
         validateFileUpload('ownerIdBack', 'Back ID');
         validateFileUpload('businessLicense', 'Business License');
@@ -430,14 +337,12 @@ registerButton.addEventListener('click', async (event) => {
         validateFileUpload('dtiDocument', 'DTI Registration Document');
         validateFileUpload('birDocument', 'BIR Registration Document');
 
-        // Validate terms agreement
         const agreeTerms = getElement('agreeTerms');
         if (!agreeTerms || !agreeTerms.checked) {
             errors.push('You must agree to the Terms of Service and Privacy Policy');
             if (agreeTerms) showFieldError(agreeTerms, 'You must agree to the Terms of Service and Privacy Policy');
         }
 
-        // Validate password requirements
         if (passwordVal) {
             if (passwordVal.length < 8) {
                 errors.push('Password must be at least 8 characters');
@@ -456,7 +361,6 @@ registerButton.addEventListener('click', async (event) => {
             }
         }
 
-        // Validate Tax ID (exactly 12 digits)
         const taxIdField = getElement('taxId');
         const taxId = taxIdField.value.replace(/-/g, '');
         if (taxId && (taxId.length !== 12 || !/^\d{12}$/.test(taxId))) {
@@ -464,7 +368,6 @@ registerButton.addEventListener('click', async (event) => {
             showFieldError(taxIdField, 'Tax ID must be exactly 12 digits');
         }
 
-        // If any errors, stop here
         if (errors.length > 0) {
             hideLoader();
             setButtonAble();
@@ -473,7 +376,6 @@ registerButton.addEventListener('click', async (event) => {
             return;
         }
 
-        // Proceed with registration
         const usernameVal = username.value;
         const passwordVal1 = password.value;
         const ownerEmailVal = ownerEmail.value;
@@ -484,16 +386,13 @@ registerButton.addEventListener('click', async (event) => {
         const dtiFile = getElement("dtiDocument").files[0];
         const birFile = getElement("birDocument").files[0];
 
-        // Step 1: Create user account
         updateLoaderProgress('creatingAccount');
         const userCredential = await createUserWithEmailAndPasswordWrapper(ownerEmailVal, passwordVal1);
         const user = userCredential.user;
 
-        // Step 2: Upload files with progress
         updateLoaderProgress('uploadingFiles', 0);
         const uploadsData = await uploadFilesWithProgress(user.uid, permitDocumentFile, businessLicenseFile, frontSideFile, backSideFile, dtiFile, birFile);
 
-        // Step 3: Save shop data
         updateLoaderProgress('savingData');
         const shopData = {
             username: usernameVal,
@@ -511,8 +410,8 @@ registerButton.addEventListener('click', async (event) => {
             shopZip: shopZip.value,
             shopCountry: shopCountry.value,
             taxId: getElement('taxId').value,
-            latitude: getElement('latitude').value, // Added
-            longitude: getElement('longitude').value, // Added
+            latitude: getElement('latitude').value,
+            longitude: getElement('longitude').value,
             dateProcessed: dateProcessed,
             dateApproved: '',
             dateRejected: '',
@@ -529,14 +428,10 @@ registerButton.addEventListener('click', async (event) => {
             throw new Error('Failed to create shop record: ' + createResult.error);
         }
 
-        // Step 4: Send verification email
         updateLoaderProgress('sendingEmail');
         await sendEmailVerificationWrapper(user);
 
-        // Step 5: Complete
         updateLoaderProgress('complete');
-        
-        // Small delay to show completion
         await new Promise(resolve => setTimeout(resolve, 1000));
         
         hideLoader();

@@ -14,15 +14,17 @@ function getElement(id) {
 // Button control functions
 function setButtonDisable() {
     const reapplyButton = getElement('reapplyButton');
+    reapplyButton.style.background = "linear-gradient(135deg, #43579d, #694c8d)";
+    reapplyButton.style.color = "#838383";
     reapplyButton.disabled = true;
-    reapplyButton.style.opacity = "0.7";
     reapplyButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
 }
 
 function setButtonAble() {
     const reapplyButton = getElement('reapplyButton');
+    reapplyButton.style.background = "linear-gradient(135deg, var(--primary), var(--secondary))";
+    reapplyButton.style.color = "var(--light)";
     reapplyButton.disabled = false;
-    reapplyButton.style.opacity = "1";
     reapplyButton.innerHTML = 'Submit Reapplication';
 }
 
@@ -33,6 +35,29 @@ function showLoader() {
 
 function hideLoader() {
     getElement('loadingOverlay').classList.remove('active');
+}
+
+// Update loader progress
+function updateLoaderProgress(stage, percentage = null) {
+    const overlayContent = document.querySelector('.overlay-content h2');
+    const progressText = document.querySelector('.overlay-content p');
+    
+    const stages = {
+        validating: 'Validating Form Data...',
+        uploadingFiles: 'Uploading Documents...',
+        savingData: 'Saving Shop Information...',
+        complete: 'Reapplication Complete!'
+    };
+    
+    if (overlayContent) {
+        overlayContent.textContent = stages[stage] || stage;
+    }
+    
+    if (progressText && percentage !== null) {
+        progressText.textContent = `Progress: ${percentage}%`;
+    } else if (progressText) {
+        progressText.textContent = 'Please wait while we process your reapplication';
+    }
 }
 
 // Overlay functions
@@ -108,35 +133,160 @@ function validateFile(file, fieldName) {
     return true;
 }
 
-// Simple file upload function - only uploads new files, doesn't delete old ones
-async function uploadFile(shopId, file, fileType) {
-    if (!file) return null; // Return null if no new file
+// Enhanced file upload function with progress tracking
+async function uploadFilesWithProgress(shopId, permitFile, licenseFile, frontSideFile, backSideFile, dtiFile, birFile) {
+    return new Promise(async (resolve, reject) => {
+        try {
+            const uploadResults = {};
+            let completedUploads = 0;
+            const totalUploads = [permitFile, licenseFile, frontSideFile, backSideFile, dtiFile, birFile].filter(file => file).length;
 
-    try {
-        // Validate file before upload
-        validateFile(file, fileType);
+            // If no files to upload, return empty object
+            if (totalUploads === 0) {
+                resolve({});
+                return;
+            }
 
-        // Create new path with timestamp
-        const storagePath = `uploads/${shopId}/${fileType}_${Date.now()}_${file.name}`;
+            const updateProgress = () => {
+                completedUploads++;
+                const progress = Math.round((completedUploads / totalUploads) * 100);
+                updateLoaderProgress('uploadingFiles', progress);
+            };
 
-        const uploadResult = await createImageToFirebase(file, storagePath);
+            const uploadPromises = [];
 
-        if (!uploadResult.success) {
-            throw new Error(`Failed to upload ${fileType}: ${uploadResult.error}`);
+            if (permitFile) {
+                const permitPath = `uploads/${shopId}/permit_${Date.now()}_${permitFile.name}`;
+                uploadPromises.push(
+                    createImageToFirebase(permitFile, permitPath).then(result => {
+                        uploadResults.permitDocument = result;
+                        updateProgress();
+                        return result;
+                    })
+                );
+            }
+
+            if (licenseFile) {
+                const licensePath = `uploads/${shopId}/license_${Date.now()}_${licenseFile.name}`;
+                uploadPromises.push(
+                    createImageToFirebase(licenseFile, licensePath).then(result => {
+                        uploadResults.businessLicense = result;
+                        updateProgress();
+                        return result;
+                    })
+                );
+            }
+
+            if (frontSideFile) {
+                const frontSidePath = `uploads/${shopId}/frontSide_${Date.now()}_${frontSideFile.name}`;
+                uploadPromises.push(
+                    createImageToFirebase(frontSideFile, frontSidePath).then(result => {
+                        uploadResults.ownerIdFront = result;
+                        updateProgress();
+                        return result;
+                    })
+                );
+            }
+
+            if (backSideFile) {
+                const backSidePath = `uploads/${shopId}/backSide_${Date.now()}_${backSideFile.name}`;
+                uploadPromises.push(
+                    createImageToFirebase(backSideFile, backSidePath).then(result => {
+                        uploadResults.ownerIdBack = result;
+                        updateProgress();
+                        return result;
+                    })
+                );
+            }
+
+            if (dtiFile) {
+                const dtiPath = `uploads/${shopId}/dti_${Date.now()}_${dtiFile.name}`;
+                uploadPromises.push(
+                    createImageToFirebase(dtiFile, dtiPath).then(result => {
+                        uploadResults.dtiDocument = result;
+                        updateProgress();
+                        return result;
+                    })
+                );
+            }
+
+            if (birFile) {
+                const birPath = `uploads/${shopId}/bir_${Date.now()}_${birFile.name}`;
+                uploadPromises.push(
+                    createImageToFirebase(birFile, birPath).then(result => {
+                        uploadResults.birDocument = result;
+                        updateProgress();
+                        return result;
+                    })
+                );
+            }
+
+            await Promise.all(uploadPromises);
+
+            // Check for failed uploads
+            const failedUploads = Object.entries(uploadResults).filter(([key, result]) => !result.success);
+            if (failedUploads.length > 0) {
+                throw new Error(`File upload failed for: ${failedUploads.map(([key]) => key).join(', ')}`);
+            }
+
+            // Format the results
+            const formattedResults = {};
+            if (uploadResults.permitDocument) {
+                formattedResults.permitDocument = { 
+                    name: permitFile.name, 
+                    url: uploadResults.permitDocument.url, 
+                    path: uploadResults.permitDocument.path, 
+                    uploadedAt: new Date().toISOString() 
+                };
+            }
+            if (uploadResults.businessLicense) {
+                formattedResults.businessLicense = { 
+                    name: licenseFile.name, 
+                    url: uploadResults.businessLicense.url, 
+                    path: uploadResults.businessLicense.path, 
+                    uploadedAt: new Date().toISOString() 
+                };
+            }
+            if (uploadResults.ownerIdFront) {
+                formattedResults.ownerIdFront = { 
+                    name: frontSideFile.name, 
+                    url: uploadResults.ownerIdFront.url, 
+                    path: uploadResults.ownerIdFront.path, 
+                    uploadedAt: new Date().toISOString() 
+                };
+            }
+            if (uploadResults.ownerIdBack) {
+                formattedResults.ownerIdBack = { 
+                    name: backSideFile.name, 
+                    url: uploadResults.ownerIdBack.url, 
+                    path: uploadResults.ownerIdBack.path, 
+                    uploadedAt: new Date().toISOString() 
+                };
+            }
+            if (uploadResults.dtiDocument) {
+                formattedResults.dtiDocument = { 
+                    name: dtiFile.name, 
+                    url: uploadResults.dtiDocument.url, 
+                    path: uploadResults.dtiDocument.path, 
+                    uploadedAt: new Date().toISOString() 
+                };
+            }
+            if (uploadResults.birDocument) {
+                formattedResults.birDocument = { 
+                    name: birFile.name, 
+                    url: uploadResults.birDocument.url, 
+                    path: uploadResults.birDocument.path, 
+                    uploadedAt: new Date().toISOString() 
+                };
+            }
+
+            resolve(formattedResults);
+
+        } catch (error) {
+            console.error('File upload error:', error);
+            reject(new Error('Failed to upload files: ' + error.message));
         }
-
-        // Return the file data structure
-        return {
-            name: file.name,
-            url: uploadResult.url,
-            path: uploadResult.path || storagePath,
-            uploadedAt: new Date().toISOString()
-        };
-
-    } catch (error) {
-        console.error(`Error in uploadFile for ${fileType}:`, error);
-        throw error;
-    }
+    });
 }
 
 // Function to update shop data
@@ -188,7 +338,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         getElement('shopName').value = dataValues.shopName || '';
         getElement('shopName').disabled = true;
         getElement('ownerName').value = dataValues.ownerName || '';
-        getElement('shopCategory').value = dataValues.shopCategory || '';
+        getElement('ownerEmail').value = dataValues.email || '';
+        getElement('ownerEmail').disabled = true;
+        getElement('ownerPhone').value = dataValues.ownerPhone || '';
         getElement('shopDescription').value = dataValues.shopDescription || '';
         getElement('yearsInBusiness').value = dataValues.yearsInBusiness || '';
         getElement('shopAddress').value = dataValues.shopAddress || '';
@@ -197,9 +349,24 @@ document.addEventListener('DOMContentLoaded', async () => {
         getElement('shopZip').value = dataValues.shopZip || '';
         getElement('shopCountry').value = dataValues.shopCountry || 'Philippines';
         getElement('taxId').value = dataValues.taxId || '';
-        getElement('ownerEmail').value = dataValues.email || '';
-        getElement('ownerEmail').disabled = true;
-        getElement('ownerPhone').value = dataValues.ownerPhone || '';
+        getElement('latitude').value = dataValues.latitude || '';
+        getElement('longitude').value = dataValues.longitude || '';
+        
+        // Update display coordinates
+        if (dataValues.latitude && dataValues.longitude) {
+            getElement('displayLatitude').textContent = parseFloat(dataValues.latitude).toFixed(6);
+            getElement('displayLongitude').textContent = parseFloat(dataValues.longitude).toFixed(6);
+        }
+
+        // Set shop categories checkboxes
+        if (dataValues.shopCategories && Array.isArray(dataValues.shopCategories)) {
+            dataValues.shopCategories.forEach(category => {
+                const checkbox = document.querySelector(`input[name="shopCategories"][value="${category}"]`);
+                if (checkbox) {
+                    checkbox.checked = true;
+                }
+            });
+        }
 
         // Set up reapply button event listener
         const reapplyButton = getElement('reapplyButton');
@@ -208,6 +375,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             event.preventDefault();
             setButtonDisable();
             showLoader();
+            updateLoaderProgress('validating');
             clearFieldErrors();
 
             // Disable all form inputs during submission
@@ -219,25 +387,71 @@ document.addEventListener('DOMContentLoaded', async () => {
                 // Validate all required fields
                 const errors = [];
                 const requiredFields = [
-                    'shopName', 'shopCategory', 'shopDescription', 'ownerName',
-                    'ownerPhone', 'shopAddress', 'shopCity', 'shopState',
-                    'shopZip', 'shopCountry', 'taxId'
+                    { id: 'shopName', name: 'Shop Name' },
+                    { id: 'shopDescription', name: 'Shop Description' },
+                    { id: 'ownerName', name: 'Owner Name' },
+                    { id: 'ownerEmail', name: 'Email' },
+                    { id: 'ownerPhone', name: 'Phone Number' },
+                    { id: 'shopAddress', name: 'Shop Address' },
+                    { id: 'shopCity', name: 'City' },
+                    { id: 'shopState', name: 'State/Province' },
+                    { id: 'shopZip', name: 'ZIP/Postal Code' },
+                    { id: 'shopCountry', name: 'Country' },
+                    { id: 'taxId', name: 'Tax ID' }
                 ];
 
-                requiredFields.forEach(fieldId => {
-                    const field = getElement(fieldId);
-                    if (!field.value.trim()) {
-                        const fieldName = fieldId.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase());
-                        errors.push(`${fieldName} is required`);
-                        showFieldError(field, `${fieldName} is required`);
+                requiredFields.forEach(({ id, name }) => {
+                    const field = getElement(id);
+                    let value = field.value.trim();
+                    if (id === 'taxId') {
+                        value = value.replace(/-/g, '');
+                    }
+                    if (!value) {
+                        errors.push(`${name} is required`);
+                        if (field) showFieldError(field, `${name} is required`);
                     }
                 });
 
+                // Validate shop categories
+                const categoryCheckboxes = document.querySelectorAll('input[name="shopCategories"]');
+                const selectedCategories = Array.from(categoryCheckboxes).filter(cb => cb.checked).map(cb => cb.value);
+                if (selectedCategories.length === 0) {
+                    errors.push('At least one Shop Category is required');
+                    const categoryGroup = categoryCheckboxes[0]?.closest('.form-group');
+                    if (categoryGroup) {
+                        showFieldError(categoryGroup.querySelector('label'), 'At least one category is required');
+                    }
+                }
+
                 // Validate phone number format
                 const phoneField = getElement('ownerPhone');
-                if (phoneField.value && (phoneField.value.length !== 10 || !/^\d+$/.test(phoneField.value))) {
+                if (phoneField && (phoneField.value.length !== 10 || !/^\d+$/.test(phoneField.value))) {
                     errors.push('Invalid phone number format');
                     showFieldError(phoneField, 'Please enter a valid 10-digit mobile number');
+                }
+
+                // Validate ZIP code
+                const zipField = getElement('shopZip');
+                if (zipField && (zipField.value.length !== 4 || !/^\d+$/.test(zipField.value))) {
+                    errors.push('Invalid ZIP code');
+                    showFieldError(zipField, 'Please enter a valid 4-digit ZIP code');
+                }
+
+                // Validate latitude and longitude
+                const latitudeField = getElement('latitude');
+                const longitudeField = getElement('longitude');
+                if (!latitudeField.value || !longitudeField.value) {
+                    errors.push('Shop location on map is required');
+                    const mapGroup = document.getElementById('map').closest('.form-group');
+                    showFieldError(mapGroup.querySelector('label'), 'Please set a location on the map');
+                }
+
+                // Validate tax ID
+                const taxIdField = getElement('taxId');
+                const taxId = taxIdField.value.replace(/-/g, '');
+                if (taxId && (taxId.length !== 12 || !/^\d{12}$/.test(taxId))) {
+                    errors.push('Tax ID must be exactly 12 digits');
+                    showFieldError(taxIdField, 'Tax ID must be exactly 12 digits');
                 }
 
                 // Get files
@@ -245,23 +459,34 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const licenseFile = getElement("businessLicense").files[0] || null;
                 const frontSideFile = getElement("ownerIdFront").files[0] || null;
                 const backSideFile = getElement("ownerIdBack").files[0] || null;
+                const dtiFile = getElement("dtiDocument").files[0] || null;
+                const birFile = getElement("birDocument").files[0] || null;
 
                 // Validate files that are actually uploaded
-                if (permitFile) {
-                    try { validateFile(permitFile, 'Business Permit'); } 
-                    catch (fileError) { errors.push(fileError.message); }
-                }
-                if (licenseFile) {
-                    try { validateFile(licenseFile, 'Business License'); } 
-                    catch (fileError) { errors.push(fileError.message); }
-                }
-                if (frontSideFile) {
-                    try { validateFile(frontSideFile, 'ID Front Side'); } 
-                    catch (fileError) { errors.push(fileError.message); }
-                }
-                if (backSideFile) {
-                    try { validateFile(backSideFile, 'ID Back Side'); } 
-                    catch (fileError) { errors.push(fileError.message); }
+                const validateFileUpload = (file, name) => {
+                    if (file) {
+                        try { 
+                            validateFile(file, name); 
+                        } catch (fileError) { 
+                            errors.push(fileError.message);
+                            const fileInput = getElement(name.toLowerCase().replace(/\s+/g, '') + 'Document');
+                            if (fileInput) showFieldError(fileInput, fileError.message);
+                        }
+                    }
+                };
+
+                validateFileUpload(permitFile, 'Business Permit');
+                validateFileUpload(licenseFile, 'Business License');
+                validateFileUpload(frontSideFile, 'ID Front Side');
+                validateFileUpload(backSideFile, 'ID Back Side');
+                validateFileUpload(dtiFile, 'DTI Registration');
+                validateFileUpload(birFile, 'BIR Registration');
+
+                // Check terms agreement
+                const agreeTerms = getElement('agreeTerms');
+                if (!agreeTerms || !agreeTerms.checked) {
+                    errors.push('You must agree to the Terms of Service and Privacy Policy');
+                    if (agreeTerms) showFieldError(agreeTerms, 'You must agree to the Terms of Service and Privacy Policy');
                 }
 
                 if (errors.length > 0) {
@@ -277,10 +502,19 @@ document.addEventListener('DOMContentLoaded', async () => {
                     ...dataValues, // Keep all existing data including files
                     status: 'pending',
                     lastUpdated: new Date().toISOString(),
+                    dateProcessed: new Date().toLocaleDateString('en-US', {
+                        year: 'numeric',
+                        month: '2-digit',
+                        day: '2-digit',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        second: '2-digit',
+                        hour12: false
+                    }).replace(/\//g, '-').replace(/,/g, ''),
                     shopName: getElement('shopName').value,
-                    shopCategory: getElement('shopCategory').value,
+                    shopCategories: selectedCategories,
                     shopDescription: getElement('shopDescription').value,
-                    yearsInBusiness: parseInt(getElement('yearsInBusiness').value) || 0,
+                    yearsInBusiness: getElement('yearsInBusiness').value || '',
                     ownerName: getElement('ownerName').value,
                     ownerPhone: getElement('ownerPhone').value,
                     shopAddress: getElement('shopAddress').value,
@@ -289,33 +523,22 @@ document.addEventListener('DOMContentLoaded', async () => {
                     shopZip: getElement('shopZip').value,
                     shopCountry: getElement('shopCountry').value,
                     taxId: getElement('taxId').value,
-                    rejectionReason: null // Clear rejection reason on reapplication
+                    latitude: getElement('latitude').value,
+                    longitude: getElement('longitude').value,
+                    rejectionReason: null, // Clear rejection reason on reapplication
+                    dateRejected: '' // Clear rejection date
                 };
 
-                // Upload ONLY the files that user actually selected
-                // If no file is selected for a field, the existing data remains unchanged
-                if (permitFile) {
-                    console.log('Uploading new permit document...');
-                    const permitResult = await uploadFile(shopId, permitFile, 'permit');
-                    updatedData.uploads.permitDocument = permitResult;
-                }
+                // Upload files that user actually selected
+                updateLoaderProgress('uploadingFiles', 0);
+                const uploadsData = await uploadFilesWithProgress(shopId, permitFile, licenseFile, frontSideFile, backSideFile, dtiFile, birFile);
 
-                if (licenseFile) {
-                    console.log('Uploading new business license...');
-                    const licenseResult = await uploadFile(shopId, licenseFile, 'license');
-                    updatedData.uploads.businessLicense = licenseResult;
-                }
-
-                if (frontSideFile) {
-                    console.log('Uploading new front ID...');
-                    const frontIdResult = await uploadFile(shopId, frontSideFile, 'frontSide');
-                    updatedData.uploads.ownerIdFront = frontIdResult;
-                }
-
-                if (backSideFile) {
-                    console.log('Uploading new back ID...');
-                    const backIdResult = await uploadFile(shopId, backSideFile, 'backSide');
-                    updatedData.uploads.ownerIdBack = backIdResult;
+                // Merge new uploads with existing uploads data
+                if (uploadsData && Object.keys(uploadsData).length > 0) {
+                    updatedData.uploads = {
+                        ...dataValues.uploads,
+                        ...uploadsData
+                    };
                 }
 
                 // Clean up any duplicate fields to maintain clean structure
@@ -326,10 +549,16 @@ document.addEventListener('DOMContentLoaded', async () => {
                 console.log('Final updated data to save:', updatedData);
 
                 // Update shop data in database
+                updateLoaderProgress('savingData');
                 await updateShopData(shopId, updatedData);
+
+                updateLoaderProgress('complete');
+                await new Promise(resolve => setTimeout(resolve, 1000));
 
                 // Show success message
                 hideLoader();
+                setButtonAble();
+                inputs.forEach(input => input.disabled = false);
                 showSuccessOverlay("Reapplication submitted successfully! Your application will be reviewed within 3-5 business days.");
 
             } catch (error) {
