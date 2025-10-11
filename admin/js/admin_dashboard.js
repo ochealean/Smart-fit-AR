@@ -164,12 +164,17 @@ function showShopModal(e) {
 }
 
 /**
- * Updates modal content with shop details
+ * Updates modal content with shop details including maps and additional documents
  * @param {Object} shop - Complete shop data object
  */
 function updateShopModalContent(shop) {
     const modalContent = document.getElementById('modalShopContent');
-    const getDocUrl = (doc) => shop.uploads[doc]?.url || 'no-document.png';
+    const getDocUrl = (doc) => shop.uploads?.[doc]?.url || 'no-document.png';
+    
+    // Format categories for display
+    const categories = Array.isArray(shop.shopCategories) 
+        ? shop.shopCategories.join(', ') 
+        : shop.shopCategory || 'N/A';
 
     modalContent.innerHTML = `
         <div class="modal-section">
@@ -184,10 +189,14 @@ function updateShopModalContent(shop) {
                     <span class="info-value">${shop.shopName || 'N/A'}</span>
                 </div>
                 <div class="info-item">
-                    <span class="info-label">Category: </span>
-                    <span class="info-value">${shop.shopCategory || 'N/A'}</span>
+                    <span class="info-label">Categories: </span>
+                    <span class="info-value">${categories}</span>
                 </div>
                 <div class="info-item">
+                    <span class="info-label">Years in Business: </span>
+                    <span class="info-value">${shop.yearsInBusiness || 'N/A'}</span>
+                </div>
+                <div class="info-item full-width">
                     <span class="info-label">Description: </span>
                     <span class="info-value">${shop.shopDescription || 'N/A'}</span>
                 </div>
@@ -209,6 +218,10 @@ function updateShopModalContent(shop) {
                     <span class="info-label">Phone: </span>
                     <span class="info-value">${shop.ownerPhone ? '+63 ' + shop.ownerPhone : 'N/A'}</span>
                 </div>
+                <div class="info-item">
+                    <span class="info-label">Username: </span>
+                    <span class="info-value">${shop.username || 'N/A'}</span>
+                </div>
             </div>
         </div>
 
@@ -217,61 +230,151 @@ function updateShopModalContent(shop) {
             <div class="info-grid">
                 <div class="info-item">
                     <span class="info-label">Address: </span>
-                    <span class="info-value">${[
-                        shop.shopAddress,
-                        shop.shopCity,
-                        shop.shopState,
-                        shop.shopCountry
-                    ].filter(Boolean).join(', ') || 'N/A'}</span>
+                    <span class="info-value">${shop.shopAddress || 'N/A'}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">City: </span>
+                    <span class="info-value">${shop.shopCity || 'N/A'}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Province: </span>
+                    <span class="info-value">${shop.shopState || 'N/A'}</span>
                 </div>
                 <div class="info-item">
                     <span class="info-label">ZIP Code: </span>
                     <span class="info-value">${shop.shopZip || 'N/A'}</span>
                 </div>
+                <div class="info-item">
+                    <span class="info-label">Country: </span>
+                    <span class="info-value">${shop.shopCountry || 'N/A'}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Tax ID: </span>
+                    <span class="info-value">${shop.taxId || 'N/A'}</span>
+                </div>
             </div>
         </div>
 
+        ${shop.latitude && shop.longitude ? `
         <div class="modal-section">
-            <h3>Business Documents</h3>
+            <h3>Shop Location on Map</h3>
+            <div class="map-coordinates">
+                <div class="coordinates-display">
+                    <span class="coord-label">Latitude: </span>
+                    <span class="coord-value">${parseFloat(shop.latitude).toFixed(6)}</span>
+                    <span class="coord-label">Longitude: </span>
+                    <span class="coord-value">${parseFloat(shop.longitude).toFixed(6)}</span>
+                </div>
+                <div id="shopLocationMap" class="shop-map" data-lat="${shop.latitude}" data-lng="${shop.longitude}"></div>
+            </div>
+        </div>
+        ` : ''}
+
+        <div class="modal-section">
+            <h3>Government ID Verification</h3>
             <div class="document-grid">
                 ${renderDocumentItem(getDocUrl('ownerIdFront'), 'Front ID')}
                 ${renderDocumentItem(getDocUrl('ownerIdBack'), 'Back ID')}
-                ${renderDocumentItem(getDocUrl('businessLicense'), 'Business License')}
-                ${renderDocumentItem(getDocUrl('permitDocument'), 'Permit')}
             </div>
         </div>
 
         <div class="modal-section">
-            <h3>Timestamps</h3>
-            <div class="info-grid">
-                <div class="info-item">
-                    <span class="info-label">Status Changed Date: </span>
-                    <span class="info-value">${formatDisplayDate(shop.dateProcessed) || 'N/A'}</span>
-                </div>
-                <div class="info-item">
-                    ${shop.status === 'approved' ? `
-                        <span class="info-label">Approval Date: </span>
-                        <span class="info-value">${formatDisplayDate(shop.dateApproved)}</span>
-                    ` : ''}
-                    
-                    ${shop.status === 'rejected' ? `
-                        <span class="info-label">Rejection Date: </span>
-                        <span class="info-value">${formatDisplayDate(shop.dateRejected)}</span>
-                    ` : ''}
-                </div>
-                <div class="info-item">
-                    ${shop.status === 'rejected' ? `
-                        <span class="info-label">Reason for Being Rejected: </span>
-                    ` : ''}
-                </div>
-                <div class="info-item">
-                    ${shop.status === 'rejected' ? `
-                        <span class="info-value">${shop.rejectionReason}</span>
-                    ` : ''}
-                </div>
+            <h3>Business Documentation</h3>
+            <div class="document-grid">
+                ${renderDocumentItem(getDocUrl('businessLicense'), 'Mayor\'s Permit / Business License')}
+                ${renderDocumentItem(getDocUrl('permitDocument'), 'Business Permit')}
+                ${renderDocumentItem(getDocUrl('dtiDocument'), 'DTI Registration Document')}
+                ${renderDocumentItem(getDocUrl('birDocument'), 'BIR Registration Document')}
             </div>
         </div>
+
+        <div class="modal-section">
+            <h3>Application Timeline</h3>
+            <div class="timestamp-section">
+                <div class="info-item">
+                    <span class="info-label">Date Registered: </span>
+                    <span class="info-value">${formatDisplayDate(shop.dateProcessed) || 'N/A'}</span>
+                </div>
+                ${shop.status === 'approved' ? `
+                <div class="info-item">
+                    <span class="info-label">Date Approved: </span>
+                    <span class="info-value">${formatDisplayDate(shop.dateApproved) || 'N/A'}</span>
+                </div>
+                ` : ''}
+                ${shop.status === 'rejected' ? `
+                <div class="info-item">
+                    <span class="info-label">Date Rejected: </span>
+                    <span class="info-value">${formatDisplayDate(shop.dateRejected) || 'N/A'}</span>
+                </div>
+                ` : ''}
+            </div>
+            ${shop.status === 'rejected' ? `
+            <div class="info-item full-width">
+                <span class="info-label">Reason for Rejection: </span>
+                <span class="info-value rejection-reason">${shop.rejectionReason || 'No reason provided'}</span>
+            </div>
+            ` : ''}
+        </div>
     `;
+
+    // Initialize map if coordinates exist
+    if (shop.latitude && shop.longitude) {
+        setTimeout(() => initializeShopMap(shop.latitude, shop.longitude), 100);
+    }
+}
+
+/**
+ * Initialize Google Map for shop location
+ * @param {number} lat - Latitude
+ * @param {number} lng - Longitude
+ */
+function initializeShopMap(lat, lng) {
+    const mapElement = document.getElementById('shopLocationMap');
+    if (!mapElement) return;
+
+    try {
+        const position = { lat: parseFloat(lat), lng: parseFloat(lng) };
+        
+        const map = new google.maps.Map(mapElement, {
+            center: position,
+            zoom: 15,
+            mapTypeControl: false,
+            streetViewControl: false,
+            fullscreenControl: true,
+            styles: [
+                {
+                    featureType: "poi",
+                    elementType: "labels",
+                    stylers: [{ visibility: "on" }]
+                }
+            ]
+        });
+
+        new google.maps.Marker({
+            position: position,
+            map: map,
+            title: "Shop Location",
+            animation: google.maps.Animation.DROP
+        });
+
+        // Add info window with coordinates
+        const infoWindow = new google.maps.InfoWindow({
+            content: `
+                <div class="map-info-window">
+                    <strong>Shop Location</strong><br>
+                    Lat: ${position.lat.toFixed(6)}<br>
+                    Lng: ${position.lng.toFixed(6)}
+                </div>
+            `
+        });
+
+        // Open info window by default
+        infoWindow.open(map, new google.maps.Marker({ position: position, map: map }));
+
+    } catch (error) {
+        console.error('Error initializing map:', error);
+        mapElement.innerHTML = '<p class="map-error">Unable to load map. Coordinates: ' + lat + ', ' + lng + '</p>';
+    }
 }
 
 /**
