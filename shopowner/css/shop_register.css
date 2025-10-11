@@ -393,6 +393,21 @@ body {
     color: #666;
 }
 
+.location-display {
+    margin-top: 10px;
+    font-size: 14px;
+    color: #333;
+}
+
+.location-display p {
+    margin: 5px 0;
+}
+
+.location-display span {
+    font-weight: bold;
+    color: #0066cc;
+}
+
 .file-requirements {
     display: block;
     color: #777;
