@@ -445,6 +445,38 @@
             box-shadow: var(--shadow-sm);
         }
 
+        /* Shop name link styles */
+        .shop-name-link {
+            color: #667eea;
+            text-decoration: underline;
+            cursor: pointer;
+            transition: color 0.3s ease;
+            font-weight: 600;
+            margin: 0.5rem 0;
+            display: inline-block;
+        }
+
+        .shop-name-link:hover {
+            color: #764ba2;
+            text-decoration: none;
+        }
+
+        /* Shoe card enhancements */
+        .shoe-card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            position: relative;
+        }
+
+        .shoe-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        }
+
+        .shoe-details h4 {
+            margin: 0.5rem 0;
+            font-size: 1.1rem;
+        }
+
         /* Modal Styles */
         .modal {
             display: none;
