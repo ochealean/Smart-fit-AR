@@ -108,6 +108,37 @@ body {
     opacity: 0.7;
 }
 
+/* Loading Overlay Styles */
+#loadingOverlay .overlay-content {
+    text-align: center;
+}
+
+.loading-spinner {
+    font-size: 3rem;
+    color: var(--primary);
+    margin-bottom: 1rem;
+}
+
+.location-display {
+    margin-top: 10px;
+    padding: 10px;
+    background-color: #f8f9fa;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+.location-display p {
+    margin: 5px 0;
+}
+
+.instruction {
+    display: block;
+    margin-top: 0.25rem;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    line-height: 1.4;
+}
+
 /* Main Container */
 .registration-container {
     display: flex;
@@ -266,65 +297,92 @@ body {
     color: var(--text-secondary);
 }
 
-/* Radio Button Styles */
-.radio-group {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 1rem;
+.location-display {
+    margin-top: 10px;
+    padding: 10px;
+    background-color: #f8f9fa;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+.location-display p {
+    margin: 5px 0;
+}
+
+#map {
+    height: 300px;
+    width: 100%;
+    border-radius: 8px;
+    border: 1px solid #ddd;
+}
+
+.instruction {
+    display: block;
+    margin-top: 0.25rem;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    line-height: 1.4;
+}
+
+/* Password requirements styling */
+.password-requirements {
     margin-top: 0.5rem;
-    width: calc(100% - 2rem); /* Consistent with other inputs */
 }
 
-.radio-option {
-    display: flex;
-    align-items: center;
-    cursor: pointer;
-    position: relative;
-    padding-left: 2rem;
-    font-size: 0.95rem;
+.password-requirements ul {
+    list-style: none;
+    padding: 0;
+    margin: 0.5rem 0;
 }
 
-.radio-option input[type="radio"] {
-    position: absolute;
-    opacity: 0;
-    cursor: pointer;
-}
-
-.radio-custom {
-    position: absolute;
-    left: 0;
-    height: 1.25rem;
-    width: 1.25rem;
-    background-color: var(--light);
-    border: 2px solid var(--gray-medium);
-    border-radius: 50%;
+.password-requirements li {
+    font-size: 0.8rem;
+    margin-bottom: 0.25rem;
+    color: var(--text-secondary);
     transition: var(--transition);
 }
 
-.radio-option:hover .radio-custom {
-    border-color: var(--primary);
+.password-requirements li.valid {
+    color: var(--success);
 }
 
-.radio-option input:checked ~ .radio-custom {
-    background-color: var(--primary);
-    border-color: var(--primary);
+.password-strength {
+    margin-top: 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
 }
 
-.radio-custom:after {
-    content: "";
-    position: absolute;
-    display: none;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 0.5rem;
-    height: 0.5rem;
-    border-radius: 50%;
-    background: var(--light);
+.strength-bar {
+    height: 6px;
+    flex: 1;
+    background: var(--gray-medium);
+    border-radius: 3px;
+    transition: var(--transition);
 }
 
-.radio-option input:checked ~ .radio-custom:after {
-    display: block;
+.strength-text {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    min-width: 120px;
+}
+
+/* Character Count Styling */
+.char-count {
+    text-align: right;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    margin-top: 0.5rem;
+    font-weight: 500;
+}
+
+.char-count.warning {
+    color: var(--warning);
+}
+
+.char-count.error {
+    color: var(--error);
+    font-weight: 600;
 }
 
 /* Phone Input Styling */
@@ -460,6 +518,55 @@ body {
     opacity: 1;
 }
 
+/* ID Upload Styles */
+.id-upload-container {
+    display: flex;
+    gap: 1rem;
+    margin-top: 0.5rem;
+}
+
+.id-upload-section {
+    flex: 1;
+    text-align: center;
+}
+
+.upload-label {
+    display: block;
+    padding: 1.5rem;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s;
+    margin-bottom: 0.5rem;
+}
+
+.upload-label:hover {
+    border-color: #6e8efb;
+    background-color: #f8f9ff;
+}
+
+.upload-label i {
+    font-size: 2rem;
+    color: #6e8efb;
+    display: block;
+    margin-bottom: 0.5rem;
+}
+
+.upload-label span {
+    font-weight: 600;
+    color: #444;
+}
+
+.file-requirements {
+    display: block;
+    color: #777;
+    font-size: 0.8rem;
+}
+
+/* Hide default file input */
+.id-upload-section input[type="file"] {
+    display: none;
+}
+
 /* Checkbox Groups */
 .checkbox-group {
     display: flex;
@@ -558,6 +665,65 @@ body {
 .toggle-password:focus {
     outline: none;
     box-shadow: 0 0 0 3px rgba(110, 142, 251, 0.3);
+}
+
+/* Password Requirements Container */
+.password-requirements {
+    margin-top: 0.75rem;
+    padding: 0.75rem;
+    background: var(--gray-light);
+    border-radius: 8px;
+    border: 1px solid var(--gray-medium);
+    width: 95%; /* Match the width of the input fields */
+}
+
+/* Password Requirements List */
+.password-requirements ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+/* Individual Requirement Items */
+.password-requirements li {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: var(--transition);
+}
+
+/* Icon for each requirement */
+.password-requirements li::before {
+    content: '•';
+    color: var(--text-secondary);
+    font-size: 1rem;
+}
+
+/* Styling for fulfilled requirements */
+.password-requirements li[style*="color: rgb(76, 175, 80)"] {
+    color: var(--success);
+}
+
+.password-requirements li[style*="color: rgb(76, 175, 80)"]::before {
+    content: '\f00c'; /* Checkmark icon from Font Awesome */
+    font-family: 'Font Awesome 6 Free';
+    font-weight: 900;
+    color: var(--success);
+}
+
+/* Styling for unfulfilled requirements */
+.password-requirements li[style*="color: rgb(244, 67, 54)"] {
+    color: var(--error);
+}
+
+.password-requirements li[style*="color: rgb(244, 67, 54)"]::before {
+    content: '•';
+    color: var(--error);
 }
 
 /* Password Strength */
@@ -802,13 +968,13 @@ body {
 }
 
 .overlay-content {
-    background: white;
+    background: var(--light);
     padding: 3rem;
     border-radius: 12px;
     text-align: center;
     max-width: 500px;
     width: 90%;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    box-shadow: var(--shadow-lg);
     transform: translateY(20px);
     transition: transform 0.3s ease;
 }
@@ -835,6 +1001,11 @@ body {
     margin-bottom: 1rem;
 }
 
+.overlay h4 {
+    color: var(--gray-dark);
+    margin-bottom: 1rem;
+}
+
 .overlay p {
     color: var(--text-secondary);
     margin-bottom: 2rem;
@@ -855,10 +1026,77 @@ body {
     background: var(--primary-dark);
 }
 
-#errorMessages {
-    text-align: left;
+.overlay.active {
+    display: flex;
+}
+
+.spinner {
+    border: 4px solid #f3f3f3;
+    border-top: 4px solid #3498db;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 20px; 
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Error Overlay Specific Styles */
+.error-container {
+    max-height: 50vh;
+    overflow-y: auto;
     margin: 1.5rem 0;
+    background: var(--gray-light);
+    border-radius: 8px;
+    padding: 1rem;
+}
+
+.error-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.error-list p {
+    margin: 0;
+    padding: 0.75rem;
+    background: var(--light);
+    border-radius: 6px;
+    font-size: 0.9rem;
     color: var(--error);
+    border-left: 4px solid var(--error);
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.error-list p::before {
+    content: "•";
+    color: var(--error);
+    font-size: 1.2rem;
+}
+
+/* Scrollbar Styling */
+.error-container::-webkit-scrollbar {
+    width: 6px;
+}
+
+.error-container::-webkit-scrollbar-track {
+    background: var(--gray-light);
+    border-radius: 4px;
+}
+
+.error-container::-webkit-scrollbar-thumb {
+    background: color-mix(in srgb, var(--error) 30%, transparent);
+    border-radius: 4px;
+}
+
+.error-container::-webkit-scrollbar-thumb:hover {
+    background: color-mix(in srgb, var(--error) 50%, transparent);
 }
 
 /* Error Highlighting */
@@ -878,6 +1116,78 @@ body {
 
 .form-group.error label {
     color: var(--error);
+}
+
+/* Radio Button Styles */
+.radio-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-top: 0.5rem;
+    width: calc(100% - 2rem); /* Consistent with other inputs */
+}
+
+.radio-option {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    position: relative;
+    padding-left: 2rem;
+    font-size: 0.95rem;
+}
+
+.radio-option input[type="radio"] {
+    position: absolute;
+    opacity: 0;
+    cursor: pointer;
+}
+
+.radio-custom {
+    position: absolute;
+    left: 0;
+    height: 1.25rem;
+    width: 1.25rem;
+    background-color: var(--light);
+    border: 2px solid var(--gray-medium);
+    border-radius: 50%;
+    transition: var(--transition);
+}
+
+.radio-option:hover .radio-custom {
+    border-color: var(--primary);
+}
+
+.radio-option input:checked ~ .radio-custom {
+    background-color: var(--primary);
+    border-color: var(--primary);
+}
+
+.radio-custom:after {
+    content: "";
+    position: absolute;
+    display: none;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 0.5rem;
+    height: 0.5rem;
+    border-radius: 50%;
+    background: var(--light);
+}
+
+.radio-option input:checked ~ .radio-custom:after {
+    display: block;
+}
+
+/* Improved Responsive Styles */
+@media (max-width: 1200px) {
+    .registration-container {
+        padding: 2% 5%;
+    }
+    
+    .registration-form {
+        padding: 2.5rem;
+    }
 }
 
 @media (max-width: 1000px) {
@@ -923,6 +1233,20 @@ body {
     .registration-form {
         padding: 1.5rem;
     }
+    
+    .id-upload-container {
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .error-container {
+        max-height: 40vh;
+    }
+    
+    .error-list p {
+        font-size: 0.85rem;
+        padding: 0.5rem;
+    }
 }
 
 @media (max-width: 480px) {
@@ -950,5 +1274,13 @@ body {
     .navigation-links {
         flex-direction: column;
         gap: 0.5rem;
+    }
+    
+    .overlay-content {
+        padding: 1.5rem;
+    }
+    
+    .error-container {
+        max-height: 35vh;
     }
 }
