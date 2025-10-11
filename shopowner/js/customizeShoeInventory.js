@@ -6,7 +6,8 @@ import {
     readData,
     updateData,
     createData,
-    addFile
+    addFile,
+    deleteFile
 } from "../../firebaseMethods.js";
 
 // Global session object
@@ -55,6 +56,13 @@ let pendingColorUploads = {};
 let pendingLacesUploads = {};
 let pendingInsoleUploads = {};
 
+// Store items marked for deletion
+let itemsToDelete = {
+    colors: [],
+    laces: [],
+    insoles: []
+};
+
 // Expose functions globally
 window.editModel = editModel;
 window.closeModal = closeModal;
@@ -69,6 +77,8 @@ window.removeInsoleOption = removeInsoleOption;
 window.uploadSingleImage = uploadSingleImage;
 window.uploadLacesImage = uploadLacesImage;
 window.uploadInsoleImage = uploadInsoleImage;
+window.addLacesColorOption = addLacesColorOption;
+window.removeLacesColorOption = removeLacesColorOption;
 
 // Helper function to get DOM elements
 function getElement(id) {
@@ -305,10 +315,15 @@ function getColorValue(colorName) {
 function closeModal() {
     getElement('editModelModal').style.display = 'none';
     document.body.classList.remove('modal-open');
-    // Clear pending uploads when modal closes
+    // Clear pending uploads and deletion lists when modal closes
     pendingColorUploads = {};
     pendingLacesUploads = {};
     pendingInsoleUploads = {};
+    itemsToDelete = {
+        colors: [],
+        laces: [],
+        insoles: []
+    };
 }
 
 function editModel(modelId) {
@@ -349,10 +364,19 @@ function openEditModal(modelId, model) {
     const modalContent = getElement('editModelContent');
     const modalElement = getElement('editModelModal');
 
-    // Reset pending uploads
+    // Reset pending uploads and deletion lists
     pendingColorUploads = {};
     pendingLacesUploads = {};
     pendingInsoleUploads = {};
+    itemsToDelete = {
+        colors: [],
+        laces: [],
+        insoles: []
+    };
+
+    // Store current model data for reference
+    modalElement.currentModelData = model;
+    modalElement.currentModelId = modelId;
 
     // Check if model has any customizations
     const hasCustomizations = Object.keys(model.bodyColors).length > 0 || 
@@ -417,11 +441,15 @@ function openEditModal(modelId, model) {
     if (model.laces && Object.keys(model.laces).length > 0) {
         Object.entries(model.laces).forEach(([laceKey, laceData]) => {
             const hasImage = laceData.image && laceData.image.includes('https://');
+            const colorsHtml = generateLacesColorsHtml(laceData.id, laceData.colors || []);
             
             lacesHtml += `
                 <div class="customization-item-edit" data-id="${laceData.id}">
                     <div class="customization-item-header">
                         <div class="customization-item-title">${laceData.id}</div>
+                        <button type="button" class="btn btn-danger btn-small" onclick="removeLacesOption('${laceData.id}')">
+                            <i class="fas fa-trash"></i> Remove
+                        </button>
                     </div>
                     <div class="customization-item-fields">
                         <div class="form-group">
@@ -452,11 +480,15 @@ function openEditModal(modelId, model) {
                                 ` : ''}
                             </div>
                         </div>
-                        <button type="button" class="btn btn-danger" onclick="removeLacesOption('${laceData.id}')">Remove</button>
                     </div>
                     <div class="form-group">
-                        <label>Available Colors (comma separated)</label>
-                        <input type="text" class="form-control" value="${laceData.colors ? laceData.colors.join(',') : ''}" data-field="colors" placeholder="white,black,red,blue,green">
+                        <label>Available Colors</label>
+                        <div class="laces-colors-container" id="lacesColors_${laceData.id}">
+                            ${colorsHtml}
+                            <button type="button" class="add-color-btn" onclick="addLacesColorOption('${laceData.id}')">
+                                <i class="fas fa-plus"></i> Add Color
+                            </button>
+                        </div>
                     </div>
                 </div>
             `;
@@ -475,6 +507,9 @@ function openEditModal(modelId, model) {
                 <div class="customization-item-edit" data-id="${insoleData.id}">
                     <div class="customization-item-header">
                         <div class="customization-item-title">${insoleData.id}</div>
+                        <button type="button" class="btn btn-danger btn-small" onclick="removeInsoleOption('${insoleData.id}')">
+                            <i class="fas fa-trash"></i> Remove
+                        </button>
                     </div>
                     <div class="customization-item-fields">
                         <div class="form-group">
@@ -505,7 +540,6 @@ function openEditModal(modelId, model) {
                                 ` : ''}
                             </div>
                         </div>
-                        <button type="button" class="btn btn-danger" onclick="removeInsoleOption('${insoleData.id}')">Remove</button>
                     </div>
                 </div>
             `;
@@ -601,6 +635,24 @@ function openEditModal(modelId, model) {
         e.preventDefault();
         saveModel(modelId);
     });
+}
+
+function generateLacesColorsHtml(lacesId, colors) {
+    if (!colors || colors.length === 0) {
+        return '<div class="empty-state-small">No colors added yet</div>';
+    }
+
+    let colorsHtml = '';
+    colors.forEach(color => {
+        colorsHtml += `
+            <div class="laces-color-option" data-color="${color}">
+                <div class="color-option selected" style="background-color: ${getColorValue(color)}" title="${color}">
+                    <span class="remove-color" onclick="removeLacesColorOption('${lacesId}', '${color}')">&times;</span>
+                </div>
+            </div>
+        `;
+    });
+    return colorsHtml;
 }
 
 function cancelEdit() {
@@ -816,6 +868,42 @@ async function uploadPendingImages() {
     return uploadResults;
 }
 
+// Delete files from storage for removed items
+async function deleteRemovedItemsFiles(modelId) {
+    const deletionPromises = [];
+
+    // Delete color images
+    for (const colorKey of itemsToDelete.colors) {
+        const angles = ['main', 'front', 'side', 'back'];
+        for (const angle of angles) {
+            const storagePath = `images/angles/${modelId}/${colorKey}/${angle}.png`;
+            deletionPromises.push(deleteFile(storagePath).catch(error => {
+                console.warn(`Failed to delete ${angle} image for color ${colorKey}:`, error);
+            }));
+        }
+    }
+
+    // Delete laces images
+    for (const laceId of itemsToDelete.laces) {
+        const storagePath = `images/laces/${modelId}/${laceId}.png`;
+        deletionPromises.push(deleteFile(storagePath).catch(error => {
+            console.warn(`Failed to delete laces image for ${laceId}:`, error);
+        }));
+    }
+
+    // Delete insole images
+    for (const insoleId of itemsToDelete.insoles) {
+        const storagePath = `images/insoles/${modelId}/${insoleId}.png`;
+        deletionPromises.push(deleteFile(storagePath).catch(error => {
+            console.warn(`Failed to delete insole image for ${insoleId}:`, error);
+        }));
+    }
+
+    // Wait for all deletions to complete
+    await Promise.allSettled(deletionPromises);
+    console.log('Completed file deletions for removed items');
+}
+
 function updateImageLinkUI(colorName, angle, status) {
     const colorElement = document.querySelector(`[data-color="${colorName}"]`);
     if (!colorElement) return;
@@ -992,20 +1080,34 @@ async function saveModel(modelId) {
             uploadedImageResults = await uploadPendingImages();
         }
         
-        // Get body colors - merge existing data with uploaded images
+        // Delete files for removed items
+        if (itemsToDelete.colors.length > 0 || itemsToDelete.laces.length > 0 || itemsToDelete.insoles.length > 0) {
+            alert('Deleting files for removed items...');
+            await deleteRemovedItemsFiles(modelId);
+        }
+        
+        // Get body colors - merge existing data with uploaded images, excluding removed colors
         const bodyColors = {};
         const colorElements = document.querySelectorAll('#bodyColorsContainer .color-option-with-upload');
         
-        // First, preserve all existing colors from database
+        // First, preserve all existing colors from database that are not marked for deletion
         if (existingModelData && existingModelData.bodyColors) {
             Object.keys(existingModelData.bodyColors).forEach(colorKey => {
-                bodyColors[colorKey] = existingModelData.bodyColors[colorKey];
+                // Only keep colors that are not marked for deletion and still exist in the form
+                if (!itemsToDelete.colors.includes(colorKey)) {
+                    bodyColors[colorKey] = existingModelData.bodyColors[colorKey];
+                }
             });
         }
         
         // Now update with colors from the form (both existing and new)
         colorElements.forEach(colorEl => {
             const colorKey = colorEl.dataset.color;
+            
+            // Skip colors marked for deletion
+            if (itemsToDelete.colors.includes(colorKey)) {
+                return;
+            }
             
             // Check if this color already exists in database
             const existingColorData = existingModelData && existingModelData.bodyColors && existingModelData.bodyColors[colorKey] 
@@ -1027,20 +1129,37 @@ async function saveModel(modelId) {
             }
         });
         
-        // Get laces - merge existing data with form data
+        // Get laces - merge existing data with form data, excluding removed laces
         const laces = {};
-        // First preserve existing laces
+        // First preserve existing laces that are not marked for deletion
         if (existingModelData && existingModelData.laces) {
             Object.keys(existingModelData.laces).forEach(laceKey => {
-                laces[laceKey] = existingModelData.laces[laceKey];
+                if (!itemsToDelete.laces.includes(laceKey)) {
+                    laces[laceKey] = existingModelData.laces[laceKey];
+                }
             });
         }
         // Update with laces from form
         document.querySelectorAll('#lacesContainer .customization-item-edit').forEach(laceEl => {
             const id = laceEl.dataset.id;
+            
+            // Skip laces marked for deletion
+            if (itemsToDelete.laces.includes(id)) {
+                return;
+            }
+            
             const price = parseInt(laceEl.querySelector('[data-field="price"]').value) || 0;
             const days = parseInt(laceEl.querySelector('[data-field="days"]').value) || 0;
-            const colors = laceEl.querySelector('[data-field="colors"]').value.split(',').map(c => c.trim()).filter(c => c);
+            
+            // Get colors from color options
+            const colorsContainer = document.getElementById(`lacesColors_${id}`);
+            const colors = [];
+            if (colorsContainer) {
+                const colorOptions = colorsContainer.querySelectorAll('.laces-color-option');
+                colorOptions.forEach(option => {
+                    colors.push(option.dataset.color);
+                });
+            }
             
             // Use uploaded image if available, otherwise keep existing image
             let image = '';
@@ -1059,17 +1178,25 @@ async function saveModel(modelId) {
             };
         });
         
-        // Get insoles - merge existing data with form data
+        // Get insoles - merge existing data with form data, excluding removed insoles
         const insoles = {};
-        // First preserve existing insoles
+        // First preserve existing insoles that are not marked for deletion
         if (existingModelData && existingModelData.insoles) {
             Object.keys(existingModelData.insoles).forEach(insoleKey => {
-                insoles[insoleKey] = existingModelData.insoles[insoleKey];
+                if (!itemsToDelete.insoles.includes(insoleKey)) {
+                    insoles[insoleKey] = existingModelData.insoles[insoleKey];
+                }
             });
         }
         // Update with insoles from form
         document.querySelectorAll('#insolesContainer .customization-item-edit').forEach(insoleEl => {
             const id = insoleEl.dataset.id;
+            
+            // Skip insoles marked for deletion
+            if (itemsToDelete.insoles.includes(id)) {
+                return;
+            }
+            
             const price = parseInt(insoleEl.querySelector('[data-field="price"]').value) || 0;
             const days = parseInt(insoleEl.querySelector('[data-field="days"]').value) || 0;
             
@@ -1112,10 +1239,15 @@ async function saveModel(modelId) {
         const result = await saveModelToDatabase(modelId, modelData);
         
         if (result.success) {
-            // Clear pending uploads after successful save
+            // Clear pending uploads and deletion lists after successful save
             pendingColorUploads = {};
             pendingLacesUploads = {};
             pendingInsoleUploads = {};
+            itemsToDelete = {
+                colors: [],
+                laces: [],
+                insoles: []
+            };
             alert('Customizations saved to database successfully!');
             closeModal();
         } else {
@@ -1204,19 +1336,26 @@ function addColorOption() {
 }
 
 function removeColorOption(colorKey) {
-    const colorEl = document.querySelector(`#bodyColorsContainer .color-option-with-upload[data-color="${colorKey}"]`);
-    if (colorEl) {
-        colorEl.remove();
-    }
-    
-    // Remove from pending uploads
-    delete pendingColorUploads[colorKey];
-    
-    // Show empty state if no colors left
-    const container = getElement('bodyColorsContainer');
-    const colorOptions = container.querySelectorAll('.color-option-with-upload');
-    if (colorOptions.length === 0) {
-        container.innerHTML = '<div class="empty-state-small">No colors added yet</div>' + container.innerHTML;
+    if (confirm(`Are you sure you want to remove the color "${colorKey}"? This will also delete all associated images from storage.`)) {
+        const colorEl = document.querySelector(`#bodyColorsContainer .color-option-with-upload[data-color="${colorKey}"]`);
+        if (colorEl) {
+            colorEl.remove();
+        }
+        
+        // Add to deletion list
+        if (!itemsToDelete.colors.includes(colorKey)) {
+            itemsToDelete.colors.push(colorKey);
+        }
+        
+        // Remove from pending uploads
+        delete pendingColorUploads[colorKey];
+        
+        // Show empty state if no colors left
+        const container = getElement('bodyColorsContainer');
+        const colorOptions = container.querySelectorAll('.color-option-with-upload');
+        if (colorOptions.length === 0) {
+            container.innerHTML = '<div class="empty-state-small">No colors added yet</div>' + container.innerHTML;
+        }
     }
 }
 
@@ -1238,6 +1377,9 @@ function addLacesOption() {
     lacesEl.innerHTML = `
         <div class="customization-item-header">
             <div class="customization-item-title">${newId}</div>
+            <button type="button" class="btn btn-danger btn-small" onclick="removeLacesOption('${newId}')">
+                <i class="fas fa-trash"></i> Remove
+            </button>
         </div>
         <div class="customization-item-fields">
             <div class="form-group">
@@ -1259,11 +1401,15 @@ function addLacesOption() {
                     </div>
                 </div>
             </div>
-            <button type="button" class="btn btn-danger" onclick="removeLacesOption('${newId}')">Remove</button>
         </div>
         <div class="form-group">
-            <label>Available Colors (comma separated)</label>
-            <input type="text" class="form-control" value="white,black,red,blue,green" data-field="colors" placeholder="white,black,red,blue,green">
+            <label>Available Colors</label>
+            <div class="laces-colors-container" id="lacesColors_${newId}">
+                <div class="empty-state-small">No colors added yet</div>
+                <button type="button" class="add-color-btn" onclick="addLacesColorOption('${newId}')">
+                    <i class="fas fa-plus"></i> Add Color
+                </button>
+            </div>
         </div>
     `;
     
@@ -1271,19 +1417,90 @@ function addLacesOption() {
 }
 
 function removeLacesOption(laceId) {
-    const laceEl = document.querySelector(`#lacesContainer .customization-item-edit[data-id="${laceId}"]`);
-    if (laceEl) {
-        laceEl.remove();
+    if (confirm(`Are you sure you want to remove the laces type "${laceId}"? This will also delete the associated image from storage.`)) {
+        console.log('Removing laces:', laceId);
+        
+        const laceEl = document.querySelector(`#lacesContainer .customization-item-edit[data-id="${laceId}"]`);
+        if (laceEl) {
+            laceEl.remove();
+            console.log('Successfully removed laces element');
+        } else {
+            console.log('Could not find laces element to remove');
+            // Fallback: try to find by iterating
+            const allLaces = document.querySelectorAll('#lacesContainer .customization-item-edit');
+            for (let i = 0; i < allLaces.length; i++) {
+                if (allLaces[i].dataset.id === laceId) {
+                    allLaces[i].remove();
+                    console.log('Removed via fallback');
+                    break;
+                }
+            }
+        }
+        
+        // Add to deletion list
+        if (!itemsToDelete.laces.includes(laceId)) {
+            itemsToDelete.laces.push(laceId);
+        }
+        
+        // Remove from pending uploads
+        delete pendingLacesUploads[laceId];
+        
+        // Show empty state if no laces left
+        const container = getElement('lacesContainer');
+        const lacesItems = container.querySelectorAll('.customization-item-edit');
+        if (lacesItems.length === 0) {
+            container.innerHTML = '<div class="empty-state-small">No laces types added yet</div>';
+        }
+    }
+}
+
+function addLacesColorOption(lacesId) {
+    const colorName = prompt("Enter color name for laces (e.g., white, black, red):");
+    if (!colorName) return;
+    
+    const normalizedColor = colorName.toLowerCase().trim();
+    if (!normalizedColor) return;
+    
+    const container = document.getElementById(`lacesColors_${lacesId}`);
+    
+    // Remove empty state if it exists
+    const emptyState = container.querySelector('.empty-state-small');
+    if (emptyState) {
+        emptyState.remove();
     }
     
-    // Remove from pending uploads
-    delete pendingLacesUploads[laceId];
+    const colorOption = document.createElement('div');
+    colorOption.className = 'laces-color-option';
+    colorOption.dataset.color = normalizedColor;
     
-    // Show empty state if no laces left
-    const container = getElement('lacesContainer');
-    const lacesItems = container.querySelectorAll('.customization-item-edit');
-    if (lacesItems.length === 0) {
-        container.innerHTML = '<div class="empty-state-small">No laces types added yet</div>';
+    colorOption.innerHTML = `
+        <div class="color-option selected" style="background-color: ${getColorValue(normalizedColor)}" title="${normalizedColor}">
+            <span class="remove-color" onclick="removeLacesColorOption('${lacesId}', '${normalizedColor}')">&times;</span>
+        </div>
+    `;
+    
+    // Insert before the add button
+    const addButton = container.querySelector('.add-color-btn');
+    container.insertBefore(colorOption, addButton);
+}
+
+function removeLacesColorOption(lacesId, colorKey) {
+    if (confirm(`Are you sure you want to remove the color "${colorKey}" from laces "${lacesId}"?`)) {
+        const colorEl = document.querySelector(`#lacesColors_${lacesId} .laces-color-option[data-color="${colorKey}"]`);
+        if (colorEl) {
+            colorEl.remove();
+        }
+        
+        // Show empty state if no colors left
+        const container = document.getElementById(`lacesColors_${lacesId}`);
+        const colorOptions = container.querySelectorAll('.laces-color-option');
+        if (colorOptions.length === 0) {
+            const emptyState = document.createElement('div');
+            emptyState.className = 'empty-state-small';
+            emptyState.textContent = 'No colors added yet';
+            const addButton = container.querySelector('.add-color-btn');
+            container.insertBefore(emptyState, addButton);
+        }
     }
 }
 
@@ -1305,6 +1522,9 @@ function addInsoleOption() {
     insoleEl.innerHTML = `
         <div class="customization-item-header">
             <div class="customization-item-title">${newId}</div>
+            <button type="button" class="btn btn-danger btn-small" onclick="removeInsoleOption('${newId}')">
+                <i class="fas fa-trash"></i> Remove
+            </button>
         </div>
         <div class="customization-item-fields">
             <div class="form-group">
@@ -1326,7 +1546,6 @@ function addInsoleOption() {
                     </div>
                 </div>
             </div>
-            <button type="button" class="btn btn-danger" onclick="removeInsoleOption('${newId}')">Remove</button>
         </div>
     `;
     
@@ -1334,19 +1553,26 @@ function addInsoleOption() {
 }
 
 function removeInsoleOption(insoleId) {
-    const insoleEl = document.querySelector(`#insolesContainer .customization-item-edit[data-id="${insoleId}"]`);
-    if (insoleEl) {
-        insoleEl.remove();
-    }
-    
-    // Remove from pending uploads
-    delete pendingInsoleUploads[insoleId];
-    
-    // Show empty state if no insoles left
-    const container = getElement('insolesContainer');
-    const insoleItems = container.querySelectorAll('.customization-item-edit');
-    if (insoleItems.length === 0) {
-        container.innerHTML = '<div class="empty-state-small">No insole types added yet</div>';
+    if (confirm(`Are you sure you want to remove the insole type "${insoleId}"? This will also delete the associated image from storage.`)) {
+        const insoleEl = document.querySelector(`#insolesContainer .customization-item-edit[data-id="${insoleId}"]`);
+        if (insoleEl) {
+            insoleEl.remove();
+        }
+        
+        // Add to deletion list
+        if (!itemsToDelete.insoles.includes(insoleId)) {
+            itemsToDelete.insoles.push(insoleId);
+        }
+        
+        // Remove from pending uploads
+        delete pendingInsoleUploads[insoleId];
+        
+        // Show empty state if no insoles left
+        const container = getElement('insolesContainer');
+        const insoleItems = container.querySelectorAll('.customization-item-edit');
+        if (insoleItems.length === 0) {
+            container.innerHTML = '<div class="empty-state-small">No insole types added yet</div>';
+        }
     }
 }
 
