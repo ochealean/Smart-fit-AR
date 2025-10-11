@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AR Customization Inventory - Shoemaker</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="icon" href="../../images/smartfitImages/smartfitAR-logo.png" type="image/x-icon">
+    <link rel="stylesheet" href="/shopowner/css/customizeShoeInventory.css">
+</head>
+
+<body>
+    <div class="dashboard">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="logo">
+                <div class="logo-icon">
+                    <i class="fas fa-shoe-prints"></i>
+                </div>
+                <span>SHOEMAKER PORTAL</span>
+            </div>
+            <div class="nav-items">
+                <a href="/shoemaker/html/shoemaker_dashboard.html" class="nav-item">
+                    <i class="fas fa-home"></i> Dashboard
+                </a>
+                <a href="/shoemaker/html/customizeShoeInventory.html" class="nav-item active">
+                    <i class="fas fa-palette"></i> AR Customization
+                </a>
+                <a href="/shoemaker/html/shoemaker_orders.html" class="nav-item">
+                    <i class="fas fa-shopping-cart"></i> Custom Orders
+                </a>
+                <a href="/shoemaker/html/shoemaker_analytics.html" class="nav-item">
+                    <i class="fas fa-chart-line"></i> Analytics
+                </a>
+                <a href="/shoemaker/html/shoemaker_profile.html" class="nav-item">
+                    <i class="fas fa-cog"></i> Settings
+                </a>
+                <a id="logout_btn" class="nav-item">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </a>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <div class="header">
+                <div class="mobile-menu-toggle">
+                    <i class="fas fa-bars"></i>
+                </div>
+                <h1>AR Customization Models</h1>
+                <div class="user-profile">
+                    <img id="profilePicture" src="#" alt="User" class="user-avatar">
+                    <span id="userFullname">Shoemaker</span>
+                </div>
+            </div>
+
+            <!-- Info Banner -->
+            <div class="info-banner">
+                <div class="info-banner-content">
+                    <i class="fas fa-info-circle info-banner-icon"></i>
+                    <div class="info-text">
+                        <h3>Manage Customization Options</h3>
+                        <p>Edit the available customization options for each shoe model. Changes will be reflected in the customer customization interface.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Models Grid -->
+            <div class="models-container">
+                <h2 class="section-title">
+                    <i class="fas fa-shoe-prints"></i> Available Models
+                </h2>
+                
+                <div class="models-grid" id="modelsGrid">
+                    <!-- Models will be populated by JavaScript -->
+                </div>
+            </div>
+
+            <!-- Edit Model Modal -->
+            <div id="editModelModal" class="modal">
+                <div class="modal-content large-modal">
+                    <div id="editModelContent"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mobile Overlay -->
+    <div class="sidebar-overlay"></div>
+
+    <script src="/shopowner/js/customizeShoeInventory.js" type="module"></script>
+</body>
+
+</html>

@@ -1065,12 +1065,109 @@ export async function getFileMetadata(storagePath) {
     }
 }
 
+export async function navBarRoles(role, roletype = null) {
+    const path = window.location.pathname;
+    const folder = path.split('/')[1]; // index 0 is empty due to leading '/'
+    console.log(folder); // Outputs: "shopowner"
+    const navItems = document.querySelector('.nav-items');
+
+    if (role === 'shoemaker') {
+        navItems.innerHTML = `
+                <div class="nav-items">
+                    <a href="/shopowner/html/shop_dashboard.html" class="nav-item keychainify-checked">
+                        <i class="fas fa-home"></i> Dashboard
+                    </a>
+                    <a href="/shopowner/html/shopowner_addshoe.html" class="nav-item keychainify-checked">
+                        <i class="fas fa-shoe-prints"></i> Add Shoe
+                    </a>
+                    <a id="addemployeebtn" href="/shopowner/html/shopowner_addemployee.html" class="nav-item shopowner keychainify-checked">
+                        <i class="fas fa-users"></i> Add Employee
+                    </a>
+                    <a href="/shopowner/html/customizeShoeInventory.html" class="nav-item active keychainify-checked">
+                        <i class="fas fa-boxes"></i> AR Inventory
+                    </a>
+                    <a href="/shopowner/html/shop_order.html" class="nav-item keychainify-checked">
+                        <i class="fas fa-shopping-cart"></i> Orders
+                    </a>
+                    <a id="issuereport" href="/shopowner/html/issue_report.html" class="nav-item manager keychainify-checked">
+                        <i class="fas fa-exclamation-circle"></i> Issue Report
+                    </a>
+                    <a id="analyticsbtn" href="/shopowner/html/analytics.html" class="nav-item manager keychainify-checked">
+                        <i class="fas fa-chart-line"></i> Analytics
+                    </a>
+                    <a href="/shopowner/html/shopprofile.html" class="nav-item keychainify-checked">
+                        <i class="fas fa-cog"></i> Settings
+                    </a>
+                    <a id="logout_btn" class="nav-item">
+                        <i class="fas fa-sign-out-alt"></i> Logout
+                    </a>
+                </div>`;
+    } else if (role === 'employee') {
+        if (roletype.toLowerCase() === "manager") {
+            navItems.innerHTML = `<a href="/shopowner/html/shop_dashboard.html" class="nav-item active keychainify-checked">
+                    <i class="fas fa-home"></i> Dashboard
+                </a>
+                <a href="/shopowner/html/shopowner_addshoe.html" class="nav-item keychainify-checked">
+                    <i class="fas fa-shoe-prints"></i> Add Shoe
+                </a>
+                <a id="shoeVerificationbtn" href="/shopowner/html/shoeverification.html" class="nav-item keychainify-checked">
+                    <i class="fas fa-check-circle"></i> Shoe Verification
+                </a>
+                <a href="/shopowner/html/shop_inventory.html" class="nav-item keychainify-checked">
+                    <i class="fas fa-boxes"></i> Inventory
+                </a>
+                <a href="/shopowner/html/shop_order.html" class="nav-item keychainify-checked">
+                    <i class="fas fa-shopping-cart"></i> Orders
+                </a>
+                <a id="issuereport" href="/shopowner/html/issue_report.html" class="nav-item manager keychainify-checked">
+                    <i class="fas fa-exclamation-circle"></i> Issue Report
+                </a>
+                <a id="analyticsbtn" href="/shopowner/html/analytics.html" class="nav-item manager keychainify-checked">
+                    <i class="fas fa-chart-line"></i> Analytics
+                </a>
+                <a href="/shopowner/html/shopprofile.html" class="nav-item keychainify-checked">
+                    <i class="fas fa-cog"></i> Settings
+                </a>
+                <a id="logout_btn" class="nav-item">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </a>`;
+        } else if (roletype.toLowerCase() === "salesperson") {
+            navItems.innerHTML = `<a href="/shopowner/html/shop_dashboard.html" class="nav-item active keychainify-checked">
+                    <i class="fas fa-home"></i> Dashboard
+                </a>
+                <a href="/shopowner/html/shopowner_addshoe.html" class="nav-item keychainify-checked">
+                    <i class="fas fa-shoe-prints"></i> Add Shoe
+                </a>
+                <a id="shoeVerificationbtn" href="/shopowner/html/shoeverification.html" class="nav-item keychainify-checked">
+                    <i class="fas fa-check-circle"></i> Shoe Verification
+                </a>
+                <a href="/shopowner/html/shop_inventory.html" class="nav-item keychainify-checked">
+                    <i class="fas fa-boxes"></i> Inventory
+                </a>
+                <a href="/shopowner/html/shop_order.html" class="nav-item keychainify-checked">
+                    <i class="fas fa-shopping-cart"></i> Orders
+                </a>
+                <a href="/shopowner/html/shopprofile.html" class="nav-item keychainify-checked">
+                    <i class="fas fa-cog"></i> Settings
+                </a>
+                <a id="logout_btn" class="nav-item">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </a>`;
+        }
+    } else if(folder === 'shopowner'){
+
+    }
+
+
+}
+
 
 // Export Firebase instances for advanced usage
 export { app, auth, db, storage };
 
 export default {
     checkUserAuth,
+    navBarRoles,
     logoutUser,
     generate18CharID,
     generate6DigitCode,
