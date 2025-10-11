@@ -1,10 +1,10 @@
-// customizeshoeedit.js - Refactored to use firebaseMethods only
+// customizeshoeedit.js - Edit existing custom shoe designs
 import {
     checkUserAuth,
     logoutUser,
-    readData,
-    updateData,
     createData,
+    updateData,
+    readData,
     generate18CharID
 } from "../../firebaseMethods.js";
 
@@ -20,87 +20,62 @@ let userSession = {
     userData: null
 };
 
-// Shoe links for AR experience
-let shoeLinks = {
-    classic: {
-        red: 'https://smart-fit-ar.vercel.app/extras/devonprocess.html',
-        blue: 'https://smart-fit-ar.vercel.app/extras/devonprocess.html',
-        black: 'https://smart-fit-ar.vercel.app/extras/devonprocess.html',
-        white: 'https://smart-fit-ar.vercel.app/extras/devonprocess.html',
-    },
-    runner: {
-        red: 'https://sdk.developer.deepar.ai/effectTester/index.html?url1=https%3A%2F%2Fdeepar-temporary-resources-prod.s3.eu-west-1.amazonaws.com%2F2a4a070e-abe1-48de-ba26-75c12804098b&name1=Running-Red.deeparproj&sdkVersion=5.6.0',
-        blue: 'https://sdk.developer.deepar.ai/effectTester/index.html?url1=https%3A%2F%2Fdeepar-temporary-resources-prod.s3.eu-west-1.amazonaws.com%2F379e6e4d-8eec-46fa-93c2-1b0878b0cba7&name1=Running-Blue.deeparproj&sdkVersion=5.6.0',
-        black: 'https://sdk.developer.deepar.ai/effectTester/index.html?url1=https%3A%2F%2Fdeepar-temporary-resources-prod.s3.eu-west-1.amazonaws.com%2F204fbbd0-00d1-4d08-838f-429683710c6a&name1=Running-Black.deeparproj&sdkVersion=5.6.0',
-        white: 'https://sdk.developer.deepar.ai/effectTester/index.html?url1=https%3A%2F%2Fdeepar-temporary-resources-prod.s3.eu-west-1.amazonaws.com%2F32c3bf87-2311-4c04-8322-40da4040080d&name1=Running-White.deeparproj&sdkVersion=5.6.0',
-    },
-    basketball: {
-        red: 'https://sdk.developer.deepar.ai/effectTester/index.html?url1=https%3A%2F%2Fdeepar-temporary-resources-prod.s3.eu-west-1.amazonaws.com%2F8963b31a-0ac0-4495-a3bd-aaad5b0edca7&name1=Basketball-Red.deeparproj&sdkVersion=5.6.0',
-        blue: 'https://sdk.developer.deepar.ai/effectTester/index.html?url1=https%3A%2F%2Fdeepar-temporary-resources-prod.s3.eu-west-1.amazonaws.com%2F8ad51b0f-f101-4c38-a03c-f41bddf3f29e&name1=Basketball-Blue.deeparproj&sdkVersion=5.6.0',
-        black: 'https://sdk.developer.deepar.ai/effectTester/index.html?url1=https%3A%2F%2Fdeepar-temporary-resources-prod.s3.eu-west-1.amazonaws.com%2F1e92b432-bf36-41f9-9a6e-61067c3dcd88&name1=Basketball-Black.deeparproj&sdkVersion=5.6.0',
-        white: 'https://sdk.developer.deepar.ai/effectTester/index.html?url1=https%3A%2F%2Fdeepar-temporary-resources-prod.s3.eu-west-1.amazonaws.com%2F250456b5-7d37-4a01-b00c-bbe5a8237d83&name1=Basketball-White.deeparproj&sdkVersion=5.6.0',
-    }
+// Store customization data from database
+let customizationData = {
+    classic: null,
+    runner: null,
+    basketball: null
 };
 
-// Initialize selections with default values
+// Default selections structure
 let selections = {
     classic: {
+        bodyColor: null,
         laces: {
-            id: 'Standard',
+            id: null,
             price: 0,
             days: 0,
-            image: 'https://via.placeholder.com/100x20?text=Classic+Laces+1',
-            color: 'white'
+            image: '',
+            color: null
         },
         insole: {
-            id: 'Foam',
+            id: null,
             price: 0,
             days: 0,
-            image: 'https://via.placeholder.com/100x20?text=Classic+Insole+1'
-        },
-        bodyColor: 'white'
+            image: ''
+        }
     },
     runner: {
+        bodyColor: null,
         laces: {
-            id: 'Standard',
+            id: null,
             price: 0,
             days: 0,
-            image: 'https://via.placeholder.com/100x20?text=Runner+Laces+1',
-            color: 'white'
+            image: '',
+            color: null
         },
         insole: {
-            id: 'Foam',
+            id: null,
             price: 0,
             days: 0,
-            image: 'https://via.placeholder.com/100x20?text=Runner+Insole+1'
-        },
-        bodyColor: 'white'
+            image: ''
+        }
     },
     basketball: {
+        bodyColor: null,
         laces: {
-            id: 'Standard',
+            id: null,
             price: 0,
             days: 0,
-            image: 'https://via.placeholder.com/100x20?text=Basketball+Laces+1',
-            color: 'white'
+            image: '',
+            color: null
         },
         insole: {
-            id: 'Foam',
+            id: null,
             price: 0,
             days: 0,
-            image: 'https://via.placeholder.com/100x20?text=Basketball+Insole+1'
-        },
-        bodyColor: 'white'
-    },
-    slipon: {
-        midsole: {
-            id: 'sliponMidsole1',
-            price: 0,
-            days: 0,
-            image: 'https://via.placeholder.com/100x60?text=SlipOn+Midsole+1'
-        },
-        outsoleColor: 'gray',
-        midsoleColor: 'white'
+            image: ''
+        }
     }
 };
 
@@ -116,7 +91,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 
 async function initializePage() {
     const user = await checkUserAuth();
-    
+
     if (!user.authenticated) {
         window.location.href = "/login.html";
         return;
@@ -127,7 +102,7 @@ async function initializePage() {
 
     // Set user profile information
     setUserProfile();
-    
+
     // Get design ID from URL
     designId = getDesignIdFromUrl();
 
@@ -137,41 +112,22 @@ async function initializePage() {
         return;
     }
 
-    // Initialize event listeners
+    // Load customization data from database
+    await loadCustomizationData();
+
+    // Initialize event listeners FIRST
     initializeEventListeners();
 
-    // Load the design data
-    try {
-        const designData = await loadDesignData(designId);
-        applyDesignData(designData);
-    } catch (error) {
-        console.error('Initialization error:', error);
-        alert('Error loading design. Redirecting to customization page.');
-        window.location.href = 'customizeshoe.html';
-    }
-}
+    // Load the saved design data AFTER UI is ready
+    await loadSavedDesign();
 
-// Set user profile information
-function setUserProfile() {
-    const userNameDisplay = getElement('userName_display2');
-    const userAvatar = getElement('imageProfile');
+    // Initial preview update
+    updatePreview();
     
-    if (userSession.userData) {
-        if (userSession.userData.firstName && userSession.userData.lastName) {
-            userNameDisplay.textContent = `${userSession.userData.firstName} ${userSession.userData.lastName}`;
-        } else if (userSession.userData.name) {
-            userNameDisplay.textContent = userSession.userData.name;
-        } else {
-            userNameDisplay.textContent = "User";
-        }
-        
-        // Set user avatar if available
-        if (userSession.userData.profilePhoto?.url) {
-            userAvatar.src = userSession.userData.profilePhoto.url;
-        } else {
-            userAvatar.src = "https://cdn-icons-png.flaticon.com/512/11542/11542598.png";
-        }
-    }
+    // Final check to ensure lace colors are properly initialized
+    setTimeout(() => {
+        ensureLaceColorsInitialized();
+    }, 500);
 }
 
 // Get design ID from URL
@@ -180,96 +136,45 @@ function getDesignIdFromUrl() {
     return urlParams.get('designId');
 }
 
-// Load design data from Firebase
-async function loadDesignData(designId) {
+// Load saved design data from database
+async function loadSavedDesign() {
     try {
         const designPath = `smartfit_AR_Database/saved_customShoes/${userSession.userId}/${designId}`;
         const result = await readData(designPath);
-        
+
         if (result.success && result.data) {
             originalDesignData = result.data;
-            return originalDesignData;
+            applySavedDesign(originalDesignData);
         } else {
             throw new Error('Design not found');
         }
     } catch (error) {
-        console.error('Error loading design:', error);
-        alert('Error loading design. Please try again.');
-        throw error;
+        console.error('Error loading saved design:', error);
+        alert('Error loading your saved design. Redirecting to customization page.');
+        window.location.href = 'customizeshoe.html';
     }
 }
 
-// Apply loaded design data to the UI
-function applyDesignData(designData) {
+// Apply saved design data to the UI - FIXED VERSION
+function applySavedDesign(designData) {
+    console.log('Applying saved design:', designData);
+
     // Set basic design info
     currentModel = designData.model;
     selectedSize = designData.size;
-    basePrice = designData.basePrice || basePrice;
 
-    // Apply the selections to our global selections object
+    // Apply selections from saved design
     if (designData.selections) {
-        selections[currentModel] = { ...selections[currentModel], ...designData.selections };
+        selections[currentModel] = { ...designData.selections };
+        console.log('Applied selections for model:', currentModel, selections[currentModel]);
     }
 
-    // First, select the model
-    selectModel(currentModel);
-
-    // Then wait for the model-specific UI to update before selecting other options
-    setTimeout(() => {
-        // Select the size
-        selectSize(selectedSize);
-
-        // Select other components based on the model
-        updateAllComponentSelections();
-
-        // Update the preview and images
-        updatePreview();
-    }, 100);
-}
-
-// Helper function to select the size
-function selectSize(size) {
-    // Find the active size options container (visible for the current model)
-    let sizeOptionsContainer = null;
-
-    // Check each model-specific container to see which one is visible
-    const modelContainers = document.querySelectorAll('.model-specific');
-    for (const container of modelContainers) {
-        if (container.style.display !== 'none') {
-            const options = container.querySelector('#sizeOptions');
-            if (options) {
-                sizeOptionsContainer = options;
-                break;
-            }
-        }
-    }
-
-    // If we found a visible size options container, select the size
-    if (sizeOptionsContainer) {
-        const sizeOption = sizeOptionsContainer.querySelector(`.component-option[data-size="${size}"]`);
-        if (sizeOption && !sizeOption.classList.contains('selected')) {
-            // Remove selected class from all options
-            sizeOptionsContainer.querySelectorAll('.component-option').forEach(opt => {
-                opt.classList.remove('selected');
-            });
-
-            // Add selected class to the target option
-            sizeOption.classList.add('selected');
-        }
-    } else {
-        // Fallback: try again after a short delay
-        setTimeout(() => selectSize(size), 200);
-    }
-}
-
-// Helper function to select the model
-function selectModel(model) {
-    const modelOption = document.querySelector(`.model-option[data-model="${model}"]`);
-    if (modelOption && !modelOption.classList.contains('selected')) {
-        modelOption.click();
-
-        // Also manually update UI state since we're programmatically changing it
+    // First, ensure the correct model is selected in UI
+    const modelOption = document.querySelector(`.model-option[data-model="${currentModel}"]`);
+    if (modelOption) {
+        // Remove selected class from all models
         document.querySelectorAll('.model-option').forEach(opt => opt.classList.remove('selected'));
+        // Add selected class to correct model
         modelOption.classList.add('selected');
 
         // Hide all model-specific sections
@@ -278,128 +183,351 @@ function selectModel(model) {
         });
 
         // Show sections for selected model
-        document.querySelectorAll(`.model-specific.${model}`).forEach(section => {
+        document.querySelectorAll(`.model-specific.${currentModel}`).forEach(section => {
             section.style.display = 'block';
         });
+
+        // Update base price and days from database
+        const modelData = customizationData[currentModel];
+        if (modelData) {
+            basePrice = modelData.basePrice || 2499;
+            baseDays = modelData.baseDays || 7;
+        }
+    }
+
+    // Now apply all other selections
+    applyAllSelections();
+}
+
+// Apply all component selections to UI - NEW FUNCTION
+function applyAllSelections() {
+    console.log('Applying all selections for model:', currentModel);
+
+    // Select size
+    selectSize(selectedSize);
+
+    // Apply component selections
+    applyComponentSelections();
+
+    // Update preview
+    updatePreview();
+}
+
+// Select size in UI
+function selectSize(size) {
+    const sizeOptions = document.querySelectorAll('#sizeOptions .component-option');
+    sizeOptions.forEach(btn => {
+        if (btn.dataset.size === size.toString()) {
+            btn.classList.add('selected');
+        } else {
+            btn.classList.remove('selected');
+        }
+    });
+}
+
+// Apply component selections to UI 
+function applyComponentSelections() {
+    const modelSelections = selections[currentModel];
+    console.log('Applying component selections:', modelSelections);
+
+    if (!modelSelections) {
+        console.warn('No selections found for model:', currentModel);
+        return;
+    }
+
+    // Apply body color first
+    if (modelSelections.bodyColor) {
+        applyBodyColorSelection(modelSelections.bodyColor);
+    }
+
+    // Apply insole selection
+    if (modelSelections.insole?.id) {
+        applyInsoleSelection(modelSelections.insole.id);
+    }
+
+    // Apply laces selection LAST to ensure lace colors are properly initialized
+    if (modelSelections.laces?.id) {
+        // Use a slightly longer delay to ensure all DOM elements are ready
+        setTimeout(() => {
+            applyLacesSelection(modelSelections.laces.id, modelSelections.laces.color);
+        }, 200);
     }
 }
 
-// Update all component selections in the UI
-function updateAllComponentSelections() {
-    const modelSelections = selections[currentModel];
+// Apply body color selection
+function applyBodyColorSelection(bodyColor) {
+    const container = getElement(`${currentModel}BodyColorOptions`);
+    if (!container) {
+        console.error(`Body color container not found for model: ${currentModel}`);
+        return;
+    }
 
-    // Helper function to select an option in the UI
-    const selectOption = (containerId, optionId) => {
-        const container = getElement(containerId);
-        if (container) {
-            const option = container.querySelector(`.component-option[data-id="${optionId}"]`);
-            if (option && !option.classList.contains('selected')) {
-                // Remove selected class from all options
-                container.querySelectorAll('.component-option').forEach(opt => {
-                    opt.classList.remove('selected');
-                });
-
-                // Add selected class to the target option
-                option.classList.add('selected');
+    const options = container.querySelectorAll('.color-option');
+    options.forEach(option => {
+        if (option.dataset.color === bodyColor) {
+            option.classList.add('selected');
+        } else {
+            option.classList.remove('selected');
+            const checkmark = option.querySelector('.color-checkmark');
+            if (checkmark) {
+                checkmark.remove();
             }
         }
-    };
+    });
+}
 
-    // Helper function to select a color in the UI
-    const selectColor = (containerId, colorValue) => {
-        const container = getElement(containerId);
-        if (container) {
-            const colorOption = container.querySelector(`.color-option[data-color="${colorValue}"]`);
-            if (colorOption && !colorOption.classList.contains('selected')) {
-                // Remove selected class from all options
-                container.querySelectorAll('.color-option').forEach(opt => {
-                    opt.classList.remove('selected');
-                });
+// Apply insole selection
+function applyInsoleSelection(insoleId) {
+    const container = getElement(`${currentModel}InsoleOptions`);
+    if (!container) {
+        console.error(`Insole container not found for model: ${currentModel}`);
+        return;
+    }
 
-                // Add selected class to the target option
-                colorOption.classList.add('selected');
+    const options = container.querySelectorAll('.component-option');
+    options.forEach(option => {
+        if (option.dataset.id === insoleId) {
+            option.classList.add('selected');
+        } else {
+            option.classList.remove('selected');
+        }
+    });
+}
+
+// Apply laces selection - UPDATED VERSION
+function applyLacesSelection(laceId, laceColor) {
+    const container = getElement(`${currentModel}LacesOptions`);
+    if (!container) {
+        console.error(`Laces container not found for model: ${currentModel}`);
+        return;
+    }
+
+    // Select lace type
+    const options = container.querySelectorAll('.component-option');
+    options.forEach(option => {
+        if (option.dataset.id === laceId) {
+            option.classList.add('selected');
+        } else {
+            option.classList.remove('selected');
+        }
+    });
+
+    // IMPORTANT: Setup lace color options immediately
+    setupLaceColorOptions(currentModel);
+
+    // Apply lace color selection after a brief delay to ensure DOM is ready
+    setTimeout(() => {
+        if (laceColor) {
+            applyLaceColorSelection(laceColor);
+        }
+    }, 150);
+}
+
+// Apply lace color selection
+function applyLaceColorSelection(laceColor) {
+    const container = getElement(`${currentModel}LacesColorOptions`);
+    if (!container) {
+        console.error(`Lace color container not found for model: ${currentModel}`);
+        return;
+    }
+
+    const options = container.querySelectorAll('.color-option');
+    let found = false;
+
+    options.forEach(option => {
+        if (option.dataset.color === laceColor) {
+            option.classList.add('selected');
+            found = true;
+        } else {
+            option.classList.remove('selected');
+            const checkmark = option.querySelector('.color-checkmark');
+            if (checkmark) {
+                checkmark.remove();
             }
         }
-    };
+    });
 
-    // Update components based on model
-    if (currentModel === 'classic') {
-        if (modelSelections.laces?.id) {
-            selectOption('classicLacesOptions', modelSelections.laces.id);
-        }
-
-        if (modelSelections.insole?.id) {
-            selectOption('classicInsoleOptions', modelSelections.insole.id);
-        }
-
-        if (modelSelections.laces?.color) {
-            selectColor('classiscLacesColorOptions', modelSelections.laces.color);
-        }
-        if (modelSelections.bodyColor) {
-            selectColor('classicBodyColorOptions', modelSelections.bodyColor);
+    if (!found) {
+        console.warn(`Lace color ${laceColor} not found in available options`);
+        // Select the first available color if saved color is not found
+        if (options.length > 0) {
+            setTimeout(() => {
+                options[0].click();
+            }, 100);
         }
     }
-    else if (currentModel === 'runner') {
-        if (modelSelections.laces?.id) {
-            selectOption('runnerLacesOptions', modelSelections.laces.id);
+}
+
+// Load customization data from Firebase Database
+async function loadCustomizationData() {
+    try {
+        const modelsPath = 'smartfit_AR_Database/ar_customization_models';
+        const result = await readData(modelsPath);
+
+        if (result.success && result.data) {
+            customizationData = result.data;
+            console.log('Loaded customization data:', customizationData);
+
+            // Setup all customization options with real images
+            setupAllCustomizationOptions();
+        } else {
+            console.warn('No customization data found in database');
+        }
+    } catch (error) {
+        console.error('Error loading customization data:', error);
+    }
+}
+
+// Setup all customization options with real images from database - IMPROVED
+function setupAllCustomizationOptions() {
+    // Setup options for each model
+    ['classic', 'runner', 'basketball'].forEach(model => {
+        setupInsoleOptions(model);
+        setupLacesOptions(model);
+        setupBodyColorOptions(model);
+        // Lace colors will be setup when lace type is selected
+    });
+}
+
+// Set user profile information
+function setUserProfile() {
+    const userNameDisplay = getElement('userName_display2');
+    const userAvatar = getElement('imageProfile');
+
+    if (userSession.userData) {
+        if (userSession.userData.firstName && userSession.userData.lastName) {
+            userNameDisplay.textContent = `${userSession.userData.firstName} ${userSession.userData.lastName}`;
+        } else if (userSession.userData.name) {
+            userNameDisplay.textContent = userSession.userData.name;
+        } else {
+            userNameDisplay.textContent = "User";
         }
 
-        if (modelSelections.insole?.id) {
-            selectOption('runnerInsoleOptions', modelSelections.insole.id);
-        }
-
-        if (modelSelections.laces?.color) {
-            selectColor('runnerLacesColorOptions', modelSelections.laces.color);
-        }
-        if (modelSelections.bodyColor) {
-            selectColor('runnerBodyColorOptions', modelSelections.bodyColor);
+        // Set user avatar if available
+        if (userSession.userData.profilePhoto) {
+            userAvatar.src = userSession.userData.profilePhoto;
+        } else {
+            userAvatar.src = getFallbackImage();
         }
     }
-    else if (currentModel === 'basketball') {
-        if (modelSelections.laces?.id) {
-            selectOption('basketballLacesOptions', modelSelections.laces.id);
-        }
+}
 
-        if (modelSelections.insole?.id) {
-            selectOption('basketballInsoleOptions', modelSelections.insole.id);
-        }
+// Update shoe images based on model and color using database URLs - IMPROVED
+function updateShoeImages() {
+    const arExperienceLink = getElement('arExperienceLink');
+    const bodyColor = selections[currentModel].bodyColor;
 
-        if (modelSelections.laces?.color) {
-            selectColor('basketballLacesColorOptions', modelSelections.laces.color);
-        }
-        if (modelSelections.bodyColor) {
-            selectColor('basketballBodyColorOptions', modelSelections.bodyColor);
+    // Update AR link
+    if (arExperienceLink) {
+        arExperienceLink.href = `#${currentModel}-${bodyColor}`;
+    }
+
+    // Get the current model data
+    const modelData = customizationData[currentModel];
+
+    if (!modelData || !bodyColor) {
+        console.warn('No model data or body color selected');
+        setFallbackImages();
+        return;
+    }
+
+    // Get color data from database
+    const colorData = modelData.bodyColors && modelData.bodyColors[bodyColor];
+
+    if (!colorData) {
+        console.warn(`No color data found for ${bodyColor} in ${currentModel}`);
+        setFallbackImages();
+        return;
+    }
+
+    // Use images object if available, otherwise use direct image property
+    const images = colorData.images || { main: colorData.image };
+
+    console.log(`Loading images for ${currentModel} - ${bodyColor}:`, images);
+
+    // Update main image using database URL
+    const soleImage = getElement('soleImage');
+    if (soleImage) {
+        if (images.main) {
+            soleImage.src = images.main;
+            soleImage.onerror = function () {
+                console.error(`Failed to load main image: ${images.main}`);
+                setFallbackImages();
+            };
+        } else {
+            setFallbackImages();
         }
     }
+
+    // Update additional view images using database URLs
+    const frontViewImage = getElement('frontViewImage');
+    if (frontViewImage && images.front) {
+        frontViewImage.src = images.front;
+        frontViewImage.onerror = function () {
+            console.error(`Failed to load front image: ${images.front}`);
+            this.src = getFallbackImage();
+        };
+    } else if (frontViewImage) {
+        frontViewImage.src = getFallbackImage();
+    }
+
+    const sideViewImage = getElement('sideViewImage');
+    if (sideViewImage && images.side) {
+        sideViewImage.src = images.side;
+        sideViewImage.onerror = function () {
+            console.error(`Failed to load side image: ${images.side}`);
+            this.src = getFallbackImage();
+        };
+    } else if (sideViewImage) {
+        sideViewImage.src = getFallbackImage();
+    }
+
+    const backViewImage = getElement('backViewImage');
+    if (backViewImage && images.back) {
+        backViewImage.src = images.back;
+        backViewImage.onerror = function () {
+            console.error(`Failed to load back image: ${images.back}`);
+            this.src = getFallbackImage();
+        };
+    } else if (backViewImage) {
+        backViewImage.src = getFallbackImage();
+    }
+}
+
+// Improved fallback image function
+function getFallbackImage() {
+    return "https://cdn-icons-png.flaticon.com/512/11542/11542598.png";
+}
+
+// Fallback function if no images are found in database
+function setFallbackImages() {
+    const images = [
+        getElement('soleImage'),
+        getElement('frontViewImage'),
+        getElement('sideViewImage'),
+        getElement('backViewImage')
+    ].filter(img => img !== null);
+
+    images.forEach(img => {
+        if (img) {
+            img.src = getFallbackImage();
+        }
+    });
 }
 
 // Update the shoe preview and summary
 function updatePreview() {
-    // Calculate totals
-    let lacesPrice = 0;
-    let insolePrice = 0;
-    let maxDays = 0;
+    const modelData = customizationData[currentModel];
 
-    if (currentModel === 'classic') {
-        lacesPrice = selections.classic.laces.price;
-        insolePrice = selections.classic.insole.price;
-        maxDays = Math.max(selections.classic.laces.days, selections.classic.insole.days);
+    if (modelData) {
+        basePrice = modelData.basePrice || 2499;
+        baseDays = modelData.baseDays || 7;
     }
-    else if (currentModel === 'runner') {
-        lacesPrice = selections.runner.laces.price;
-        insolePrice = selections.runner.insole.price;
-        maxDays = Math.max(selections.runner.laces.days, selections.runner.insole.days);
-    }
-    else if (currentModel === 'basketball') {
-        lacesPrice = selections.basketball.laces.price;
-        insolePrice = selections.basketball.insole.price;
-        maxDays = Math.max(selections.basketball.laces.days, selections.basketball.insole.days);
-    }
-    else if (currentModel === 'slipon') {
-        lacesPrice = 0;
-        insolePrice = selections.slipon.midsole.price;
-        maxDays = selections.slipon.midsole.days;
-    }
+
+    // Calculate totals
+    let lacesPrice = selections[currentModel].laces.price || 0;
+    let insolePrice = selections[currentModel].insole.price || 0;
+    let maxDays = Math.max(selections[currentModel].laces.days || 0, selections[currentModel].insole.days || 0);
 
     const customizationPrice = lacesPrice + insolePrice;
     const subtotal = basePrice + customizationPrice;
@@ -424,9 +552,9 @@ function updatePreview() {
     if (productionTimeElement) productionTimeElement.textContent = `${totalDays}-${totalDays + 3} days`;
     if (totalPriceElement) totalPriceElement.textContent = `₱${totalPrice.toFixed(2)}`;
 
-    // Update the shoe images based on the current model and body color
+    // Update shoe images
     updateShoeImages();
-    
+
     // Return values for database storage
     return {
         lacesPrice,
@@ -438,64 +566,329 @@ function updatePreview() {
     };
 }
 
-// Function to update shoe images based on current selections
-function updateShoeImages() {
-    const modelSelections = selections[currentModel];
-    // Use outsoleColor for slipon, bodyColor for other models
-    const colorKey = currentModel === 'slipon' ? modelSelections.outsoleColor || 'gray' : modelSelections.bodyColor || 'white';
+// Setup insole options dynamically from database
+function setupInsoleOptions(model) {
+    const optionsContainer = getElement(`${model}InsoleOptions`);
+    if (!optionsContainer) return;
 
-    // Update AR experience link
-    const arExperienceLink = getElement('arExperienceLink');
-    if (arExperienceLink && shoeLinks[currentModel]?.[colorKey]) {
-        console.log('Updating AR link for model:', currentModel, 'with color:', colorKey);
-        arExperienceLink.href = shoeLinks[currentModel][colorKey];
-    } else {
-        console.warn('AR link not found or invalid for model:', currentModel, 'color:', colorKey);
-        if (arExperienceLink) {
-            arExperienceLink.href = '#'; // Fallback to prevent broken link
-        }
+    const modelData = customizationData[model];
+    if (!modelData || !modelData.insoles) {
+        optionsContainer.innerHTML = '<div class="no-options">No insole options available</div>';
+        return;
     }
 
-    // Set the main shoe image
-    const soleImage = getElement('soleImage');
-    if (soleImage) {
-        soleImage.src = `/images/angles/${currentModel}/${colorKey}/main.png`;
-        soleImage.alt = `${currentModel} shoe - main view`;
+    const insoles = Object.values(modelData.insoles);
+    if (insoles.length === 0) {
+        optionsContainer.innerHTML = '<div class="no-options">No insole options available</div>';
+        return;
     }
 
-    // Set the additional view images
-    const frontViewImage = getElement('frontViewImage');
-    const sideViewImage = getElement('sideViewImage');
-    const backViewImage = getElement('backViewImage');
+    optionsContainer.innerHTML = '';
 
-    if (frontViewImage) {
-        frontViewImage.src = `/images/angles/${currentModel}/${colorKey}/front.png`;
-        frontViewImage.alt = `${currentModel} shoe - front view`;
-    }
+    insoles.forEach((insole, index) => {
+        const option = document.createElement('div');
+        option.className = `component-option`;
+        option.dataset.id = insole.id;
+        option.dataset.price = insole.price || 0;
+        option.dataset.days = insole.days || 0;
+        option.dataset.image = insole.image || '';
 
-    if (sideViewImage) {
-        sideViewImage.src = `/images/angles/${currentModel}/${colorKey}/side.png`;
-        sideViewImage.alt = `${currentModel} shoe - side view`;
-    }
+        // Use the image URL from database, fallback to placeholder
+        const imageUrl = insole.image || getFallbackImage();
 
-    if (backViewImage) {
-        backViewImage.src = `/images/angles/${currentModel}/${colorKey}/back.png`;
-        backViewImage.alt = `${currentModel} shoe - back view`;
-    }
+        option.innerHTML = `
+            <img src="${imageUrl}" 
+                 alt="${insole.id}" 
+                 class="component-option-image"
+                 onerror="this.src='${getFallbackImage()}'">
+            <div class="component-option-name">${insole.id}</div>
+            <div class="component-option-price">+₱${insole.price || 0}</div>
+        `;
 
-    // Add error handling for images
-    const images = [soleImage, frontViewImage, sideViewImage, backViewImage].filter(img => img !== null);
-    images.forEach(img => {
-        if (img) {
-            img.onerror = function () {
-                this.src = 'https://via.placeholder.com/150x100?text=Image+Not+Found';
-                this.alt = 'Image not available';
+        option.addEventListener('click', function () {
+            optionsContainer.querySelectorAll('.component-option').forEach(opt => opt.classList.remove('selected'));
+            this.classList.add('selected');
+            selections[model].insole = {
+                id: this.dataset.id,
+                price: parseFloat(this.dataset.price),
+                days: parseInt(this.dataset.days),
+                image: this.dataset.image
             };
-        }
+            updatePreview();
+        });
+
+        optionsContainer.appendChild(option);
     });
 }
 
-// Save design to Realtime Database (updates existing design)
+// Setup laces options dynamically from database
+function setupLacesOptions(model) {
+    const optionsContainer = getElement(`${model}LacesOptions`);
+    if (!optionsContainer) return;
+
+    const modelData = customizationData[model];
+    if (!modelData || !modelData.laces) {
+        optionsContainer.innerHTML = '<div class="no-options">No laces options available</div>';
+        return;
+    }
+
+    const laces = Object.values(modelData.laces);
+    if (laces.length === 0) {
+        optionsContainer.innerHTML = '<div class="no-options">No laces options available</div>';
+        return;
+    }
+
+    optionsContainer.innerHTML = '';
+
+    laces.forEach((lace, index) => {
+        const option = document.createElement('div');
+        option.className = `component-option`;
+        option.dataset.id = lace.id;
+        option.dataset.price = lace.price || 0;
+        option.dataset.days = lace.days || 0;
+        option.dataset.image = lace.image || '';
+
+        // Use the image URL from database, fallback to placeholder
+        const imageUrl = lace.image || getFallbackImage();
+
+        option.innerHTML = `
+            <img src="${imageUrl}" 
+                 alt="${lace.id}" 
+                 class="component-option-image"
+                 onerror="this.src='${getFallbackImage()}'">
+            <div class="component-option-name">${lace.id}</div>
+            <div class="component-option-price">+₱${lace.price || 0}</div>
+        `;
+
+        option.addEventListener('click', function () {
+            optionsContainer.querySelectorAll('.component-option').forEach(opt => opt.classList.remove('selected'));
+            this.classList.add('selected');
+
+            // Get current lace color before updating
+            const currentColor = selections[model].laces?.color;
+
+            // Update lace selection
+            selections[model].laces = {
+                id: this.dataset.id,
+                price: parseFloat(this.dataset.price),
+                days: parseInt(this.dataset.days),
+                image: this.dataset.image,
+                color: currentColor // Preserve current color if it exists
+            };
+
+            // Refresh lace color options for the new lace type
+            setupLaceColorOptions(model);
+
+            updatePreview();
+        });
+
+        optionsContainer.appendChild(option);
+    });
+}
+
+// Check and fix lace color initialization if needed
+function ensureLaceColorsInitialized() {
+    const laceColorContainer = getElement(`${currentModel}LacesColorOptions`);
+    if (!laceColorContainer) return;
+    
+    const selectedColor = selections[currentModel].laces.color;
+    const colorOptions = laceColorContainer.querySelectorAll('.color-option');
+    
+    // If we have a selected color but no options are selected, fix it
+    if (selectedColor && colorOptions.length > 0) {
+        let isAnySelected = false;
+        colorOptions.forEach(option => {
+            if (option.classList.contains('selected')) {
+                isAnySelected = true;
+            }
+        });
+        
+        if (!isAnySelected) {
+            console.log('Fixing unselected lace color:', selectedColor);
+            applyLaceColorSelection(selectedColor);
+        }
+    }
+}
+
+// Setup lace color options specifically - UPDATED VERSION
+function setupLaceColorOptions(model) {
+    const optionsContainer = getElement(`${model}LacesColorOptions`);
+    if (!optionsContainer) {
+        console.error(`Lace color container not found for model: ${model}`);
+        return;
+    }
+
+    const modelData = customizationData[model];
+    const currentLaceId = selections[model].laces.id;
+    const currentLaceColor = selections[model].laces.color;
+
+    let colors = [];
+
+    if (modelData && modelData.laces && modelData.laces[currentLaceId]) {
+        colors = modelData.laces[currentLaceId].colors || [];
+        console.log(`Found ${colors.length} colors for lace type ${currentLaceId} in model ${model}:`, colors);
+    } else {
+        console.warn(`No lace data found for ${currentLaceId} in model ${model}`);
+    }
+
+    if (colors.length === 0) {
+        optionsContainer.innerHTML = '<div class="no-options">No color options available for this lace type</div>';
+        selections[model].laces.color = null;
+        return;
+    }
+
+    optionsContainer.innerHTML = '';
+
+    colors.forEach((color, index) => {
+        const option = document.createElement('div');
+        option.className = `color-option`;
+        option.dataset.color = color;
+        option.style.backgroundColor = getColorValue(color);
+
+        // Add tooltip with color name
+        const colorName = color.charAt(0).toUpperCase() + color.slice(1);
+        option.title = colorName;
+
+        // Check if this color should be selected (from saved design)
+        const shouldSelect = color === currentLaceColor;
+        if (shouldSelect) {
+            option.classList.add('selected');
+        }
+
+        option.addEventListener('click', function () {
+            console.log(`Lace color selected: ${color} for model ${model}`);
+            optionsContainer.querySelectorAll('.color-option').forEach(opt => {
+                opt.classList.remove('selected');
+                // Remove existing checkmarks
+                const existingCheckmark = opt.querySelector('.color-checkmark');
+                if (existingCheckmark) {
+                    existingCheckmark.remove();
+                }
+            });
+            this.classList.add('selected');
+
+            // Add checkmark to selected color
+            
+
+            // Update the lace color selection
+            selections[model].laces.color = this.dataset.color;
+            console.log(`Updated selections for ${model}:`, selections[model]);
+            updatePreview();
+        });
+
+        optionsContainer.appendChild(option);
+    });
+
+    // If no color is selected but we have colors available, select the first one
+    if (!currentLaceColor && colors.length > 0) {
+        setTimeout(() => {
+            const firstColorOption = optionsContainer.querySelector('.color-option');
+            if (firstColorOption && !firstColorOption.classList.contains('selected')) {
+                firstColorOption.click();
+            }
+        }, 100);
+    }
+}
+
+// Setup body color options - NEW SEPARATE FUNCTION
+function setupBodyColorOptions(model) {
+    const optionsContainer = getElement(`${model}BodyColorOptions`);
+    if (!optionsContainer) {
+        console.error(`Body color container not found for model: ${model}`);
+        return;
+    }
+
+    const modelData = customizationData[model];
+    let colors = [];
+
+    if (modelData && modelData.bodyColors) {
+        colors = Object.keys(modelData.bodyColors);
+        console.log(`Found ${colors.length} body colors for model ${model}:`, colors);
+    }
+
+    if (colors.length === 0) {
+        optionsContainer.innerHTML = '<div class="no-options">No color options available</div>';
+        return;
+    }
+
+    optionsContainer.innerHTML = '';
+
+    colors.forEach((color, index) => {
+        const option = document.createElement('div');
+        option.className = `color-option`;
+        option.dataset.color = color;
+        option.style.backgroundColor = getColorValue(color);
+
+        // Add tooltip with color name
+        const colorName = color.charAt(0).toUpperCase() + color.slice(1);
+        option.title = colorName;
+
+        option.addEventListener('click', function () {
+            console.log(`Body color selected: ${color} for model ${model}`);
+            optionsContainer.querySelectorAll('.color-option').forEach(opt => {
+                opt.classList.remove('selected');
+                // Remove existing checkmarks
+                const existingCheckmark = opt.querySelector('.color-checkmark');
+                if (existingCheckmark) {
+                    existingCheckmark.remove();
+                }
+            });
+            this.classList.add('selected');
+
+            // Add checkmark to selected color
+            
+
+            selections[model].bodyColor = this.dataset.color;
+            updatePreview();
+        });
+
+        optionsContainer.appendChild(option);
+    });
+}
+
+// Helper function to get color value for display
+function getColorValue(colorName) {
+    const colorMap = {
+        'white': '#e2e2e2',
+        'black': '#000000',
+        'blue': '#112dcc',
+        'red': '#e74c3c',
+        'green': '#27ae60',
+        'gray': '#2c3e50',
+        'yellow': '#f1c40f',
+        'purple': '#9b59b6',
+        'pink': '#e84393',
+        'orange': '#e67e22',
+        'brown': '#795548'
+    };
+
+    return colorMap[colorName] || '#cccccc';
+}
+
+// Get preview image URL - uses actual database images
+function getPreviewImageUrl() {
+    const modelData = customizationData[currentModel];
+    const bodyColor = selections[currentModel].bodyColor;
+
+    if (modelData && modelData.bodyColors && modelData.bodyColors[bodyColor]) {
+        const colorData = modelData.bodyColors[bodyColor];
+        // Return the main image URL if available
+        if (colorData.images && colorData.images.main) {
+            return colorData.images.main;
+        }
+    }
+
+    // Fallback to placeholder based on model
+    if (currentModel === 'classic') {
+        return 'https://via.placeholder.com/200x120/667eea/white?text=Classic+Sneaker';
+    } else if (currentModel === 'runner') {
+        return 'https://via.placeholder.com/200x120/764ba2/white?text=Performance+Runner';
+    } else {
+        return 'https://via.placeholder.com/200x120/f093fb/white?text=High-Top+Basketball';
+    }
+}
+
+// Save updated design to Realtime Database
 async function saveDesignToDatabase() {
     try {
         if (!designId) {
@@ -504,8 +897,8 @@ async function saveDesignToDatabase() {
 
         // Calculate totals using updatePreview
         const prices = updatePreview();
-        
-        // Clean up data to remove undefined values
+
+        // Clean up data
         const cleanSelections = {};
         Object.keys(selections[currentModel]).forEach(key => {
             if (selections[currentModel][key] !== undefined) {
@@ -535,13 +928,14 @@ async function saveDesignToDatabase() {
             totalPrice: prices.totalPrice,
             productionTime: `${prices.totalDays}-${prices.totalDays + 3} days`,
             selections: cleanSelections,
+            previewImage: getPreviewImageUrl(),
             updatedAt: Date.now()
         };
 
-        // Update in Realtime Database
+        // Update in database
         const designPath = `smartfit_AR_Database/saved_customShoes/${userSession.userId}/${designId}`;
         const result = await updateData(designPath, updatedDesign);
-        
+
         if (result.success) {
             console.log('Design updated with ID: ', designId);
             return designId;
@@ -555,7 +949,7 @@ async function saveDesignToDatabase() {
     }
 }
 
-// Add to cart function
+// Add to cart
 async function addToCart() {
     try {
         // Calculate totals using updatePreview
@@ -580,10 +974,10 @@ async function addToCart() {
             productionTime: `${prices.totalDays}-${prices.totalDays + 3} days`
         };
 
-        // Save to customized_cart in Realtime Database
-        const cartPath = `smartfit_AR_Database/customized_cart/${userSession.userId}`;
+        // Save to cart
+        const cartPath = `smartfit_AR_Database/customized_cart/${userSession.userId}/${generate18CharID()}`;
         const result = await createData(cartPath, userSession.userId, cartItem);
-        
+
         if (result.success) {
             alert(`Your updated ${currentModel} shoe design has been added to your cart!`);
         } else {
@@ -595,13 +989,13 @@ async function addToCart() {
     }
 }
 
-// Function to handle Buy Now action - USING URL PARAMETERS
+// Buy now - using URL params
 async function buyNow() {
     try {
         // Calculate totals using updatePreview
         const prices = updatePreview();
 
-        // Clean up the selections object to remove undefined values
+        // Clean up selections for URL params
         const cleanSelections = {};
         Object.keys(selections[currentModel]).forEach(key => {
             if (selections[currentModel][key] !== undefined) {
@@ -633,35 +1027,36 @@ async function buyNow() {
             image: getPreviewImageUrl(),
             isCustom: true,
             designId: designId, // Include the design ID for reference
-            selections: cleanSelections, // Use the cleaned selections
+            selections: cleanSelections,
             productionTime: `${prices.totalDays}-${prices.totalDays + 3} days`,
             timestamp: Date.now()
         };
 
-        // Generate a simple order ID
-        const orderId = `CUST-EDIT-${Date.now()}`;
-        
         // Encode order data for URL parameters
         const orderDataString = encodeURIComponent(JSON.stringify(orderData));
-        
+
+        // Generate a simple order ID
+        const orderId = `CUST-EDIT-${Date.now()}`;
+
         // Redirect to checkout with URL parameters
         window.location.href = `/customer/html/checkoutcustomize.html?orderId=${orderId}&orderData=${orderDataString}`;
-        
+
     } catch (error) {
         console.error('Error during buy now: ', error);
         alert('There was an error placing your order. Please try again.');
     }
 }
 
-// Helper function to get preview image URL
-function getPreviewImageUrl() {
-    const modelImages = {
-        'classic': 'https://via.placeholder.com/200x120?text=Classic+Sneaker',
-        'runner': 'https://via.placeholder.com/200x120?text=Performance+Runner',
-        'basketball': 'https://via.placeholder.com/200x120?text=High-Top+Basketball',
-        'slipon': 'https://via.placeholder.com/200x120?text=Slip-On+Comfort'
-    };
-    return modelImages[currentModel] || 'https://via.placeholder.com/200x120?text=Shoe+Image';
+// Refresh customization options when model changes
+function refreshCustomizationOptions(model) {
+    setupInsoleOptions(model);
+    setupLacesOptions(model);
+    setupBodyColorOptions(model);
+
+    // Setup lace colors if a lace type is already selected
+    if (selections[model].laces?.id) {
+        setupLaceColorOptions(model);
+    }
 }
 
 // Initialize all event listeners
@@ -693,140 +1088,80 @@ function initializeEventListeners() {
 
     images.forEach(img => {
         img.addEventListener('click', () => {
-            // Open the image's src in a new tab
             window.open(img.src, '_blank');
         });
     });
 
     // Model selection
     const modelOptions = document.querySelectorAll('.model-option');
-    if (modelOptions.length > 0) {
-        modelOptions.forEach(option => {
-            option.addEventListener('click', function () {
-                modelOptions.forEach(opt => opt.classList.remove('selected'));
-                this.classList.add('selected');
-                currentModel = this.dataset.model;
-                basePrice = parseFloat(this.dataset.price);
+    modelOptions.forEach(option => {
+        option.addEventListener('click', function () {
+            modelOptions.forEach(opt => opt.classList.remove('selected'));
+            this.classList.add('selected');
+            currentModel = this.dataset.model;
 
-                // Hide all model-specific sections
-                document.querySelectorAll('.model-specific').forEach(section => {
-                    section.style.display = 'none';
-                });
+            // Update base price and days from database
+            const modelData = customizationData[currentModel];
+            if (modelData) {
+                basePrice = modelData.basePrice || 2499;
+                baseDays = modelData.baseDays || 7;
+            }
 
-                // Show sections for selected model
-                document.querySelectorAll(`.model-specific.${currentModel}`).forEach(section => {
-                    section.style.display = 'block';
-                });
-
-                // Update the preview and images
-                updatePreview();
+            // Hide all model-specific sections
+            document.querySelectorAll('.model-specific').forEach(section => {
+                section.style.display = 'none';
             });
+
+            // Show sections for selected model
+            document.querySelectorAll(`.model-specific.${currentModel}`).forEach(section => {
+                section.style.display = 'block';
+            });
+
+            // Refresh customization options for the selected model
+            refreshCustomizationOptions(currentModel);
+
+            // Update preview after a short delay to ensure UI is updated
+            setTimeout(() => {
+                updatePreview();
+            }, 100);
         });
-    }
+    });
 
     // Size selection
     const sizeOptions = document.querySelectorAll('#sizeOptions .component-option');
-    if (sizeOptions.length > 0) {
-        sizeOptions.forEach(btn => {
-            btn.addEventListener('click', function () {
-                sizeOptions.forEach(b => b.classList.remove('selected'));
-                this.classList.add('selected');
-                selectedSize = this.dataset.size;
-                updatePreview();
-            });
+    sizeOptions.forEach(btn => {
+        btn.addEventListener('click', function () {
+            sizeOptions.forEach(b => b.classList.remove('selected'));
+            this.classList.add('selected');
+            selectedSize = this.dataset.size;
+            updatePreview();
         });
-    }
+    });
 
-    // Component selection
-    function setupComponentOptions(componentType, optionsContainer, model) {
-        if (!optionsContainer) return;
-
-        const options = optionsContainer.querySelectorAll('.component-option');
-        options.forEach(option => {
-            option.addEventListener('click', function () {
-                options.forEach(opt => opt.classList.remove('selected'));
-                this.classList.add('selected');
-
-                // Update the selections object based on component type
-                if (componentType === 'laces' || componentType === 'insole') {
-                    selections[model][componentType] = {
-                        id: this.dataset.id,
-                        price: parseFloat(this.dataset.price),
-                        days: parseInt(this.dataset.days),
-                        image: this.dataset.image,
-                        color: componentType === 'laces' ? selections[model][componentType]?.color : undefined
-                    };
-                }
-
-                updatePreview();
-            });
-        });
-    }
-
-    // Initialize all component options
-    setupComponentOptions('laces', getElement('classicLacesOptions'), 'classic');
-    setupComponentOptions('insole', getElement('classicInsoleOptions'), 'classic');
-    setupComponentOptions('laces', getElement('runnerLacesOptions'), 'runner');
-    setupComponentOptions('insole', getElement('runnerInsoleOptions'), 'runner');
-    setupComponentOptions('laces', getElement('basketballLacesOptions'), 'basketball');
-    setupComponentOptions('insole', getElement('basketballInsoleOptions'), 'basketball');
-
-    // Color selection
-    function setupColorOptions(colorType, optionsContainer, model) {
-        if (!optionsContainer) return;
-
-        const options = optionsContainer.querySelectorAll('.color-option');
-        options.forEach(option => {
-            option.addEventListener('click', function () {
-                options.forEach(opt => opt.classList.remove('selected'));
-                this.classList.add('selected');
-
-                // Update color in selections
-                const path = colorType.split('.');
-                if (path.length > 1) {
-                    selections[model][path[0]][path[1]] = this.dataset.color;
-                } else {
-                    selections[model][colorType] = this.dataset.color;
-                }
-
-                // Update the preview and images
-                updatePreview();
-            });
-        });
-    }
-
-    // Initialize all color options
-    setupColorOptions('laces.color', getElement('classiscLacesColorOptions'), 'classic');
-    setupColorOptions('bodyColor', getElement('classicBodyColorOptions'), 'classic');
-    setupColorOptions('laces.color', getElement('runnerLacesColorOptions'), 'runner');
-    setupColorOptions('bodyColor', getElement('runnerBodyColorOptions'), 'runner');
-    setupColorOptions('laces.color', getElement('basketballLacesColorOptions'), 'basketball');
-    setupColorOptions('bodyColor', getElement('basketballBodyColorOptions'), 'basketball');
-
-    // Save design button (now updates existing design)
-    const saveButton = document.querySelector('.btn-outline');
-    if (saveButton) {
-        saveButton.addEventListener('click', async function () {
+    // Save design button (updates existing design)
+    const saveDesignBtn = document.querySelector('.btn-outline');
+    if (saveDesignBtn) {
+        saveDesignBtn.addEventListener('click', async function () {
             try {
                 await saveDesignToDatabase();
-                alert(`Your ${currentModel} design has been updated!`);
+                alert(`Your ${currentModel} design has been updated successfully!`);
             } catch (error) {
                 console.error('Error saving design: ', error);
-                alert('There was an error saving your design. Please try again.');
+                alert('There was an error updating your design. Please try again.');
             }
         });
     }
 
     // Add to cart button
-    const addToCartButton = document.querySelector('.btn-primary');
-    if (addToCartButton) {
-        addToCartButton.addEventListener('click', addToCart);
+    const addToCartBtn = document.querySelector('.btn-add-to-cart');
+    if (addToCartBtn) {
+        addToCartBtn.addEventListener('click', addToCart);
     }
 
     // Buy now button
-    const buyNowButton = document.querySelector('.btn-buy');
-    if (buyNowButton) {
-        buyNowButton.addEventListener('click', buyNow);
+    const buyNowBtn = document.querySelector('.btn-buy');
+    if (buyNowBtn) {
+        buyNowBtn.addEventListener('click', buyNow);
     }
 
     // Info button functionality
@@ -837,27 +1172,27 @@ function initializeEventListeners() {
     const closePartsModal = getElement('closePartsModal');
     const closeSizeModal = getElement('closeSizeModal');
 
-    if (partsInfoBtn && partsModal && closePartsModal) {
+    if (partsInfoBtn && sizeInfoBtn && partsModal && sizeModal) {
         partsInfoBtn.addEventListener('click', () => {
             partsModal.style.display = 'flex';
         });
 
-        closePartsModal.addEventListener('click', () => {
-            partsModal.style.display = 'none';
-        });
-    }
-
-    if (sizeInfoBtn && sizeModal && closeSizeModal) {
         sizeInfoBtn.addEventListener('click', () => {
             sizeModal.style.display = 'flex';
         });
 
-        closeSizeModal.addEventListener('click', () => {
-            sizeModal.style.display = 'none';
-        });
-    }
+        if (closePartsModal) {
+            closePartsModal.addEventListener('click', () => {
+                partsModal.style.display = 'none';
+            });
+        }
 
-    if (partsModal && sizeModal) {
+        if (closeSizeModal) {
+            closeSizeModal.addEventListener('click', () => {
+                sizeModal.style.display = 'none';
+            });
+        }
+
         window.addEventListener('click', (event) => {
             if (event.target === partsModal) {
                 partsModal.style.display = 'none';
@@ -869,10 +1204,7 @@ function initializeEventListeners() {
     }
 
     // Logout functionality
-    const logoutButton = getElement('logout_btn');
-    if (logoutButton) {
-        logoutButton.addEventListener('click', handleLogout);
-    }
+    getElement('logout_btn').addEventListener('click', handleLogout);
 }
 
 // Handle logout
@@ -885,4 +1217,13 @@ async function handleLogout() {
             alert('Logout failed: ' + result.error);
         }
     }
+}
+
+// Helper function to log current selections (for debugging)
+function logCurrentSelections() {
+    console.log('Current Model:', currentModel);
+    console.log('Current Selections:', selections[currentModel]);
+    console.log('Body Color:', selections[currentModel].bodyColor);
+    console.log('Laces:', selections[currentModel].laces);
+    console.log('Insole:', selections[currentModel].insole);
 }
