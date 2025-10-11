@@ -7,83 +7,289 @@
     <link rel="icon" href="../../images/smartfitImages/smartfitAR-logo.png" type="image/x-icon">
     <link rel="stylesheet" href="/shopowner/css/shop_reapply.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <!-- Google Maps JavaScript API -->
-    <script>
-        // Ensure initMap is globally available and waits for DOM
-        window.initMap = function() {
-            document.addEventListener('DOMContentLoaded', function() {
-                const mapDiv = document.getElementById('map');
-                if (!mapDiv) {
-                    console.error('Map div not found');
+<!-- Google Maps JavaScript API -->
+<script>
+    // Ensure initMap is globally available and waits for DOM
+    window.initMap = function() {
+        document.addEventListener('DOMContentLoaded', function() {
+            const mapDiv = document.getElementById('map');
+            if (!mapDiv) {
+                console.error('Map div not found');
+                return;
+            }
+
+            const { AdvancedMarkerElement } = google.maps.marker;
+
+            map = new google.maps.Map(mapDiv, {
+                center: { lat: 14.5995, lng: 120.9842 }, // Default center: Philippines
+                zoom: 8,
+                mapId: '8ddbd8f389c81029930da3' // Your valid Map ID
+            });
+
+            marker = new AdvancedMarkerElement({
+                map: map,
+                position: null, // Initially no position
+                gmpDraggable: true, // Correct property for draggability
+                title: 'Shop Location'
+            });
+
+            // Hide marker initially until address is geocoded
+            marker.visible = false;
+
+            geocoder = new google.maps.Geocoder();
+
+            // Add dragend listener using google.maps.event
+            google.maps.event.addListener(marker, 'dragend', function() {
+                const position = marker.position;
+                if (position) {
+                    document.getElementById('latitude').value = position.lat;
+                    document.getElementById('longitude').value = position.lng;
+                    document.getElementById('displayLatitude').textContent = position.lat.toFixed(6);
+                    document.getElementById('displayLongitude').textContent = position.lng.toFixed(6);
+                }
+            });
+
+            // Handle "Locate on Map" button
+            document.getElementById('locateMapBtn').addEventListener('click', function() {
+                const shopAddress = document.getElementById('shopAddress').value.trim();
+                const shopCity = document.getElementById('shopCity').value.trim();
+                const shopState = document.getElementById('shopState').value.trim();
+                const shopZip = document.getElementById('shopZip').value.trim();
+                const shopCountry = document.getElementById('shopCountry').value.trim();
+
+                // Validate that all required address fields are filled
+                if (!shopAddress || !shopCity || !shopState || !shopZip) {
+                    showErrorOverlay(['Please fill in all address fields (Street Address, City, Province, and ZIP Code) before locating on map.']);
                     return;
                 }
 
-                const { AdvancedMarkerElement } = google.maps.marker;
+                // Create multiple address formats to improve geocoding accuracy
+                const addressFormats = [
+                    // Format 1: Full detailed address (highest priority)
+                    `${shopAddress}, ${shopCity}, ${shopState} ${shopZip}, ${shopCountry}`,
+                    // Format 2: Address + City + Province (remove ZIP if problematic)
+                    `${shopAddress}, ${shopCity}, ${shopState}, ${shopCountry}`,
+                    // Format 3: Just address and city
+                    `${shopAddress}, ${shopCity}, ${shopCountry}`,
+                    // Format 4: Address-focused format
+                    `${shopAddress}, ${shopCity}`
+                ];
 
-                map = new google.maps.Map(mapDiv, {
-                    center: { lat: 14.5995, lng: 120.9842 }, // Default center: Philippines
-                    zoom: 8,
-                    mapId: '8ddbd8f389c81029930da3' // Your valid Map ID
-                });
-
-                marker = new AdvancedMarkerElement({
-                    map: map,
-                    position: null, // Initially no position
-                    gmpDraggable: true, // Correct property for draggability
-                    title: 'Shop Location'
-                });
-
-                // Hide marker initially until address is geocoded
-                marker.visible = false;
-
-                geocoder = new google.maps.Geocoder();
-
-                // Add dragend listener using google.maps.event
-                google.maps.event.addListener(marker, 'dragend', function() {
-                    const position = marker.position;
-                    if (position) {
-                        // FIX: AdvancedMarkerElement position is an object, not a LatLng with methods
-                        document.getElementById('latitude').value = position.lat;
-                        document.getElementById('longitude').value = position.lng;
-                        // Update display
-                        document.getElementById('displayLatitude').textContent = position.lat.toFixed(6);
-                        document.getElementById('displayLongitude').textContent = position.lng.toFixed(6);
+                console.log('Attempting to geocode address:', shopAddress);
+                
+                // Try geocoding with increasing specificity
+                attemptGeocoding(addressFormats, 0);
+                
+                function attemptGeocoding(formats, index) {
+                    if (index >= formats.length) {
+                        // All formats failed, show error and allow manual placement
+                        console.error('All geocoding attempts failed');
+                        showErrorOverlay([
+                            'Unable to pinpoint the exact street address.',
+                            'The marker has been placed in the general area.',
+                            'Please manually drag the marker to your exact shop location.'
+                        ]);
+                        
+                        // Center on the city as fallback
+                        geocoder.geocode({
+                            address: `${shopCity}, ${shopState}, ${shopCountry}`
+                        }, function(results, status) {
+                            if (status === google.maps.GeocoderStatus.OK) {
+                                const location = results[0].geometry.location;
+                                map.setCenter(location);
+                                map.setZoom(15);
+                                marker.position = { lat: location.lat(), lng: location.lng() };
+                                marker.visible = true;
+                                updateCoordinates(location.lat(), location.lng());
+                            }
+                        });
+                        return;
                     }
-                });
 
-                // Handle "Locate on Map" button
-                document.getElementById('locateMapBtn').addEventListener('click', function() {
-                    const address = `${document.getElementById('shopAddress').value}, ${document.getElementById('shopCity').value}, ${document.getElementById('shopState').value}, ${document.getElementById('shopZip').value}, ${document.getElementById('shopCountry').value}`;
-                    geocoder.geocode({ address: address }, function(results, status) {
+                    const currentAddress = formats[index];
+                    console.log(`Attempt ${index + 1}: ${currentAddress}`);
+
+                    geocoder.geocode({ 
+                        address: currentAddress,
+                        region: 'ph' // Use region instead of componentRestrictions for better results
+                    }, function(results, status) {
                         if (status === google.maps.GeocoderStatus.OK) {
                             const location = results[0].geometry.location;
-                            map.setCenter(location);
-                            map.setZoom(15);
+                            const formattedAddress = results[0].formatted_address;
+                            const locationType = results[0].geometry.location_type;
                             
-                            // FIX: Convert LatLng object to literal for AdvancedMarkerElement
+                            console.log(`Geocoding successful (Attempt ${index + 1}):`, formattedAddress);
+                            console.log('Location type:', locationType);
+                            console.log('Exact coordinates:', location.lat(), location.lng());
+
+                            // Check if we got a precise location (ROOFTOP, RANGE_INTERPOLATED, or GEOMETRIC_CENTER)
+                            const isPrecise = ['ROOFTOP', 'RANGE_INTERPOLATED', 'GEOMETRIC_CENTER'].includes(locationType);
+                            
+                            map.setCenter(location);
+                            map.setZoom(isPrecise ? 17 : 15); // Higher zoom for precise locations
+                            
                             marker.position = {
                                 lat: location.lat(),
                                 lng: location.lng()
                             };
                             
-                            marker.visible = true; // Show marker
-                            document.getElementById('latitude').value = location.lat();
-                            document.getElementById('longitude').value = location.lng();
-                            // Update display
-                            document.getElementById('displayLatitude').textContent = location.lat().toFixed(6);
-                            document.getElementById('displayLongitude').textContent = location.lng().toFixed(6);
+                            marker.visible = true;
+                            updateCoordinates(location.lat(), location.lng());
+
+                            if (!isPrecise) {
+                                // If not precise, inform the user to adjust manually
+                                showErrorOverlay([
+                                    'Approximate location found.',
+                                    'Please manually drag the marker to your exact shop location for better accuracy.'
+                                ]);
+                            } else {
+                                console.log('Precise location found!');
+                            }
+                            
+                        } else if (status === google.maps.GeocoderStatus.ZERO_RESULTS) {
+                            console.log(`Attempt ${index + 1} failed: No results`);
+                            // Try next format
+                            attemptGeocoding(formats, index + 1);
                         } else {
-                            showErrorOverlay(['Unable to locate the address. Please check the address or manually adjust the marker.']);
+                            console.log(`Attempt ${index + 1} failed: ${status}`);
+                            // Try next format
+                            attemptGeocoding(formats, index + 1);
                         }
                     });
-                });
-            });
-        };
+                }
 
-        // Global variables
-        let map, marker, geocoder;
-    </script>
-    <script async src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBiw-3TrRkU1hSU0_dEsn3fjUxXAZWcLrg&libraries=places,marker&callback=initMap"></script>
+                function updateCoordinates(lat, lng) {
+                    document.getElementById('latitude').value = lat;
+                    document.getElementById('longitude').value = lng;
+                    document.getElementById('displayLatitude').textContent = lat.toFixed(6);
+                    document.getElementById('displayLongitude').textContent = lng.toFixed(6);
+                }
+            });
+
+            // Enhanced address autocomplete for better street-level accuracy
+            function initializeAddressAutocomplete() {
+                const addressInput = document.getElementById('shopAddress');
+                if (addressInput && google.maps.places) {
+                    const autocomplete = new google.maps.places.Autocomplete(addressInput, {
+                        componentRestrictions: { country: 'ph' },
+                        fields: ['address_components', 'geometry', 'formatted_address', 'name'],
+                        types: ['address', 'establishment'] // Include establishments for better results
+                    });
+
+                    autocomplete.addListener('place_changed', function() {
+                        const place = autocomplete.getPlace();
+                        if (!place.geometry) {
+                            console.log('No details available for input: ' + place.name);
+                            return;
+                        }
+
+                        console.log('Place autocomplete result:', place);
+
+                        // Extract address components
+                        extractAndFillAddressComponents(place);
+                        
+                        // Auto-center map on selected location
+                        const location = place.geometry.location;
+                        map.setCenter(location);
+                        map.setZoom(17);
+                        
+                        marker.position = {
+                            lat: location.lat(),
+                            lng: location.lng()
+                        };
+                        marker.visible = true;
+                        
+                        updateCoordinates(location.lat(), location.lng());
+                    });
+
+                    // Add input event listener to help with manual addresses
+                    addressInput.addEventListener('blur', function() {
+                        if (this.value.trim() && !this.getAttribute('data-autocomplete-used')) {
+                            // User typed manually, try to geocode just the street address
+                            setTimeout(() => {
+                                document.getElementById('locateMapBtn').click();
+                            }, 500);
+                        }
+                        this.removeAttribute('data-autocomplete-used');
+                    });
+
+                    // Mark when autocomplete is used
+                    addressInput.addEventListener('change', function() {
+                        this.setAttribute('data-autocomplete-used', 'true');
+                    });
+                }
+            }
+
+            function extractAndFillAddressComponents(place) {
+                let streetNumber = '';
+                let route = '';
+                let locality = '';
+                let administrativeArea = '';
+                let postalCode = '';
+
+                for (const component of place.address_components) {
+                    const componentType = component.types[0];
+                    
+                    switch (componentType) {
+                        case 'street_number':
+                            streetNumber = component.long_name;
+                            break;
+                        case 'route':
+                            route = component.long_name;
+                            break;
+                        case 'locality':
+                        case 'sublocality_level_1':
+                        case 'sublocality':
+                            if (!locality) locality = component.long_name;
+                            break;
+                        case 'administrative_area_level_1':
+                            administrativeArea = component.long_name;
+                            break;
+                        case 'administrative_area_level_2':
+                            if (!administrativeArea) administrativeArea = component.long_name;
+                            break;
+                        case 'postal_code':
+                            postalCode = component.long_name;
+                            break;
+                    }
+                }
+
+                // Build the full street address
+                let fullAddress = '';
+                if (streetNumber && route) {
+                    fullAddress = `${streetNumber} ${route}`;
+                } else if (route) {
+                    fullAddress = route;
+                } else {
+                    fullAddress = place.name || '';
+                }
+
+                // Update form fields
+                if (fullAddress) {
+                    document.getElementById('shopAddress').value = fullAddress;
+                }
+                if (locality && !document.getElementById('shopCity').value) {
+                    document.getElementById('shopCity').value = locality;
+                }
+                if (administrativeArea && !document.getElementById('shopState').value) {
+                    document.getElementById('shopState').value = administrativeArea;
+                }
+                if (postalCode && !document.getElementById('shopZip').value) {
+                    document.getElementById('shopZip').value = postalCode;
+                }
+            }
+
+            // Initialize address autocomplete when Places library is loaded
+            if (typeof google !== 'undefined' && google.maps && google.maps.places) {
+                initializeAddressAutocomplete();
+            }
+        });
+    };
+
+    // Global variables
+    let map, marker, geocoder;
+</script>
+<script async src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBiw-3TrRkU1hSU0_dEsn3fjUxXAZWcLrg&libraries=places,marker&callback=initMap"></script>
 </head>
 <body style="padding: 0;">
 
