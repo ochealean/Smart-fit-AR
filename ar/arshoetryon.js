@@ -43,186 +43,185 @@ const API_BASE_URL = 'https://deepareffecapi.onrender.com';
 
 // Function to build effect map from API
 async function buildEffectMapFromAPI() {
-  try {
-    console.log('🔄 Building effect map from API...');
-    
-    // First, get all models
-    const modelsResponse = await fetch(`${API_BASE_URL}/api/deepar/models`);
-    
-    if (!modelsResponse.ok) {
-      throw new Error(`API responded with status: ${modelsResponse.status}`);
-    }
-    
-    const modelsData = await modelsResponse.json();
-    
-    if (!modelsData.models || modelsData.models.length === 0) {
-      throw new Error('No models found from API');
-    }
+    try {
+        console.log('🔄 Building effect map from API...');
 
-    const effectMap = {};
-    let hasEffects = false;
-    
-    // Build effect map for each model
-    for (const model of modelsData.models) {
-      const modelId = model.id;
-      effectMap[modelId] = {};
-      
-      try {
-        // Get available effects for this model
-        const effectsResponse = await fetch(`${API_BASE_URL}/api/deepar/models/${modelId}`);
-        
-        if (effectsResponse.ok) {
-          const effectsData = await effectsResponse.json();
-          
-          if (effectsData.availableEffects && Object.keys(effectsData.availableEffects).length > 0) {
-            for (const [color, effectInfo] of Object.entries(effectsData.availableEffects)) {
-              effectMap[modelId][color] = effectInfo.deeparEffect;
-            }
-            hasEffects = true;
-            console.log(`✅ Found ${Object.keys(effectsData.availableEffects).length} effects for ${modelId}`);
-          } else {
-            console.warn(`⚠️ No effects found for model: ${modelId}`);
-          }
-        } else {
-          console.warn(`⚠️ Failed to fetch effects for model: ${modelId}, status: ${effectsResponse.status}`);
+        // First, get all models
+        const modelsResponse = await fetch(`${API_BASE_URL}/api/deepar/models`);
+
+        if (!modelsResponse.ok) {
+            throw new Error(`API responded with status: ${modelsResponse.status}`);
         }
-      } catch (modelError) {
-        console.warn(`⚠️ Error fetching effects for ${modelId}:`, modelError.message);
-      }
+
+        const modelsData = await modelsResponse.json();
+
+        if (!modelsData.models || modelsData.models.length === 0) {
+            throw new Error('No models found from API');
+        }
+
+        const effectMap = {};
+        let hasEffects = false;
+
+        // Build effect map for each model
+        for (const model of modelsData.models) {
+            const modelId = model.id;
+            effectMap[modelId] = {};
+
+            try {
+                // Get available effects for this model
+                const effectsResponse = await fetch(`${API_BASE_URL}/api/deepar/models/${modelId}`);
+
+                if (effectsResponse.ok) {
+                    const effectsData = await effectsResponse.json();
+
+                    if (effectsData.availableEffects && Object.keys(effectsData.availableEffects).length > 0) {
+                        for (const [color, effectInfo] of Object.entries(effectsData.availableEffects)) {
+                            effectMap[modelId][color] = effectInfo.deeparEffect;
+                        }
+                        hasEffects = true;
+                        console.log(`✅ Found ${Object.keys(effectsData.availableEffects).length} effects for ${modelId}`);
+                    } else {
+                        console.warn(`⚠️ No effects found for model: ${modelId}`);
+                    }
+                } else {
+                    console.warn(`⚠️ Failed to fetch effects for model: ${modelId}, status: ${effectsResponse.status}`);
+                }
+            } catch (modelError) {
+                console.warn(`⚠️ Error fetching effects for ${modelId}:`, modelError.message);
+            }
+        }
+
+        if (!hasEffects) {
+            throw new Error('No effects found in any model');
+        }
+
+        console.log('🎯 Effect map built from API:', effectMap);
+        return effectMap;
+
+    } catch (error) {
+        console.error('❌ Error building effect map from API:', error.message);
+        return null;
     }
-    
-    if (!hasEffects) {
-      throw new Error('No effects found in any model');
-    }
-    
-    console.log('🎯 Effect map built from API:', effectMap);
-    return effectMap;
-    
-  } catch (error) {
-    console.error('❌ Error building effect map from API:', error.message);
-    return null;
-  }
 }
 
 // Function to build effect map directly from Firebase (fallback)
 async function buildEffectMapFromFirebase() {
-  try {
-    console.log('🔄 Building effect map from Firebase...');
-    
-    const result = await readData('smartfit_AR_Database/ar_customization_models');
-    
-    if (!result.success) {
-      throw new Error('Failed to fetch data from Firebase');
-    }
+    try {
+        console.log('🔄 Building effect map from Firebase...');
 
-    const modelsData = result.data;
-    const effectMap = {};
-    let hasEffects = false;
+        const result = await readData('smartfit_AR_Database/ar_customization_models');
 
-    Object.keys(modelsData).forEach(modelKey => {
-      const model = modelsData[modelKey];
-      effectMap[modelKey] = {};
-      
-      if (model.bodyColors) {
-        Object.keys(model.bodyColors).forEach(colorKey => {
-          const colorData = model.bodyColors[colorKey];
-          
-          // Use the DeepAR effect URL from the database
-          if (colorData.deeparEffect) {
-            // Try to use API proxy for the effect
-            const proxiedEffect = `${API_BASE_URL}/api/deepar/${modelKey}/${colorKey}`;
-            effectMap[modelKey][colorKey] = proxiedEffect;
-            hasEffects = true;
-            console.log(`✅ Found DeepAR effect for ${modelKey} ${colorKey}`);
-          } else {
-            console.warn(`⚠️ No DeepAR effect found for ${modelKey} ${colorKey}`);
-          }
+        if (!result.success) {
+            throw new Error('Failed to fetch data from Firebase');
+        }
+
+        const modelsData = result.data;
+        const effectMap = {};
+        let hasEffects = false;
+
+        Object.keys(modelsData).forEach(modelKey => {
+            const model = modelsData[modelKey];
+            effectMap[modelKey] = {};
+
+            if (model.bodyColors) {
+                Object.keys(model.bodyColors).forEach(colorKey => {
+                    const colorData = model.bodyColors[colorKey];
+
+                    // Use the DeepAR effect URL from the database
+                    if (colorData.deepARFile) { // Changed to deepARFile
+                        const proxiedEffect = `${API_BASE_URL}/api/deepar/${modelKey}/${colorKey}`;
+                        effectMap[modelKey][colorKey] = proxiedEffect;
+                        hasEffects = true;
+                        console.log(`✅ Found DeepAR effect for ${modelKey} ${colorKey}`);
+                    } else {
+                        console.warn(`⚠️ No DeepAR effect found for ${modelKey} ${colorKey}`);
+                    }
+                });
+            }
         });
-      }
-    });
 
-    if (!hasEffects) {
-      throw new Error('No DeepAR effects found in Firebase database');
+        if (!hasEffects) {
+            throw new Error('No DeepAR effects found in Firebase database');
+        }
+
+        console.log('🎯 Effect map built from Firebase:', effectMap);
+        return effectMap;
+
+    } catch (error) {
+        console.error('❌ Error building effect map from Firebase:', error.message);
+        return null;
     }
-
-    console.log('🎯 Effect map built from Firebase:', effectMap);
-    return effectMap;
-    
-  } catch (error) {
-    console.error('❌ Error building effect map from Firebase:', error.message);
-    return null;
-  }
 }
 
 // Main function to fetch AR models with proper fallback
 async function fetchARModels() {
-  try {
-    console.log('🔄 Fetching AR models...');
-    
-    // Try to get effects from API first
-    let apiEffectMap = await buildEffectMapFromAPI();
-    
-    if (apiEffectMap) {
-      effectMap = apiEffectMap;
-      console.log('✅ Using effects from API server');
-      return await getModelsDataFromFirebase(); // Return the actual models data
+    try {
+        console.log('🔄 Fetching AR models...');
+
+        // Try to get effects from API first
+        let apiEffectMap = await buildEffectMapFromAPI();
+
+        if (apiEffectMap) {
+            effectMap = apiEffectMap;
+            console.log('✅ Using effects from API server');
+            return await getModelsDataFromFirebase(); // Return the actual models data
+        }
+
+        // Fallback to direct Firebase
+        console.warn('⚠️ API failed, falling back to Firebase');
+        const firebaseEffectMap = await buildEffectMapFromFirebase();
+
+        if (firebaseEffectMap) {
+            effectMap = firebaseEffectMap;
+            console.log('✅ Using effects from Firebase');
+            return await getModelsDataFromFirebase();
+        }
+
+        // Ultimate fallback - use API direct endpoints
+        console.warn('⚠️ Firebase failed, using API direct endpoints');
+        effectMap = buildDirectAPIEffectMap();
+        console.log('✅ Using direct API endpoints');
+        return await getModelsDataFromFirebase();
+
+    } catch (error) {
+        console.error('❌ Error in fetchARModels:', error.message);
+        return null;
     }
-    
-    // Fallback to direct Firebase
-    console.warn('⚠️ API failed, falling back to Firebase');
-    const firebaseEffectMap = await buildEffectMapFromFirebase();
-    
-    if (firebaseEffectMap) {
-      effectMap = firebaseEffectMap;
-      console.log('✅ Using effects from Firebase');
-      return await getModelsDataFromFirebase();
-    }
-    
-    // Ultimate fallback - use API direct endpoints
-    console.warn('⚠️ Firebase failed, using API direct endpoints');
-    effectMap = buildDirectAPIEffectMap();
-    console.log('✅ Using direct API endpoints');
-    return await getModelsDataFromFirebase();
-    
-  } catch (error) {
-    console.error('❌ Error in fetchARModels:', error.message);
-    return null;
-  }
 }
 
 // Get models data from Firebase
 async function getModelsDataFromFirebase() {
-  try {
-    const result = await readData('smartfit_AR_Database/ar_customization_models');
-    return result.success ? result.data : null;
-  } catch (error) {
-    console.error('❌ Error fetching models data:', error.message);
-    return null;
-  }
+    try {
+        const result = await readData('smartfit_AR_Database/ar_customization_models');
+        return result.success ? result.data : null;
+    } catch (error) {
+        console.error('❌ Error fetching models data:', error.message);
+        return null;
+    }
 }
 
 // Build direct API effect map as ultimate fallback
 function buildDirectAPIEffectMap() {
-  return {
-    classic: {
-      red: `${API_BASE_URL}/api/deepar/classic/red`,
-      white: `${API_BASE_URL}/api/deepar/classic/white`,
-      black: `${API_BASE_URL}/api/deepar/classic/black`,
-      blue: `${API_BASE_URL}/api/deepar/classic/blue`
-    },
-    basketball: {
-      red: `${API_BASE_URL}/api/deepar/basketball/red`,
-      white: `${API_BASE_URL}/api/deepar/basketball/white`,
-      black: `${API_BASE_URL}/api/deepar/basketball/black`,
-      blue: `${API_BASE_URL}/api/deepar/basketball/blue`
-    },
-    runner: {
-      red: `${API_BASE_URL}/api/deepar/runner/red`,
-      white: `${API_BASE_URL}/api/deepar/runner/white`,
-      black: `${API_BASE_URL}/api/deepar/runner/black`,
-      blue: `${API_BASE_URL}/api/deepar/runner/blue`
-    }
-  };
+    return {
+        classic: {
+            red: `${API_BASE_URL}/api/deepar/classic/red`,
+            white: `${API_BASE_URL}/api/deepar/classic/white`,
+            black: `${API_BASE_URL}/api/deepar/classic/black`,
+            blue: `${API_BASE_URL}/api/deepar/classic/blue`
+        },
+        basketball: {
+            red: `${API_BASE_URL}/api/deepar/basketball/red`,
+            white: `${API_BASE_URL}/api/deepar/basketball/white`,
+            black: `${API_BASE_URL}/api/deepar/basketball/black`,
+            blue: `${API_BASE_URL}/api/deepar/basketball/blue`
+        },
+        runner: {
+            red: `${API_BASE_URL}/api/deepar/runner/red`,
+            white: `${API_BASE_URL}/api/deepar/runner/white`,
+            black: `${API_BASE_URL}/api/deepar/runner/black`,
+            blue: `${API_BASE_URL}/api/deepar/runner/blue`
+        }
+    };
 }
 
 // Function to get image URL from color data
@@ -240,22 +239,22 @@ function getColorImageUrl(colorData) {
 // Function to create filter buttons dynamically based on database data
 function createFilterButtons(arModelsData) {
     const container = document.getElementById('filter-container');
-    
+
     if (!container) {
         console.error('❌ Filter container not found');
         return;
     }
-    
+
     container.innerHTML = ''; // Clear existing content
-    
+
     if (!arModelsData || Object.keys(arModelsData).length === 0) {
         container.innerHTML = '<div class="no-effects">No AR effects available</div>';
         return;
     }
-    
+
     const categories = Object.keys(arModelsData);
     let hasAnyEffects = false;
-    
+
     categories.forEach((model, catIndex) => {
         const group = document.createElement('div');
         group.className = 'category-group';
@@ -266,11 +265,11 @@ function createFilterButtons(arModelsData) {
 
         const buttonsDiv = document.createElement('div');
         buttonsDiv.className = 'filter-buttons';
-        
+
         // Get available colors for this model from database
         const availableColors = arModelsData[model].bodyColors;
         let hasModelEffects = false;
-        
+
         if (availableColors) {
             for (const color in availableColors) {
                 // Check if effect exists for this color in our effect map
@@ -278,10 +277,10 @@ function createFilterButtons(arModelsData) {
                     console.warn(`⚠️ No DeepAR effect found for ${model} ${color}, skipping`);
                     continue;
                 }
-                
+
                 const button = document.createElement('div');
                 button.className = 'filter-button';
-                
+
                 button.dataset.path = effectMap[model][color];
                 button.dataset.model = model;
                 button.dataset.color = color;
@@ -290,15 +289,15 @@ function createFilterButtons(arModelsData) {
                 button.setAttribute('aria-label', `${model} ${color}`);
 
                 const img = document.createElement('img');
-                
+
                 // Get the image URL from the database
                 const colorData = availableColors[color];
                 const imageUrl = getColorImageUrl(colorData);
-                
+
                 img.src = imageUrl;
                 img.className = 'filter-image';
                 img.alt = `${model} ${color} shoe`;
-                img.onerror = function() {
+                img.onerror = function () {
                     // If image fails to load, use a placeholder
                     this.src = '/images/shoe3.png';
                 };
@@ -327,7 +326,7 @@ function createFilterButtons(arModelsData) {
                 hasAnyEffects = true;
             }
         }
-        
+
         if (hasModelEffects) {
             group.appendChild(buttonsDiv);
             container.appendChild(group);
@@ -339,7 +338,7 @@ function createFilterButtons(arModelsData) {
             }
         }
     });
-    
+
     if (!hasAnyEffects) {
         container.innerHTML = '<div class="no-effects">No AR effects available. Please check if DeepAR effects are properly configured.</div>';
     }
@@ -349,11 +348,11 @@ function createFilterButtons(arModelsData) {
 function getInitialEffectPath() {
     const model = urlParams.get('model') || 'classic';
     const color = urlParams.get('color') || 'white';
-    
+
     if (effectMap[model] && effectMap[model][color]) {
         return effectMap[model][color];
     }
-    
+
     // Fallback: find first available effect
     for (const modelKey in effectMap) {
         for (const colorKey in effectMap[modelKey]) {
@@ -361,76 +360,76 @@ function getInitialEffectPath() {
             return effectMap[modelKey][colorKey];
         }
     }
-    
+
     return null;
 }
 
 // Main initialization function
 (async function () {
-  loader.classList.add('active');
-  try {
-    // Initialize DeepAR first
-    deepAR = await deepar.initialize({
-      licenseKey: 'f0eafd99d224758bdc2c7271acd80bc7642fdb178ba74faf1c61c1ec7d25221057493e7b9b73c58d',
-      previewElement: preview,
-    });
-    console.log("✅ DeepAR initialized");
+    loader.classList.add('active');
+    try {
+        // Initialize DeepAR first
+        deepAR = await deepar.initialize({
+            licenseKey: 'f0eafd99d224758bdc2c7271acd80bc7642fdb178ba74faf1c61c1ec7d25221057493e7b9b73c58d',
+            previewElement: preview,
+        });
+        console.log("✅ DeepAR initialized");
 
-    // Fetch AR models data
-    let arModelsData = await fetchARModels();
-    
-    if (!arModelsData || Object.keys(arModelsData).length === 0) {
-      throw new Error('No AR models data available');
+        // Fetch AR models data
+        let arModelsData = await fetchARModels();
+
+        if (!arModelsData || Object.keys(arModelsData).length === 0) {
+            throw new Error('No AR models data available');
+        }
+
+        console.log('📊 Available models and colors:', arModelsData);
+
+        // Get initial effect path
+        const initialEffectPath = getInitialEffectPath();
+
+        if (!initialEffectPath) {
+            throw new Error('No DeepAR effects available. Please ensure DeepAR effects are uploaded to the database.');
+        }
+
+        // Start with back camera
+        await switchCamera('environment');
+        await deepAR.switchEffect(initialEffectPath);
+        console.log(`✅ Initial shoe effect loaded: ${initialEffectPath}`);
+
+        // Set up DeepAR callbacks
+        deepAR.callbacks.onFeetVisibilityChanged = (visible) => {
+            console.log(visible ? '👟 Feet detected!' : 'No feet visible.');
+        };
+
+        // Create filter buttons based on available data
+        createFilterButtons(arModelsData);
+
+        // Select initial button
+        const initialModel = urlParams.get('model') || 'classic';
+        const initialColor = urlParams.get('color') || 'white';
+        const initialButton = Array.from(document.querySelectorAll('.filter-button')).find(btn =>
+            btn.dataset.model === initialModel && btn.dataset.color === initialColor
+        );
+
+        if (initialButton) {
+            initialButton.classList.add('selected');
+            console.log(`✅ Selected initial button: ${initialModel} ${initialColor}`);
+        } else {
+            const firstButton = document.querySelector('.filter-button');
+            if (firstButton) {
+                firstButton.classList.add('selected');
+                console.log('✅ Selected first available button as fallback');
+            }
+        }
+
+        loader.classList.remove('active');
+        console.log('🎉 AR Try-On initialized successfully');
+
+    } catch (err) {
+        console.error("❌ Initialization error:", err);
+        loader.classList.remove('active');
+        alert('Failed to initialize AR. Please check console for details and ensure DeepAR effects are properly configured.');
     }
-
-    console.log('📊 Available models and colors:', arModelsData);
-
-    // Get initial effect path
-    const initialEffectPath = getInitialEffectPath();
-    
-    if (!initialEffectPath) {
-      throw new Error('No DeepAR effects available. Please ensure DeepAR effects are uploaded to the database.');
-    }
-
-    // Start with back camera
-    await switchCamera('environment');
-    await deepAR.switchEffect(initialEffectPath);
-    console.log(`✅ Initial shoe effect loaded: ${initialEffectPath}`);
-
-    // Set up DeepAR callbacks
-    deepAR.callbacks.onFeetVisibilityChanged = (visible) => {
-      console.log(visible ? '👟 Feet detected!' : 'No feet visible.');
-    };
-
-    // Create filter buttons based on available data
-    createFilterButtons(arModelsData);
-
-    // Select initial button
-    const initialModel = urlParams.get('model') || 'classic';
-    const initialColor = urlParams.get('color') || 'white';
-    const initialButton = Array.from(document.querySelectorAll('.filter-button')).find(btn => 
-      btn.dataset.model === initialModel && btn.dataset.color === initialColor
-    );
-    
-    if (initialButton) {
-      initialButton.classList.add('selected');
-      console.log(`✅ Selected initial button: ${initialModel} ${initialColor}`);
-    } else {
-      const firstButton = document.querySelector('.filter-button');
-      if (firstButton) {
-        firstButton.classList.add('selected');
-        console.log('✅ Selected first available button as fallback');
-      }
-    }
-
-    loader.classList.remove('active');
-    console.log('🎉 AR Try-On initialized successfully');
-    
-  } catch (err) {
-    console.error("❌ Initialization error:", err);
-    loader.classList.remove('active');
-    alert('Failed to initialize AR. Please check console for details and ensure DeepAR effects are properly configured.');
-  }
 })();
 
 // Camera and effect switching functions
@@ -460,7 +459,7 @@ async function switchCamera(facingMode) {
 }
 
 function handleBuyNow() {
-    if(window.userAuthStatus) window.location.href = deepARBuyNowLink;
+    if (window.userAuthStatus) window.location.href = deepARBuyNowLink;
     else alert('Please login first to purchase');
 }
 
@@ -473,10 +472,10 @@ async function toggleCamera() {
 async function switchEffect(effectPath, model, color) {
     try {
         if (!deepAR) throw new Error('DeepAR not initialized');
-        
+
         console.log(`🔄 Switching to effect: ${effectPath}`);
         await deepAR.switchEffect(effectPath);
-        
+
         currentEffectPath = effectPath;
         console.log(`✅ Switched to effect: ${effectPath}`);
 
@@ -533,7 +532,7 @@ function enterExpanded() {
     screenshotBtnExpanded.style.display = 'flex';
     switchCameraBtnExpanded.style.display = 'flex';
     document.body.style.overflow = 'hidden';
-    
+
     if (isMirrored) {
         preview.classList.remove('mirroredwithout80');
         preview.classList.add('mirrored');
@@ -560,7 +559,7 @@ function exitExpanded() {
     screenshotBtnExpanded.style.display = 'none';
     switchCameraBtnExpanded.style.display = 'none';
     document.body.style.overflow = 'auto';
-    
+
     if (isMirrored) {
         preview.classList.remove('mirrored');
         preview.classList.add('mirroredwithout80');
