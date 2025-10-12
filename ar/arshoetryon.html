@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -15,8 +16,8 @@
             --dark: #1a1a2e;
             --light: #f8f9fa;
             --gray: #e9ecef;
-            --shadow-sm: 0 2px 4px rgba(0,0,0,0.1);
-            --shadow-md: 0 4px 12px rgba(0,0,0,0.15);
+            --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.1);
+            --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.15);
             --transition: all 0.3s ease;
         }
 
@@ -102,7 +103,7 @@
         }
 
         .switch-camera-button {
-            background: rgba(255,255,255,0.8);
+            background: rgba(255, 255, 255, 0.8);
             border: none;
             border-radius: 50%;
             width: 32px;
@@ -141,8 +142,11 @@
             z-index: 1001;
         }
 
-        .expand-button, .exit-button, .mirror-button, .screenshot-button {
-            background: rgba(255,255,255,0.8);
+        .expand-button,
+        .exit-button,
+        .mirror-button,
+        .screenshot-button {
+            background: rgba(255, 255, 255, 0.8);
             border: none;
             border-radius: 50%;
             width: 32px;
@@ -155,12 +159,18 @@
             box-shadow: var(--shadow-sm);
         }
 
-        .expand-button:hover, .exit-button:hover, .mirror-button:hover, .screenshot-button:hover {
+        .expand-button:hover,
+        .exit-button:hover,
+        .mirror-button:hover,
+        .screenshot-button:hover {
             background: white;
             transform: scale(1.1);
         }
 
-        .expand-button i, .exit-button i, .mirror-button i, .screenshot-button i {
+        .expand-button i,
+        .exit-button i,
+        .mirror-button i,
+        .screenshot-button i {
             color: var(--primary);
             font-size: 14px;
         }
@@ -187,7 +197,7 @@
             transform: translateX(-50%);
             width: 80vw;
             max-width: 90%;
-            background: rgba(255,255,255,0.95);
+            background: rgba(255, 255, 255, 0.95);
             padding: 15px;
             border-radius: 10px 10px 0 0;
             box-shadow: var(--shadow-md);
@@ -236,7 +246,7 @@
             display: none;
             bottom: 20px;
             right: 10vw;
-            background: rgba(255,255,255,0.8);
+            background: rgba(255, 255, 255, 0.8);
             border: none;
             border-radius: 50%;
             width: 40px;
@@ -435,7 +445,8 @@
             margin: 10px 0;
         }
 
-        .back-button:hover, .buy-now-button:hover {
+        .back-button:hover,
+        .buy-now-button:hover {
             transform: translateY(-2px);
             box-shadow: var(--shadow-md);
         }
@@ -467,7 +478,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(255,255,255,0.9);
+            background: rgba(255, 255, 255, 0.9);
             display: none;
             align-items: center;
             justify-content: center;
@@ -488,8 +499,13 @@
         }
 
         @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
         }
 
         @media (max-width: 768px) {
@@ -530,7 +546,7 @@
                 font-size: 0.7rem;
             }
 
-            .back-button .buy-now-button{
+            .back-button .buy-now-button {
                 max-width: 200px;
             }
         }
@@ -563,6 +579,7 @@
         }
     </style>
 </head>
+
 <body>
     <header>
         <h1>SmartFit - AR Try-On</h1>
@@ -605,7 +622,8 @@
     <button class="buy-now-button" id="buy-now-button">Buy Now</button>
 
     <!-- Back button -->
-    <button class="back-button" id="back-button" onclick="window.location.href='arshoe.html'">Back to Collection</button>
+    <button class="back-button" id="back-button" onclick="window.location.href='arshoe.html'">Back to
+        Collection</button>
 
     <!-- Toggle filter button for expanded view -->
     <button class="toggle-filter-btn" id="toggle-filter-btn" title="Toggle Filters">
@@ -634,6 +652,11 @@
     </div>
 
     <script>
+        const params = new URLSearchParams(window.location.search);
+        const model = params.get('model');
+        console.log(`/customer/html/customizeshoe.html?model=${model}`);
+        let deepARBuyNowLink = `/customer/html/customizeshoe.html?model=${model}`;
+        
         let deepAR;
         let isFrontCamera = false; // Track camera state
         let isMirrored = false; // Track mirror state
@@ -785,6 +808,10 @@
             }
         }
 
+        function handleBuyNow() {
+            window.location.href = deepARBuyNowLink;
+        }
+
         async function toggleCamera() {
             isFrontCamera = !isFrontCamera;
             const facingMode = isFrontCamera ? 'user' : 'environment';
@@ -797,6 +824,11 @@
                 await deepAR.switchEffect(effectPath);
                 currentEffectPath = effectPath;
                 console.log(`✅ Switched to effect: ${effectPath}`);
+
+                const params = new URLSearchParams(window.location.search);
+                const model = params.get('model');
+                console.log(`/customer/html/customizeshoe.html?model=${model}`);
+                deepARBuyNowLink = `/customer/html/customizeshoe.html?model=${model}`;
             } catch (err) {
                 console.error("❌ Failed to switch effect:", err);
             }
@@ -834,6 +866,7 @@
 
         switchCameraBtnNormal.addEventListener('click', toggleCamera);
         switchCameraBtnExpanded.addEventListener('click', toggleCamera);
+        buyNowButton.addEventListener('click', handleBuyNow);
 
         function enterExpanded() {
             preview.classList.add('expanded');
@@ -938,4 +971,5 @@
         });
     </script>
 </body>
+
 </html>
