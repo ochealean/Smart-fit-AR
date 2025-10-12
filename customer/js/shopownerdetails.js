@@ -17,7 +17,10 @@ class ShopDetailsPage {
         this.currentPage = 1;
         this.productsPerPage = 12;
         this.currentFilters = {
-            category: 'all',
+            search: '',
+            gender: 'all',
+            brand: 'all',
+            type: 'all',
             sort: 'newest'
         };
         
@@ -839,19 +842,52 @@ class ShopDetailsPage {
     applyFilters(products) {
         let filtered = [...products];
         
-        // Category filter
-        if (this.currentFilters.category !== 'all') {
+        // Search filter
+        if (this.currentFilters.search) {
             filtered = filtered.filter(product => {
-                const productCategory = (product.shoeType || product.shoeBrand || '').toLowerCase();
-                return productCategory === this.currentFilters.category;
+                const searchTerm = this.currentFilters.search.toLowerCase();
+                const productName = (product.shoeName || '').toLowerCase();
+                const productDescription = (product.generalDescription || '').toLowerCase();
+                const productBrand = (product.shoeBrand || '').toLowerCase();
+                const productType = (product.shoeType || '').toLowerCase();
+                
+                return productName.includes(searchTerm) ||
+                    productDescription.includes(searchTerm) ||
+                    productBrand.includes(searchTerm) ||
+                    productType.includes(searchTerm);
             });
         }
         
+        // Gender filter
+        if (this.currentFilters.gender !== 'all') {
+            filtered = filtered.filter(product => {
+                const productGender = (product.shoeGender || '').toLowerCase();
+                return productGender === this.currentFilters.gender;
+            });
+        }
+        
+        // Brand filter
+        if (this.currentFilters.brand !== 'all') {
+            filtered = filtered.filter(product => {
+                const productBrand = (product.shoeBrand || '').toLowerCase();
+                return productBrand === this.currentFilters.brand;
+            });
+        }
+        
+        // Type filter
+        if (this.currentFilters.type !== 'all') {
+            filtered = filtered.filter(product => {
+                const productType = (product.shoeType || '').toLowerCase();
+                return productType === this.currentFilters.type;
+            });
+        }
+        
+        console.log(`🔍 Filters applied: ${filtered.length} products after filtering`);
         return filtered;
     }
 
     applySorting(products) {
-        const sorted = [...products];
+                const sorted = [...products];
         
         switch (this.currentFilters.sort) {
             case 'price-low':
@@ -1326,10 +1362,32 @@ class ShopDetailsPage {
             });
         });
         
+        // Search functionality
+        document.getElementById('productSearch').addEventListener('input', (e) => {
+            console.log('🔍 Search input:', e.target.value);
+            this.currentFilters.search = e.target.value.toLowerCase();
+            this.currentPage = 1;
+            this.renderProducts();
+        });
+        
         // Filter controls
-        document.getElementById('categoryFilter').addEventListener('change', (e) => {
-            console.log('🔧 Category filter changed:', e.target.value);
-            this.currentFilters.category = e.target.value;
+        document.getElementById('genderFilter').addEventListener('change', (e) => {
+            console.log('🔧 Gender filter changed:', e.target.value);
+            this.currentFilters.gender = e.target.value;
+            this.currentPage = 1;
+            this.renderProducts();
+        });
+        
+        document.getElementById('brandFilter').addEventListener('change', (e) => {
+            console.log('🔧 Brand filter changed:', e.target.value);
+            this.currentFilters.brand = e.target.value;
+            this.currentPage = 1;
+            this.renderProducts();
+        });
+        
+        document.getElementById('typeFilter').addEventListener('change', (e) => {
+            console.log('🔧 Type filter changed:', e.target.value);
+            this.currentFilters.type = e.target.value;
             this.currentPage = 1;
             this.renderProducts();
         });

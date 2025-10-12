@@ -128,13 +128,56 @@
                         <div class="products-header">
                             <h2>Available Shoes</h2>
                             <div class="filter-controls">
-                                <select id="categoryFilter" class="filter-select">
-                                    <option value="all">All Categories</option>
+                                <!-- Search Bar -->
+                                <div class="search-container">
+                                    <input type="text" id="productSearch" class="search-bar" placeholder="Search shoes by name, description...">
+                                    <i class="fas fa-search search-icon"></i>
+                                </div>
+                                
+                                <!-- Category Filters -->
+                                <select id="genderFilter" class="filter-select">
+                                    <option value="all">All Genders</option>
+                                    <option value="men">Men</option>
+                                    <option value="women">Women</option>
+                                    <option value="kids">Kids</option>
+                                    <option value="unisex">Unisex</option>
+                                </select>
+                                
+                                <select id="brandFilter" class="filter-select">
+                                    <option value="all">All Brands</option>
+                                    <option value="nike">Nike</option>
+                                    <option value="adidas">Adidas</option>
+                                    <option value="puma">Puma</option>
+                                    <option value="reebok">Reebok</option>
+                                    <option value="new-balance">New Balance</option>
+                                    <option value="asics">ASICS</option>
+                                    <option value="under-armour">Under Armour</option>
+                                    <option value="vans">Vans</option>
+                                    <option value="converse">Converse</option>
+                                    <option value="fila">Fila</option>
+                                    <option value="skechers">Skechers</option>
+                                    <option value="brooks">Brooks</option>
+                                    <option value="jordan">Air Jordan</option>
+                                    <option value="timberland">Timberland</option>
+                                    <option value="merrell">Merrell</option>
+                                    <option value="others">Others</option>
+                                </select>
+                                
+                                <select id="typeFilter" class="filter-select">
+                                    <option value="all">All Types</option>
                                     <option value="running">Running</option>
                                     <option value="basketball">Basketball</option>
                                     <option value="casual">Casual</option>
+                                    <option value="formal">Formal</option>
                                     <option value="sneakers">Sneakers</option>
+                                    <option value="boots">Boots</option>
+                                    <option value="sandals">Sandals</option>
+                                    <option value="slippers">Slippers</option>
+                                    <option value="high-heels">High Heels</option>
+                                    <option value="flats">Flats</option>
+                                    <option value="others">Others</option>
                                 </select>
+                                
                                 <select id="sortFilter" class="filter-select">
                                     <option value="newest">Newest First</option>
                                     <option value="price-low">Price: Low to High</option>

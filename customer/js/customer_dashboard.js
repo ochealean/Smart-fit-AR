@@ -202,7 +202,7 @@ async function displayAllShoes(allShops, shoeContainer) {
                     <h3>${shoe.shoeName || 'Unnamed Shoe'}</h3>
                     <p class="shoe-code">Code: ${shoe.shoeCode || 'N/A'}</p>
                     <h4 class="shop-name-link" data-shop-id="${shopID}" data-shop-name="${shopName}">
-                        Shop: ${shopName}
+                        Shop Name: ${shopName}
                     </h4>
                     <div class="product-meta">
                         <span class="product-brand">${shoe.shoeBrand || 'No Brand'}</span>
