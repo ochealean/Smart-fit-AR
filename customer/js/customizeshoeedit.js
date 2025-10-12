@@ -123,7 +123,7 @@ async function initializePage() {
 
     // Initial preview update
     updatePreview();
-    
+
     // Final check to ensure lace colors are properly initialized
     setTimeout(() => {
         ensureLaceColorsInitialized();
@@ -417,9 +417,10 @@ function updateShoeImages() {
     const arExperienceLink = getElement('arExperienceLink');
     const bodyColor = selections[currentModel].bodyColor;
 
-    // Update AR link
-    if (arExperienceLink) {
-        arExperienceLink.href = `#${currentModel}-${bodyColor}`;
+    // Update AR link to point to actual AR page with correct parameters
+    if (arExperienceLink && bodyColor) {
+        arExperienceLink.href = `/ar/arshoetryon.html?model=${currentModel}&color=${bodyColor}`;
+        console.log(`AR Experience Link updated: ${arExperienceLink.href}`);
     }
 
     // Get the current model data
@@ -690,10 +691,10 @@ function setupLacesOptions(model) {
 function ensureLaceColorsInitialized() {
     const laceColorContainer = getElement(`${currentModel}LacesColorOptions`);
     if (!laceColorContainer) return;
-    
+
     const selectedColor = selections[currentModel].laces.color;
     const colorOptions = laceColorContainer.querySelectorAll('.color-option');
-    
+
     // If we have a selected color but no options are selected, fix it
     if (selectedColor && colorOptions.length > 0) {
         let isAnySelected = false;
@@ -702,7 +703,7 @@ function ensureLaceColorsInitialized() {
                 isAnySelected = true;
             }
         });
-        
+
         if (!isAnySelected) {
             console.log('Fixing unselected lace color:', selectedColor);
             applyLaceColorSelection(selectedColor);
@@ -768,7 +769,7 @@ function setupLaceColorOptions(model) {
             this.classList.add('selected');
 
             // Add checkmark to selected color
-            
+
 
             // Update the lace color selection
             selections[model].laces.color = this.dataset.color;
@@ -836,7 +837,7 @@ function setupBodyColorOptions(model) {
             this.classList.add('selected');
 
             // Add checkmark to selected color
-            
+
 
             selections[model].bodyColor = this.dataset.color;
             updatePreview();
