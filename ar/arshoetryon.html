@@ -651,12 +651,21 @@
         <div class="loader-spinner"></div>
     </div>
 
-    <script>
+    <script type="module">
+        import { checkUserAuth } from '../../firebaseMethods.js';
+        const authStatus = await checkUserAuth();
+        if (authStatus.authenticated && authStatus.role === 'customer') {
+            window.userAuthStatus = true;
+        } else window.userAuthStatus = false;
+    </script>
+
+
+    <script type="module">
         const params = new URLSearchParams(window.location.search);
         const model = params.get('model');
         console.log(`/customer/html/customizeshoe.html?model=${model}`);
         let deepARBuyNowLink = `/customer/html/customizeshoe.html?model=${model}`;
-        
+
         let deepAR;
         let isFrontCamera = false; // Track camera state
         let isMirrored = false; // Track mirror state
@@ -809,7 +818,8 @@
         }
 
         function handleBuyNow() {
-            window.location.href = deepARBuyNowLink;
+            if(window.userAuthStatus) window.location.href = deepARBuyNowLink;
+            else alert('please login first');
         }
 
         async function toggleCamera() {
