@@ -167,7 +167,7 @@ const exitBtnExpanded = document.getElementById('exit-btn-expanded');
                     imageUrl = colorData.image;
                 } else {
                     // Fallback image if no image is found
-                    imageUrl = '/images/placeholder-shoe.png';
+                    imageUrl = '/images/shoe3.png';
                 }
                 
                 img.src = imageUrl;
@@ -175,7 +175,7 @@ const exitBtnExpanded = document.getElementById('exit-btn-expanded');
                 img.alt = `${model} ${color} shoe`;
                 img.onerror = function() {
                     // If image fails to load, use a placeholder
-                    this.src = '/images/placeholder-shoe.png';
+                    this.src = '/images/shoe3.png';
                 };
 
                 const name = document.createElement('span');
