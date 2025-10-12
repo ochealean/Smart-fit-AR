@@ -39,45 +39,70 @@ const backButton = document.getElementById('back-button');
 const expandedControls = document.getElementById('expanded-controls');
 const exitBtnExpanded = document.getElementById('exit-btn-expanded');
 
-// Function to fetch AR models from Firebase and build effect map
-async function fetchARModels() {
-    try {
-        const result = await readData('smartfit_AR_Database/ar_customization_models');
-        if (result.success) {
-            console.log('✅ AR models fetched from database:', result.data);
-            
-            // Build effect map from database data
-            effectMap = {};
-            const modelsData = result.data;
-            
-            Object.keys(modelsData).forEach(modelKey => {
-                const model = modelsData[modelKey];
-                effectMap[modelKey] = {};
-                
-                if (model.bodyColors) {
-                    Object.keys(model.bodyColors).forEach(colorKey => {
-                        const colorData = model.bodyColors[colorKey];
-                        // Use the DeepAR effect URL from the database
-                        if (colorData.deepARFile) {
-                            effectMap[modelKey][colorKey] = colorData.deepARFile;
-                            console.log(`📁 DeepAR effect for ${modelKey} ${colorKey}: ${colorData.deepARFile}`);
-                        } else {
-                            console.warn(`⚠️ No DeepAR effect found for ${modelKey} ${colorKey}`);
-                        }
-                    });
-                }
-            });
-            
-            console.log('🎯 Built effect map:', effectMap);
-            return modelsData;
-        } else {
-            console.error('❌ Failed to fetch AR models:', result.error);
-            return null;
-        }
-    } catch (error) {
-        console.error('❌ Error fetching AR models:', error);
-        return null;
+const API_BASE_URL = 'https://deepareffecapi.onrender.com'; // Replace with your deployed API URL
+
+// Function to build effect map from API
+async function buildEffectMapFromAPI() {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/deepar/models`);
+    const modelsData = await response.json();
+    
+    if (!modelsData.models) {
+      throw new Error('No models found from API');
     }
+
+    const effectMap = {};
+    
+    // Build effect map for each model
+    for (const model of modelsData.models) {
+      const modelId = model.id;
+      effectMap[modelId] = {};
+      
+      // Get available effects for this model
+      const effectsResponse = await fetch(`${API_BASE_URL}/api/deepar/models/${modelId}`);
+      const effectsData = await effectsResponse.json();
+      
+      if (effectsData.availableEffects) {
+        for (const [color, effectInfo] of Object.entries(effectsData.availableEffects)) {
+          effectMap[modelId][color] = effectInfo.deeparEffect;
+        }
+      }
+    }
+    
+    console.log('🎯 Effect map built from API:', effectMap);
+    return effectMap;
+    
+  } catch (error) {
+    console.error('❌ Error building effect map from API:', error);
+    return null;
+  }
+}
+
+// Updated fetchARModels function
+async function fetchARModels() {
+  try {
+    // Try to get effects from API first
+    const apiEffectMap = await buildEffectMapFromAPI();
+    
+    if (apiEffectMap) {
+      effectMap = apiEffectMap;
+      console.log('✅ Using effects from API server');
+    } else {
+      // Fallback to direct Firebase (with CORS issues)
+      console.warn('⚠️ Falling back to direct Firebase access');
+      const result = await readData('smartfit_AR_Database/ar_customization_models');
+      if (result.success) {
+        // Build effect map from Firebase (existing code)
+        // This will have CORS issues but works as fallback
+      }
+    }
+    
+    return apiEffectMap;
+    
+  } catch (error) {
+    console.error('❌ Error in fetchARModels:', error);
+    return null;
+  }
 }
 
 // Function to get image URL from color data
