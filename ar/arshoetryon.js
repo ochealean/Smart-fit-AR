@@ -41,7 +41,56 @@ const exitBtnExpanded = document.getElementById('exit-btn-expanded');
 
 const API_BASE_URL = 'https://deepareffecapi.onrender.com';
 
-// Function to build effect map from API
+// Function to build effect map directly from Firebase (primary method)
+async function buildEffectMapFromFirebase() {
+    try {
+        console.log('🔄 Building effect map from Firebase...');
+
+        const result = await readData('smartfit_AR_Database/ar_customization_models');
+
+        if (!result.success) {
+            throw new Error('Failed to fetch data from Firebase');
+        }
+
+        const modelsData = result.data;
+        const effectMap = {};
+        let hasEffects = false;
+
+        Object.keys(modelsData).forEach(modelKey => {
+            const model = modelsData[modelKey];
+            effectMap[modelKey] = {};
+
+            if (model.bodyColors) {
+                Object.keys(model.bodyColors).forEach(colorKey => {
+                    const colorData = model.bodyColors[colorKey];
+
+                    // Use the DeepAR effect URL from the database
+                    if (colorData.deepARFile) {
+                        const proxiedEffect = `${API_BASE_URL}/api/deepar/${modelKey}/${colorKey}`;
+                        effectMap[modelKey][colorKey] = proxiedEffect;
+                        hasEffects = true;
+                        console.log(`✅ Found DeepAR effect for ${modelKey} ${colorKey}`);
+                    } else {
+                        console.warn(`⚠️ No DeepAR effect found for ${modelKey} ${colorKey}`);
+                    }
+                });
+            }
+        });
+
+        if (!hasEffects) {
+            throw new Error('No DeepAR effects found in Firebase database');
+        }
+
+        console.log('🎯 Effect map built from Firebase:', effectMap);
+        return effectMap;
+
+    } catch (error) {
+        console.error('❌ Error building effect map from Firebase:', error.message);
+        return null;
+    }
+}
+
+// Function to build effect map from API (fallback)
 async function buildEffectMapFromAPI() {
     try {
         console.log('🔄 Building effect map from API...');
@@ -76,9 +125,11 @@ async function buildEffectMapFromAPI() {
 
                     if (effectsData.availableEffects && Object.keys(effectsData.availableEffects).length > 0) {
                         for (const [color, effectInfo] of Object.entries(effectsData.availableEffects)) {
-                            effectMap[modelId][color] = effectInfo.deeparEffect;
+                            if (effectInfo.deeparEffect) {
+                                effectMap[modelId][color] = effectInfo.deeparEffect;
+                                hasEffects = true;
+                            }
                         }
-                        hasEffects = true;
                         console.log(`✅ Found ${Object.keys(effectsData.availableEffects).length} effects for ${modelId}`);
                     } else {
                         console.warn(`⚠️ No effects found for model: ${modelId}`);
@@ -104,84 +155,31 @@ async function buildEffectMapFromAPI() {
     }
 }
 
-// Function to build effect map directly from Firebase (fallback)
-async function buildEffectMapFromFirebase() {
-    try {
-        console.log('🔄 Building effect map from Firebase...');
-
-        const result = await readData('smartfit_AR_Database/ar_customization_models');
-
-        if (!result.success) {
-            throw new Error('Failed to fetch data from Firebase');
-        }
-
-        const modelsData = result.data;
-        const effectMap = {};
-        let hasEffects = false;
-
-        Object.keys(modelsData).forEach(modelKey => {
-            const model = modelsData[modelKey];
-            effectMap[modelKey] = {};
-
-            if (model.bodyColors) {
-                Object.keys(model.bodyColors).forEach(colorKey => {
-                    const colorData = model.bodyColors[colorKey];
-
-                    // Use the DeepAR effect URL from the database
-                    if (colorData.deepARFile) { // Changed to deepARFile
-                        const proxiedEffect = `${API_BASE_URL}/api/deepar/${modelKey}/${colorKey}`;
-                        effectMap[modelKey][colorKey] = proxiedEffect;
-                        hasEffects = true;
-                        console.log(`✅ Found DeepAR effect for ${modelKey} ${colorKey}`);
-                    } else {
-                        console.warn(`⚠️ No DeepAR effect found for ${modelKey} ${colorKey}`);
-                    }
-                });
-            }
-        });
-
-        if (!hasEffects) {
-            throw new Error('No DeepAR effects found in Firebase database');
-        }
-
-        console.log('🎯 Effect map built from Firebase:', effectMap);
-        return effectMap;
-
-    } catch (error) {
-        console.error('❌ Error building effect map from Firebase:', error.message);
-        return null;
-    }
-}
-
 // Main function to fetch AR models with proper fallback
 async function fetchARModels() {
     try {
         console.log('🔄 Fetching AR models...');
 
-        // Try to get effects from API first
-        let apiEffectMap = await buildEffectMapFromAPI();
+        // Try to get effects from Firebase first (more reliable)
+        let effectMapResult = await buildEffectMapFromFirebase();
 
-        if (apiEffectMap) {
-            effectMap = apiEffectMap;
-            console.log('✅ Using effects from API server');
-            return await getModelsDataFromFirebase(); // Return the actual models data
-        }
-
-        // Fallback to direct Firebase
-        console.warn('⚠️ API failed, falling back to Firebase');
-        const firebaseEffectMap = await buildEffectMapFromFirebase();
-
-        if (firebaseEffectMap) {
-            effectMap = firebaseEffectMap;
+        if (effectMapResult) {
+            effectMap = effectMapResult;
             console.log('✅ Using effects from Firebase');
             return await getModelsDataFromFirebase();
         }
 
-        // Ultimate fallback - use API direct endpoints
-        console.warn('⚠️ Firebase failed, using API direct endpoints');
-        effectMap = buildDirectAPIEffectMap();
-        console.log('✅ Using direct API endpoints');
-        return await getModelsDataFromFirebase();
+        // Fallback to API
+        console.warn('⚠️ Firebase failed, falling back to API');
+        const apiEffectMap = await buildEffectMapFromAPI();
+
+        if (apiEffectMap) {
+            effectMap = apiEffectMap;
+            console.log('✅ Using effects from API server');
+            return await getModelsDataFromFirebase();
+        }
+
+        throw new Error('All data sources failed');
 
     } catch (error) {
         console.error('❌ Error in fetchARModels:', error.message);
@@ -198,30 +196,6 @@ async function getModelsDataFromFirebase() {
         console.error('❌ Error fetching models data:', error.message);
         return null;
     }
-}
-
-// Build direct API effect map as ultimate fallback
-function buildDirectAPIEffectMap() {
-    return {
-        classic: {
-            red: `${API_BASE_URL}/api/deepar/classic/red`,
-            white: `${API_BASE_URL}/api/deepar/classic/white`,
-            black: `${API_BASE_URL}/api/deepar/classic/black`,
-            blue: `${API_BASE_URL}/api/deepar/classic/blue`
-        },
-        basketball: {
-            red: `${API_BASE_URL}/api/deepar/basketball/red`,
-            white: `${API_BASE_URL}/api/deepar/basketball/white`,
-            black: `${API_BASE_URL}/api/deepar/basketball/black`,
-            blue: `${API_BASE_URL}/api/deepar/basketball/blue`
-        },
-        runner: {
-            red: `${API_BASE_URL}/api/deepar/runner/red`,
-            white: `${API_BASE_URL}/api/deepar/runner/white`,
-            black: `${API_BASE_URL}/api/deepar/runner/black`,
-            blue: `${API_BASE_URL}/api/deepar/runner/blue`
-        }
-    };
 }
 
 // Function to get image URL from color data
@@ -488,7 +462,7 @@ async function switchEffect(effectPath, model, color) {
     }
 }
 
-// Event listeners
+// Event listeners (keep your existing event listeners)
 toggleButton.addEventListener('click', () => {
     filterSection.classList.toggle('minimized');
     if (filterSection.classList.contains('minimized')) {
