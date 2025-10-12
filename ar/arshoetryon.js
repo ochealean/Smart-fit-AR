@@ -58,9 +58,9 @@ async function fetchARModels() {
                     Object.keys(model.bodyColors).forEach(colorKey => {
                         const colorData = model.bodyColors[colorKey];
                         // Use the DeepAR effect URL from the database
-                        if (colorData.deeparEffect) {
-                            effectMap[modelKey][colorKey] = colorData.deeparEffect;
-                            console.log(`📁 DeepAR effect for ${modelKey} ${colorKey}: ${colorData.deeparEffect}`);
+                        if (colorData.deepARFile) {
+                            effectMap[modelKey][colorKey] = colorData.deepARFile;
+                            console.log(`📁 DeepAR effect for ${modelKey} ${colorKey}: ${colorData.deepARFile}`);
                         } else {
                             console.warn(`⚠️ No DeepAR effect found for ${modelKey} ${colorKey}`);
                         }
