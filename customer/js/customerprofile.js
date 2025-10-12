@@ -18,8 +18,10 @@ let userSession = {
     userData: null,
     role: null
 };
+let map;
+let marker;
 
-// DOM Elements
+// DOM Elements - Add the new map elements
 const elements = {
     // Header
     userNameDisplay: document.getElementById('userName_display2'),
@@ -43,6 +45,12 @@ const elements = {
     state: document.getElementById('state'),
     zipCode: document.getElementById('zipCode'),
     country: document.getElementById('country'),
+    // Map Elements
+    map: document.getElementById('map'),
+    latitude: document.getElementById('latitude'),
+    longitude: document.getElementById('longitude'),
+    displayLatitude: document.getElementById('displayLatitude'),
+    displayLongitude: document.getElementById('displayLongitude'),
     // Password Fields
     currentPassword: document.getElementById('currentPassword'),
     newPassword: document.getElementById('newPassword'),
@@ -80,6 +88,154 @@ async function initializePage() {
     loadCustomerProfile();
     setupEventListeners();
     setupPasswordToggleListeners();
+    initializeMap();
+    initializePasswordStrength();
+    initializePasswordConfirmation();
+}
+
+// Initialize Google Maps
+function initializeMap() {
+    if (!elements.map) {
+        console.log('Map container not found');
+        return;
+    }
+
+    // Default coordinates (Manila, Philippines)
+    const defaultLat = 14.5995;
+    const defaultLng = 120.9842;
+
+    // Initialize the map
+    map = new google.maps.Map(elements.map, {
+        center: { lat: defaultLat, lng: defaultLng },
+        zoom: 15,
+        mapTypeControl: true,
+        streetViewControl: true,
+        fullscreenControl: true
+    });
+
+    // Initialize marker
+    marker = new google.maps.Marker({
+        map: map,
+        draggable: true,
+        animation: google.maps.Animation.DROP,
+        title: "Drag to set your location"
+    });
+
+    // Add click listener to map
+    map.addListener('click', function(event) {
+        const lat = event.latLng.lat();
+        const lng = event.latLng.lng();
+        updateMarkerPosition(lat, lng);
+        updateCoordinatesDisplay(lat, lng);
+        reverseGeocode(lat, lng);
+    });
+
+    // Add marker drag end listener
+    marker.addListener('dragend', function(event) {
+        const lat = event.latLng.lat();
+        const lng = event.latLng.lng();
+        updateCoordinatesDisplay(lat, lng);
+        reverseGeocode(lat, lng);
+    });
+
+    console.log('Google Maps initialized');
+}
+
+// Update marker position
+function updateMarkerPosition(lat, lng) {
+    marker.setPosition({ lat: lat, lng: lng });
+    map.panTo({ lat: lat, lng: lng });
+}
+
+// Update coordinates display
+function updateCoordinatesDisplay(lat, lng) {
+    if (elements.latitude) elements.latitude.value = lat;
+    if (elements.longitude) elements.longitude.value = lng;
+    if (elements.displayLatitude) elements.displayLatitude.textContent = lat.toFixed(6);
+    if (elements.displayLongitude) elements.displayLongitude.textContent = lng.toFixed(6);
+}
+
+// Reverse geocode coordinates to address
+function reverseGeocode(lat, lng) {
+    const geocoder = new google.maps.Geocoder();
+    const latlng = { lat: lat, lng: lng };
+
+    geocoder.geocode({ location: latlng }, function(results, status) {
+        if (status === 'OK' && results[0]) {
+            const address = results[0].formatted_address;
+            updateAddressFields(results[0]);
+        } else {
+            console.log('Geocoder failed due to: ' + status);
+        }
+    });
+}
+
+// Update address fields based on geocoding results
+function updateAddressFields(geocodeResult) {
+    let city = '';
+    let state = '';
+    let zipCode = '';
+    let country = '';
+
+    // Parse address components
+    geocodeResult.address_components.forEach(component => {
+        const types = component.types;
+        
+        if (types.includes('locality')) {
+            city = component.long_name;
+        } else if (types.includes('administrative_area_level_1')) {
+            state = component.long_name;
+        } else if (types.includes('postal_code')) {
+            zipCode = component.long_name;
+        } else if (types.includes('country')) {
+            country = component.long_name;
+        }
+    });
+
+    // Update form fields if they're empty or if we found better data
+    if (city && elements.city) elements.city.value = city;
+    if (state && elements.state) elements.state.value = state;
+    if (zipCode && elements.zipCode) elements.zipCode.value = zipCode;
+    if (country && elements.country) elements.country.value = country;
+    if (elements.address) elements.address.value = geocodeResult.formatted_address;
+}
+
+// Load customer location on map
+function loadCustomerLocation(customerData) {
+    if (customerData.latitude && customerData.longitude) {
+        const lat = parseFloat(customerData.latitude);
+        const lng = parseFloat(customerData.longitude);
+        
+        updateMarkerPosition(lat, lng);
+        updateCoordinatesDisplay(lat, lng);
+        
+        console.log('Loaded customer location:', { lat, lng });
+    } else {
+        // Try to geocode from address if coordinates not available
+        if (customerData.address) {
+            geocodeAddress(customerData.address);
+        }
+    }
+}
+
+// Geocode address to coordinates
+function geocodeAddress(address) {
+    const geocoder = new google.maps.Geocoder();
+    
+    geocoder.geocode({ address: address }, function(results, status) {
+        if (status === 'OK' && results[0]) {
+            const location = results[0].geometry.location;
+            const lat = location.lat();
+            const lng = location.lng();
+            
+            updateMarkerPosition(lat, lng);
+            updateCoordinatesDisplay(lat, lng);
+            
+            console.log('Geocoded address to coordinates:', { lat, lng });
+        } else {
+            console.log('Geocode was not successful for the following reason: ' + status);
+        }
+    });
 }
 
 // Toggle password visibility
@@ -128,13 +284,21 @@ function loadCustomerProfile() {
     const unsubscribe = readDataRealtime(customerPath, (result) => {
         if (result.success && result.data) {
             customerData = result.data;
-            console.log('Customer Data:', customerData);
+            
+            // ADDED: Console log for customer data
+            console.log('Customer Data Retrieved:', customerData);
+            console.log('Customer ID:', userSession.userId);
+            console.log('Full Customer Object:', JSON.stringify(customerData, null, 2));
+            
             originalEmail = customerData.email || '';
 
             // Update UI with customer data
             updateHeader(customerData);
             updateProfileSection(customerData);
             updateFormFields(customerData);
+            
+            // Load customer location on map
+            loadCustomerLocation(customerData);
 
             // Load statistics
             loadCustomerStatistics();
@@ -196,6 +360,14 @@ function updateFormFields(customerData) {
     if (customerData.state) elements.state.value = customerData.state;
     if (customerData.zip) elements.zipCode.value = customerData.zip;
     if (customerData.country) elements.country.value = customerData.country;
+    
+    // Coordinates
+    if (customerData.latitude && customerData.longitude) {
+        if (elements.latitude) elements.latitude.value = customerData.latitude;
+        if (elements.longitude) elements.longitude.value = customerData.longitude;
+        if (elements.displayLatitude) elements.displayLatitude.textContent = parseFloat(customerData.latitude).toFixed(6);
+        if (elements.displayLongitude) elements.displayLongitude.textContent = parseFloat(customerData.longitude).toFixed(6);
+    }
 }
 
 function loadCustomerStatistics() {
@@ -281,7 +453,7 @@ function setupEventListeners() {
         });
     }
 
-    // Form submission
+        // Form submission
     if (elements.form) {
         elements.form.addEventListener('submit', async function (e) {
             e.preventDefault();
@@ -311,6 +483,13 @@ function setupEventListeners() {
                 updates.state = elements.state.value;
                 updates.zip = elements.zipCode.value;
                 updates.country = elements.country.value;
+                
+                // Add coordinates if available
+                if (elements.latitude.value && elements.longitude.value) {
+                    updates.latitude = elements.latitude.value;
+                    updates.longitude = elements.longitude.value;
+                    updates.locationVerified = true;
+                }
 
                 // Upload avatar if changed
                 if (avatarFile) {
@@ -581,6 +760,119 @@ async function changePassword(currentPassword, newPassword, confirmPassword) {
             throw new Error(error.message || 'Failed to change password. Please try again.');
         }
     }
+}
+
+// Initialize password strength indicator
+function initializePasswordStrength() {
+    const passwordInput = document.getElementById('newPassword');
+    const strengthBars = document.querySelectorAll('.strength-bar');
+    const strengthText = document.querySelector('.strength-text');
+    const reqLength = document.getElementById('req-length');
+    const reqUppercase = document.getElementById('req-uppercase');
+    const reqNumber = document.getElementById('req-number');
+    const reqSpecial = document.getElementById('req-special');
+
+    if (!passwordInput || !strengthBars.length) return;
+
+    passwordInput.addEventListener('input', function() {
+        const password = this.value;
+        let strength = 0;
+        
+        // Check length >= 8
+        const hasLength = password.length >= 8;
+        if (reqLength) {
+            reqLength.classList.toggle('valid', hasLength);
+        }
+        if (hasLength) strength++;
+        
+        // Check uppercase
+        const hasUppercase = /[A-Z]/.test(password);
+        if (reqUppercase) {
+            reqUppercase.classList.toggle('valid', hasUppercase);
+        }
+        if (hasUppercase) strength++;
+        
+        // Check number
+        const hasNumber = /\d/.test(password);
+        if (reqNumber) {
+            reqNumber.classList.toggle('valid', hasNumber);
+        }
+        if (hasNumber) strength++;
+        
+        // Check special character
+        const hasSpecial = /[^a-zA-Z0-9]/.test(password);
+        if (reqSpecial) {
+            reqSpecial.classList.toggle('valid', hasSpecial);
+        }
+        if (hasSpecial) strength++;
+        
+        // Update strength bars
+        strengthBars.forEach((bar, index) => {
+            bar.classList.toggle('active', index < strength);
+        });
+        
+        // Update text and color
+        if (strengthText) {
+            let strengthLevel = 'Weak';
+            let strengthClass = 'strength-weak';
+            
+            if (strength <= 1) {
+                strengthLevel = 'Weak';
+                strengthClass = 'strength-weak';
+            } else if (strength === 2) {
+                strengthLevel = 'Fair';
+                strengthClass = 'strength-fair';
+            } else if (strength === 3) {
+                strengthLevel = 'Good';
+                strengthClass = 'strength-good';
+            } else {
+                strengthLevel = 'Strong';
+                strengthClass = 'strength-strong';
+            }
+            
+            strengthText.textContent = `Password strength: ${strengthLevel}`;
+            strengthText.className = `strength-text ${strengthClass}`;
+        }
+    });
+}
+
+// Initialize password confirmation validation
+function initializePasswordConfirmation() {
+    const newPasswordInput = document.getElementById('newPassword');
+    const confirmPasswordInput = document.getElementById('confirmPassword');
+    
+    if (!newPasswordInput || !confirmPasswordInput) return;
+    
+    // Create confirmation message element
+    const confirmationElement = document.createElement('div');
+    confirmationElement.className = 'password-match';
+    confirmationElement.textContent = 'Passwords match';
+    confirmPasswordInput.parentNode.appendChild(confirmationElement);
+    
+    function validatePasswordMatch() {
+        const newPassword = newPasswordInput.value;
+        const confirmPassword = confirmPasswordInput.value;
+        
+        if (confirmPassword === '') {
+            confirmationElement.style.display = 'none';
+            return;
+        }
+        
+        confirmationElement.style.display = 'flex';
+        
+        if (newPassword === confirmPassword && newPassword !== '') {
+            confirmationElement.classList.remove('invalid');
+            confirmationElement.classList.add('valid');
+            confirmationElement.textContent = 'Passwords match';
+        } else {
+            confirmationElement.classList.remove('valid');
+            confirmationElement.classList.add('invalid');
+            confirmationElement.textContent = 'Passwords do not match';
+        }
+    }
+    
+    newPasswordInput.addEventListener('input', validatePasswordMatch);
+    confirmPasswordInput.addEventListener('input', validatePasswordMatch);
 }
 
 // Handle logout

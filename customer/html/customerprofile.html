@@ -8,6 +8,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="icon" href="../../images/smartfitImages/smartfitAR-logo.png" type="image/x-icon">
     <link rel="stylesheet" href="../css/customerprofile.css">
+    <script async src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBiw-3TrRkU1hSU0_dEsn3fjUxXAZWcLrg&libraries=places,marker&callback=initMap"></script>
 </head>
 
 <body>
@@ -197,23 +198,53 @@
                                 </select>
                             </div>
                         </div>
+
+                        <!-- Add Google Maps Section -->
+                        <div class="form-group">
+                            <label class="form-label">Location Map</label>
+                            <div id="map" style="height: 300px; width: 100%; border-radius: var(--radius-sm); margin-top: 10px;"></div>
+                            <div style="margin-top: 10px; font-size: 0.9rem; color: var(--gray-dark);">
+                                <span>Coordinates: </span>
+                                <span id="displayLatitude">N/A</span>, <span id="displayLongitude">N/A</span>
+                            </div>
+                        </div>
+
+                        <!-- Hidden coordinates fields -->
+                        <input type="hidden" id="latitude" value="">
+                        <input type="hidden" id="longitude" value="">
+
                     </div>
 
                     <!-- Password Change Section -->
                     <div class="form-section">
                         <h3 class="section-title"><i class="fas fa-lock"></i> Change Password</h3>
 
-                        <div class="form-row">
-                            <div class="form-group password-toggle">
-                                <label for="currentPassword" class="form-label">Current Password</label>
-                                <input type="password" id="currentPassword" class="form-control">
-                                <i class="fas fa-eye password-toggle-icon" data-field-id="currentPassword" aria-label="Show password"></i>
-                            </div>
+                        <div class="form-group password-toggle">
+                            <label for="currentPassword" class="form-label">Current Password</label>
+                            <input type="password" id="currentPassword" class="form-control">
+                            <i class="fas fa-eye password-toggle-icon" data-field-id="currentPassword" aria-label="Show password"></i>
+                        </div>
 
-                            <div class="form-group password-toggle">
-                                <label for="newPassword" class="form-label">New Password</label>
-                                <input type="password" id="newPassword" class="form-control">
-                                <i class="fas fa-eye password-toggle-icon" data-field-id="newPassword" aria-label="Show password"></i>
+                        <div class="form-group password-toggle">
+                            <label for="newPassword" class="form-label">New Password</label>
+                            <input type="password" id="newPassword" class="form-control">
+                            <i class="fas fa-eye password-toggle-icon" data-field-id="newPassword" aria-label="Show password"></i>
+                            
+                            <!-- Add Password Requirements -->
+                            <div class="password-requirements">
+                                <ul>
+                                    <li id="req-length">At least 8 characters</li>
+                                    <li id="req-uppercase">At least one uppercase letter</li>
+                                    <li id="req-number">At least one number</li>
+                                    <li id="req-special">At least one special character</li>
+                                </ul>
+                            </div>
+                            <div class="password-strength">
+                                <span class="strength-bar"></span>
+                                <span class="strength-bar"></span>
+                                <span class="strength-bar"></span>
+                                <span class="strength-bar"></span>
+                                <span class="strength-text">Password strength: Weak</span>
                             </div>
                         </div>
 
