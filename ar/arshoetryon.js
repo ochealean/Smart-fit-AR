@@ -177,7 +177,7 @@ function createFilterButtons(arModelsData) {
 
         // Start with back camera
         await switchCamera('environment');
-        await deepAR.switchEffect(currentEffectPath);
+        await deepAR.switchEffect('https://ik.imagekit.io/dhzqpau8e/classic_white.deepar?updatedAt=1760279270537');
         console.log(`✅ Initial shoe effect loaded: ${currentEffectPath}`);
 
         deepAR.callbacks.onFeetVisibilityChanged = (visible) => {
@@ -196,7 +196,7 @@ function createFilterButtons(arModelsData) {
             const firstButton = document.querySelector('.filter-button');
             if (firstButton) {
                 firstButton.classList.add('selected');
-                await switchEffect(firstButton.dataset.path);
+                await switchEffect('https://ik.imagekit.io/dhzqpau8e/classic_white.deepar?updatedAt=1760279270537');
             }
         }
 
