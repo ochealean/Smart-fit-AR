@@ -9,6 +9,7 @@ import {
     addFile,
     deleteFile
 } from "../../firebaseMethods.js";
+import { storageService } from "../../deepARMethods.js";
 
 // Global session object
 const userSession = {
@@ -55,6 +56,7 @@ const EMPTY_CUSTOMIZATIONS = {
 let pendingColorUploads = {};
 let pendingLacesUploads = {};
 let pendingInsoleUploads = {};
+let pendingDeepARUploads = {};
 
 // Store items marked for deletion
 let itemsToDelete = {
@@ -77,6 +79,7 @@ window.removeInsoleOption = removeInsoleOption;
 window.uploadSingleImage = uploadSingleImage;
 window.uploadLacesImage = uploadLacesImage;
 window.uploadInsoleImage = uploadInsoleImage;
+window.uploadDeepARFile = uploadDeepARFile;
 window.addLacesColorOption = addLacesColorOption;
 window.removeLacesColorOption = removeLacesColorOption;
 
@@ -182,13 +185,15 @@ function createModelCard(modelId, model) {
                                 colorData.images.main && 
                                 colorData.images.front && 
                                 colorData.images.side && 
-                                colorData.images.back;
+                                colorData.images.back &&
+                                colorData.deepARFile; // Check for DeepAR file
             const uploadStatus = hasAllImages ? 'uploaded' : 'missing';
             colorBadgesHtml += `
                 <div class="color-badge ${uploadStatus}" 
                      style="background-color: ${getColorValue(color)}" 
-                     title="${colorData.name} - ${hasAllImages ? 'All images uploaded' : 'Missing images'}">
+                     title="${colorData.name} - ${hasAllImages ? 'All files uploaded' : 'Missing files'}">
                     ${!hasAllImages ? '<i class="fas fa-exclamation-triangle warning-icon"></i>' : ''}
+                    ${colorData.deepARFile ? '<i class="fas fa-vr-cardboard ar-icon" title="AR Effect Available"></i>' : ''}
                 </div>
             `;
         });
@@ -319,6 +324,7 @@ function closeModal() {
     pendingColorUploads = {};
     pendingLacesUploads = {};
     pendingInsoleUploads = {};
+    pendingDeepARUploads = {};
     itemsToDelete = {
         colors: [],
         laces: [],
@@ -368,6 +374,7 @@ function openEditModal(modelId, model) {
     pendingColorUploads = {};
     pendingLacesUploads = {};
     pendingInsoleUploads = {};
+    pendingDeepARUploads = {};
     itemsToDelete = {
         colors: [],
         laces: [],
@@ -392,6 +399,8 @@ function openEditModal(modelId, model) {
                                 colorData.images.front && 
                                 colorData.images.side && 
                                 colorData.images.back;
+            const hasDeepARFile = colorData.deepARFile;
+            const allFilesUploaded = hasAllImages && hasDeepARFile;
             
             bodyColorsHtml += `
                 <div class="color-option-with-upload" data-color="${colorKey}">
@@ -412,19 +421,23 @@ function openEditModal(modelId, model) {
                             <button type="button" class="btn btn-small btn-upload" onclick="uploadSingleImage('${modelId}', '${colorKey}', 'back')">
                                 <i class="fas fa-upload"></i> Back
                             </button>
+                            <button type="button" class="btn btn-small btn-deepar" onclick="uploadDeepARFile('${modelId}', '${colorKey}')">
+                                <i class="fas fa-vr-cardboard"></i> DeepAR File
+                            </button>
                         </div>
-                        <div class="upload-status ${hasAllImages ? 'uploaded' : 'missing'}">
-                            <i class="fas ${hasAllImages ? 'fa-check-circle' : 'fa-exclamation-triangle'}"></i>
-                            ${hasAllImages ? 'All images uploaded' : '4 images required'}
+                        <div class="upload-status ${allFilesUploaded ? 'uploaded' : 'missing'}">
+                            <i class="fas ${allFilesUploaded ? 'fa-check-circle' : 'fa-exclamation-triangle'}"></i>
+                            ${allFilesUploaded ? 'All files uploaded' : '5 files required (4 images + DeepAR)'}
                         </div>
-                        ${colorData.images ? `
+                        ${colorData.images || colorData.deepARFile ? `
                             <div class="image-preview-links">
-                                <small>Uploaded images:</small>
+                                <small>Uploaded files:</small>
                                 <div class="image-links">
-                                    ${colorData.images.main ? `<span class="image-link" title="${colorData.images.main}">✓ main.png</span>` : '<span class="image-link missing">✗ main.png</span>'}
-                                    ${colorData.images.front ? `<span class="image-link" title="${colorData.images.front}">✓ front.png</span>` : '<span class="image-link missing">✗ front.png</span>'}
-                                    ${colorData.images.side ? `<span class="image-link" title="${colorData.images.side}">✓ side.png</span>` : '<span class="image-link missing">✗ side.png</span>'}
-                                    ${colorData.images.back ? `<span class="image-link" title="${colorData.images.back}">✓ back.png</span>` : '<span class="image-link missing">✗ back.png</span>'}
+                                    ${colorData.images?.main ? `<span class="image-link" title="${colorData.images.main}">✓ main.png</span>` : '<span class="image-link missing">✗ main.png</span>'}
+                                    ${colorData.images?.front ? `<span class="image-link" title="${colorData.images.front}">✓ front.png</span>` : '<span class="image-link missing">✗ front.png</span>'}
+                                    ${colorData.images?.side ? `<span class="image-link" title="${colorData.images.side}">✓ side.png</span>` : '<span class="image-link missing">✗ side.png</span>'}
+                                    ${colorData.images?.back ? `<span class="image-link" title="${colorData.images.back}">✓ back.png</span>` : '<span class="image-link missing">✗ back.png</span>'}
+                                    ${colorData.deepARFile ? `<span class="image-link deepar" title="${colorData.deepARFile}">✓ effect.deepar</span>` : '<span class="image-link deepar missing">✗ effect.deepar</span>'}
                                 </div>
                             </div>
                         ` : ''}
@@ -436,7 +449,7 @@ function openEditModal(modelId, model) {
         bodyColorsHtml = '<div class="empty-state-small">No colors added yet</div>';
     }
 
-    // Generate laces HTML
+    // Generate laces HTML (unchanged)
     let lacesHtml = '';
     if (model.laces && Object.keys(model.laces).length > 0) {
         Object.entries(model.laces).forEach(([laceKey, laceData]) => {
@@ -497,7 +510,7 @@ function openEditModal(modelId, model) {
         lacesHtml = '<div class="empty-state-small">No laces types added yet</div>';
     }
 
-    // Generate insoles HTML
+    // Generate insoles HTML (unchanged)
     let insolesHtml = '';
     if (model.insoles && Object.keys(model.insoles).length > 0) {
         Object.entries(model.insoles).forEach(([insoleKey, insoleData]) => {
@@ -559,6 +572,7 @@ function openEditModal(modelId, model) {
                     <i class="fas fa-info-circle"></i>
                     <h4>No Customizations Found</h4>
                     <p>This model doesn't have any customization options set up yet. Please add body colors, laces types, and insole types below.</p>
+                    <p><strong>Note:</strong> Each body color requires 4 images (main, front, side, back) and 1 DeepAR effect file.</p>
                 </div>
             ` : ''}
             
@@ -587,7 +601,7 @@ function openEditModal(modelId, model) {
                 
                 <div class="customization-section-edit">
                     <h3 class="section-title-edit"><i class="fas fa-palette"></i> Body Colors</h3>
-                    <p class="section-description">Add the available body colors for this model. For each color, you must upload 4 images (main, front, side, back) that will be used in the customer customization interface.</p>
+                    <p class="section-description">Add the available body colors for this model. For each color, you must upload 4 images (main, front, side, back) AND 1 DeepAR effect file (.deepar) that will be used in the AR customization interface.</p>
                     <div class="color-picker-with-upload" id="bodyColorsContainer">
                         ${bodyColorsHtml}
                         <div class="add-color-btn" onclick="addColorOption()">
@@ -688,6 +702,42 @@ function uploadSingleImage(modelId, colorName, angle) {
         updateUploadStatus(colorName);
 
         console.log(`File selected for ${colorName} - ${angle}:`, file.name);
+    };
+}
+
+// Upload DeepAR file
+function uploadDeepARFile(modelId, colorName) {
+    const fileInput = document.createElement('input');
+    fileInput.type = 'file';
+    fileInput.accept = '.deepar';
+    fileInput.click();
+
+    fileInput.onchange = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        // Validate file type
+        if (!file.name.toLowerCase().endsWith('.deepar')) {
+            alert('Please select a valid .deepar file');
+            return;
+        }
+
+        // Show file selected status
+        const deepARButton = document.querySelector(`[data-color="${colorName}"] .btn-deepar`);
+        deepARButton.innerHTML = '<i class="fas fa-check"></i> Selected';
+        deepARButton.style.backgroundColor = '#48cfad';
+
+        // Store file in pending uploads
+        if (!pendingDeepARUploads[colorName]) {
+            pendingDeepARUploads[colorName] = { file: null, modelId: modelId };
+        }
+        pendingDeepARUploads[colorName].file = file;
+
+        // Update UI to show file is selected but not uploaded
+        updateDeepARLinkUI(colorName, 'Selected - waiting for save');
+        updateUploadStatus(colorName);
+
+        console.log(`DeepAR file selected for ${colorName}:`, file.name);
     };
 }
 
@@ -801,6 +851,63 @@ async function uploadPendingImages() {
         }
     }
     
+    // Upload DeepAR files using deepARMethods
+    for (const [colorName, deepARData] of Object.entries(pendingDeepARUploads)) {
+        if (!deepARData.file) continue;
+        
+        try {
+            const deepARButton = document.querySelector(`[data-color="${colorName}"] .btn-deepar`);
+            if (deepARButton) {
+                deepARButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Uploading...';
+                deepARButton.disabled = true;
+            }
+
+            const modelId = deepARData.modelId;
+            const storagePath = `deepar/effects/${modelId}/${colorName}/effect.deepar`;
+            
+            console.log(`Uploading DeepAR file for ${colorName} to: ${storagePath}`);
+            
+            // Use deepARMethods storageService to upload the file
+            const result = await storageService.uploadFile(
+                deepARData.file, 
+                storagePath,
+                (progress) => {
+                    console.log(`DeepAR upload progress for ${colorName}: ${progress}%`);
+                }
+            );
+
+            if (!result.success) {
+                throw new Error(`Failed to upload DeepAR file: ${result.error}`);
+            }
+
+            // Store the uploaded DeepAR file URL
+            if (!uploadResults.colors[colorName]) {
+                uploadResults.colors[colorName] = {};
+            }
+            uploadResults.colors[colorName].deepARFile = result.downloadURL;
+
+            // Update UI to show uploaded
+            if (deepARButton) {
+                deepARButton.innerHTML = '<i class="fas fa-check"></i> Uploaded';
+                deepARButton.style.backgroundColor = '#48cfad';
+            }
+
+            updateDeepARLinkUI(colorName, result.downloadURL);
+            console.log(`Successfully uploaded DeepAR file for ${colorName}:`, result.downloadURL);
+            
+        } catch (error) {
+            console.error(`Error uploading DeepAR file for ${colorName}:`, error);
+            
+            const deepARButton = document.querySelector(`[data-color="${colorName}"] .btn-deepar`);
+            if (deepARButton) {
+                deepARButton.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Failed';
+                deepARButton.style.backgroundColor = '#ff6b6b';
+            }
+            
+            throw new Error(`Failed to upload DeepAR file for ${colorName}: ${error.message}`);
+        }
+    }
+    
     // Upload laces images
     for (const [lacesId, lacesData] of Object.entries(pendingLacesUploads)) {
         try {
@@ -872,7 +979,7 @@ async function uploadPendingImages() {
 async function deleteRemovedItemsFiles(modelId) {
     const deletionPromises = [];
 
-    // Delete color images
+    // Delete color images and DeepAR files
     for (const colorKey of itemsToDelete.colors) {
         const angles = ['main', 'front', 'side', 'back'];
         for (const angle of angles) {
@@ -881,6 +988,14 @@ async function deleteRemovedItemsFiles(modelId) {
                 console.warn(`Failed to delete ${angle} image for color ${colorKey}:`, error);
             }));
         }
+        
+        // Delete DeepAR file
+        const deepARPath = `deepar/effects/${modelId}/${colorKey}/effect.deepar`;
+        deletionPromises.push(
+            storageService.deleteFile(deepARPath).catch(error => {
+                console.warn(`Failed to delete DeepAR file for color ${colorKey}:`, error);
+            })
+        );
     }
 
     // Delete laces images
@@ -937,6 +1052,45 @@ function updateImageLinkUI(colorName, angle, status) {
         } else {
             newLink.className = `image-link ${angle} pending`;
             newLink.innerHTML = `⏳ ${angle}.png`;
+            newLink.title = status;
+        }
+        imageLinks.appendChild(newLink);
+    }
+}
+
+function updateDeepARLinkUI(colorName, status) {
+    const colorElement = document.querySelector(`[data-color="${colorName}"]`);
+    if (!colorElement) return;
+
+    let imageLinksContainer = colorElement.querySelector('.image-preview-links');
+    if (!imageLinksContainer) {
+        imageLinksContainer = createImageLinksContainer(colorElement);
+    }
+
+    const deepARLink = imageLinksContainer.querySelector('.image-link.deepar');
+    if (deepARLink) {
+        if (status.includes('https://')) {
+            // It's a URL - uploaded successfully
+            deepARLink.className = 'image-link deepar';
+            deepARLink.innerHTML = '✓ effect.deepar';
+            deepARLink.title = status;
+        } else {
+            // It's a status message
+            deepARLink.className = 'image-link deepar pending';
+            deepARLink.innerHTML = '⏳ effect.deepar';
+            deepARLink.title = status;
+        }
+    } else {
+        // Create new link if it doesn't exist
+        const imageLinks = imageLinksContainer.querySelector('.image-links');
+        const newLink = document.createElement('span');
+        if (status.includes('https://')) {
+            newLink.className = 'image-link deepar';
+            newLink.innerHTML = '✓ effect.deepar';
+            newLink.title = status;
+        } else {
+            newLink.className = 'image-link deepar pending';
+            newLink.innerHTML = '⏳ effect.deepar';
             newLink.title = status;
         }
         imageLinks.appendChild(newLink);
@@ -1020,17 +1174,20 @@ function updateUploadStatus(colorName) {
     const uploadStatus = colorElement.querySelector('.upload-status');
     const imageLinks = colorElement.querySelectorAll('.image-link:not(.missing)');
     
-    const uploadedCount = colorElement.querySelectorAll('.image-link:not(.missing):not(.pending)').length;
-    const totalCount = imageLinks.length;
+    const uploadedImagesCount = colorElement.querySelectorAll('.image-link:not(.missing):not(.pending):not(.deepar)').length;
+    const hasDeepARFile = colorElement.querySelector('.image-link.deepar:not(.missing):not(.pending)');
+    const totalRequired = 5; // 4 images + 1 DeepAR file
     
-    if (uploadedCount === 4) {
-        uploadStatus.innerHTML = '<i class="fas fa-check-circle"></i> All images uploaded';
+    const uploadedCount = uploadedImagesCount + (hasDeepARFile ? 1 : 0);
+    
+    if (uploadedCount === totalRequired) {
+        uploadStatus.innerHTML = '<i class="fas fa-check-circle"></i> All files uploaded';
         uploadStatus.className = 'upload-status uploaded';
-    } else if (totalCount > 0) {
-        uploadStatus.innerHTML = `<i class="fas fa-exclamation-triangle"></i> ${uploadedCount}/4 images uploaded`;
+    } else if (uploadedCount > 0) {
+        uploadStatus.innerHTML = `<i class="fas fa-exclamation-triangle"></i> ${uploadedCount}/${totalRequired} files uploaded`;
         uploadStatus.className = 'upload-status missing';
     } else {
-        uploadStatus.innerHTML = '<i class="fas fa-exclamation-triangle"></i> 0/4 images uploaded';
+        uploadStatus.innerHTML = `<i class="fas fa-exclamation-triangle"></i> 0/${totalRequired} files uploaded`;
         uploadStatus.className = 'upload-status missing';
     }
 }
@@ -1040,12 +1197,13 @@ function createImageLinksContainer(colorElement) {
     const imageLinksContainer = document.createElement('div');
     imageLinksContainer.className = 'image-preview-links';
     imageLinksContainer.innerHTML = `
-        <small>Uploaded images:</small>
+        <small>Uploaded files:</small>
         <div class="image-links">
             <span class="image-link main missing">✗ main.png</span>
             <span class="image-link front missing">✗ front.png</span>
             <span class="image-link side missing">✗ side.png</span>
             <span class="image-link back missing">✗ back.png</span>
+            <span class="image-link deepar missing">✗ effect.deepar</span>
         </div>
     `;
     uploadSection.appendChild(imageLinksContainer);
@@ -1074,9 +1232,10 @@ async function saveModel(modelId) {
         // Upload all pending images first
         let uploadedImageResults = {};
         if (Object.keys(pendingColorUploads).length > 0 || 
+            Object.keys(pendingDeepARUploads).length > 0 ||
             Object.keys(pendingLacesUploads).length > 0 || 
             Object.keys(pendingInsoleUploads).length > 0) {
-            alert('Starting image uploads... This may take a moment.');
+            alert('Starting file uploads... This may take a moment.');
             uploadedImageResults = await uploadPendingImages();
         }
         
@@ -1121,10 +1280,11 @@ async function saveModel(modelId) {
                     images: {
                         ...(existingColorData.images || {}),
                         ...uploadedImageResults.colors[colorKey].images
-                    }
+                    },
+                    deepARFile: uploadedImageResults.colors[colorKey].deepARFile || existingColorData.deepARFile
                 };
             } else {
-                // If no new images uploaded, keep existing data or create new entry
+                // If no new files uploaded, keep existing data or create new entry
                 bodyColors[colorKey] = existingColorData;
             }
         });
@@ -1243,6 +1403,7 @@ async function saveModel(modelId) {
             pendingColorUploads = {};
             pendingLacesUploads = {};
             pendingInsoleUploads = {};
+            pendingDeepARUploads = {};
             itemsToDelete = {
                 colors: [],
                 laces: [],
@@ -1316,17 +1477,21 @@ function addColorOption() {
                 <button type="button" class="btn btn-small btn-upload" onclick="uploadSingleImage('${modelId}', '${normalizedColor}', 'back')">
                     <i class="fas fa-upload"></i> Back
                 </button>
+                <button type="button" class="btn btn-small btn-deepar" onclick="uploadDeepARFile('${modelId}', '${normalizedColor}')">
+                    <i class="fas fa-vr-cardboard"></i> DeepAR File
+                </button>
             </div>
             <div class="upload-status missing">
-                <i class="fas fa-exclamation-triangle"></i> 0/4 images uploaded
+                <i class="fas fa-exclamation-triangle"></i> 0/5 files uploaded
             </div>
             <div class="image-preview-links">
-                <small>Uploaded images:</small>
+                <small>Uploaded files:</small>
                 <div class="image-links">
                     <span class="image-link main missing">✗ main.png</span>
                     <span class="image-link front missing">✗ front.png</span>
                     <span class="image-link side missing">✗ side.png</span>
                     <span class="image-link back missing">✗ back.png</span>
+                    <span class="image-link deepar missing">✗ effect.deepar</span>
                 </div>
             </div>
         </div>
@@ -1336,7 +1501,7 @@ function addColorOption() {
 }
 
 function removeColorOption(colorKey) {
-    if (confirm(`Are you sure you want to remove the color "${colorKey}"? This will also delete all associated images from storage.`)) {
+    if (confirm(`Are you sure you want to remove the color "${colorKey}"? This will also delete all associated images and DeepAR files from storage.`)) {
         const colorEl = document.querySelector(`#bodyColorsContainer .color-option-with-upload[data-color="${colorKey}"]`);
         if (colorEl) {
             colorEl.remove();
@@ -1349,6 +1514,7 @@ function removeColorOption(colorKey) {
         
         // Remove from pending uploads
         delete pendingColorUploads[colorKey];
+        delete pendingDeepARUploads[colorKey];
         
         // Show empty state if no colors left
         const container = getElement('bodyColorsContainer');
