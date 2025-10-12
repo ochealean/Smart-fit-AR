@@ -345,6 +345,70 @@ textarea.form-control {
     background-color: white;
 }
 
+/* Tax Number Helper Styles */
+.tax-helper {
+    margin-top: 0.5rem;
+    font-size: 0.8rem;
+    color: var(--gray-dark);
+}
+
+.tax-helper small {
+    font-style: italic;
+}
+
+/* Tax Input Styling */
+#taxId {
+    font-family: 'Courier New', monospace;
+    letter-spacing: 1px;
+}
+
+/* Validation states for tax input */
+#taxId.valid {
+    border-color: var(--success);
+    background-color: rgba(72, 207, 173, 0.05);
+}
+
+#taxId.invalid {
+    border-color: var(--error);
+    background-color: rgba(255, 107, 107, 0.05);
+}
+
+/* Map Styles */
+#map {
+    border: 2px solid var(--gray-light);
+    transition: var(--transition);
+}
+
+#map:hover {
+    border-color: var(--primary);
+    box-shadow: var(--shadow-sm);
+}
+
+/* Coordinates Display */
+.coordinates-display {
+    background: var(--gray-light);
+    padding: 0.5rem 1rem;
+    border-radius: var(--radius-sm);
+    font-family: monospace;
+    font-size: 0.9rem;
+    margin-top: 0.5rem;
+}
+
+/* Map Instructions */
+.map-instructions {
+    background: #e3f2fd;
+    border-left: 4px solid var(--primary);
+    padding: 0.75rem 1rem;
+    margin-bottom: 1rem;
+    border-radius: var(--radius-sm);
+    font-size: 0.9rem;
+}
+
+.map-instructions i {
+    color: var(--primary);
+    margin-right: 0.5rem;
+}
+
 /* Document Upload Styles */
 .document-upload {
     margin-top: 1rem;

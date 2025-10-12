@@ -8,6 +8,7 @@
     <link rel="icon" type="image/png" href="/images/smartfitImages/smartfitAR-logo.png">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="stylesheet" href="../css/shopprofile.css">
+        <script async src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBiw-3TrRkU1hSU0_dEsn3fjUxXAZWcLrg&libraries=places,marker&callback=initMap"></script>
 </head>
 
 <body>
@@ -174,34 +175,72 @@
                         <div class="form-row">
                             <div class="form-group">
                                 <label for="shopCity" class="form-label">City</label>
-                                <input type="text" id="shopCity" class="form-control" value="City">
+                                <select id="shopCity" class="form-select">
+                                    <option value="" disabled selected>Select . . .</option>
+                                    <option value="Abucay">Abucay</option>
+                                    <option value="Bagac">Bagac</option>
+                                    <option value="Balanga City">Balanga City</option>
+                                    <option value="Dinalupihan">Dinalupihan</option>
+                                    <option value="Hermosa">Hermosa</option>
+                                    <option value="Limay">Limay</option>
+                                    <option value="Mariveles">Mariveles</option>
+                                    <option value="Morong">Morong</option>
+                                    <option value="Orani">Orani</option>
+                                    <option value="Orion">Orion</option>
+                                    <option value="Pilar">Pilar</option>
+                                    <option value="Samal">Samal</option>
+                                </select>
                             </div>
 
                             <div class="form-group">
                                 <label for="shopState" class="form-label">State/Province</label>
-                                <input type="text" id="shopState" class="form-control" value="Province">
+                                <select id="shopState" class="form-select">
+                                    <option value="Central Luzon" selected>Central Luzon</option>
+                                </select>
                             </div>
                         </div>
 
                         <div class="form-row">
                             <div class="form-group">
                                 <label for="shopZip" class="form-label">ZIP/Postal Code</label>
-                                <input type="text" id="shopZip" class="form-control" value="ZIP Code">
+                                <input type="number" id="shopZip" class="form-control" value="" maxlength="4">
                             </div>
 
                             <div class="form-group">
                                 <label for="shopCountry" class="form-label">Country</label>
                                 <select id="shopCountry" class="form-select">
                                     <option value="Philippines" selected>Philippines</option>
-                                    <option value="Other">Other</option>
                                 </select>
                             </div>
                         </div>
+
+                        <!-- GOOGLE MAPS CONTAINER -->
+                        <div class="form-group">
+                            <label class="form-label">Location Map</label>
+                            <div id="map" style="height: 300px; width: 100%; border-radius: var(--radius-sm); margin-top: 10px;"></div>
+                            <div style="margin-top: 10px; font-size: 0.9rem; color: var(--gray-dark);">
+                                <span>Coordinates: </span>
+                                <span id="displayLatitude">N/A</span>, <span id="displayLongitude">N/A</span>
+                            </div>
+                        </div>
+
+                        <!-- ADD HIDDEN COORDINATES FIELDS -->
+                        <input type="hidden" id="latitude" value="">
+                        <input type="hidden" id="longitude" value="">
+
                     </div>
 
                     <!-- Business Documents Section -->
                     <div class="form-section">
                         <h3 class="section-title"><i class="fas fa-file-contract"></i> Business Documents</h3>
+
+                        <div class="document-upload">
+                            <label class="form-label">Tax Identification Number</label>
+                            <input type="text" id="taxId" class="form-control" value="XXXX-XXXX-XXXX">
+                            <div class="tax-helper">
+                                <small>Format: 12 digits (XXXX-XXXX-XXXX). Numbers only will be auto-formatted. if TIN is less than 12 digits just add leading zeros.</small>
+                            </div>
+                        </div>
 
                         <div class="document-upload">
                             <label class="form-label">Mayor's Permit / Business License</label>
@@ -219,11 +258,6 @@
                         </div>
 
                         <div class="document-upload">
-                            <label class="form-label">Tax Identification Number</label>
-                            <input type="text" id="taxId" class="form-control" value="XXXX-XXXX-XXXX">
-                        </div>
-
-                        <div class="document-upload">
                             <label class="form-label">Business Permit</label>
                             <div class="document-preview" id="businessPermitPreview">
                                 <i class="fas fa-file-image document-icon"></i>
@@ -234,6 +268,36 @@
                                 <div class="document-actions">
                                     <button type="button" class="btn btn-view" data-doc-type="permitDocument"><i class="fas fa-eye"></i> View</button>
                                     <button type="button" class="btn btn-replace" data-doc-type="permitDocument"><i class="fas fa-sync"></i> Replace</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="document-upload">
+                            <label class="form-label">DTI Business Name Registration</label>
+                            <div class="document-preview" id="dtiDocumentPreview">
+                                <i class="fas fa-file-image document-icon"></i>
+                                <div class="document-info">
+                                    <div class="document-name">DTI Business Name Registration File</div>
+                                    <div class="document-upload-date">Uploaded: When</div>
+                                </div>
+                                <div class="document-actions">
+                                    <button type="button" class="btn btn-view" data-doc-type="dtiDocument"><i class="fas fa-eye"></i> View</button>
+                                    <button type="button" class="btn btn-replace" data-doc-type="dtiDocument"><i class="fas fa-sync"></i> Replace</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="document-upload">
+                            <label class="form-label">BIR Certificate / Registration</label>
+                            <div class="document-preview" id="birDocumentPreview">
+                                <i class="fas fa-file-pdf document-icon"></i>
+                                <div class="document-info">
+                                    <div class="document-name">BIR Certificate / Registration File</div>
+                                    <div class="document-upload-date">Uploaded: When</div>
+                                </div>
+                                <div class="document-actions">
+                                    <button type="button" class="btn btn-view" data-doc-type="birDocument"><i class="fas fa-eye"></i> View</button>
+                                    <button type="button" class="btn btn-replace" data-doc-type="birDocument"><i class="fas fa-sync"></i> Replace</button>
                                 </div>
                             </div>
                         </div>
