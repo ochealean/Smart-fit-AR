@@ -515,7 +515,7 @@ function createCartSummary() {
             <span id="subtotal">₱0.00</span>
         </div>
         <div class="summary-row">
-            <span>Tax (10%)</span>
+            <span>Tax (12%)</span>
             <span id="tax">₱0.00</span>
         </div>
         <div class="summary-row">
@@ -569,7 +569,7 @@ function updateTotals() {
     const selectedItems = cartItems.filter(item => checkedCartIds.includes(item.cartId));
 
     const subtotal = selectedItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-    const tax = subtotal * 0.1;
+    const tax = subtotal * 0.12;
     const shipping = selectedItems.length > 0 ? 5.0 : 0.0;
     const total = subtotal + tax + shipping;
 
