@@ -18,14 +18,9 @@ const urlParams = new URLSearchParams(window.location.search);
 const initialModel = urlParams.get('model') || 'classic';
 const initialColor = urlParams.get('color') || 'white';
 
-// Effect map remains the same
-const effectMap = {
-    classic: { white: 'classic_white.deepar', black: 'classic_black.deepar', blue: 'classic_blue.deepar', red: 'classic_red.deepar', green: 'classic_green.deepar', pink: 'classic_pink.deepar' },
-    running: { white: 'running_white.deepar', black: 'running_black.deepar', blue: 'running_blue.deepar', red: 'running_red.deepar', green: 'running_green.deepar', pink: 'running_pink.deepar' },
-    basketball: { white: 'basketball_white.deepar', black: 'basketball_black.deepar', blue: 'basketball_blue.deepar', red: 'basketball_red.deepar', green: 'basketball_green.deepar', pink: 'basketball_pink.deepar' }
-};
-
-let currentEffectPath = `./effects/filters/${effectMap[initialModel][initialColor]}`;
+// Effect map will be populated from database
+let effectMap = {};
+let currentEffectPath = '';
 const loader = document.getElementById('loader');
 const filterSection = document.getElementById('filter-section');
 const toggleButton = document.getElementById('toggle-filters');
@@ -44,13 +39,37 @@ const backButton = document.getElementById('back-button');
 const expandedControls = document.getElementById('expanded-controls');
 const exitBtnExpanded = document.getElementById('exit-btn-expanded');
 
-// Function to fetch AR models from Firebase
+// Function to fetch AR models from Firebase and build effect map
 async function fetchARModels() {
     try {
         const result = await readData('smartfit_AR_Database/ar_customization_models');
         if (result.success) {
             console.log('✅ AR models fetched from database:', result.data);
-            return result.data;
+            
+            // Build effect map from database data
+            effectMap = {};
+            const modelsData = result.data;
+            
+            Object.keys(modelsData).forEach(modelKey => {
+                const model = modelsData[modelKey];
+                effectMap[modelKey] = {};
+                
+                if (model.bodyColors) {
+                    Object.keys(model.bodyColors).forEach(colorKey => {
+                        const colorData = model.bodyColors[colorKey];
+                        // Use the DeepAR effect URL from the database
+                        if (colorData.deeparEffect) {
+                            effectMap[modelKey][colorKey] = colorData.deeparEffect;
+                            console.log(`📁 DeepAR effect for ${modelKey} ${colorKey}: ${colorData.deeparEffect}`);
+                        } else {
+                            console.warn(`⚠️ No DeepAR effect found for ${modelKey} ${colorKey}`);
+                        }
+                    });
+                }
+            });
+            
+            console.log('🎯 Built effect map:', effectMap);
+            return modelsData;
         } else {
             console.error('❌ Failed to fetch AR models:', result.error);
             return null;
@@ -68,7 +87,7 @@ function getColorImageUrl(colorData) {
     } else if (colorData.image) {
         return colorData.image;
     } else {
-        // Fallback to placeholder or use a default image based on color name
+        // Fallback to placeholder
         return '/images/shoe3.png';
     }
 }
@@ -85,7 +104,7 @@ function createFilterButtons(arModelsData) {
         group.className = 'category-group';
         const title = document.createElement('div');
         title.className = 'category-title';
-        title.textContent = model.charAt(0).toUpperCase() + model.slice(1);
+        title.textContent = arModelsData[model].name || (model.charAt(0).toUpperCase() + model.slice(1));
         group.appendChild(title);
 
         const buttonsDiv = document.createElement('div');
@@ -98,13 +117,15 @@ function createFilterButtons(arModelsData) {
             const button = document.createElement('div');
             button.className = 'filter-button';
             
-            // Check if effect exists for this color, otherwise skip
+            // Check if effect exists for this color in our effect map
             if (!effectMap[model] || !effectMap[model][color]) {
-                console.warn(`⚠️ No effect found for ${model} ${color}, skipping`);
+                console.warn(`⚠️ No DeepAR effect found for ${model} ${color}, skipping`);
                 continue;
             }
             
-            button.dataset.path = `./effects/filters/${effectMap[model][color]}`;
+            button.dataset.path = effectMap[model][color];
+            button.dataset.model = model;
+            button.dataset.color = color;
             button.setAttribute('role', 'button');
             button.setAttribute('tabindex', '0');
             button.setAttribute('aria-label', `${model} ${color}`);
@@ -132,7 +153,7 @@ function createFilterButtons(arModelsData) {
 
             button.onclick = async () => {
                 loader.classList.add('active');
-                await switchEffect(button.dataset.path);
+                await switchEffect(button.dataset.path, model, color);
                 document.querySelectorAll('.filter-button').forEach(btn => btn.classList.remove('selected'));
                 button.classList.add('selected');
                 loader.classList.remove('active');
@@ -156,6 +177,25 @@ function createFilterButtons(arModelsData) {
     });
 }
 
+// Function to get initial effect path based on URL parameters
+function getInitialEffectPath(arModelsData) {
+    const model = urlParams.get('model') || 'classic';
+    const color = urlParams.get('color') || 'white';
+    
+    if (effectMap[model] && effectMap[model][color]) {
+        return effectMap[model][color];
+    }
+    
+    // Fallback: find first available effect
+    for (const modelKey in effectMap) {
+        for (const colorKey in effectMap[modelKey]) {
+            return effectMap[modelKey][colorKey];
+        }
+    }
+    
+    return null;
+}
+
 (async function () {
     loader.classList.add('active');
     try {
@@ -166,7 +206,7 @@ function createFilterButtons(arModelsData) {
         });
         console.log("✅ DeepAR initialized ");
 
-        // Fetch AR models from database
+        // Fetch AR models from database and build effect map
         const arModelsData = await fetchARModels();
         
         if (!arModelsData) {
@@ -175,9 +215,16 @@ function createFilterButtons(arModelsData) {
 
         console.log('📊 Available models and colors:', arModelsData);
 
+        // Get initial effect path from database
+        currentEffectPath = getInitialEffectPath(arModelsData);
+        
+        if (!currentEffectPath) {
+            throw new Error('No DeepAR effects found in database');
+        }
+
         // Start with back camera
         await switchCamera('environment');
-        await deepAR.switchEffect('https://ik.imagekit.io/dhzqpau8e/classic_white.deepar?updatedAt=1760279270537');
+        await deepAR.switchEffect(currentEffectPath);
         console.log(`✅ Initial shoe effect loaded: ${currentEffectPath}`);
 
         deepAR.callbacks.onFeetVisibilityChanged = (visible) => {
@@ -188,7 +235,12 @@ function createFilterButtons(arModelsData) {
         createFilterButtons(arModelsData);
 
         // Select initial button if available
-        const initialButton = Array.from(document.querySelectorAll('.filter-button')).find(btn => btn.dataset.path === currentEffectPath);
+        const initialModel = urlParams.get('model') || 'classic';
+        const initialColor = urlParams.get('color') || 'white';
+        const initialButton = Array.from(document.querySelectorAll('.filter-button')).find(btn => 
+            btn.dataset.model === initialModel && btn.dataset.color === initialColor
+        );
+        
         if (initialButton) {
             initialButton.classList.add('selected');
         } else {
@@ -196,7 +248,7 @@ function createFilterButtons(arModelsData) {
             const firstButton = document.querySelector('.filter-button');
             if (firstButton) {
                 firstButton.classList.add('selected');
-                await switchEffect('https://ik.imagekit.io/dhzqpau8e/classic_white.deepar?updatedAt=1760279270537');
+                await switchEffect(firstButton.dataset.path, firstButton.dataset.model, firstButton.dataset.color);
             }
         }
 
@@ -208,7 +260,6 @@ function createFilterButtons(arModelsData) {
     }
 })();
 
-// The rest of your functions remain the same...
 async function switchCamera(facingMode) {
     try {
         if (currentStream) {
@@ -245,17 +296,16 @@ async function toggleCamera() {
     await switchCamera(facingMode);
 }
 
-async function switchEffect(effectPath) {
+async function switchEffect(effectPath, model, color) {
     try {
         if (!deepAR) throw new Error('DeepAR not initialized');
         await deepAR.switchEffect(effectPath);
         currentEffectPath = effectPath;
         console.log(`✅ Switched to effect: ${effectPath}`);
 
-        const params = new URLSearchParams(window.location.search);
-        const model = params.get('model');
-        console.log(`/customer/html/customizeshoe.html?model=${model}`);
-        deepARBuyNowLink = `/customer/html/customizeshoe.html?model=${model}`;
+        // Update buy now link with current model and color
+        deepARBuyNowLink = `/customer/html/customizeshoe.html?model=${model}&color=${color}`;
+        console.log(`🛒 Updated buy now link: ${deepARBuyNowLink}`);
     } catch (err) {
         console.error("❌ Failed to switch effect:", err);
     }
