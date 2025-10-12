@@ -233,7 +233,7 @@ function createProductCard(shoeData) {
             </div>
         </div>
     </div>
-  `;
+    `;
 }
 
 // Show no shoes message
