@@ -816,12 +816,8 @@
                 currentEffectPath = effectPath;
                 console.log(`✅ Switched to effect: ${effectPath}`);
 
-                const urlParams = new URLSearchParams(window.location.search);
-                const id = urlParams.get('id'); // example usage
-                const token = urlParams.get('token');
-
-                console.log(id);
-                console.log(token);
+                const currentURL = window.location.href;
+                console.log(currentURL);
             } catch (err) {
                 console.error("❌ Failed to switch effect:", err);
             }
