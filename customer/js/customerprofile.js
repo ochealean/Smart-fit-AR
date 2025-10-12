@@ -42,6 +42,7 @@ const elements = {
     gender: document.getElementById('gender'),
     address: document.getElementById('address'),
     city: document.getElementById('city'),
+    province: document.getElementById('province'),
     state: document.getElementById('state'),
     zipCode: document.getElementById('zipCode'),
     country: document.getElementById('country'),
@@ -174,6 +175,7 @@ function reverseGeocode(lat, lng) {
 // Update address fields based on geocoding results
 function updateAddressFields(geocodeResult) {
     let city = '';
+    let province = '';
     let state = '';
     let zipCode = '';
     let country = '';
@@ -184,7 +186,9 @@ function updateAddressFields(geocodeResult) {
         
         if (types.includes('locality')) {
             city = component.long_name;
-        } else if (types.includes('administrative_area_level_1')) {
+        } else if (types.includes('administrative_area_level_2')) {
+            province = component.long_name;
+        }else if (types.includes('administrative_area_level_1')) {
             state = component.long_name;
         } else if (types.includes('postal_code')) {
             zipCode = component.long_name;
@@ -195,6 +199,7 @@ function updateAddressFields(geocodeResult) {
 
     // Update form fields if they're empty or if we found better data
     if (city && elements.city) elements.city.value = city;
+    if (province && elements.province) elements.province.value = province;
     if (state && elements.state) elements.state.value = state;
     if (zipCode && elements.zipCode) elements.zipCode.value = zipCode;
     if (country && elements.country) elements.country.value = country;
@@ -358,6 +363,7 @@ function updateFormFields(customerData) {
     // Address Info
     if (customerData.address) elements.address.value = customerData.address;
     if (customerData.city) elements.city.value = customerData.city;
+    if (customerData.state) elements.state.province = customerData.province;
     if (customerData.state) elements.state.value = customerData.state;
     if (customerData.zip) elements.zipCode.value = customerData.zip;
     if (customerData.country) elements.country.value = customerData.country;
@@ -491,6 +497,7 @@ function setupEventListeners() {
                 updates.gender = elements.gender.value;
                 updates.address = elements.address.value;
                 updates.city = elements.city.value;
+                updates.province = elements.province.value;
                 updates.state = elements.state.value;
                 updates.zip = elements.zipCode.value;
                 updates.country = elements.country.value;
@@ -905,7 +912,8 @@ function validateFormFields() {
         { id: 'birthdate', name: 'Date of Birth' },
         { id: 'address', name: 'Address' },
         { id: 'city', name: 'City' },
-        { id: 'state', name: 'State/Province' },
+        { id: 'province', name: 'Province' },
+        { id: 'state', name: 'Region' },
         { id: 'zipCode', name: 'ZIP Code' },
         { id: 'country', name: 'Country' }
     ];
@@ -978,7 +986,7 @@ function validateFormFields() {
 function clearFieldErrors() {
     const fieldsToClear = [
         'firstName', 'lastName', 'phone', 'birthdate', 
-        'address', 'city', 'state', 'zipCode', 'country'
+        'address', 'city','province', 'state', 'zipCode', 'country'
     ];
     
     fieldsToClear.forEach(fieldId => {
@@ -994,7 +1002,7 @@ function clearFieldErrors() {
 function setupRealTimeValidation() {
     const fieldsToValidate = [
         'firstName', 'lastName', 'phone', 'birthdate', 
-        'address', 'city', 'state', 'zipCode', 'country'
+        'address', 'city','province', 'state', 'zipCode', 'country'
     ];
     
     fieldsToValidate.forEach(fieldId => {
