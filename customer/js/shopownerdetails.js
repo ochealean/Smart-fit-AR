@@ -715,8 +715,8 @@ class ShopDetailsPage {
             <div class="product-card" data-product-id="${product.id}">
                 <img src="${mainImage}" alt="${product.shoeName}" class="product-image" 
                     onerror="this.src='/images/unloadshoepic.png'">
-                <button class="view-product-btn" onclick="event.stopPropagation(); shopDetails.showProductModal('${product.id}')">
-                    <i class="fas fa-eye"></i> View
+                <button class="view-product-btn" onclick="event.stopPropagation(); shopDetails.viewShoeDetails('${product.id}')">
+                    <i class="fas fa-eye"></i> View Details
                 </button>
                 <div class="product-info">
                     <h3 class="product-name">${product.shoeName || 'Unnamed Product'}</h3>
@@ -910,10 +910,22 @@ class ShopDetailsPage {
                 if (!e.target.closest('.view-product-btn')) {
                     const productId = card.dataset.productId;
                     console.log('🖱️ Product card clicked:', productId);
-                    this.showProductModal(productId);
+                    this.viewShoeDetails(productId);
                 }
             });
         });
+    }
+
+    // NEW METHOD: Redirect to shoe details page
+    viewShoeDetails(productId) {
+        console.log('👟 Redirecting to shoe details for:', productId);
+        
+        // Construct the URL with both shoeID and shopID parameters
+        const shoeDetailsUrl = `/customer/html/shoedetails.html?shoeID=${productId}&shopID=${this.shopId}`;
+        console.log('🔗 Redirecting to:', shoeDetailsUrl);
+        
+        // Redirect to the shoe details page
+        window.location.href = shoeDetailsUrl;
     }
 
     async showProductModal(productId) {
@@ -966,11 +978,8 @@ class ShopDetailsPage {
                     ${this.renderProductVariants(product)}
                     
                     <div class="product-actions">
-                        <button class="add-to-cart-btn" onclick="shopDetails.addToCartModal('${product.id}')">
-                            <i class="fas fa-shopping-cart"></i> Add to Cart
-                        </button>
-                        <button class="wishlist-btn" onclick="shopDetails.addToWishlist('${product.id}')">
-                            <i class="fas fa-heart"></i> Add to Wishlist
+                        <button class="view-details-btn" onclick="shopDetails.viewShoeDetails('${product.id}')">
+                            <i class="fas fa-eye"></i> View Details
                         </button>
                     </div>
                 </div>
@@ -1097,17 +1106,6 @@ class ShopDetailsPage {
         
         console.log(`✅ Generated ${Object.keys(sizes).length} size options`);
         return sizesHTML;
-    }
-
-    // Placeholder methods for cart and wishlist functionality
-    addToCartModal(productId) {
-        console.log('🛒 Add to cart clicked for product:', productId);
-        alert('Add to cart functionality will be implemented soon!');
-    }
-
-    addToWishlist(productId) {
-        console.log('❤️ Add to wishlist clicked for product:', productId);
-        alert('Add to wishlist functionality will be implemented soon!');
     }
 
     renderSampleReviews() {
@@ -1315,20 +1313,6 @@ class ShopDetailsPage {
         
         // Fallback to generic name if customer data not found
         return `Customer ${customerId.substring(0, 8)}...`;
-    }
-
-    renderStars(rating) {
-        let stars = '';
-        for (let i = 1; i <= 5; i++) {
-            if (i <= rating) {
-                stars += '<i class="fas fa-star"></i>';
-            } else if (i - 0.5 <= rating) {
-                stars += '<i class="fas fa-star-half-alt"></i>';
-            } else {
-                stars += '<i class="far fa-star"></i>';
-            }
-        }
-        return stars;
     }
 
     setupEventListeners() {
