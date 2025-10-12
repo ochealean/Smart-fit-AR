@@ -74,14 +74,14 @@
                     <input type="hidden" id="shoeId">
 
                     <div class="form-group">
-                        <label for="shoeName">General Shoe Name</label>
-                        <input type="text" id="shoeName" required placeholder="e.g., Curry 3, Jordan 1">
-                    </div>
-
-                    <div class="form-group">
                         <label for="shoeCode">Shoe Code (Numbers Only)</label>
                         <input type="text" id="shoeCode" pattern="[0-9]+" required placeholder="e.g., 003, 101"
                             readonly>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="shoeName">General Shoe Name</label>
+                        <input type="text" id="shoeName" required placeholder="e.g., Curry 3, Jordan 1">
                     </div>
 
                     <div class="form-group">
@@ -125,11 +125,12 @@
 
                     <!-- Add this gender selection field -->
                     <div class="form-group">
-                        <label for="shoeGender">Gender</label>
+                        <label for="shoeGender">Categories</label>
                         <select id="shoeGender" required>
-                            <option value="" disabled selected>Select gender</option>
+                            <option value="" disabled selected>Select category</option>
                             <option value="men">Men</option>
                             <option value="women">Women</option>
+                            <option value="kids">Kids</option>
                             <option value="unisex">Unisex (Both)</option>
                         </select>
                     </div>
