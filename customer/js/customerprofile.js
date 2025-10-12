@@ -91,6 +91,7 @@ async function initializePage() {
     initializeMap();
     initializePasswordStrength();
     initializePasswordConfirmation();
+    setupRealTimeValidation();
 }
 
 // Initialize Google Maps
@@ -453,13 +454,23 @@ function setupEventListeners() {
         });
     }
 
-        // Form submission
+    // Form submission
     if (elements.form) {
         elements.form.addEventListener('submit', async function (e) {
             e.preventDefault();
 
             try {
                 showLoading(true);
+                
+                // Clear previous errors
+                clearFieldErrors();
+                
+                // Validate form fields
+                const validationErrors = validateFormFields();
+                if (validationErrors.length > 0) {
+                    throw new Error(validationErrors.join('\n'));
+                }
+
                 const updates = {};
                 let passwordChanged = false;
 
@@ -527,6 +538,13 @@ function setupEventListeners() {
             } catch (error) {
                 console.error('Error updating profile:', error);
                 showAlert(error.message, 'error');
+                
+                // Scroll to first error field
+                const firstErrorField = document.querySelector('[style*="border-color: var(--error)"]');
+                if (firstErrorField) {
+                    firstErrorField.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    firstErrorField.focus();
+                }
             } finally {
                 showLoading(false);
             }
@@ -873,6 +891,143 @@ function initializePasswordConfirmation() {
     
     newPasswordInput.addEventListener('input', validatePasswordMatch);
     confirmPasswordInput.addEventListener('input', validatePasswordMatch);
+}
+
+// Add this validation function
+function validateFormFields() {
+    const errors = [];
+    
+    // Required text fields
+    const requiredFields = [
+        { id: 'firstName', name: 'First Name' },
+        { id: 'lastName', name: 'Last Name' },
+        { id: 'phone', name: 'Phone Number' },
+        { id: 'birthdate', name: 'Date of Birth' },
+        { id: 'address', name: 'Address' },
+        { id: 'city', name: 'City' },
+        { id: 'state', name: 'State/Province' },
+        { id: 'zipCode', name: 'ZIP Code' },
+        { id: 'country', name: 'Country' }
+    ];
+
+    // Validate required fields
+    requiredFields.forEach(({ id, name }) => {
+        const field = getElement(id);
+        if (!field || !field.value.trim()) {
+            errors.push(`${name} is required`);
+            // Add visual error state
+            field.style.borderColor = 'var(--error)';
+            field.style.boxShadow = '0 0 0 2px rgba(255, 107, 107, 0.2)';
+        } else {
+            // Remove error state if valid
+            field.style.borderColor = '';
+            field.style.boxShadow = '';
+        }
+    });
+
+    // Validate phone number format (if provided)
+    const phoneField = getElement('phone');
+    if (phoneField && phoneField.value.trim()) {
+        const phoneRegex = /^\d{10}$/;
+        if (!phoneRegex.test(phoneField.value.replace(/\D/g, ''))) {
+            errors.push('Phone number must be exactly 10 digits');
+            phoneField.style.borderColor = 'var(--error)';
+            phoneField.style.boxShadow = '0 0 0 2px rgba(255, 107, 107, 0.2)';
+        }
+    }
+
+    // Validate ZIP code format (if provided)
+    const zipField = getElement('zipCode');
+    if (zipField && zipField.value.trim()) {
+        const zipRegex = /^\d{4}$/;
+        if (!zipRegex.test(zipField.value)) {
+            errors.push('ZIP code must be exactly 4 digits');
+            zipField.style.borderColor = 'var(--error)';
+            zipField.style.boxShadow = '0 0 0 2px rgba(255, 107, 107, 0.2)';
+        }
+    }
+
+    // Validate birthdate (if provided)
+    const birthdateField = getElement('birthdate');
+    if (birthdateField && birthdateField.value) {
+        const birthDate = new Date(birthdateField.value);
+        const today = new Date();
+        const minAgeDate = new Date();
+        minAgeDate.setFullYear(today.getFullYear() - 13); // Minimum age 13 years
+        
+        if (birthDate > minAgeDate) {
+            errors.push('You must be at least 13 years old');
+            birthdateField.style.borderColor = 'var(--error)';
+            birthdateField.style.boxShadow = '0 0 0 2px rgba(255, 107, 107, 0.2)';
+        }
+    }
+
+    // Validate coordinates (if map is implemented)
+    if (elements.latitude && elements.longitude) {
+        const latitude = elements.latitude.value;
+        const longitude = elements.longitude.value;
+        if (!latitude || !longitude) {
+            errors.push('Please set your location on the map by clicking on your address');
+        }
+    }
+
+    return errors;
+}
+
+// Add this function to clear error states
+function clearFieldErrors() {
+    const fieldsToClear = [
+        'firstName', 'lastName', 'phone', 'birthdate', 
+        'address', 'city', 'state', 'zipCode', 'country'
+    ];
+    
+    fieldsToClear.forEach(fieldId => {
+        const field = getElement(fieldId);
+        if (field) {
+            field.style.borderColor = '';
+            field.style.boxShadow = '';
+        }
+    });
+}
+
+// Add real-time validation for better UX
+function setupRealTimeValidation() {
+    const fieldsToValidate = [
+        'firstName', 'lastName', 'phone', 'birthdate', 
+        'address', 'city', 'state', 'zipCode', 'country'
+    ];
+    
+    fieldsToValidate.forEach(fieldId => {
+        const field = getElement(fieldId);
+        if (field) {
+            field.addEventListener('input', function() {
+                // Clear error state when user starts typing
+                if (this.value.trim()) {
+                    this.style.borderColor = '';
+                    this.style.boxShadow = '';
+                }
+            });
+            
+            // For specific field validations
+            if (fieldId === 'phone') {
+                field.addEventListener('input', function() {
+                    this.value = this.value.replace(/\D/g, '');
+                    if (this.value.length > 10) {
+                        this.value = this.value.slice(0, 10);
+                    }
+                });
+            }
+            
+            if (fieldId === 'zipCode') {
+                field.addEventListener('input', function() {
+                    this.value = this.value.replace(/\D/g, '');
+                    if (this.value.length > 4) {
+                        this.value = this.value.slice(0, 4);
+                    }
+                });
+            }
+        }
+    });
 }
 
 // Handle logout
