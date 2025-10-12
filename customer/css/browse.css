@@ -325,6 +325,22 @@ body {
     margin-bottom: 0.5rem;
 }
 
+/* Shop name link styles */
+.shop-name-link {
+    color: #667eea;
+    text-decoration: underline;
+    cursor: pointer;
+    transition: color 0.3s ease;
+    font-weight: 600;
+    margin: 0.5rem 0;
+    display: inline-block;
+    font-size: 1rem;
+}
+
+.shop-name-link:hover {
+    color: #764ba2;
+}
+
 .product-name {
     font-weight: 600;
     margin-bottom: 0.5rem;
