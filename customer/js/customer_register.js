@@ -1,14 +1,266 @@
 import {
     createImageToFirebase,
-    updateProfileMethod,
     createUserWithEmailAndPasswordWrapper,
     sendEmailVerificationWrapper,
     createData
 } from "../../firebaseMethods.js";
 
+// State variables
+let avatarFile = null;
+let map;
+let marker;
+let geocoder;
+
+// DOM Elements
+const elements = {
+    // Form Fields
+    firstName: document.getElementById('firstName'),
+    lastName: document.getElementById('lastName'),
+    email: document.getElementById('email'),
+    phone: document.getElementById('phone'),
+    birthDate: document.getElementById('birthDate'),
+    address: document.getElementById('address'),
+    city: document.getElementById('city'),
+    state: document.getElementById('state'),
+    zip: document.getElementById('zip'),
+    country: document.getElementById('country'),
+    username: document.getElementById('username'),
+    password: document.getElementById('password'),
+    confirmPassword: document.getElementById('confirmPassword'),
+    profilePhoto: document.getElementById('profilePhoto'),
+    agreeTerms: document.getElementById('agreeTerms'),
+    // Map Elements
+    map: document.getElementById('map'),
+    latitude: document.getElementById('latitude'),
+    longitude: document.getElementById('longitude'),
+    displayLatitude: document.getElementById('displayLatitude'),
+    displayLongitude: document.getElementById('displayLongitude'),
+    // Buttons
+    registerButton: document.getElementById('registerButton'),
+    form: document.getElementById('customerRegistrationForm')
+};
+
 // Helper function to get DOM elements
 function getElement(id) {
     return document.getElementById(id);
+}
+
+// Initialize the page
+document.addEventListener('DOMContentLoaded', function () {
+    initializePage();
+});
+
+function initializePage() {
+    initializeMap();
+    setupEventListeners();
+    initializePasswordToggle();
+    initializePasswordStrength();
+    initializePhoneValidation();
+    initializeZipValidation();
+    initializeDateValidation();
+    setupFilePreview('profilePhoto', 'profilePreview', 'Profile Photo');
+}
+
+// Initialize Google Maps
+function initializeMap() {
+    if (!elements.map) {
+        console.log('Map container not found');
+        return;
+    }
+
+    // Default coordinates (Bataan, Philippines) - Centered on Bataan
+    const defaultLat = 14.677350;  // Bataan latitude
+    const defaultLng = 120.530303; // Bataan longitude
+
+    // Initialize the map
+    map = new google.maps.Map(elements.map, {
+        center: { lat: defaultLat, lng: defaultLng },
+        zoom: 15,
+        mapTypeControl: true,
+        streetViewControl: true,
+        fullscreenControl: true
+    });
+
+    // Initialize marker
+    marker = new google.maps.Marker({
+        map: map,
+        draggable: true,
+        animation: google.maps.Animation.DROP,
+        title: "Drag to set your location"
+    });
+
+    // Add click listener to map
+    map.addListener('click', function(event) {
+        const lat = event.latLng.lat();
+        const lng = event.latLng.lng();
+        updateMarkerPosition(lat, lng);
+        updateCoordinatesDisplay(lat, lng);
+        reverseGeocode(lat, lng);
+    });
+
+    // Add marker drag end listener
+    marker.addListener('dragend', function(event) {
+        const lat = event.latLng.lat();
+        const lng = event.latLng.lng();
+        updateCoordinatesDisplay(lat, lng);
+        reverseGeocode(lat, lng);
+    });
+
+    // Initialize geocoder
+    geocoder = new google.maps.Geocoder();
+
+    console.log('Google Maps initialized for registration');
+}
+
+// Update marker position
+function updateMarkerPosition(lat, lng) {
+    marker.setPosition({ lat: lat, lng: lng });
+    map.panTo({ lat: lat, lng: lng });
+}
+
+// Update coordinates display
+function updateCoordinatesDisplay(lat, lng) {
+    if (elements.latitude) elements.latitude.value = lat;
+    if (elements.longitude) elements.longitude.value = lng;
+    if (elements.displayLatitude) elements.displayLatitude.textContent = lat.toFixed(6);
+    if (elements.displayLongitude) elements.displayLongitude.textContent = lng.toFixed(6);
+}
+
+// Reverse geocode coordinates to address
+function reverseGeocode(lat, lng) {
+    const latlng = { lat: lat, lng: lng };
+
+    geocoder.geocode({ location: latlng }, function(results, status) {
+        if (status === 'OK' && results[0]) {
+            updateAddressFields(results[0]);
+            showMapMessage('Location found! Address fields have been auto-filled.', 'success');
+        } else {
+            console.log('Geocoder failed due to: ' + status);
+            showMapMessage('Could not find address for this location. Please enter address manually.', 'error');
+        }
+    });
+}
+
+// Update address fields based on geocoding results
+function updateAddressFields(geocodeResult) {
+    let city = '';
+    let province = '';
+    let state = '';
+    let zipCode = '';
+    let country = '';
+
+    // Parse address components
+    geocodeResult.address_components.forEach(component => {
+        const types = component.types;
+        
+        if (types.includes('locality')) {
+            city = component.long_name;
+        } else if (types.includes('administrative_area_level_2')) {
+            province = component.long_name;
+        } else if (types.includes('administrative_area_level_1')) {
+            state = component.long_name;
+        } else if (types.includes('postal_code')) {
+            zipCode = component.long_name;
+        } else if (types.includes('country')) {
+            country = component.long_name;
+        }
+    });
+
+    // Update form fields if they're empty or if we found better data
+    if (city && elements.city) {
+        const cityOption = Array.from(elements.city.options).find(option => 
+            option.text.toLowerCase().includes(city.toLowerCase()) || 
+            city.toLowerCase().includes(option.text.toLowerCase())
+        );
+        if (cityOption) {
+            elements.city.value = cityOption.value;
+        } else if (!elements.city.value) {
+            elements.city.value = city;
+        }
+    }
+    
+    if (province && elements.state) {
+        const provinceOption = Array.from(elements.state.options).find(option => 
+            option.text.toLowerCase().includes(province.toLowerCase()) || 
+            province.toLowerCase().includes(option.text.toLowerCase())
+        );
+        if (provinceOption) {
+            elements.state.value = provinceOption.value;
+        } else if (!elements.state.value) {
+            elements.state.value = province;
+        }
+    }
+    
+    if (state && document.getElementById('state')) {
+        // If you have a separate region field
+        const stateField = document.getElementById('state');
+        if (stateField) {
+            const stateOption = Array.from(stateField.options).find(option => 
+                option.text.toLowerCase().includes(state.toLowerCase()) || 
+                state.toLowerCase().includes(option.text.toLowerCase())
+            );
+            if (stateOption) {
+                stateField.value = stateOption.value;
+            }
+        }
+    }
+    
+    if (zipCode && elements.zip && !elements.zip.value) {
+        elements.zip.value = zipCode;
+    }
+    
+    if (country && elements.country) {
+        const countryOption = Array.from(elements.country.options).find(option => 
+            option.text.toLowerCase().includes(country.toLowerCase()) || 
+            country.toLowerCase().includes(option.text.toLowerCase())
+        );
+        if (countryOption) {
+            elements.country.value = countryOption.value;
+        }
+    }
+    
+    if (elements.address) {
+        elements.address.value = geocodeResult.formatted_address;
+    }
+}
+
+// Helper function to show map messages
+function showMapMessage(message, type) {
+    // Remove any existing map messages
+    const existingMessage = document.querySelector('.map-message');
+    if (existingMessage) {
+        existingMessage.remove();
+    }
+
+    const messageDiv = document.createElement('div');
+    messageDiv.className = `map-message ${type}`;
+    messageDiv.style.cssText = `
+        position: absolute;
+        top: 10px;
+        left: 50%;
+        transform: translateX(-50%);
+        padding: 10px 15px;
+        border-radius: 5px;
+        color: white;
+        z-index: 1000;
+        font-size: 0.9rem;
+        background-color: ${type === 'success' ? '#4CAF50' : '#F44336'};
+        box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    `;
+    messageDiv.textContent = message;
+
+    const mapContainer = document.getElementById('map');
+    if (mapContainer) {
+        mapContainer.style.position = 'relative';
+        mapContainer.appendChild(messageDiv);
+
+        // Auto-remove after 3 seconds
+        setTimeout(() => {
+            if (messageDiv.parentNode) {
+                messageDiv.remove();
+            }
+        }, 3000);
+    }
 }
 
 // Password strength indicator
@@ -320,6 +572,138 @@ async function uploadProfilePhotoWithProgress(userId, photoFile) {
     });
 }
 
+// Setup event listeners
+function setupEventListeners() {
+    // Add event listeners for overlay buttons
+    const closeOverlayBtn = getElement('closeOverlay');
+    const closeErrorOverlayBtn = getElement('closeErrorOverlay');
+    
+    if (closeOverlayBtn) {
+        closeOverlayBtn.addEventListener('click', closeOverlays);
+    }
+    
+    if (closeErrorOverlayBtn) {
+        closeErrorOverlayBtn.addEventListener('click', closeOverlays);
+    }
+
+    // Add form submit handler
+    const registrationForm = getElement('customerRegistrationForm');
+    if (registrationForm) {
+        registrationForm.addEventListener('submit', handleRegistration);
+    }
+}
+
+// Validation function
+function validateFormFields() {
+    const errors = [];
+    
+    // Required text fields
+    const requiredFields = [
+        { id: 'firstName', name: 'First Name' },
+        { id: 'lastName', name: 'Last Name' },
+        { id: 'email', name: 'Email' },
+        { id: 'phone', name: 'Phone Number' },
+        { id: 'birthDate', name: 'Date of Birth' },
+        { id: 'address', name: 'Street Address' },
+        { id: 'city', name: 'City' },
+        { id: 'state', name: 'State/Province' },
+        { id: 'zip', name: 'ZIP/Postal Code' },
+        { id: 'country', name: 'Country' },
+        { id: 'username', name: 'Username' },
+        { id: 'password', name: 'Password' },
+        { id: 'confirmPassword', name: 'Confirm Password' }
+    ];
+
+    // Validate required fields
+    requiredFields.forEach(({ id, name }) => {
+        const field = getElement(id);
+        if (!field || !field.value.trim()) {
+            errors.push(`${name} is required`);
+            if (field) showFieldError(field, `${name} is required`);
+        }
+    });
+
+    // Validate coordinates
+    const latitude = getElement('latitude').value;
+    const longitude = getElement('longitude').value;
+    if (!latitude || !longitude) {
+        errors.push('Location coordinates are required');
+        const mapGroup = document.getElementById('map').closest('.form-group');
+        showFieldError(mapGroup.querySelector('label'), 'Please set your location on the map by clicking on your address');
+    }
+
+    // Validate email format
+    const emailField = getElement('email');
+    if (emailField && !/^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/.test(emailField.value)) {
+        errors.push('Invalid email format');
+        showFieldError(emailField, 'Please enter a valid email address');
+    }
+
+    // Validate phone number
+    const phoneField = getElement('phone');
+    if (phoneField && (phoneField.value.length !== 10 || !/^\d+$/.test(phoneField.value))) {
+        errors.push('Invalid phone number');
+        showFieldError(phoneField, 'Please enter a valid 10-digit Philippine mobile number');
+    }
+
+    // Validate ZIP code
+    const zipField = getElement('zip');
+    if (zipField && (zipField.value.length !== 4 || !/^\d+$/.test(zipField.value))) {
+        errors.push('Invalid ZIP code');
+        showFieldError(zipField, 'Please enter a valid 4-digit ZIP code');
+    }
+
+    // Validate password match
+    const passwordVal = getElement('password')?.value;
+    const confirmPasswordVal = getElement('confirmPassword')?.value;
+    if (passwordVal !== confirmPasswordVal) {
+        errors.push('Passwords do not match');
+        showFieldError(getElement('confirmPassword'), 'Passwords do not match');
+    }
+
+    // Validate password strength
+    if (passwordVal) {
+        if (passwordVal.length < 8) {
+            errors.push('Password must be at least 8 characters');
+        }
+        if (!/[A-Z]/.test(passwordVal)) {
+            errors.push('Password must contain at least one uppercase letter');
+        }
+        if (!/\d/.test(passwordVal)) {
+            errors.push('Password must contain at least one number');
+        }
+        if (!/[^a-zA-Z0-9]/.test(passwordVal)) {
+            errors.push('Password must contain at least one special character');
+        }
+        if (errors.length > 0 && errors.some(e => e.includes('Password must'))) {
+            showFieldError(getElement('password'), 'Password does not meet requirements');
+        }
+    }
+
+    // Validate profile photo if provided
+    const profilePhotoFile = getElement("profilePhoto").files[0];
+    if (profilePhotoFile) {
+        if (profilePhotoFile.size > 2 * 1024 * 1024) {
+            errors.push('Profile photo file size exceeds 2MB limit');
+            showFieldError(getElement('profilePhoto'), 'File size exceeds 2MB limit');
+        }
+        const validTypes = ['image/jpeg', 'image/png'];
+        if (!validTypes.includes(profilePhotoFile.type)) {
+            errors.push('Profile photo invalid file type');
+            showFieldError(getElement('profilePhoto'), 'Only JPEG or PNG files are allowed');
+        }
+    }
+
+    // Validate terms agreement
+    const agreeTerms = getElement('agreeTerms');
+    if (!agreeTerms || !agreeTerms.checked) {
+        errors.push('You must agree to the Terms of Service and Privacy Policy');
+        if (agreeTerms) showFieldError(agreeTerms, 'You must agree to the Terms of Service and Privacy Policy');
+    }
+
+    return errors;
+}
+
 // Main registration handler
 async function handleRegistration(event) {
     event.preventDefault();
@@ -332,110 +716,7 @@ async function handleRegistration(event) {
         document.querySelectorAll('.error-message').forEach(el => el.remove());
         document.querySelectorAll('.form-group').forEach(el => el.classList.remove('error'));
 
-        const errors = [];
-        const requiredFields = [
-            { id: 'firstName', name: 'First Name' },
-            { id: 'lastName', name: 'Last Name' },
-            { id: 'email', name: 'Email' },
-            { id: 'phone', name: 'Phone Number' },
-            { id: 'birthDate', name: 'Date of Birth' },
-            { id: 'address', name: 'Street Address' },
-            { id: 'city', name: 'City' },
-            { id: 'state', name: 'State/Province' },
-            { id: 'zip', name: 'ZIP/Postal Code' },
-            { id: 'country', name: 'Country' },
-            { id: 'username', name: 'Username' },
-            { id: 'password', name: 'Password' },
-            { id: 'confirmPassword', name: 'Confirm Password' }
-        ];
-
-        // Validate required fields
-        requiredFields.forEach(({ id, name }) => {
-            const field = getElement(id);
-            if (!field || !field.value.trim()) {
-                errors.push(`${name} is required`);
-                if (field) showFieldError(field, `${name} is required`);
-            }
-        });
-
-        // Validate coordinates
-        const latitude = getElement('latitude').value;
-        const longitude = getElement('longitude').value;
-        if (!latitude || !longitude) {
-            errors.push('Location coordinates are required');
-            const mapGroup = document.getElementById('map').closest('.form-group');
-            showFieldError(mapGroup.querySelector('label'), 'Please set your location on the map');
-        }
-
-        // Validate email format
-        const emailField = getElement('email');
-        if (emailField && !/^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/.test(emailField.value)) {
-            errors.push('Invalid email format');
-            showFieldError(emailField, 'Please enter a valid email address');
-        }
-
-        // Validate phone number
-        const phoneField = getElement('phone');
-        if (phoneField && (phoneField.value.length !== 10 || !/^\d+$/.test(phoneField.value))) {
-            errors.push('Invalid phone number');
-            showFieldError(phoneField, 'Please enter a valid 10-digit Philippine mobile number');
-        }
-
-        // Validate ZIP code
-        const zipField = getElement('zip');
-        if (zipField && (zipField.value.length !== 4 || !/^\d+$/.test(zipField.value))) {
-            errors.push('Invalid ZIP code');
-            showFieldError(zipField, 'Please enter a valid 4-digit ZIP code');
-        }
-
-        // Validate password match
-        const passwordVal = getElement('password')?.value;
-        const confirmPasswordVal = getElement('confirmPassword')?.value;
-        if (passwordVal !== confirmPasswordVal) {
-            errors.push('Passwords do not match');
-            showFieldError(getElement('confirmPassword'), 'Passwords do not match');
-        }
-
-        // Validate password strength
-        if (passwordVal) {
-            if (passwordVal.length < 8) {
-                errors.push('Password must be at least 8 characters');
-            }
-            if (!/[A-Z]/.test(passwordVal)) {
-                errors.push('Password must contain at least one uppercase letter');
-            }
-            if (!/\d/.test(passwordVal)) {
-                errors.push('Password must contain at least one number');
-            }
-            if (!/[^a-zA-Z0-9]/.test(passwordVal)) {
-                errors.push('Password must contain at least one special character');
-            }
-            if (errors.length > 0 && errors.some(e => e.includes('Password must'))) {
-                showFieldError(getElement('password'), 'Password does not meet requirements');
-            }
-        }
-
-        // Validate profile photo if provided
-        const profilePhotoFile = getElement("profilePhoto").files[0];
-        if (profilePhotoFile) {
-            if (profilePhotoFile.size > 2 * 1024 * 1024) {
-                errors.push('Profile photo file size exceeds 2MB limit');
-                showFieldError(getElement('profilePhoto'), 'File size exceeds 2MB limit');
-            }
-            const validTypes = ['image/jpeg', 'image/png'];
-            if (!validTypes.includes(profilePhotoFile.type)) {
-                errors.push('Profile photo invalid file type');
-                showFieldError(getElement('profilePhoto'), 'Only JPEG or PNG files are allowed');
-            }
-        }
-
-        // Validate terms agreement
-        const agreeTerms = getElement('agreeTerms');
-        if (!agreeTerms || !agreeTerms.checked) {
-            errors.push('You must agree to the Terms of Service and Privacy Policy');
-            if (agreeTerms) showFieldError(agreeTerms, 'You must agree to the Terms of Service and Privacy Policy');
-        }
-
+        const errors = validateFormFields();
         if (errors.length > 0) {
             hideLoader();
             setButtonAble();
@@ -454,6 +735,7 @@ async function handleRegistration(event) {
         const user = userCredential.user;
 
         // Upload profile photo if provided
+        const profilePhotoFile = getElement("profilePhoto").files[0];
         let photoData = null;
         if (profilePhotoFile) {
             try {
@@ -484,7 +766,7 @@ async function handleRegistration(event) {
             latitude: getElement('latitude').value,
             longitude: getElement('longitude').value,
             locationVerified: !!(getElement('latitude').value && getElement('longitude').value),
-            ...(photoData && { profilePhoto: photoData })
+            ...(photoData && { profilePhoto: photoData.profilePhoto })
         };
 
         const createResult = await createData(
@@ -509,9 +791,10 @@ async function handleRegistration(event) {
         showSuccessOverlay();
         getElement('customerRegistrationForm').reset();
 
-        // Reset map coordinates
+        // Reset map coordinates and marker
         getElement('displayLatitude').textContent = 'N/A';
         getElement('displayLongitude').textContent = 'N/A';
+        marker.setPosition(null);
 
     } catch (error) {
         console.error('Registration error:', error);
@@ -531,32 +814,3 @@ async function handleRegistration(event) {
         showErrorOverlay([errorMessage]);
     }
 }
-
-// Initialize everything when DOM is loaded
-document.addEventListener('DOMContentLoaded', function() {
-    // Initialize form functionality
-    initializePasswordToggle();
-    initializePasswordStrength();
-    initializePhoneValidation();
-    initializeZipValidation();
-    initializeDateValidation();
-    setupFilePreview('profilePhoto', 'profilePreview', 'Profile Photo');
-
-    // Add event listeners for overlay buttons
-    const closeOverlayBtn = getElement('closeOverlay');
-    const closeErrorOverlayBtn = getElement('closeErrorOverlay');
-    
-    if (closeOverlayBtn) {
-        closeOverlayBtn.addEventListener('click', closeOverlays);
-    }
-    
-    if (closeErrorOverlayBtn) {
-        closeErrorOverlayBtn.addEventListener('click', closeOverlays);
-    }
-
-    // Add form submit handler
-    const registrationForm = getElement('customerRegistrationForm');
-    if (registrationForm) {
-        registrationForm.addEventListener('submit', handleRegistration);
-    }
-});

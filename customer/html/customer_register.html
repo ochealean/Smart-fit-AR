@@ -426,14 +426,28 @@
                 <div class="form-section">
                     <h2><i class="fas fa-map-marker-alt"></i> Address Information</h2>
                     <div class="form-group">
-                        <label for="address">Street Address*</label>
+                        <label for="address">Address*</label>
                         <input type="text" id="address" name="address" required placeholder="House number and street name">
                     </div>
 
                     <div class="form-row">
                         <div class="form-group">
                             <label for="city">City*</label>
-                            <input type="text" id="city" name="city" required placeholder="City">
+                            <select id="city" class="form-select">
+                                <option value="" disabled selected>Select . . .</option>
+                                <option value="Abucay">Abucay</option>
+                                <option value="Bagac">Bagac</option>
+                                <option value="Balanga City">Balanga City</option>
+                                <option value="Dinalupihan">Dinalupihan</option>
+                                <option value="Hermosa">Hermosa</option>
+                                <option value="Limay">Limay</option>
+                                <option value="Mariveles">Mariveles</option>
+                                <option value="Morong">Morong</option>
+                                <option value="Orani">Orani</option>
+                                <option value="Orion">Orion</option>
+                                <option value="Pilar">Pilar</option>
+                                <option value="Samal">Samal</option>
+                            </select>
                         </div>
 
                         <div class="form-group">
@@ -451,6 +465,13 @@
                         </div>
 
                         <div class="form-group">
+                            <label for="state" class="form-label">Region</label>
+                            <select id="state" class="form-select">
+                                <option value="Central Luzon" selected>Central Luzon</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
                             <label for="country">Country*</label>
                             <select id="country" name="country" required>
                                 <option value="Philippines" selected>Philippines</option>
@@ -461,8 +482,10 @@
                     <!-- Map Location Section for Customer -->
                     <div class="form-group">
                         <label>Your Location on Map*</label>
-                        <small class="instruction">Click 'Locate on Map' to automatically pin your location based on the address. You can drag the marker to adjust for better delivery accuracy.</small>
-                        <button type="button" id="locateMapBtn" class="overlay-btn" style="margin-bottom: 1rem;">Locate on Map</button>
+                        <small class="instruction">
+                            <strong>Click directly on the map</strong> to set your location and auto-fill address fields.<br>
+                            You can drag the marker to adjust for better delivery accuracy.
+                        </small>
                         <div id="map" style="height: 300px; width: 100%; border-radius: 8px; border: 1px solid var(--gray-medium);"></div>
                         <input type="hidden" id="latitude" name="latitude">
                         <input type="hidden" id="longitude" name="longitude">
