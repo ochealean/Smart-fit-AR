@@ -652,6 +652,11 @@
     </div>
 
     <script>
+        const params = new URLSearchParams(window.location.search);
+        const model = params.get('model');
+        console.log(`/customer/html/customizeshoe.html?model=${model}`);
+        let deepARBuyNowLink = `/customer/html/customizeshoe.html?model=${model}`;
+        
         let deepAR;
         let isFrontCamera = false; // Track camera state
         let isMirrored = false; // Track mirror state
@@ -803,6 +808,10 @@
             }
         }
 
+        function handleBuyNow() {
+            window.location.href = deepARBuyNowLink;
+        }
+
         async function toggleCamera() {
             isFrontCamera = !isFrontCamera;
             const facingMode = isFrontCamera ? 'user' : 'environment';
@@ -816,8 +825,10 @@
                 currentEffectPath = effectPath;
                 console.log(`✅ Switched to effect: ${effectPath}`);
 
-                const currentURL = window.location.href;
-                console.log(currentURL);
+                const params = new URLSearchParams(window.location.search);
+                const model = params.get('model');
+                console.log(`/customer/html/customizeshoe.html?model=${model}`);
+                deepARBuyNowLink = `/customer/html/customizeshoe.html?model=${model}`;
             } catch (err) {
                 console.error("❌ Failed to switch effect:", err);
             }
@@ -855,6 +866,7 @@
 
         switchCameraBtnNormal.addEventListener('click', toggleCamera);
         switchCameraBtnExpanded.addEventListener('click', toggleCamera);
+        buyNowButton.addEventListener('click', handleBuyNow);
 
         function enterExpanded() {
             preview.classList.add('expanded');
