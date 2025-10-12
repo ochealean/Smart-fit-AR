@@ -7,289 +7,301 @@
     <link rel="icon" href="../../images/smartfitImages/smartfitAR-logo.png" type="image/x-icon">
     <link rel="stylesheet" href="/shopowner/css/shop_reapply.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-<!-- Google Maps JavaScript API -->
-<script>
-    // Ensure initMap is globally available and waits for DOM
-    window.initMap = function() {
-        document.addEventListener('DOMContentLoaded', function() {
+    <!-- Google Maps JavaScript API -->
+    <script>
+        // Global variables for map
+        let map, marker, geocoder;
+
+        // Ensure initMap is globally available and waits for DOM
+        window.initMap = function() {
+            document.addEventListener('DOMContentLoaded', function() {
+                initializeMap();
+            });
+        };
+
+        // Initialize Google Maps with Bataan center
+        function initializeMap() {
             const mapDiv = document.getElementById('map');
             if (!mapDiv) {
                 console.error('Map div not found');
                 return;
             }
 
-            const { AdvancedMarkerElement } = google.maps.marker;
+            // Default coordinates (Balanga City, Bataan, Philippines)
+            const defaultLat = 14.6833;  // Balanga City center
+            const defaultLng = 120.5333; // Balanga City center
 
+            // Initialize the map
             map = new google.maps.Map(mapDiv, {
-                center: { lat: 14.5995, lng: 120.9842 }, // Default center: Philippines
-                zoom: 8,
-                mapId: '8ddbd8f389c81029930da3' // Your valid Map ID
+                center: { lat: defaultLat, lng: defaultLng },
+                zoom: 12, // Good zoom level to see most of Bataan
+                mapTypeControl: true,
+                streetViewControl: true,
+                fullscreenControl: true
             });
 
-            marker = new AdvancedMarkerElement({
+            // Initialize marker
+            marker = new google.maps.Marker({
                 map: map,
-                position: null, // Initially no position
-                gmpDraggable: true, // Correct property for draggability
-                title: 'Shop Location'
+                draggable: true,
+                animation: google.maps.Animation.DROP,
+                title: "Drag to set your shop location"
             });
 
-            // Hide marker initially until address is geocoded
-            marker.visible = false;
-
+            // Initialize geocoder
             geocoder = new google.maps.Geocoder();
 
-            // Add dragend listener using google.maps.event
-            google.maps.event.addListener(marker, 'dragend', function() {
-                const position = marker.position;
-                if (position) {
-                    document.getElementById('latitude').value = position.lat;
-                    document.getElementById('longitude').value = position.lng;
-                    document.getElementById('displayLatitude').textContent = position.lat.toFixed(6);
-                    document.getElementById('displayLongitude').textContent = position.lng.toFixed(6);
-                }
+            // Add click listener to map
+            map.addListener('click', function(event) {
+                const lat = event.latLng.lat();
+                const lng = event.latLng.lng();
+                updateMarkerPosition(lat, lng);
+                updateCoordinatesDisplay(lat, lng);
+                reverseGeocode(lat, lng);
             });
 
-            // Handle "Locate on Map" button
-            document.getElementById('locateMapBtn').addEventListener('click', function() {
-                const shopAddress = document.getElementById('shopAddress').value.trim();
-                const shopCity = document.getElementById('shopCity').value.trim();
-                const shopState = document.getElementById('shopState').value.trim();
-                const shopZip = document.getElementById('shopZip').value.trim();
-                const shopCountry = document.getElementById('shopCountry').value.trim();
-
-                // Validate that all required address fields are filled
-                if (!shopAddress || !shopCity || !shopState || !shopZip) {
-                    showErrorOverlay(['Please fill in all address fields (Street Address, City, Province, and ZIP Code) before locating on map.']);
-                    return;
-                }
-
-                // Create multiple address formats to improve geocoding accuracy
-                const addressFormats = [
-                    // Format 1: Full detailed address (highest priority)
-                    `${shopAddress}, ${shopCity}, ${shopState} ${shopZip}, ${shopCountry}`,
-                    // Format 2: Address + City + Province (remove ZIP if problematic)
-                    `${shopAddress}, ${shopCity}, ${shopState}, ${shopCountry}`,
-                    // Format 3: Just address and city
-                    `${shopAddress}, ${shopCity}, ${shopCountry}`,
-                    // Format 4: Address-focused format
-                    `${shopAddress}, ${shopCity}`
-                ];
-
-                console.log('Attempting to geocode address:', shopAddress);
-                
-                // Try geocoding with increasing specificity
-                attemptGeocoding(addressFormats, 0);
-                
-                function attemptGeocoding(formats, index) {
-                    if (index >= formats.length) {
-                        // All formats failed, show error and allow manual placement
-                        console.error('All geocoding attempts failed');
-                        showErrorOverlay([
-                            'Unable to pinpoint the exact street address.',
-                            'The marker has been placed in the general area.',
-                            'Please manually drag the marker to your exact shop location.'
-                        ]);
-                        
-                        // Center on the city as fallback
-                        geocoder.geocode({
-                            address: `${shopCity}, ${shopState}, ${shopCountry}`
-                        }, function(results, status) {
-                            if (status === google.maps.GeocoderStatus.OK) {
-                                const location = results[0].geometry.location;
-                                map.setCenter(location);
-                                map.setZoom(15);
-                                marker.position = { lat: location.lat(), lng: location.lng() };
-                                marker.visible = true;
-                                updateCoordinates(location.lat(), location.lng());
-                            }
-                        });
-                        return;
-                    }
-
-                    const currentAddress = formats[index];
-                    console.log(`Attempt ${index + 1}: ${currentAddress}`);
-
-                    geocoder.geocode({ 
-                        address: currentAddress,
-                        region: 'ph' // Use region instead of componentRestrictions for better results
-                    }, function(results, status) {
-                        if (status === google.maps.GeocoderStatus.OK) {
-                            const location = results[0].geometry.location;
-                            const formattedAddress = results[0].formatted_address;
-                            const locationType = results[0].geometry.location_type;
-                            
-                            console.log(`Geocoding successful (Attempt ${index + 1}):`, formattedAddress);
-                            console.log('Location type:', locationType);
-                            console.log('Exact coordinates:', location.lat(), location.lng());
-
-                            // Check if we got a precise location (ROOFTOP, RANGE_INTERPOLATED, or GEOMETRIC_CENTER)
-                            const isPrecise = ['ROOFTOP', 'RANGE_INTERPOLATED', 'GEOMETRIC_CENTER'].includes(locationType);
-                            
-                            map.setCenter(location);
-                            map.setZoom(isPrecise ? 17 : 15); // Higher zoom for precise locations
-                            
-                            marker.position = {
-                                lat: location.lat(),
-                                lng: location.lng()
-                            };
-                            
-                            marker.visible = true;
-                            updateCoordinates(location.lat(), location.lng());
-
-                            if (!isPrecise) {
-                                // If not precise, inform the user to adjust manually
-                                showErrorOverlay([
-                                    'Approximate location found.',
-                                    'Please manually drag the marker to your exact shop location for better accuracy.'
-                                ]);
-                            } else {
-                                console.log('Precise location found!');
-                            }
-                            
-                        } else if (status === google.maps.GeocoderStatus.ZERO_RESULTS) {
-                            console.log(`Attempt ${index + 1} failed: No results`);
-                            // Try next format
-                            attemptGeocoding(formats, index + 1);
-                        } else {
-                            console.log(`Attempt ${index + 1} failed: ${status}`);
-                            // Try next format
-                            attemptGeocoding(formats, index + 1);
-                        }
-                    });
-                }
-
-                function updateCoordinates(lat, lng) {
-                    document.getElementById('latitude').value = lat;
-                    document.getElementById('longitude').value = lng;
-                    document.getElementById('displayLatitude').textContent = lat.toFixed(6);
-                    document.getElementById('displayLongitude').textContent = lng.toFixed(6);
-                }
+            // Add marker drag end listener
+            marker.addListener('dragend', function(event) {
+                const lat = event.latLng.lat();
+                const lng = event.latLng.lng();
+                updateCoordinatesDisplay(lat, lng);
+                reverseGeocode(lat, lng);
             });
 
-            // Enhanced address autocomplete for better street-level accuracy
-            function initializeAddressAutocomplete() {
-                const addressInput = document.getElementById('shopAddress');
-                if (addressInput && google.maps.places) {
-                    const autocomplete = new google.maps.places.Autocomplete(addressInput, {
-                        componentRestrictions: { country: 'ph' },
-                        fields: ['address_components', 'geometry', 'formatted_address', 'name'],
-                        types: ['address', 'establishment'] // Include establishments for better results
-                    });
+            console.log('Google Maps initialized for shop reapplication - Centered on Bataan');
+        }
 
-                    autocomplete.addListener('place_changed', function() {
-                        const place = autocomplete.getPlace();
-                        if (!place.geometry) {
-                            console.log('No details available for input: ' + place.name);
-                            return;
-                        }
+        // Update marker position
+        function updateMarkerPosition(lat, lng) {
+            marker.setPosition({ lat: lat, lng: lng });
+            map.panTo({ lat: lat, lng: lng });
+        }
 
-                        console.log('Place autocomplete result:', place);
+        // Update coordinates display
+        function updateCoordinatesDisplay(lat, lng) {
+            document.getElementById('latitude').value = lat;
+            document.getElementById('longitude').value = lng;
+            document.getElementById('displayLatitude').textContent = lat.toFixed(6);
+            document.getElementById('displayLongitude').textContent = lng.toFixed(6);
+        }
 
-                        // Extract address components
-                        extractAndFillAddressComponents(place);
-                        
-                        // Auto-center map on selected location
-                        const location = place.geometry.location;
-                        map.setCenter(location);
-                        map.setZoom(17);
-                        
-                        marker.position = {
-                            lat: location.lat(),
-                            lng: location.lng()
-                        };
-                        marker.visible = true;
-                        
-                        updateCoordinates(location.lat(), location.lng());
-                    });
+        // Reverse geocode coordinates to address
+        function reverseGeocode(lat, lng) {
+            const latlng = { lat: lat, lng: lng };
 
-                    // Add input event listener to help with manual addresses
-                    addressInput.addEventListener('blur', function() {
-                        if (this.value.trim() && !this.getAttribute('data-autocomplete-used')) {
-                            // User typed manually, try to geocode just the street address
-                            setTimeout(() => {
-                                document.getElementById('locateMapBtn').click();
-                            }, 500);
-                        }
-                        this.removeAttribute('data-autocomplete-used');
-                    });
-
-                    // Mark when autocomplete is used
-                    addressInput.addEventListener('change', function() {
-                        this.setAttribute('data-autocomplete-used', 'true');
-                    });
-                }
-            }
-
-            function extractAndFillAddressComponents(place) {
-                let streetNumber = '';
-                let route = '';
-                let locality = '';
-                let administrativeArea = '';
-                let postalCode = '';
-
-                for (const component of place.address_components) {
-                    const componentType = component.types[0];
-                    
-                    switch (componentType) {
-                        case 'street_number':
-                            streetNumber = component.long_name;
-                            break;
-                        case 'route':
-                            route = component.long_name;
-                            break;
-                        case 'locality':
-                        case 'sublocality_level_1':
-                        case 'sublocality':
-                            if (!locality) locality = component.long_name;
-                            break;
-                        case 'administrative_area_level_1':
-                            administrativeArea = component.long_name;
-                            break;
-                        case 'administrative_area_level_2':
-                            if (!administrativeArea) administrativeArea = component.long_name;
-                            break;
-                        case 'postal_code':
-                            postalCode = component.long_name;
-                            break;
-                    }
-                }
-
-                // Build the full street address
-                let fullAddress = '';
-                if (streetNumber && route) {
-                    fullAddress = `${streetNumber} ${route}`;
-                } else if (route) {
-                    fullAddress = route;
+            geocoder.geocode({ location: latlng }, function(results, status) {
+                if (status === google.maps.GeocoderStatus.OK && results[0]) {
+                    updateAddressFields(results[0]);
+                    showMapMessage('Location found! Address fields have been auto-filled.', 'success');
                 } else {
-                    fullAddress = place.name || '';
+                    console.log('Geocoder failed due to: ' + status);
+                    showMapMessage('Could not find address for this location. Please enter address manually.', 'error');
                 }
+            });
+        }
 
-                // Update form fields
-                if (fullAddress) {
-                    document.getElementById('shopAddress').value = fullAddress;
+        // Update address fields based on geocoding results
+        function updateAddressFields(geocodeResult) {
+            let city = '';
+            let province = '';
+            let region = '';
+            let zipCode = '';
+            let country = '';
+
+            // Parse address components
+            geocodeResult.address_components.forEach(component => {
+                const types = component.types;
+                
+                if (types.includes('locality')) {
+                    city = component.long_name;
+                } else if (types.includes('administrative_area_level_2')) {
+                    province = component.long_name;
+                } else if (types.includes('administrative_area_level_1')) {
+                    region = component.long_name;
+                } else if (types.includes('postal_code')) {
+                    zipCode = component.long_name;
+                } else if (types.includes('country')) {
+                    country = component.long_name;
                 }
-                if (locality && !document.getElementById('shopCity').value) {
-                    document.getElementById('shopCity').value = locality;
-                }
-                if (administrativeArea && !document.getElementById('shopState').value) {
-                    document.getElementById('shopState').value = administrativeArea;
-                }
-                if (postalCode && !document.getElementById('shopZip').value) {
-                    document.getElementById('shopZip').value = postalCode;
-                }
+            });
+
+            // Update form fields
+            const addressField = document.getElementById('shopAddress');
+            const cityField = document.getElementById('shopCity');
+            const provinceField = document.getElementById('shopProvince');
+            const regionField = document.getElementById('shopState');
+            const zipField = document.getElementById('shopZip');
+            const countryField = document.getElementById('shopCountry');
+
+            // Update address (always update as this is the main field)
+            if (addressField) {
+                addressField.value = geocodeResult.formatted_address;
             }
 
-            // Initialize address autocomplete when Places library is loaded
-            if (typeof google !== 'undefined' && google.maps && google.maps.places) {
-                initializeAddressAutocomplete();
+            // Update city
+            if (city && cityField) {
+                cityField.value = city;
+            }
+
+            // Update province
+            if (province && provinceField) {
+                provinceField.value = province;
+            }
+
+            // Update region
+            if (region && regionField) {
+                regionField.value = region;
+            }
+
+            // Update ZIP code
+            if (zipCode && zipField) {
+                zipField.value = zipCode;
+            }
+
+            // Update country
+            if (country && countryField) {
+                countryField.value = country;
+            }
+
+            console.log('Auto-filled shop address fields from reverse geocoding');
+        }
+
+        // Helper function to show map messages
+        function showMapMessage(message, type) {
+            // Remove any existing map messages
+            const existingMessage = document.querySelector('.map-message');
+            if (existingMessage) {
+                existingMessage.remove();
+            }
+
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `map-message ${type}`;
+            messageDiv.style.cssText = `
+                position: absolute;
+                top: 10px;
+                left: 50%;
+                transform: translateX(-50%);
+                padding: 10px 15px;
+                border-radius: 5px;
+                color: white;
+                z-index: 1000;
+                font-size: 0.9rem;
+                background-color: ${type === 'success' ? '#4CAF50' : '#F44336'};
+                box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            `;
+            messageDiv.textContent = message;
+
+            const mapContainer = document.getElementById('map');
+            if (mapContainer) {
+                mapContainer.style.position = 'relative';
+                mapContainer.appendChild(messageDiv);
+
+                // Auto-remove after 3 seconds
+                setTimeout(() => {
+                    if (messageDiv.parentNode) {
+                        messageDiv.remove();
+                    }
+                }, 3000);
+            }
+        }
+
+        // Toggle password visibility
+        document.addEventListener('DOMContentLoaded', function() {
+            document.querySelectorAll('.toggle-password').forEach(button => {
+                button.addEventListener('click', function() {
+                    const input = this.previousElementSibling;
+                    const icon = this.querySelector('i');
+                    
+                    if (input.type === 'password') {
+                        input.type = 'text';
+                        icon.classList.remove('fa-eye');
+                        icon.classList.add('fa-eye-slash');
+                        this.setAttribute('aria-label', 'Hide password');
+                    } else {
+                        input.type = 'password';
+                        icon.classList.remove('fa-eye-slash');
+                        icon.classList.add('fa-eye');
+                        this.setAttribute('aria-label', 'Show password');
+                    }
+                });
+            });
+        });
+
+        // ZIP code validation (4 digits only)
+        document.addEventListener('DOMContentLoaded', function() {
+            const zipInput = document.getElementById('shopZip');
+            if (zipInput) {
+                zipInput.addEventListener('input', function () {
+                    this.value = this.value.replace(/\D/g, '');
+                    if (this.value.length > 4) {
+                        this.value = this.value.slice(0, 4);
+                    }
+                });
             }
         });
-    };
+        
+        // Success overlay
+        function showSuccessOverlay() {
+            document.getElementById('successOverlay').classList.add('active');
+        }
 
-    // Global variables
-    let map, marker, geocoder;
-</script>
-<script async src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBiw-3TrRkU1hSU0_dEsn3fjUxXAZWcLrg&libraries=places,marker&callback=initMap"></script>
+        function showErrorOverlay(errors) {
+            const errorContainer = document.getElementById('errorMessages');
+            errorContainer.innerHTML = '';
+            errors.forEach(error => {
+                const errorElement = document.createElement('p');
+                errorElement.textContent = error;
+                errorContainer.appendChild(errorElement);
+            });
+            document.getElementById('errorOverlay').classList.add('active');
+        }
+
+        function closeOverlays() {
+            document.getElementById('successOverlay').classList.remove('active');
+            document.getElementById('errorOverlay').classList.remove('active');
+        }
+
+        // Add event listeners for overlay buttons
+        document.addEventListener('DOMContentLoaded', function() {
+            const closeOverlayBtn = document.getElementById('closeOverlay');
+            const closeErrorOverlayBtn = document.getElementById('closeErrorOverlay');
+            
+            if (closeOverlayBtn) {
+                closeOverlayBtn.addEventListener('click', closeOverlays);
+            }
+            
+            if (closeErrorOverlayBtn) {
+                closeErrorOverlayBtn.addEventListener('click', closeOverlays);
+            }
+        });
+
+        // Character count for shop description
+        document.addEventListener('DOMContentLoaded', function() {
+            const textarea = document.getElementById("shopDescription");
+            const charCount = document.getElementById("charCount");
+
+            if (textarea && charCount) {
+                textarea.addEventListener("input", () => {
+                    const currentLength = textarea.value.length;
+                    const maxLength = textarea.maxLength;
+                    charCount.textContent = `${currentLength} / ${maxLength} characters`;
+                    
+                    // Add warning colors
+                    charCount.classList.remove('warning', 'error');
+                    if (currentLength > maxLength * 0.8) {
+                        charCount.classList.add('warning');
+                    }
+                    if (currentLength > maxLength * 0.95) {
+                        charCount.classList.add('error');
+                    }
+                });
+
+                // Initialize count on page load
+                charCount.textContent = `${textarea.value.length} / ${textarea.maxLength} characters`;
+            }
+        });
+    </script>
+    <script async src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBiw-3TrRkU1hSU0_dEsn3fjUxXAZWcLrg&libraries=places,marker&callback=initMap"></script>
 </head>
 <body style="padding: 0;">
 
@@ -421,9 +433,9 @@
                         <label for="ownerPhone">Phone Number*</label>
                         <div class="phone-input-container">
                             <span class="country-code">+63</span>
-                            <input type="tel" id="ownerPhone" name="ownerPhone" required placeholder="9123456789" maxlength="10">
+                            <input type="tel" id="ownerPhone" name="ownerPhone" required placeholder="912 345 6789" maxlength="12">
                         </div>
-                        <small>Enter your 10-digit Philippine mobile number (without +63)</small>
+                        <small>Enter your 10-digit Philippine mobile number starting with 9 (e.g., 912 345 6789)</small>
                     </div>
                     
                     <div class="form-group">
@@ -479,9 +491,16 @@
                     
                     <div class="form-row">
                         <div class="form-group">
-                            <label for="shopState">Province*</label>
-                            <select type="text" id="shopState" name="shopState" required placeholder="State">
+                            <label for="shopProvince">Province*</label>
+                            <select id="shopProvince" name="shopProvince" required>
                                 <option value="Bataan" selected>Bataan</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="shopState">Region*</label>
+                            <select id="shopState" name="shopState" required>
+                                <option value="Central Luzon" selected>Central Luzon</option>
                             </select>
                         </div>
                         
@@ -496,8 +515,10 @@
                     <!-- Map Location Section -->
                     <div class="form-group">
                         <label>Shop Location on Map*</label>
-                        <small class="instruction">Click 'Locate on Map' to automatically pin your location based on the address. You can drag the marker to adjust.</small>
-                        <button type="button" id="locateMapBtn" class="overlay-btn" style="margin-bottom: 1rem;">Locate on Map</button>
+                        <small class="instruction">
+                            <strong>Click directly on the map</strong> to set your shop location in Bataan and auto-fill address fields.<br>
+                            You can drag the marker to adjust for better accuracy.
+                        </small>
                         <div id="map" style="height: 300px; width: 100%; border-radius: 8px; border: 1px solid var(--gray-medium);"></div>
                         <input type="hidden" id="latitude" name="latitude">
                         <input type="hidden" id="longitude" name="longitude">
@@ -514,7 +535,7 @@
                     
                     <div class="form-group">
                         <label for="taxId">Tax Identification Number*</label>
-                        <input type="text" id="taxId" name="taxId" required placeholder="XXXX-XXXX-XXXX" maxlength="15" pattern="[0-9]{4}-[0-9]{4}-[0-9]{4}" inputmode="numeric">
+                        <input type="text" id="taxId" name="taxId" required placeholder="XXXX-XXXX-XXXX" maxlength="14" pattern="[0-9]{4}-[0-9]{4}-[0-9]{4}" inputmode="numeric">
                         <small>Enter your 12-digit TIN (e.g., 1234-5678-9012). If your TIN has fewer than 12 digits, add zeros at the beginning to make it 12 digits long.</small>
                     </div>
                     
@@ -634,33 +655,22 @@
     </footer>
 
     <script>
-        // Toggle password visibility (if needed in future)
-        document.querySelectorAll('.toggle-password').forEach(button => {
-            button.addEventListener('click', function() {
-                const input = this.previousElementSibling;
-                const icon = this.querySelector('i');
-                
-                if (input.type === 'password') {
-                    input.type = 'text';
-                    icon.classList.remove('fa-eye');
-                    icon.classList.add('fa-eye-slash');
-                    this.setAttribute('aria-label', 'Hide password');
-                } else {
-                    input.type = 'password';
-                    icon.classList.remove('fa-eye-slash');
-                    icon.classList.add('fa-eye');
-                    this.setAttribute('aria-label', 'Show password');
-                }
-            });
-        });
-
         // Phone number validation
         const phoneInput = document.getElementById('ownerPhone');
         
         phoneInput.addEventListener('input', function() {
+            // Remove any non-digit characters
             this.value = this.value.replace(/\D/g, '');
+            
+            // Limit to 10 digits (Philippine mobile numbers are 10 digits after +63)
             if (this.value.length > 10) {
                 this.value = this.value.slice(0, 10);
+            }
+            
+            // Format the display with spaces for better readability
+            const formattedValue = this.value.replace(/(\d{3})(\d{3})(\d{4})/, '$1 $2 $3');
+            if (this.value.length >= 10) {
+                this.value = formattedValue;
             }
         });
 
@@ -698,33 +708,6 @@
             if (this.value.length > 4) {
                 this.value = this.value.slice(0, 4);
             }
-        });
-        
-        // Success overlay
-        function showSuccessOverlay() {
-            document.getElementById('successOverlay').classList.add('active');
-        }
-
-        function showErrorOverlay(errors) {
-            const errorContainer = document.getElementById('errorMessages');
-            errorContainer.innerHTML = '';
-            errors.forEach(error => {
-                const errorElement = document.createElement('p');
-                errorElement.textContent = error;
-                errorContainer.appendChild(errorElement);
-            });
-            document.getElementById('errorOverlay').classList.add('active');
-        }
-
-        function closeOverlays() {
-            document.getElementById('successOverlay').classList.remove('active');
-            document.getElementById('errorOverlay').classList.remove('active');
-        }
-
-        // Add event listeners for overlay buttons
-        document.addEventListener('DOMContentLoaded', function() {
-            document.getElementById('closeOverlay').addEventListener('click', closeOverlays);
-            document.getElementById('closeErrorOverlay').addEventListener('click', closeOverlays);
         });
 
         // Initialize all file upload previews
@@ -791,117 +774,6 @@
         document.addEventListener('DOMContentLoaded', function() {
             initializeAllFilePreviews();
         });
-
-        // Form validation
-        document.getElementById('shopReapplicationForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            // Clear previous errors
-            document.querySelectorAll('.form-group').forEach(group => {
-                group.classList.remove('error');
-                const errorMessage = group.querySelector('.error-message');
-                if (errorMessage) errorMessage.remove();
-            });
-            const errors = [];
-            const requiredFields = [
-                { id: 'shopName', name: 'Shop Name' },
-                { id: 'shopDescription', name: 'Shop Description' },
-                { id: 'yearsInBusiness', name: 'Years in Business' },
-                { id: 'ownerName', name: 'Owner Name' },
-                { id: 'ownerEmail', name: 'Email' },
-                { id: 'ownerPhone', name: 'Phone Number' },
-                { id: 'shopAddress', name: 'Shop Address' },
-                { id: 'shopCity', name: 'City' },
-                { id: 'shopState', name: 'State/Province' },
-                { id: 'shopZip', name: 'ZIP/Postal Code' },
-                { id: 'shopCountry', name: 'Country' },
-                { id: 'taxId', name: 'Tax ID' }
-            ];
-            requiredFields.forEach(field => {
-                const element = document.getElementById(field.id);
-                let value = element.value.trim();
-                if (field.id === 'taxId') {
-                    value = value.replace(/-/g, '');
-                }
-                if (!value) {
-                    const formGroup = element.closest('.form-group');
-                    formGroup.classList.add('error');
-                    const errorElement = document.createElement('span');
-                    errorElement.className = 'error-message';
-                    errorElement.textContent = `${field.name} is required`;
-                    formGroup.appendChild(errorElement);
-                    errors.push(`${field.name} is required`);
-                }
-            });
-            const zipCode = document.getElementById('shopZip').value;
-            if (zipCode && (zipCode.length !== 4 || !/^\d{4}$/.test(zipCode))) {
-                const formGroup = document.getElementById('shopZip').closest('.form-group');
-                formGroup.classList.add('error');
-                const errorElement = document.createElement('span');
-                errorElement.className = 'error-message';
-                errorElement.textContent = 'Please enter a valid 4-digit ZIP code';
-                formGroup.appendChild(errorElement);
-                errors.push('Please enter a valid 4-digit ZIP code');
-            }
-            const taxId = document.getElementById('taxId').value.replace(/-/g, '');
-            if (taxId && (taxId.length !== 12 || !/^\d{12}$/.test(taxId))) {
-                const formGroup = document.getElementById('taxId').closest('.form-group');
-                formGroup.classList.add('error');
-                const errorElement = document.createElement('span');
-                errorElement.className = 'error-message';
-                errorElement.textContent = 'Please enter a valid 12-digit Tax ID';
-                formGroup.appendChild(errorElement);
-                errors.push('Please enter a valid 12-digit Tax ID');
-            }
-            const phoneNumber = document.getElementById('ownerPhone').value;
-            if (phoneNumber.length !== 10) {
-                const formGroup = document.getElementById('ownerPhone').closest('.form-group');
-                formGroup.classList.add('error');
-                const errorElement = document.createElement('span');
-                errorElement.className = 'error-message';
-                errorElement.textContent = 'Please enter a valid 10-digit Philippine mobile number';
-                formGroup.appendChild(errorElement);
-                errors.push('Please enter a valid 10-digit Philippine mobile number');
-            }
-            if (!document.getElementById('agreeTerms').checked) {
-                const formGroup = document.getElementById('agreeTerms').closest('.form-group');
-                formGroup.classList.add('error');
-                const errorElement = document.createElement('span');
-                errorElement.className = 'error-message';
-                errorElement.textContent = 'You must agree to the Terms of Service and Privacy Policy';
-                formGroup.appendChild(errorElement);
-                errors.push('You must agree to the Terms of Service and Privacy Policy');
-            }
-            if (errors.length > 0) {
-                showErrorOverlay(errors);
-                document.querySelector('.form-group.error')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            } else {
-                showSuccessOverlay();
-            }
-        });
-
-        // Character count for shop description
-        const textarea = document.getElementById("shopDescription");
-        const charCount = document.getElementById("charCount");
-
-        if (textarea && charCount) {
-            textarea.addEventListener("input", () => {
-                const currentLength = textarea.value.length;
-                const maxLength = textarea.maxLength;
-                charCount.textContent = `${currentLength} / ${maxLength} characters`;
-                
-                // Add warning colors
-                charCount.classList.remove('warning', 'error');
-                if (currentLength > maxLength * 0.8) {
-                    charCount.classList.add('warning');
-                }
-                if (currentLength > maxLength * 0.95) {
-                    charCount.classList.add('error');
-                }
-            });
-
-            // Initialize count on page load
-            charCount.textContent = `${textarea.value.length} / ${textarea.maxLength} characters`;
-        }
 
     </script>
     <script src="/shopowner/js/shop_reapply.js" type="module"></script>

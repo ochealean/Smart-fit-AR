@@ -345,7 +345,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         getElement('yearsInBusiness').value = dataValues.yearsInBusiness || '';
         getElement('shopAddress').value = dataValues.shopAddress || '';
         getElement('shopCity').value = dataValues.shopCity || '';
-        getElement('shopState').value = dataValues.shopState || '';
+        getElement('shopProvince').value = dataValues.shopProvince || 'Bataan';
+        getElement('shopState').value = dataValues.shopState || 'Central Luzon';
         getElement('shopZip').value = dataValues.shopZip || '';
         getElement('shopCountry').value = dataValues.shopCountry || 'Philippines';
         getElement('taxId').value = dataValues.taxId || '';
@@ -394,7 +395,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                     { id: 'ownerPhone', name: 'Phone Number' },
                     { id: 'shopAddress', name: 'Shop Address' },
                     { id: 'shopCity', name: 'City' },
-                    { id: 'shopState', name: 'State/Province' },
+                    { id: 'shopProvince', name: 'Province' },
+                    { id: 'shopState', name: 'Region' },
                     { id: 'shopZip', name: 'ZIP/Postal Code' },
                     { id: 'shopCountry', name: 'Country' },
                     { id: 'taxId', name: 'Tax ID' }
@@ -425,9 +427,12 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                 // Validate phone number format
                 const phoneField = getElement('ownerPhone');
-                if (phoneField && (phoneField.value.length !== 10 || !/^\d+$/.test(phoneField.value))) {
-                    errors.push('Invalid phone number format');
-                    showFieldError(phoneField, 'Please enter a valid 10-digit mobile number');
+                if (phoneField) {
+                    const phoneDigits = phoneField.value.replace(/\D/g, '');
+                    if (phoneDigits.length !== 10 || !/^9\d{9}$/.test(phoneDigits)) {
+                        errors.push('Invalid phone number');
+                        showFieldError(phoneField, 'Please enter a valid 10-digit Philippine mobile number starting with 9');
+                    }
                 }
 
                 // Validate ZIP code
@@ -451,7 +456,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const taxId = taxIdField.value.replace(/-/g, '');
                 if (taxId && (taxId.length !== 12 || !/^\d{12}$/.test(taxId))) {
                     errors.push('Tax ID must be exactly 12 digits');
-                    showFieldError(taxIdField, 'Tax ID must be exactly 12 digits');
+                    showFieldError(taxIdField, 'Tax ID must be exactly 12 digits (XXXX-XXXX-XXXX)');
                 }
 
                 // Get files
@@ -516,9 +521,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                     shopDescription: getElement('shopDescription').value,
                     yearsInBusiness: getElement('yearsInBusiness').value || '',
                     ownerName: getElement('ownerName').value,
-                    ownerPhone: getElement('ownerPhone').value,
+                    ownerPhone: getElement('ownerPhone').value.replace(/\s/g, ''), // Remove spaces for storage
                     shopAddress: getElement('shopAddress').value,
                     shopCity: getElement('shopCity').value,
+                    shopProvince: getElement('shopProvince').value,
                     shopState: getElement('shopState').value,
                     shopZip: getElement('shopZip').value,
                     shopCountry: getElement('shopCountry').value,
