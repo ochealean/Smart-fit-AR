@@ -19,6 +19,7 @@ const ownerEmail = getElement('ownerEmail');
 const ownerPhone = getElement('ownerPhone');
 const shopAddress = getElement('shopAddress');
 const shopCity = getElement('shopCity');
+const shopProvince = getElement('shopProvince');
 const shopState = getElement('shopState');
 const shopZip = getElement('shopZip');
 const shopCountry = getElement('shopCountry');
@@ -109,20 +110,6 @@ function closeOverlays() {
     getElement('errorOverlay').classList.remove('active');
 }
 
-// Add event listeners for overlay buttons
-document.addEventListener('DOMContentLoaded', function() {
-    const closeOverlayBtn = getElement('closeOverlay');
-    const closeErrorOverlayBtn = getElement('closeErrorOverlay');
-    
-    if (closeOverlayBtn) {
-        closeOverlayBtn.addEventListener('click', closeOverlays);
-    }
-    
-    if (closeErrorOverlayBtn) {
-        closeErrorOverlayBtn.addEventListener('click', closeOverlays);
-    }
-});
-
 // Helper function to show field errors
 function showFieldError(field, message) {
     const formGroup = field.closest('.form-group');
@@ -139,6 +126,155 @@ function showFieldError(field, message) {
         errorElement.textContent = message;
         formGroup.appendChild(errorElement);
     }
+}
+
+// Tax ID formatting and validation
+function initializeTaxIdFormatting() {
+    const taxIdInput = document.getElementById('taxId');
+    if (!taxIdInput) return;
+
+    taxIdInput.addEventListener('input', function() {
+        let value = this.value.replace(/[^0-9-]/g, '');
+        value = value.replace(/-/g, '');
+        
+        if (value.length > 12) {
+            value = value.slice(0, 12);
+        }
+        
+        let formattedValue = '';
+        for (let i = 0; i < value.length; i++) {
+            if (i > 0 && i % 4 === 0) {
+                formattedValue += '-';
+            }
+            formattedValue += value[i];
+        }
+        this.value = formattedValue;
+    });
+
+    taxIdInput.addEventListener('keypress', function(e) {
+        const char = String.fromCharCode(e.keyCode || e.which);
+        if (!/[0-9]/.test(char)) {
+            e.preventDefault();
+        }
+    });
+
+    // Also add blur event to ensure format is complete
+    taxIdInput.addEventListener('blur', function() {
+        let value = this.value.replace(/-/g, '');
+        if (value.length > 0 && value.length < 12) {
+            // Pad with zeros if needed
+            value = value.padStart(12, '0');
+            let formattedValue = '';
+            for (let i = 0; i < value.length; i++) {
+                if (i > 0 && i % 4 === 0) {
+                    formattedValue += '-';
+                }
+                formattedValue += value[i];
+            }
+            this.value = formattedValue;
+        }
+    });
+}
+
+// Phone number validation
+function initializePhoneValidation() {
+    const phoneInput = document.getElementById('ownerPhone');
+    if (!phoneInput) return;
+
+    phoneInput.addEventListener('input', function() {
+        // Remove any non-digit characters
+        this.value = this.value.replace(/\D/g, '');
+        
+        // Limit to 10 digits (Philippine mobile numbers are 10 digits after +63)
+        if (this.value.length > 10) {
+            this.value = this.value.slice(0, 10);
+        }
+        
+        // Format the display with spaces for better readability
+        const formattedValue = this.value.replace(/(\d{3})(\d{3})(\d{4})/, '$1 $2 $3');
+        if (this.value.length >= 10) {
+            this.value = formattedValue;
+        }
+    });
+
+    phoneInput.addEventListener('blur', function() {
+        // Ensure we have exactly 10 digits
+        const digits = this.value.replace(/\D/g, '');
+        if (digits.length !== 10) {
+            showFieldError(this, 'Please enter a valid 10-digit Philippine mobile number');
+        } else {
+            // Format nicely on blur
+            this.value = digits.replace(/(\d{3})(\d{3})(\d{4})/, '$1 $2 $3');
+        }
+    });
+
+    phoneInput.addEventListener('focus', function() {
+        // Remove spaces when focused for easier editing
+        this.value = this.value.replace(/\s/g, '');
+    });
+}
+
+// File upload preview functionality
+function initializeAllFilePreviews() {
+    setupFilePreview('ownerIdFront', 'frontPreview', 'Front Side');
+    setupFilePreview('ownerIdBack', 'backPreview', 'Back Side');
+    setupFilePreview('businessLicense', 'licensePreview', 'Business License');
+    setupFilePreview('permitDocument', 'permitPreview', 'Business Permit');
+    setupFilePreview('dtiDocument', 'dtiPreview', 'DTI Document');
+    setupFilePreview('birDocument', 'birPreview', 'BIR Document');
+}
+
+function setupFilePreview(inputId, previewId, defaultText) {
+    const input = document.getElementById(inputId);
+    const preview = document.getElementById(previewId);
+    
+    if (!input || !preview) return;
+    
+    input.addEventListener('change', function() {
+        const file = this.files[0];
+        if (!file) return;
+        if (file.size > 5 * 1024 * 1024) {
+            alert('File size exceeds 5MB limit');
+            this.value = '';
+            return;
+        }
+        const validTypes = ['image/jpeg', 'image/png', 'application/pdf'];
+        if (!validTypes.includes(file.type)) {
+            alert('Only JPEG, PNG, or PDF files are allowed');
+            this.value = '';
+            return;
+        }
+        if (file.type === 'application/pdf') {
+            preview.innerHTML = `
+                <i class="fas fa-file-pdf"></i>
+                <span class="file-name">${file.name}</span>
+                <button class="remove-preview" type="button">&times;</button>
+            `;
+            preview.classList.add('has-preview');
+            return;
+        }
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            preview.innerHTML = `
+                <img src="${e.target.result}" alt="Preview">
+                <button class="remove-preview" type="button">&times;</button>
+            `;
+            preview.classList.add('has-preview');
+        };
+        reader.readAsDataURL(file);
+    });
+    
+    preview.addEventListener('click', function(e) {
+        if (e.target.classList.contains('remove-preview')) {
+            e.stopPropagation();
+            input.value = '';
+            preview.innerHTML = `
+                <i class="fas ${inputId.includes('Id') ? 'fa-id-card' : 'fa-file-upload'}"></i>
+                <span>${defaultText}</span>
+            `;
+            preview.classList.remove('has-preview');
+        }
+    });
 }
 
 // Enhanced file upload function with progress tracking
@@ -221,6 +357,93 @@ async function uploadFilesWithProgress(userId, permitFile, licenseFile, frontSid
     });
 }
 
+// Update address fields based on geocoding results (for the new fields)
+function updateAddressFields(geocodeResult) {
+    let city = '';
+    let province = '';
+    let region = '';
+    let zipCode = '';
+    let country = '';
+
+    // Parse address components
+    geocodeResult.address_components.forEach(component => {
+        const types = component.types;
+        
+        if (types.includes('locality')) {
+            city = component.long_name;
+        } else if (types.includes('administrative_area_level_2')) {
+            province = component.long_name;
+        } else if (types.includes('administrative_area_level_1')) {
+            region = component.long_name;
+        } else if (types.includes('postal_code')) {
+            zipCode = component.long_name;
+        } else if (types.includes('country')) {
+            country = component.long_name;
+        }
+    });
+
+    // Update form fields
+    const addressField = document.getElementById('shopAddress');
+    const cityField = document.getElementById('shopCity');
+    const provinceField = document.getElementById('shopProvince'); // NEW
+    const regionField = document.getElementById('shopState'); // Now represents Region
+    const zipField = document.getElementById('shopZip');
+    const countryField = document.getElementById('shopCountry');
+
+    // Update address (always update as this is the main field)
+    if (addressField) {
+        addressField.value = geocodeResult.formatted_address;
+    }
+
+    // Update city
+    if (city && cityField) {
+        cityField.value = city;
+    }
+
+    // Update province
+    if (province && provinceField) {
+        provinceField.value = province;
+    }
+
+    // Update region
+    if (region && regionField) {
+        regionField.value = region;
+    }
+
+    // Update ZIP code
+    if (zipCode && zipField) {
+        zipField.value = zipCode;
+    }
+
+    // Update country
+    if (country && countryField) {
+        countryField.value = country;
+    }
+
+    console.log('Auto-filled shop address fields from reverse geocoding');
+}
+
+// Initialize all form functionality when DOM is loaded
+document.addEventListener('DOMContentLoaded', function() {
+    initializeTaxIdFormatting();
+    initializePhoneValidation();
+    initializeAllFilePreviews();
+    
+    // Add event listeners for overlay buttons
+    const closeOverlayBtn = getElement('closeOverlay');
+    const closeErrorOverlayBtn = getElement('closeErrorOverlay');
+    
+    if (closeOverlayBtn) {
+        closeOverlayBtn.addEventListener('click', closeOverlays);
+    }
+    
+    if (closeErrorOverlayBtn) {
+        closeErrorOverlayBtn.addEventListener('click', closeOverlays);
+    }
+    
+    console.log('Shop registration form initialized');
+});
+
 // Main registration handler with proper progress tracking
 registerButton.addEventListener('click', async (event) => {
     event.preventDefault();
@@ -244,7 +467,8 @@ registerButton.addEventListener('click', async (event) => {
             { id: 'ownerIdBack', name: 'ID Back' },
             { id: 'shopAddress', name: 'Shop Address' },
             { id: 'shopCity', name: 'City' },
-            { id: 'shopState', name: 'State/Province' },
+            { id: 'shopProvince', name: 'Province' }, // NEW
+            { id: 'shopState', name: 'Region' }, // Updated label
             { id: 'shopZip', name: 'ZIP/Postal Code' },
             { id: 'shopCountry', name: 'Country' },
             { id: 'businessLicense', name: 'Business License' },
@@ -282,9 +506,12 @@ registerButton.addEventListener('click', async (event) => {
         }
 
         const phoneField = getElement('ownerPhone');
-        if (phoneField && (phoneField.value.length !== 10 || !/^\d+$/.test(phoneField.value))) {
-            errors.push('Invalid phone number');
-            showFieldError(phoneField, 'Please enter a valid 10-digit Philippine mobile number');
+        if (phoneField) {
+            const phoneDigits = phoneField.value.replace(/\D/g, '');
+            if (phoneDigits.length !== 10 || !/^9\d{9}$/.test(phoneDigits)) {
+                errors.push('Invalid phone number');
+                showFieldError(phoneField, 'Please enter a valid 10-digit Philippine mobile number starting with 9');
+            }
         }
 
         const zipField = getElement('shopZip');
@@ -365,7 +592,7 @@ registerButton.addEventListener('click', async (event) => {
         const taxId = taxIdField.value.replace(/-/g, '');
         if (taxId && (taxId.length !== 12 || !/^\d{12}$/.test(taxId))) {
             errors.push('Tax ID must be exactly 12 digits');
-            showFieldError(taxIdField, 'Tax ID must be exactly 12 digits');
+            showFieldError(taxIdField, 'Tax ID must be exactly 12 digits (XXXX-XXXX-XXXX)');
         }
 
         if (errors.length > 0) {
@@ -403,10 +630,11 @@ registerButton.addEventListener('click', async (event) => {
             shopCategories: selectedCategories,
             shopDescription: shopDescription.value,
             yearsInBusiness: yearsInBusiness.value || '',
-            ownerPhone: ownerPhone.value,
+            ownerPhone: ownerPhone.value.replace(/\s/g, ''), // Remove spaces for storage
             shopAddress: shopAddress.value,
             shopCity: shopCity.value,
-            shopState: shopState.value,
+            shopProvince: shopProvince.value, // NEW FIELD
+            shopState: shopState.value, // Now represents Region
             shopZip: shopZip.value,
             shopCountry: shopCountry.value,
             taxId: getElement('taxId').value,
@@ -438,6 +666,13 @@ registerButton.addEventListener('click', async (event) => {
         setButtonAble();
         showSuccessOverlay();
         getElement('shopRegistrationForm').reset();
+
+        // Reset map coordinates and marker
+        document.getElementById('displayLatitude').textContent = 'N/A';
+        document.getElementById('displayLongitude').textContent = 'N/A';
+        if (window.marker) {
+            window.marker.setPosition(null);
+        }
 
     } catch (error) {
         console.error('Registration error:', error);
