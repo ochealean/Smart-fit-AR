@@ -203,7 +203,7 @@
                         <div class="form-row">
                             <div class="form-group">
                                 <label for="shopZip" class="form-label">ZIP/Postal Code</label>
-                                <input type="text" id="shopZip" class="form-control" value="ZIP Code">
+                                <input type="number" id="shopZip" class="form-control" value="" maxlength="4">
                             </div>
 
                             <div class="form-group">
@@ -237,6 +237,9 @@
                         <div class="document-upload">
                             <label class="form-label">Tax Identification Number</label>
                             <input type="text" id="taxId" class="form-control" value="XXXX-XXXX-XXXX">
+                            <div class="tax-helper">
+                                <small>Format: 12 digits (XXXX-XXXX-XXXX). Numbers only will be auto-formatted. if TIN is less than 12 digits just add leading zeros.</small>
+                            </div>
                         </div>
 
                         <div class="document-upload">

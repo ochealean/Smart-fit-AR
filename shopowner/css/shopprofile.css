@@ -345,6 +345,34 @@ textarea.form-control {
     background-color: white;
 }
 
+/* Tax Number Helper Styles */
+.tax-helper {
+    margin-top: 0.5rem;
+    font-size: 0.8rem;
+    color: var(--gray-dark);
+}
+
+.tax-helper small {
+    font-style: italic;
+}
+
+/* Tax Input Styling */
+#taxId {
+    font-family: 'Courier New', monospace;
+    letter-spacing: 1px;
+}
+
+/* Validation states for tax input */
+#taxId.valid {
+    border-color: var(--success);
+    background-color: rgba(72, 207, 173, 0.05);
+}
+
+#taxId.invalid {
+    border-color: var(--error);
+    background-color: rgba(255, 107, 107, 0.05);
+}
+
 /* Map Styles */
 #map {
     border: 2px solid var(--gray-light);

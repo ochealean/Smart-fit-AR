@@ -130,6 +130,7 @@ async function initializePage() {
     loadShopProfile();
     setupEventListeners();
     setupPasswordToggleListeners();
+    setupTaxNumberValidation();
     
     // Also setup event listeners for employee form
     setupEmployeeEventListeners();
@@ -485,10 +486,14 @@ function updateFormFields(shopData) {
         console.log('🌍 Country set to:', shopData.shopCountry);
     }
 
-    // Business Info
+    // Business Info - UPDATE TAX ID FORMATTING
     if (shopData.taxId) {
-        elements.taxId.value = shopData.taxId;
-        console.log('💳 Tax ID set to:', shopData.taxId);
+        // Format the tax ID before setting the value
+        const formattedTaxId = formatTaxNumber(shopData.taxId);
+        elements.taxId.value = formattedTaxId;
+        console.log('💳 Tax ID set to:', formattedTaxId);
+    } else {
+        elements.taxId.value = '';
     }
     
     console.log('✅ Form fields update complete');
@@ -777,6 +782,13 @@ function setupEventListeners() {
             e.preventDefault();
 
             try {
+                // Validate required fields first
+                const missingFields = validateRequiredFields();
+                if (missingFields.length > 0) {
+                    const errorMessage = showFieldValidationError(missingFields);
+                    throw new Error(`Please fill in all required fields: ${errorMessage}`);
+                }
+
                 showLoading(true);
                 const updates = {};
                 let emailChanged = false;
@@ -800,17 +812,28 @@ function setupEventListeners() {
                 }
 
                 // Update shop data
-                updates.shopName = elements.shopName.value;
+                updates.shopName = elements.shopName.value.trim();
                 updates.shopCategory = elements.shopCategory.value;
-                updates.shopDescription = elements.shopDescription.value;
-                updates.ownerName = elements.ownerName.value;
-                updates.ownerPhone = elements.ownerPhone.value;
-                updates.shopAddress = elements.shopAddress.value;
+                updates.shopDescription = elements.shopDescription.value.trim();
+                updates.ownerName = elements.ownerName.value.trim();
+                updates.ownerPhone = elements.ownerPhone.value.trim();
+                updates.shopAddress = elements.shopAddress.value.trim();
                 updates.shopCity = elements.shopCity.value;
                 updates.shopState = elements.shopState.value;
-                updates.shopZip = elements.shopZip.value;
+                updates.shopZip = elements.shopZip.value.trim();
                 updates.shopCountry = elements.shopCountry.value;
-                updates.taxId = elements.taxId.value;
+                
+                // Format and validate tax ID
+                if (elements.taxId.value.trim()) {
+                    const cleanTaxId = elements.taxId.value.replace(/\D/g, '');
+                    if (cleanTaxId.length !== 12) {
+                        throw new Error('Tax Identification Number must be exactly 12 digits');
+                    }
+                    updates.taxId = cleanTaxId;
+                    console.log('💳 Tax ID stored as:', updates.taxId);
+                } else {
+                    updates.taxId = '';
+                }
                 
                 // ADD COORDINATES TO UPDATES
                 if (elements.latitude.value && elements.longitude.value) {
@@ -958,6 +981,171 @@ function setupEventListeners() {
         elements.logoutBtn.addEventListener('click', handleLogout);
     }
 }
+
+function formatTaxNumber(value) {
+    // Remove all non-digit characters
+    const numbers = value.replace(/\D/g, '');
+    
+    // Pad with zeros if less than 12 digits
+    const paddedNumbers = numbers.padEnd(12, '0');
+    
+    // Format as XXXX-XXXX-XXXX
+    if (paddedNumbers.length <= 4) {
+        return paddedNumbers;
+    } else if (paddedNumbers.length <= 8) {
+        return `${paddedNumbers.slice(0, 4)}-${paddedNumbers.slice(4)}`;
+    } else {
+        return `${paddedNumbers.slice(0, 4)}-${paddedNumbers.slice(4, 8)}-${paddedNumbers.slice(8, 12)}`;
+    }
+}
+
+// Add this function to validate tax number input
+function setupTaxNumberValidation() {
+    const taxInput = elements.taxId;
+    if (!taxInput) return;
+
+    taxInput.addEventListener('input', function(e) {
+        const cursorPosition = e.target.selectionStart;
+        const originalValue = e.target.value;
+        
+        // Format the value
+        const formattedValue = formatTaxNumber(originalValue);
+        
+        // Update the input value
+        e.target.value = formattedValue;
+        
+        // Adjust cursor position to account for added dashes
+        let newCursorPosition = cursorPosition;
+        const addedDashes = (formattedValue.match(/-/g) || []).length - (originalValue.match(/-/g) || []).length;
+        
+        if (addedDashes > 0 && cursorPosition >= 4) {
+            newCursorPosition += 1;
+        }
+        if (addedDashes > 0 && cursorPosition >= 8) {
+            newCursorPosition += 1;
+        }
+        
+        e.target.setSelectionRange(newCursorPosition, newCursorPosition);
+    });
+
+    // Also format on blur to ensure proper formatting
+    taxInput.addEventListener('blur', function() {
+        if (this.value) {
+            this.value = formatTaxNumber(this.value);
+        }
+    });
+
+    // Prevent invalid characters
+    taxInput.addEventListener('keypress', function(e) {
+        const char = String.fromCharCode(e.keyCode || e.which);
+        if (!/\d/.test(char) && char !== '-') {
+            e.preventDefault();
+        }
+    });
+}
+
+// Add this function to validate required fields
+function validateRequiredFields() {
+    const requiredFields = [
+        'shopName',
+        'shopCategory', 
+        'shopDescription',
+        'ownerName',
+        'ownerEmail',
+        'ownerPhone',
+        'shopAddress',
+        'shopCity',
+        'shopState',
+        'shopZip',
+        'shopCountry',
+        'taxId'
+    ];
+
+    const missingFields = [];
+    
+    requiredFields.forEach(fieldId => {
+        const field = getElement(fieldId);
+        if (field && !field.value.trim()) {
+            missingFields.push(fieldId);
+            
+            // Add visual indication for missing fields
+            field.style.borderColor = '#ff4444';
+            field.addEventListener('input', function() {
+                if (this.value.trim()) {
+                    this.style.borderColor = '';
+                }
+            });
+        } else if (field) {
+            field.style.borderColor = '';
+        }
+    });
+
+    // Special validation for phone fields
+    const phoneFields = ['ownerPhone'];
+    phoneFields.forEach(fieldId => {
+        const field = getElement(fieldId);
+        if (field && field.value.trim() && field.value.trim().length < 10) {
+            missingFields.push(fieldId);
+            field.style.borderColor = '#ff4444';
+        }
+    });
+
+    // Special validation for tax ID (should be 12 digits after formatting)
+    const taxField = getElement('taxId');
+    if (taxField && taxField.value.trim()) {
+        const cleanTaxId = taxField.value.replace(/\D/g, '');
+        if (cleanTaxId.length !== 12) {
+            missingFields.push('taxId');
+            taxField.style.borderColor = '#ff4444';
+        }
+    }
+
+    return missingFields;
+}
+
+// Add this function to get field labels for error messages
+function getFieldLabel(fieldId) {
+    const labels = {
+        'shopName': 'Shop Name',
+        'shopCategory': 'Shop Category',
+        'shopDescription': 'Shop Description',
+        'ownerName': 'Owner Name',
+        'ownerEmail': 'Email',
+        'ownerPhone': 'Phone Number',
+        'shopAddress': 'Shop Address',
+        'shopCity': 'City',
+        'shopState': 'State/Province',
+        'shopZip': 'ZIP/Postal Code',
+        'shopCountry': 'Country',
+        'taxId': 'Tax Identification Number'
+    };
+    
+    return labels[fieldId] || fieldId;
+}
+
+// Add this function to show field validation errors
+function showFieldValidationError(missingFields) {
+    const errorMessages = missingFields.map(fieldId => {
+        const label = getFieldLabel(fieldId);
+        const field = getElement(fieldId);
+        
+        if (fieldId === 'ownerPhone' && field && field.value.trim()) {
+            return `${label} must be 10 digits`;
+        } else if (fieldId === 'taxId' && field && field.value.trim()) {
+            return `${label} must be 12 digits`;
+        } else {
+            return `${label} is required`;
+        }
+    });
+    
+    return errorMessages.join(', ');
+}
+
+document.getElementById("shopZip").addEventListener("input", function() {
+    if (this.value.length > 4) {
+        this.value = this.value.slice(0, 4);
+    }
+});
 
 function setDefaultAvatar(imgElement) {
     if (!imgElement) return;
@@ -1225,16 +1413,23 @@ function setupEmployeeEventListeners() {
         e.preventDefault();
         
         try {
+            // Validate required fields first
+            const missingFields = validateEmployeeRequiredFields();
+            if (missingFields.length > 0) {
+                const errorMessage = showEmployeeFieldValidationError(missingFields);
+                throw new Error(`Please fill in all required fields: ${errorMessage}`);
+            }
+
             showLoading(true);
             const updates = {};
             let passwordChanged = false;
             
             // Get form values
-            const fullName = getElement('employeeFullName').value;
-            const phone = getElement('employeePhone').value;
-            const emergencyName = getElement('emergencyContactName').value;
-            const emergencyRelation = getElement('emergencyContactRelation').value;
-            const emergencyPhone = getElement('emergencyContactPhone').value;
+            const fullName = getElement('employeeFullName').value.trim();
+            const phone = getElement('employeePhone').value.trim();
+            const emergencyName = getElement('emergencyContactName').value.trim();
+            const emergencyRelation = getElement('emergencyContactRelation').value.trim();
+            const emergencyPhone = getElement('emergencyContactPhone').value.trim();
             const currentPassword = getElement('employeeCurrentPassword').value;
             const newPassword = getElement('employeeNewPassword').value;
             const confirmPassword = getElement('employeeConfirmPassword').value;
@@ -1416,6 +1611,75 @@ function loadEmployeeStatistics() {
 
     // Store unsubscribe for cleanup
     window.employeeOrdersUnsubscribe = ordersUnsubscribe;
+}
+
+// Add employee form validation
+function validateEmployeeRequiredFields() {
+    const requiredFields = [
+        'employeeFullName',
+        'employeePhone',
+        'emergencyContactName',
+        'emergencyContactRelation',
+        'emergencyContactPhone'
+    ];
+
+    const missingFields = [];
+    
+    requiredFields.forEach(fieldId => {
+        const field = getElement(fieldId);
+        if (field && !field.value.trim()) {
+            missingFields.push(fieldId);
+            
+            // Add visual indication for missing fields
+            field.style.borderColor = '#ff4444';
+            field.addEventListener('input', function() {
+                if (this.value.trim()) {
+                    this.style.borderColor = '';
+                }
+            });
+        } else if (field) {
+            field.style.borderColor = '';
+        }
+    });
+
+    // Special validation for phone fields
+    const phoneFields = ['employeePhone', 'emergencyContactPhone'];
+    phoneFields.forEach(fieldId => {
+        const field = getElement(fieldId);
+        if (field && field.value.trim() && field.value.trim().length < 10) {
+            missingFields.push(fieldId);
+            field.style.borderColor = '#ff4444';
+        }
+    });
+
+    return missingFields;
+}
+
+function getEmployeeFieldLabel(fieldId) {
+    const labels = {
+        'employeeFullName': 'Full Name',
+        'employeePhone': 'Phone Number',
+        'emergencyContactName': 'Emergency Contact Name',
+        'emergencyContactRelation': 'Emergency Contact Relationship',
+        'emergencyContactPhone': 'Emergency Contact Phone'
+    };
+    
+    return labels[fieldId] || fieldId;
+}
+
+function showEmployeeFieldValidationError(missingFields) {
+    const errorMessages = missingFields.map(fieldId => {
+        const label = getEmployeeFieldLabel(fieldId);
+        const field = getElement(fieldId);
+        
+        if ((fieldId === 'employeePhone' || fieldId === 'emergencyContactPhone') && field && field.value.trim()) {
+            return `${label} must be 10 digits`;
+        } else {
+            return `${label} is required`;
+        }
+    });
+    
+    return errorMessages.join(', ');
 }
 
 // Toggle password visibility
