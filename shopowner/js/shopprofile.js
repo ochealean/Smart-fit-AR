@@ -18,6 +18,8 @@ import {
 let avatarFile = null;
 let licenseFile = null;
 let permitFile = null;
+let birFile = null;
+let dtiFile = null;
 let frontIdFile = null;
 let backIdFile = null;
 let shopData = {};
@@ -28,6 +30,9 @@ let userSession = {
     role: null,
     shopId: null
 };
+
+let map;
+let marker;
 
 // DOM Elements
 const elements = {
@@ -58,9 +63,18 @@ const elements = {
     shopCountry: document.getElementById('shopCountry'),
     taxId: document.getElementById('taxId'),
 
+    // Map
+    map: document.getElementById('map'),
+    latitude: document.getElementById('latitude'),
+    longitude: document.getElementById('longitude'),
+    displayLatitude: document.getElementById('displayLatitude'),
+    displayLongitude: document.getElementById('displayLongitude'),
+
     // Documents
     businessLicensePreview: document.getElementById('businessLicensePreview'),
     businessPermitPreview: document.getElementById('businessPermitPreview'),
+    birDocumentPreview: document.getElementById('birDocumentPreview'),
+    dtiDocumentPreview: document.getElementById('dtiDocumentPreview'),
     ownerIdFrontPreview: document.getElementById('ownerIdFrontPreview'),
     ownerIdBackPreview: document.getElementById('ownerIdBackPreview'),
 
@@ -90,9 +104,18 @@ document.addEventListener('DOMContentLoaded', async function () {
 });
 
 async function initializePage() {
+    console.log('🚀 Initializing Shop Profile Page...');
+    
     const user = await checkUserAuth();
+    console.log('🔐 Authentication Result:', {
+        authenticated: user.authenticated,
+        role: user.role,
+        userId: user.userId,
+        hasUserData: !!user.userData
+    });
     
     if (!user.authenticated) {
+        console.log('❌ User not authenticated, redirecting to login');
         window.location.href = "/login.html#shop";
         return;
     }
@@ -102,19 +125,177 @@ async function initializePage() {
     userSession.role = user.role;
     userSession.shopId = user.shopId || user.userId;
 
+    console.log('👤 User Session Established:', userSession);
+
     loadShopProfile();
     setupEventListeners();
     setupPasswordToggleListeners();
     
     // Also setup event listeners for employee form
     setupEmployeeEventListeners();
+    
+    console.log('✅ Page initialization complete');
+}
+
+// ADD GOOGLE MAPS FUNCTIONS
+function initializeMap() {
+    if (!elements.map) {
+        console.log('Map container not found');
+        return;
+    }
+
+    // Default coordinates (Manila, Philippines)
+    const defaultLat = 14.5995;
+    const defaultLng = 120.9842;
+
+    // Initialize the map
+    map = new google.maps.Map(elements.map, {
+        center: { lat: defaultLat, lng: defaultLng },
+        zoom: 15,
+        mapTypeControl: true,
+        streetViewControl: true,
+        fullscreenControl: true
+    });
+
+    // Initialize marker
+    marker = new google.maps.Marker({
+        map: map,
+        draggable: true,
+        animation: google.maps.Animation.DROP,
+        title: "Drag to set your shop location"
+    });
+
+    // Add click listener to map
+    map.addListener('click', function(event) {
+        const lat = event.latLng.lat();
+        const lng = event.latLng.lng();
+        updateMarkerPosition(lat, lng);
+        updateCoordinatesDisplay(lat, lng);
+        reverseGeocode(lat, lng);
+    });
+
+    // Add marker drag end listener
+    marker.addListener('dragend', function(event) {
+        const lat = event.latLng.lat();
+        const lng = event.latLng.lng();
+        updateCoordinatesDisplay(lat, lng);
+        reverseGeocode(lat, lng);
+    });
+
+    console.log('Google Maps initialized for shop profile');
+}
+
+// Update marker position
+function updateMarkerPosition(lat, lng) {
+    marker.setPosition({ lat: lat, lng: lng });
+    map.panTo({ lat: lat, lng: lng });
+}
+
+// Update coordinates display
+function updateCoordinatesDisplay(lat, lng) {
+    if (elements.latitude) elements.latitude.value = lat;
+    if (elements.longitude) elements.longitude.value = lng;
+    if (elements.displayLatitude) elements.displayLatitude.textContent = lat.toFixed(6);
+    if (elements.displayLongitude) elements.displayLongitude.textContent = lng.toFixed(6);
+}
+
+// Reverse geocode coordinates to address
+function reverseGeocode(lat, lng) {
+    const geocoder = new google.maps.Geocoder();
+    const latlng = { lat: lat, lng: lng };
+
+    geocoder.geocode({ location: latlng }, function(results, status) {
+        if (status === 'OK' && results[0]) {
+            const address = results[0].formatted_address;
+            updateAddressFields(results[0]);
+        } else {
+            console.log('Geocoder failed due to: ' + status);
+        }
+    });
+}
+
+// Update address fields based on geocoding results
+function updateAddressFields(geocodeResult) {
+    let city = '';
+    let state = '';
+    let zipCode = '';
+    let country = '';
+
+    // Parse address components
+    geocodeResult.address_components.forEach(component => {
+        const types = component.types;
+        
+        if (types.includes('locality')) {
+            city = component.long_name;
+        } else if (types.includes('administrative_area_level_1')) {
+            state = component.long_name;
+        } else if (types.includes('postal_code')) {
+            zipCode = component.long_name;
+        } else if (types.includes('country')) {
+            country = component.long_name;
+        }
+    });
+
+    // Update form fields if they're empty or if we found better data
+    if (city && elements.shopCity) elements.shopCity.value = city;
+    if (state && elements.shopState) elements.shopState.value = state;
+    if (zipCode && elements.shopZip) elements.shopZip.value = zipCode;
+    if (country && elements.shopCountry) elements.shopCountry.value = country;
+    if (elements.shopAddress) elements.shopAddress.value = geocodeResult.formatted_address;
+}
+
+// Load shop location on map
+function loadShopLocation(shopData) {
+    if (shopData.latitude && shopData.longitude) {
+        const lat = parseFloat(shopData.latitude);
+        const lng = parseFloat(shopData.longitude);
+        
+        updateMarkerPosition(lat, lng);
+        updateCoordinatesDisplay(lat, lng);
+        
+        console.log('Loaded shop location:', { lat, lng });
+    } else {
+        // Try to geocode from address if coordinates not available
+        if (shopData.shopAddress) {
+            geocodeAddress(shopData.shopAddress);
+        }
+    }
+}
+
+// Geocode address to coordinates
+function geocodeAddress(address) {
+    const geocoder = new google.maps.Geocoder();
+    
+    geocoder.geocode({ address: address }, function(results, status) {
+        if (status === 'OK' && results[0]) {
+            const location = results[0].geometry.location;
+            const lat = location.lat();
+            const lng = location.lng();
+            
+            updateMarkerPosition(lat, lng);
+            updateCoordinatesDisplay(lat, lng);
+            
+            console.log('Geocoded shop address to coordinates:', { lat, lng });
+        } else {
+            console.log('Geocode was not successful for the following reason: ' + status);
+        }
+    });
 }
 
 function loadShopProfile() {
+    console.log('=== STARTING SHOP PROFILE LOAD ===');
+    console.log('User Session Data:', {
+        userId: userSession.userId,
+        role: userSession.role,
+        shopId: userSession.shopId,
+        userData: userSession.userData
+    });
+
     // First determine if this is a shop owner or employee
     if (userSession.role === 'employee') {
-        // This is an employee
-        console.log('Employee Data:', userSession.userData);
+        console.log('🟢 Loading EMPLOYEE profile');
+        console.log('Employee Data from Session:', userSession.userData);
+        
         originalEmail = userSession.userData.email || '';
         
         // Hide shop profile section and show employee section
@@ -136,13 +317,40 @@ function loadShopProfile() {
             if (issueReport) issueReport.style.display = "none";
         }
     } else {
-        // This is a shop owner
+        console.log('🟢 Loading SHOP OWNER profile');
         const shopPath = `smartfit_AR_Database/shop/${userSession.userId}`;
+        console.log('📁 Database Path:', shopPath);
         
         const unsubscribe = readDataRealtime(shopPath, (result) => {
+            console.log('📥 Database Response Received:', {
+                success: result.success,
+                hasData: !!result.data,
+                dataKeys: result.data ? Object.keys(result.data) : 'No data'
+            });
+
             if (result.success && result.data) {
                 shopData = result.data;
-                console.log('Shop Data:', shopData);
+                console.log('🏪 FULL SHOP DATA FROM DATABASE:', shopData);
+                console.log('📋 Shop Data Breakdown:');
+                console.log('  - Shop Name:', shopData.shopName);
+                console.log('  - Email:', shopData.email);
+                console.log('  - Owner Name:', shopData.ownerName);
+                console.log('  - Phone:', shopData.ownerPhone);
+                console.log('  - Address:', shopData.shopAddress);
+                console.log('  - Uploads Available:', !!shopData.uploads);
+                
+                if (shopData.uploads) {
+                    console.log('  📎 Uploads Breakdown:');
+                    Object.keys(shopData.uploads).forEach(uploadKey => {
+                        const upload = shopData.uploads[uploadKey];
+                        console.log(`    - ${uploadKey}:`, {
+                            name: upload.name,
+                            url: upload.url ? 'URL Available' : 'No URL',
+                            uploadedAt: upload.uploadedAt
+                        });
+                    });
+                }
+                
                 originalEmail = shopData.email || '';
                 
                 // Show shop profile section and hide employee section
@@ -162,10 +370,14 @@ function loadShopProfile() {
                 // Update Documents
                 updateDocuments(shopData);
                 
+                // Initialize map and load shop location
+                initializeMap();
+                loadShopLocation(shopData);
+                
                 // Load statistics
                 loadShopStatistics();
             } else {
-                console.error('Shop data not found');
+                console.error('❌ Shop data not found or error:', result);
                 window.location.href = '/login.html#shop';
             }
         });
@@ -173,76 +385,129 @@ function loadShopProfile() {
         // Store unsubscribe for cleanup if needed
         window.shopProfileUnsubscribe = unsubscribe;
     }
+    console.log('=== SHOP PROFILE LOAD COMPLETE ===');
 }
 
 function updateHeader(shopData) {
+    console.log('👤 Updating header with shop data...');
+    
     // Shop Name
     if (shopData.shopName) {
         elements.userNameDisplay.textContent = shopData.shopName;
+        console.log('🏪 Header Shop Name set to:', shopData.shopName);
     }
 
     // Profile Image
     if (shopData.uploads?.shopLogo?.url) {
         elements.userProfileImage.src = shopData.uploads.shopLogo.url;
+        console.log('🖼️ Header Profile Image set to shop logo');
     } else {
         setDefaultAvatar(elements.userProfileImage);
+        console.log('🖼️ Header Profile Image set to default (no shop logo found)');
     }
 }
 
 function updateProfileSection(shopData) {
+    console.log('📊 Updating profile section with shop data...');
+    
     // Shop Name
     if (shopData.shopName) {
         elements.profileName.textContent = shopData.shopName;
+        console.log('🏪 Profile Name set to:', shopData.shopName);
     }
 
     // Email
     if (shopData.email) {
         elements.profileEmail.textContent = shopData.email;
+        console.log('📧 Profile Email set to:', shopData.email);
     }
 
     // Avatar
     if (shopData.uploads?.shopLogo?.url) {
         elements.profileAvatar.src = shopData.uploads.shopLogo.url;
+        console.log('🖼️ Profile Avatar set to shop logo URL');
     } else {
         setDefaultAvatar(elements.profileAvatar);
+        console.log('🖼️ Profile Avatar set to default (no shop logo found)');
     }
 }
 
 function updateFormFields(shopData) {
+    console.log('📝 Updating form fields with shop data...');
+    
     // Shop Info
-    if (shopData.shopName) elements.shopName.value = shopData.shopName;
-    if (shopData.shopCategory) elements.shopCategory.value = shopData.shopCategory;
-    if (shopData.shopDescription) elements.shopDescription.value = shopData.shopDescription;
+    if (shopData.shopName) {
+        elements.shopName.value = shopData.shopName;
+        console.log('🏪 Shop Name set to:', shopData.shopName);
+    }
+    if (shopData.shopCategory) {
+        elements.shopCategory.value = shopData.shopCategory;
+        console.log('📂 Shop Category set to:', shopData.shopCategory);
+    }
+    if (shopData.shopDescription) {
+        elements.shopDescription.value = shopData.shopDescription;
+        console.log('📋 Shop Description set (length):', shopData.shopDescription.length);
+    }
 
     // Contact Info
-    if (shopData.ownerName) elements.ownerName.value = shopData.ownerName;
-    if (shopData.email) elements.ownerEmail.value = shopData.email;
-    if (shopData.ownerPhone) elements.ownerPhone.value = shopData.ownerPhone;
+    if (shopData.ownerName) {
+        elements.ownerName.value = shopData.ownerName;
+        console.log('👤 Owner Name set to:', shopData.ownerName);
+    }
+    if (shopData.email) {
+        elements.ownerEmail.value = shopData.email;
+        console.log('📧 Email set to:', shopData.email);
+    }
+    if (shopData.ownerPhone) {
+        elements.ownerPhone.value = shopData.ownerPhone;
+        console.log('📞 Phone set to:', shopData.ownerPhone);
+    }
 
     // Location Info
-    if (shopData.shopAddress) elements.shopAddress.value = shopData.shopAddress;
-    if (shopData.shopCity) elements.shopCity.value = shopData.shopCity;
-    if (shopData.shopState) elements.shopState.value = shopData.shopState;
-    if (shopData.shopZip) elements.shopZip.value = shopData.shopZip;
-    if (shopData.shopCountry) elements.shopCountry.value = shopData.shopCountry;
+    if (shopData.shopAddress) {
+        elements.shopAddress.value = shopData.shopAddress;
+        console.log('📍 Address set to:', shopData.shopAddress);
+    }
+    if (shopData.shopCity) {
+        elements.shopCity.value = shopData.shopCity;
+        console.log('🏙️ City set to:', shopData.shopCity);
+    }
+    if (shopData.shopState) {
+        elements.shopState.value = shopData.shopState;
+        console.log('🗺️ State set to:', shopData.shopState);
+    }
+    if (shopData.shopZip) {
+        elements.shopZip.value = shopData.shopZip;
+        console.log('📮 ZIP set to:', shopData.shopZip);
+    }
+    if (shopData.shopCountry) {
+        elements.shopCountry.value = shopData.shopCountry;
+        console.log('🌍 Country set to:', shopData.shopCountry);
+    }
 
     // Business Info
-    if (shopData.taxId) elements.taxId.value = shopData.taxId;
+    if (shopData.taxId) {
+        elements.taxId.value = shopData.taxId;
+        console.log('💳 Tax ID set to:', shopData.taxId);
+    }
+    
+    console.log('✅ Form fields update complete');
 }
 
 function updateDocuments(shopData) {
+    console.log('📄 Starting document update process...');
     console.log('Shop Data for Documents:', shopData);
-    console.log('Uploads Data:', shopData.uploads);
+    console.log('Uploads Data Structure:', shopData.uploads);
 
     // Business License (Mayor's Permit)
     if (elements.businessLicensePreview) {
         if (shopData.uploads?.businessLicense) {
             const license = shopData.uploads.businessLicense;
+            console.log('📋 Business License Found:', license);
             updateDocumentPreview(elements.businessLicensePreview, license, 'Business License');
-            console.log('Business License URL:', license.url);
         } else {
+            console.log('⚠️ No Business License found in uploads');
             elements.businessLicensePreview.style.display = 'none';
-            console.log('No Business License found');
         }
     }
 
@@ -250,11 +515,35 @@ function updateDocuments(shopData) {
     if (elements.businessPermitPreview) {
         if (shopData.uploads?.permitDocument) {
             const permit = shopData.uploads.permitDocument;
+            console.log('📋 Business Permit Found:', permit);
             updateDocumentPreview(elements.businessPermitPreview, permit, 'Business Permit');
-            console.log('Business Permit URL:', permit.url);
         } else {
+            console.log('⚠️ No Business Permit found in uploads');
             elements.businessPermitPreview.style.display = 'none';
-            console.log('No Business Permit found');
+        }
+    }
+
+    // BIR Document
+    if (elements.birDocumentPreview) {
+        if (shopData.uploads?.birDocument) {
+            const birDoc = shopData.uploads.birDocument;
+            console.log('📋 BIR Document Found:', birDoc);
+            updateDocumentPreview(elements.birDocumentPreview, birDoc, 'BIR Certificate');
+        } else {
+            console.log('⚠️ No BIR Document found in uploads');
+            elements.birDocumentPreview.style.display = 'none';
+        }
+    }
+
+    // DTI Document
+    if (elements.dtiDocumentPreview) {
+        if (shopData.uploads?.dtiDocument) {
+            const dtiDoc = shopData.uploads.dtiDocument;
+            console.log('📋 DTI Document Found:', dtiDoc);
+            updateDocumentPreview(elements.dtiDocumentPreview, dtiDoc, 'DTI Registration');
+        } else {
+            console.log('⚠️ No DTI Document found in uploads');
+            elements.dtiDocumentPreview.style.display = 'none';
         }
     }
 
@@ -262,11 +551,11 @@ function updateDocuments(shopData) {
     if (elements.ownerIdFrontPreview) {
         if (shopData.uploads?.ownerIdFront) {
             const idFront = shopData.uploads.ownerIdFront;
+            console.log('🆔 Owner ID Front Found:', idFront);
             updateDocumentPreview(elements.ownerIdFrontPreview, idFront, 'Owner ID Front');
-            console.log('Owner ID Front URL:', idFront.url);
         } else {
+            console.log('⚠️ No Owner ID Front found in uploads');
             elements.ownerIdFrontPreview.style.display = 'none';
-            console.log('No Owner ID Front found');
         }
     }
 
@@ -274,13 +563,15 @@ function updateDocuments(shopData) {
     if (elements.ownerIdBackPreview) {
         if (shopData.uploads?.ownerIdBack) {
             const idBack = shopData.uploads.ownerIdBack;
+            console.log('🆔 Owner ID Back Found:', idBack);
             updateDocumentPreview(elements.ownerIdBackPreview, idBack, 'Owner ID Back');
-            console.log('Owner ID Back URL:', idBack.url);
         } else {
+            console.log('⚠️ No Owner ID Back found in uploads');
             elements.ownerIdBackPreview.style.display = 'none';
-            console.log('No Owner ID Back found');
         }
     }
+    
+    console.log('✅ Document update process complete');
 }
 
 function updateDocumentPreview(container, documentData, defaultName) {
@@ -411,6 +702,12 @@ function setupEventListeners() {
             } else if (docType === 'permitDocument' && shopData.uploads?.permitDocument?.url) {
                 url = shopData.uploads.permitDocument.url;
                 console.log('Found Business Permit URL:', url);
+            } else if (docType === 'birDocument' && shopData.uploads?.birDocument?.url) {
+                url = shopData.uploads.birDocument.url;
+                console.log('Found BIR Document URL:', url);
+            } else if (docType === 'dtiDocument' && shopData.uploads?.dtiDocument?.url) {
+                url = shopData.uploads.dtiDocument.url;
+                console.log('Found DTI Document URL:', url);
             } else if (docType === 'ownerIdFront' && shopData.uploads?.ownerIdFront?.url) {
                 url = shopData.uploads.ownerIdFront.url;
                 console.log('Found Owner ID Front URL:', url);
@@ -446,6 +743,10 @@ function setupEventListeners() {
                         licenseFile = file;
                     } else if (docType === 'permitDocument') {
                         permitFile = file;
+                    } else if (docType === 'birDocument') {
+                        birFile = file;
+                    } else if (docType === 'dtiDocument') {
+                        dtiFile = file;
                     } else if (docType === 'ownerIdFront') {
                         frontIdFile = file;
                     } else if (docType === 'ownerIdBack') {
@@ -510,6 +811,13 @@ function setupEventListeners() {
                 updates.shopZip = elements.shopZip.value;
                 updates.shopCountry = elements.shopCountry.value;
                 updates.taxId = elements.taxId.value;
+                
+                // ADD COORDINATES TO UPDATES
+                if (elements.latitude.value && elements.longitude.value) {
+                    updates.latitude = elements.latitude.value;
+                    updates.longitude = elements.longitude.value;
+                    updates.locationVerified = true;
+                }
 
                 // Upload files
                 const uploadPromises = [];
@@ -542,6 +850,28 @@ function setupEventListeners() {
                     uploadPromises.push(uploadFile(userSession.userId, permitFile, 'permitDocument', oldUrl).then(url => {
                         newUploads.permitDocument = {
                             name: permitFile.name,
+                            url: url,
+                            uploadedAt: new Date().toISOString()
+                        };
+                    }));
+                }
+
+                if (birFile) {
+                    const oldUrl = shopData.uploads?.birDocument?.url || null;
+                    uploadPromises.push(uploadFile(userSession.userId, birFile, 'birDocument', oldUrl).then(url => {
+                        newUploads.birDocument = {
+                            name: birFile.name,
+                            url: url,
+                            uploadedAt: new Date().toISOString()
+                        };
+                    }));
+                }
+
+                if (dtiFile) {
+                    const oldUrl = shopData.uploads?.dtiDocument?.url || null;
+                    uploadPromises.push(uploadFile(userSession.userId, dtiFile, 'dtiDocument', oldUrl).then(url => {
+                        newUploads.dtiDocument = {
+                            name: dtiFile.name,
                             url: url,
                             uploadedAt: new Date().toISOString()
                         };
