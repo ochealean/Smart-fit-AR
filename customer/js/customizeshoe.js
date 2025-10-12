@@ -106,7 +106,7 @@ async function initializePage() {
     // Initialize event listeners
     initializeEventListeners();
     
-    // Check URL parameters for model selection
+    // Check URL parameters for model and color selection
     checkUrlParameters();
     
     // Initial preview update
@@ -216,8 +216,10 @@ function updateShoeImages() {
     const arExperienceLink = getElement('arExperienceLink');
     const bodyColor = selections[currentModel].bodyColor;
     
-    // Update AR link - you might want to update this based on your AR implementation
-    arExperienceLink.href = `#${currentModel}-${bodyColor}`;
+    // Update AR link with correct path and parameters
+    if (arExperienceLink) {
+        arExperienceLink.href = `/ar/arshoetryon.html?model=${currentModel}&color=${bodyColor}`;
+    }
     
     // Get the current model data
     const modelData = customizationData[currentModel];
@@ -304,10 +306,11 @@ function setFallbackImages() {
     });
 }
 
-// Check URL parameters for model selection
+// Check URL parameters for model and color selection
 function checkUrlParameters() {
     const urlParams = new URLSearchParams(window.location.search);
     const modelParam = urlParams.get('model')?.toLowerCase();
+    const colorParam = urlParams.get('color')?.toLowerCase();
 
     const modelMap = {
         'classic': 'classic',
@@ -316,16 +319,57 @@ function checkUrlParameters() {
     };
 
     let modelToSelect = 'classic';
+    let colorToSelect = null;
     
+    // Process model parameter
     if (modelParam && modelMap[modelParam]) {
         modelToSelect = modelMap[modelParam];
     }
 
+    // Process color parameter
+    if (colorParam) {
+        colorToSelect = colorParam;
+    }
+
+    // Select the model first
     const modelOption = document.querySelector(`.model-option[data-model="${modelToSelect}"]`);
     if (modelOption) {
         modelOption.click();
+        
+        // After model is selected, wait a bit for the options to load then select the color
+        setTimeout(() => {
+            if (colorToSelect) {
+                selectColorForCurrentModel(colorToSelect);
+            }
+        }, 100);
     } else {
         document.querySelector('.model-option[data-model="classic"]').click();
+        
+        setTimeout(() => {
+            if (colorToSelect) {
+                selectColorForCurrentModel(colorToSelect);
+            }
+        }, 100);
+    }
+}
+
+// Helper function to select a specific color for the current model
+function selectColorForCurrentModel(color) {
+    const colorOptionsContainer = getElement(`${currentModel}BodyColorOptions`);
+    if (!colorOptionsContainer) {
+        console.warn(`Color options container not found for model: ${currentModel}`);
+        return;
+    }
+
+    const colorOption = colorOptionsContainer.querySelector(`[data-color="${color}"]`);
+    if (colorOption) {
+        colorOption.click();
+        console.log(`Color ${color} selected for model ${currentModel}`);
+    } else {
+        console.warn(`Color ${color} not found in available options for model ${currentModel}`);
+        // Check what colors are available
+        const availableColors = Array.from(colorOptionsContainer.querySelectorAll('.color-option')).map(opt => opt.dataset.color);
+        console.log(`Available colors for ${currentModel}:`, availableColors);
     }
 }
 
