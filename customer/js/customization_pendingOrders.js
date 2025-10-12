@@ -4,7 +4,9 @@ import {
     logoutUser,
     readData,
     readDataRealtime,
-    updateData
+    updateData,
+    createData,
+    generate18CharID
 } from "../../firebaseMethods.js";
 
 // Global variables
@@ -16,6 +18,7 @@ let allOrders = [];
 let currentCarouselIndex = 0;
 let carouselImages = [];
 let carouselListenersAdded = false;
+let currentReportOrder = null;
 
 // Helper function to get DOM elements
 function getElement(id) {
@@ -69,7 +72,6 @@ function setUserProfile() {
             userNameDisplay.textContent = "User";
         }
         
-        // Set user avatar if available
         if (userSession.userData.profilePhoto) {
             userAvatar.src = userSession.userData.profilePhoto;
         } else {
@@ -142,9 +144,9 @@ function filterOrdersByStatus(status) {
         if (status === 'pending') {
             return order.status === 'pending';
         } else if (status === 'processing') {
-            return order.status === 'processing';
+            return order.status === 'processing' || ['Order Processed', 'Shipped', 'In Transit', 'Arrived at Facility', 'Out for Delivery'].includes(order.status);
         } else if (status === 'history') {
-            return order.status === 'completed' || order.status === 'cancelled' || order.status === 'rejected';
+            return ['completed', 'cancelled', 'rejected', 'delivered'].includes(order.status);
         }
         return false;
     });
@@ -182,10 +184,10 @@ function renderOrders(orders, status) {
         let statusBadge = '';
         if (order.status === 'pending') {
             statusBadge = '<span class="status-badge status-pending">Pending</span>';
-        } else if (order.status === 'processing') {
-            statusBadge = '<span class="status-badge status-processing">Processing</span>';
-        } else if (order.status === 'completed') {
-            statusBadge = '<span class="status-badge status-completed">Completed</span>';
+        } else if (order.status === 'processing' || ['Order Processed', 'Shipped', 'In Transit', 'Arrived at Facility', 'Out for Delivery'].includes(order.status)) {
+            statusBadge = `<span class="status-badge status-processing">${order.status}</span>`;
+        } else if (order.status === 'completed' || order.status === 'delivered') {
+            statusBadge = '<span class="status-badge status-completed">Delivered</span>';
         } else if (order.status === 'cancelled') {
             statusBadge = '<span class="status-badge status-cancelled">Cancelled</span>';
         } else if (order.status === 'rejected') {
@@ -196,14 +198,14 @@ function renderOrders(orders, status) {
 
         // Additional info based on status
         let additionalInfo = '';
-        if (order.status === 'processing') {
+        if (order.status === 'processing' || ['Order Processed', 'Shipped', 'In Transit', 'Arrived at Facility', 'Out for Delivery'].includes(order.status)) {
             additionalInfo = `
                 <div class="detail-row">
                     <span class="detail-label">Production Time:</span>
                     <span class="detail-value">${order.productionTime || 'Not specified'}</span>
                 </div>
             `;
-        } else if (order.status === 'completed' || order.status === 'cancelled' || order.status === 'rejected') {
+        } else if (['completed', 'delivered', 'cancelled', 'rejected'].includes(order.status)) {
             // Find the status update timestamp if available
             let statusDate = '';
             if (order.statusUpdates && order.statusUpdates[order.status]) {
@@ -226,6 +228,40 @@ function renderOrders(orders, status) {
                     </div>
                 `;
             }
+        }
+
+        // Add buttons based on status
+        let actionButtons = `
+            <button class="btn btn-view view-order-btn" data-order='${JSON.stringify(order).replace(/'/g, "\\'")}'>
+                <i class="fas fa-eye"></i> View Details
+            </button>
+        `;
+
+        // Add Cancel button for 'pending' status
+        if (order.status === 'pending') {
+            actionButtons += `
+                <button class="btn btn-cancel cancel-order-btn" data-order-id="${order.orderId}" data-source="${order.source}">
+                    <i class="fas fa-times"></i> Cancel
+                </button>
+            `;
+        }
+
+        // Add Complete button for 'Out for Delivery' status
+        if (order.status === 'Out for Delivery') {
+            actionButtons += `
+                <button class="btn btn-complete complete-order-btn" data-order-id="${order.orderId}" data-source="${order.source}">
+                    <i class="fas fa-check"></i> Complete
+                </button>
+            `;
+        }
+
+        // Add Report Issue button only for 'Out for Delivery' status
+        if (order.status === 'Out for Delivery') {
+            actionButtons += `
+                <button class="btn btn-report report-issue-btn" data-order-id="${order.orderId}" data-source="${order.source}">
+                    <i class="fas fa-exclamation-triangle"></i> Report Issue
+                </button>
+            `;
         }
 
         card.innerHTML = `
@@ -258,13 +294,7 @@ function renderOrders(orders, status) {
                 <img src="${productImage}" alt="Product Image" class="order-image" onerror="this.onerror=null; this.src='https://cdn-icons-png.flaticon.com/512/11542/11542598.png';">
             </div>
             <div class="order-actions">
-                <button class="btn btn-view view-order-btn" data-order='${JSON.stringify(order).replace(/'/g, "\\'")}'>
-                    <i class="fas fa-eye"></i> View Details
-                </button>
-                ${(order.status === 'pending') ? 
-                `<button class="btn btn-cancel cancel-order-btn" data-order-id="${order.orderId}" data-source="${order.source}">
-                    <i class="fas fa-times"></i> Cancel
-                </button>` : ''}
+                ${actionButtons}
             </div>
         `;
 
@@ -285,6 +315,24 @@ function renderOrders(orders, status) {
             const orderId = e.target.closest('.cancel-order-btn').getAttribute('data-order-id');
             const source = e.target.closest('.cancel-order-btn').getAttribute('data-source');
             cancelOrder(orderId, source);
+        });
+    });
+
+    // Add event listeners to complete buttons
+    document.querySelectorAll('.complete-order-btn').forEach(button => {
+        button.addEventListener('click', (e) => {
+            const orderId = e.target.closest('.complete-order-btn').getAttribute('data-order-id');
+            const source = e.target.closest('.complete-order-btn').getAttribute('data-source');
+            completeOrder(orderId, source);
+        });
+    });
+
+    // Add event listeners to report issue buttons
+    document.querySelectorAll('.report-issue-btn').forEach(button => {
+        button.addEventListener('click', (e) => {
+            const orderId = e.target.closest('.report-issue-btn').getAttribute('data-order-id');
+            const source = e.target.closest('.report-issue-btn').getAttribute('data-source');
+            showReportIssueModal(orderId, source);
         });
     });
 }
@@ -350,10 +398,10 @@ function showOrderDetails(order) {
     let statusBadge = '';
     if (order.status === 'pending') {
         statusBadge = '<span class="status-badge status-pending">Pending</span>';
-    } else if (order.status === 'processing') {
-        statusBadge = '<span class="status-badge status-processing">Processing</span>';
-    } else if (order.status === 'completed') {
-        statusBadge = '<span class="status-badge status-completed">Completed</span>';
+    } else if (order.status === 'processing' || ['Order Processed', 'Shipped', 'In Transit', 'Arrived at Facility', 'Out for Delivery'].includes(order.status)) {
+        statusBadge = `<span class="status-badge status-processing">${order.status}</span>`;
+    } else if (order.status === 'completed' || order.status === 'delivered') {
+        statusBadge = '<span class="status-badge status-completed">Delivered</span>';
     } else if (order.status === 'cancelled') {
         statusBadge = '<span class="status-badge status-cancelled">Cancelled</span>';
     } else if (order.status === 'rejected') {
@@ -382,8 +430,18 @@ function showOrderDetails(order) {
     setTextContent("modalOrderDate", order.formattedDate || "Date not available");
     setInnerHTML("modalOrderStatus", statusBadge);
     setTextContent("modalPaymentMethod", order.paymentMethod || "Not specified");
-    setTextContent("modalPaymentStatus", order.status || "Pending");
     
+    // Show rejection reason if rejected
+    const rejectionRow = getElement('rejectionReasonRow');
+    if (rejectionRow) {
+        if (order.status === 'rejected' && order.statusUpdates?.rejected?.message) {
+            setTextContent("modalRejectionReason", order.statusUpdates.rejected.message);
+            rejectionRow.style.display = 'flex';
+        } else {
+            rejectionRow.style.display = 'none';
+        }
+    }
+
     // Extract color from selections if available
     let shoeColor = "default";
     if (order.selections) {
@@ -434,7 +492,7 @@ function showOrderDetails(order) {
     // Show customer info if available
     if (order.shippingInfo) {
         setTextContent("modalCustomerName", `${order.shippingInfo.firstName} ${order.shippingInfo.lastName}`);
-        setTextContent("modalCustomerAddress", `${order.shippingInfo.address}, ${order.shippingInfo.city}, ${order.shippingInfo.country}`);
+        setTextContent("modalCustomerAddress", `${order.shippingInfo.address || ''}, ${order.shippingInfo.city || ''}, ${order.shippingInfo.country || ''}`.trim());
         setTextContent("modalCustomerContact", order.shippingInfo.phone || "Not specified");
     } else if (userSession.userData) {
         setTextContent("modalCustomerName", `${userSession.userData.firstName || ''} ${userSession.userData.lastName || ''}`.trim() || "Not specified");
@@ -442,18 +500,13 @@ function showOrderDetails(order) {
         setTextContent("modalCustomerContact", userSession.userData.phone || "Not specified");
     }
     
-    // Calculate estimated delivery (order date + production time)
-    let estDelivery = "Not specified";
-    if (order.orderDate && order.productionTime) {
-        const orderDate = new Date(order.orderDate);
-        const daysMatch = order.productionTime.match(/(\d+)/);
-        if (daysMatch) {
-            const daysToAdd = parseInt(daysMatch[1]);
-            orderDate.setDate(orderDate.getDate() + daysToAdd);
-            estDelivery = orderDate.toLocaleDateString();
-        }
-    }
-    setTextContent("modalEstDelivery", estDelivery);
+    // Shipping details
+    const shipping = order.shipping || {};
+    setTextContent("modalCarrier", shipping.carrier || "N/A");
+    setTextContent("modalTrackingNumber", shipping.trackingNumber || "N/A");
+    setTextContent("modalShipDate", shipping.shipDate || "N/A");
+    setTextContent("modalEstDelivery", shipping.estDelivery || "Not specified");
+    setTextContent("modalShippingNotes", shipping.notes || "N/A");
     
     // Calculate prices with VAT and shipping
     const basePrice = order.basePrice || 2999;
@@ -472,8 +525,48 @@ function showOrderDetails(order) {
     setTextContent("modalShipping", `₱${shippingPrice.toLocaleString()}`);
     setTextContent("modalTotalPrice", `₱${totalPrice.toLocaleString()}`);
     
+    // Populate timeline
+    const timelineContainer = getElement('modalTimeline');
+    if (timelineContainer) {
+        timelineContainer.innerHTML = generateTimelineHTML(order.statusUpdates || {});
+    }
+    
     // Show the modal
     modal.style.display = "flex";
+}
+
+function generateTimelineHTML(updates) {
+    if (!updates || Object.keys(updates).length === 0) {
+        return `
+            <div class="timeline-item">
+                <div class="timeline-dot"></div>
+                <div class="timeline-content">
+                    <div class="timeline-title">No status updates available</div>
+                    <p class="timeline-desc">Check back later for updates on this order</p>
+                </div>
+            </div>
+        `;
+    }
+
+    const sortedUpdates = Object.values(updates)
+        .sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+
+    return sortedUpdates.map((update, index) => {
+        const isActive = index === 0;
+        const isCompleted = index > 0;
+        const date = new Date(update.timestamp).toLocaleString();
+        return `
+            <div class="timeline-item ${isActive ? 'active' : ''} ${isCompleted ? 'completed' : ''}">
+                <div class="timeline-dot"></div>
+                <div class="timeline-content">
+                    <div class="timeline-date">${date}</div>
+                    <h4 class="timeline-title">${update.status}</h4>
+                    <p class="timeline-desc">${update.message}</p>
+                    ${update.location ? `<p class="timeline-desc">Location: ${update.location}</p>` : ''}
+                </div>
+            </div>
+        `;
+    }).join('');
 }
 
 function setupCarousel(order) {
@@ -655,6 +748,100 @@ async function cancelOrder(orderId, source) {
     }
 }
 
+async function completeOrder(orderId, source) {
+    if (!confirm(`Are you sure you want to mark order ${orderId} as delivered?`)) {
+        return;
+    }
+
+    try {
+        const completeButton = document.querySelector(`.complete-order-btn[data-order-id="${orderId}"]`);
+        if (completeButton) {
+            const originalHTML = completeButton.innerHTML;
+            completeButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Completing...';
+            completeButton.disabled = true;
+
+            const orderPath = `smartfit_AR_Database/${source}/${userSession.userId}/${orderId}`;
+            const orderResult = await readData(orderPath);
+            
+            if (!orderResult.success) {
+                throw new Error('Order not found');
+            }
+
+            const orderData = orderResult.data;
+
+            const updates = {
+                status: 'delivered',
+                deliveredAt: Date.now(),
+                statusUpdates: {
+                    ...(orderData.statusUpdates || {}),
+                    delivered: {
+                        status: 'delivered',
+                        timestamp: Date.now(),
+                        message: 'Order delivered and confirmed by customer'
+                    }
+                }
+            };
+
+            const updateResult = await updateData(orderPath, updates);
+            
+            if (updateResult.success) {
+                allOrders = await fetchAllOrders();
+                const activeTab = document.querySelector('.order-tab.active').getAttribute('data-tab');
+                const filteredOrders = filterOrdersByStatus(activeTab);
+                renderOrders(filteredOrders, activeTab);
+                alert(`Order ${orderId} has been marked as delivered.`);
+            } else {
+                throw new Error(updateResult.error);
+            }
+
+            completeButton.innerHTML = originalHTML;
+            completeButton.disabled = false;
+        }
+    } catch (error) {
+        console.error('Error completing order:', error);
+        alert(`Failed to complete order: ${error.message}`);
+    }
+}
+
+function showReportIssueModal(orderId, source) {
+    currentReportOrder = { orderId, source };
+    const modal = getElement('reportIssueModal');
+    if (modal) {
+        getElement('reportOrderId').textContent = orderId;
+        modal.style.display = 'flex';
+    }
+}
+
+async function submitReportIssue(description) {
+    if (!currentReportOrder) return;
+
+    try {
+        const issueId = generate18CharID();
+        const issuePath = `smartfit_AR_Database/issueReports/${userSession.userId}/${issueId}`;
+        const issueData = {
+            orderId: currentReportOrder.orderId,
+            source: currentReportOrder.source,
+            description,
+            createdAt: Date.now(),
+            status: 'pending'
+        };
+
+        const result = await createData(issuePath, null, issueData);
+        
+        if (result.success) {
+            alert('Issue reported successfully!');
+            const modal = getElement('reportIssueModal');
+            if (modal) modal.style.display = 'none';
+            getElement('issueDescription').value = '';
+        } else {
+            throw new Error(result.error);
+        }
+    } catch (error) {
+        console.error('Error reporting issue:', error);
+        alert(`Failed to report issue: ${error.message}`);
+    }
+}
+
 // Set up real-time listeners for database changes
 function setupRealtimeListeners() {
     // Listen for changes in customizedtransactions
@@ -695,7 +882,7 @@ function initPage() {
         });
     });
 
-    // Set up modal close functionality
+    // Set up order modal close functionality
     const closeModalBtn = getElement('closeModalBtn');
     const closeModalXBtn = document.querySelector('.close-modal');
     const orderModal = getElement('orderModal');
@@ -716,6 +903,47 @@ function initPage() {
         window.addEventListener('click', function(e) {
             if (e.target === orderModal) {
                 orderModal.style.display = 'none';
+            }
+        });
+    }
+
+    // Set up report issue modal
+    const reportModal = getElement('reportIssueModal');
+    const closeReportModal = getElement('closeReportModal');
+    const cancelReportBtn = getElement('cancelReportBtn');
+    const reportForm = getElement('reportIssueForm');
+
+    if (closeReportModal) {
+        closeReportModal.addEventListener('click', () => {
+            if (reportModal) reportModal.style.display = 'none';
+            getElement('issueDescription').value = '';
+        });
+    }
+
+    if (cancelReportBtn) {
+        cancelReportBtn.addEventListener('click', () => {
+            if (reportModal) reportModal.style.display = 'none';
+            getElement('issueDescription').value = '';
+        });
+    }
+
+    if (reportForm) {
+        reportForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const description = getElement('issueDescription').value.trim();
+            if (description) {
+                await submitReportIssue(description);
+            } else {
+                alert('Please provide a description of the issue.');
+            }
+        });
+    }
+
+    if (reportModal) {
+        window.addEventListener('click', (e) => {
+            if (e.target === reportModal) {
+                reportModal.style.display = 'none';
+                getElement('issueDescription').value = '';
             }
         });
     }
@@ -750,8 +978,8 @@ async function handleLogout() {
         const result = await logoutUser();
         if (result.success) {
             window.location.href = "/login.html";
-        } else {
-            alert('Logout failed: ' + result.error);
+         } else {
+           alert('Logout failed: ' + result.error);
         }
     }
 }

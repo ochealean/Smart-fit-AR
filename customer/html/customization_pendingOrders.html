@@ -120,6 +120,10 @@
                                 <div class="detail-label">Payment Method:</div>
                                 <div class="detail-value" id="modalPaymentMethod">GCash</div>
                             </div>
+                            <div class="detail-row" id="rejectionReasonRow" style="display: none;">
+                                <div class="detail-label">Rejection Reason:</div>
+                                <div class="detail-value" id="modalRejectionReason">N/A</div>
+                            </div>
                         </div>
                         
                         <div class="detail-section">
@@ -137,8 +141,31 @@
                                 <div class="detail-value" id="modalCustomerContact">+63 912 345 6789</div>
                             </div>
                             <div class="detail-row">
+                                <div class="detail-label">Carrier:</div>
+                                <div class="detail-value" id="modalCarrier">N/A</div>
+                            </div>
+                            <div class="detail-row">
+                                <div class="detail-label">Tracking Number:</div>
+                                <div class="detail-value" id="modalTrackingNumber">N/A</div>
+                            </div>
+                            <div class="detail-row">
+                                <div class="detail-label">Ship Date:</div>
+                                <div class="detail-value" id="modalShipDate">N/A</div>
+                            </div>
+                            <div class="detail-row">
                                 <div class="detail-label">Est. Delivery:</div>
                                 <div class="detail-value" id="modalEstDelivery">Aug 20, 2023</div>
+                            </div>
+                            <div class="detail-row">
+                                <div class="detail-label">Notes:</div>
+                                <div class="detail-value" id="modalShippingNotes">N/A</div>
+                            </div>
+                        </div>
+
+                        <div class="detail-section">
+                            <h3><i class="fas fa-history"></i> Status Updates</h3>
+                            <div class="timeline" id="modalTimeline">
+                                <!-- Timeline items will be added here -->
                             </div>
                         </div>
                     </div>
@@ -236,6 +263,29 @@
                         <i class="fas fa-times"></i> Close
                     </button>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Report Issue Modal -->
+    <div class="modal-overlay" id="reportIssueModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Report Issue for Order <span id="reportOrderId"></span></h2>
+                <button class="close-modal" id="closeReportModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="reportIssueForm">
+                    <div class="form-group">
+                        <label for="issueDescription">Issue Description</label>
+                        <textarea id="issueDescription" class="form-control" rows="5" required
+                            placeholder="Please describe the issue with this order..."></textarea>
+                    </div>
+                    <div class="modal-actions">
+                        <button type="button" class="btn btn-cancel" id="cancelReportBtn"><i class="fas fa-times"></i> Cancel</button>
+                        <button type="submit" class="btn btn-primary"><i class="fas fa-check"></i> Submit Report</button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
