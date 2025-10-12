@@ -1,4 +1,4 @@
-import { checkUserAuth } from '../../firebaseMethods.js';
+import { checkUserAuth, readData } from '../../firebaseMethods.js';
 
 const authStatus = await checkUserAuth();
 if (authStatus.authenticated && authStatus.role === 'customer') {
@@ -11,87 +11,18 @@ console.log(`/customer/html/customizeshoe.html?model=${model}`);
 let deepARBuyNowLink = `/customer/html/customizeshoe.html?model=${model}`;
 
 let deepAR;
-let isFrontCamera = false; // Track camera state
-let isMirrored = false; // Track mirror state
-let currentStream = null; // Track the active media stream
+let isFrontCamera = false;
+let isMirrored = false;
+let currentStream = null;
 const urlParams = new URLSearchParams(window.location.search);
 const initialModel = urlParams.get('model') || 'classic';
 const initialColor = urlParams.get('color') || 'white';
 
-// Database structure for AR customization models
-const arCustomizationModels = {
-    "classic": {
-        "bodyColors": {
-            "white": {
-                "images": {
-                    "main": "https://firebasestorage.googleapis.com/v0/b/opportunity-9d3bf.firebasestorage.app/o/images%2Fangles%2Fclassic%2Fwhite%2Fmain.png?alt=media&token=YOUR_TOKEN_HERE"
-                },
-                "name": "White"
-            },
-            "black": {
-                "images": {
-                    "main": "https://firebasestorage.googleapis.com/v0/b/opportunity-9d3bf.firebasestorage.app/o/images%2Fangles%2Fclassic%2Fblack%2Fmain.png?alt=media&token=9b45c241-fa00-4437-bef5-fb358e592037"
-                },
-                "name": "Black"
-            },
-            "blue": {
-                "images": {
-                    "main": "https://firebasestorage.googleapis.com/v0/b/opportunity-9d3bf.firebasestorage.app/o/images%2Fangles%2Fclassic%2Fblue%2Fmain.png?alt=media&token=db1f7718-0f52-4f9b-b5fb-f0d9d1a9bdbc"
-                },
-                "name": "Blue"
-            },
-            "red": {
-                "name": "Red"
-            }
-        }
-    },
-    "running": {
-        "bodyColors": {
-            "white": {
-                "image": "/images/angles/runner/white/main.png",
-                "name": "White"
-            },
-            "black": {
-                "image": "/images/angles/runner/black/main.png",
-                "name": "Black"
-            },
-            "blue": {
-                "image": "/images/angles/runner/blue/main.png",
-                "name": "Blue"
-            },
-            "red": {
-                "image": "/images/angles/runner/red/main.png",
-                "name": "Red"
-            }
-        }
-    },
-    "basketball": {
-        "bodyColors": {
-            "white": {
-                "image": "/images/angles/basketball/white/main.png",
-                "name": "White"
-            },
-            "black": {
-                "image": "/images/angles/basketball/black/main.png",
-                "name": "Black"
-            },
-            "blue": {
-                "image": "/images/angles/basketball/blue/main.png",
-                "name": "Blue"
-            },
-            "red": {
-                "image": "/images/angles/basketball/red/main.png",
-                "name": "Red"
-            }
-        }
-    }
-};
-
 // Effect map remains the same
 const effectMap = {
-    classic: { white: 'classic_white.deepar', black: 'classic_black.deepar', blue: 'classic_blue.deepar', red: 'classic_red.deepar' },
-    running: { white: 'running_white.deepar', black: 'running_black.deepar', blue: 'running_blue.deepar', red: 'running_red.deepar' },
-    basketball: { white: 'basketball/white.deepar', black: 'basketball_black.deepar', blue: 'basketball_blue.deepar', red: 'basketball_red.deepar' }
+    classic: { white: 'classic_white.deepar', black: 'classic_black.deepar', blue: 'classic_blue.deepar', red: 'classic_red.deepar', green: 'classic_green.deepar', pink: 'classic_pink.deepar' },
+    running: { white: 'running_white.deepar', black: 'running_black.deepar', blue: 'running_blue.deepar', red: 'running_red.deepar', green: 'running_green.deepar', pink: 'running_pink.deepar' },
+    basketball: { white: 'basketball_white.deepar', black: 'basketball_black.deepar', blue: 'basketball_blue.deepar', red: 'basketball_red.deepar', green: 'basketball_green.deepar', pink: 'basketball_pink.deepar' }
 };
 
 let currentEffectPath = `./effects/filters/${effectMap[initialModel][initialColor]}`;
@@ -113,14 +44,136 @@ const backButton = document.getElementById('back-button');
 const expandedControls = document.getElementById('expanded-controls');
 const exitBtnExpanded = document.getElementById('exit-btn-expanded');
 
+// Function to fetch AR models from Firebase
+async function fetchARModels() {
+    try {
+        const result = await readData('smartfit_AR_Database/ar_customization_models');
+        if (result.success) {
+            console.log('✅ AR models fetched from database:', result.data);
+            return result.data;
+        } else {
+            console.error('❌ Failed to fetch AR models:', result.error);
+            return null;
+        }
+    } catch (error) {
+        console.error('❌ Error fetching AR models:', error);
+        return null;
+    }
+}
+
+// Function to get image URL from color data
+function getColorImageUrl(colorData) {
+    if (colorData.images && colorData.images.main) {
+        return colorData.images.main;
+    } else if (colorData.image) {
+        return colorData.image;
+    } else {
+        // Fallback to placeholder or use a default image based on color name
+        return '/images/shoe3.png';
+    }
+}
+
+// Function to create filter buttons dynamically based on database data
+function createFilterButtons(arModelsData) {
+    const container = document.getElementById('filter-container');
+    container.innerHTML = ''; // Clear existing content
+    
+    const categories = Object.keys(arModelsData);
+    
+    categories.forEach((model, catIndex) => {
+        const group = document.createElement('div');
+        group.className = 'category-group';
+        const title = document.createElement('div');
+        title.className = 'category-title';
+        title.textContent = model.charAt(0).toUpperCase() + model.slice(1);
+        group.appendChild(title);
+
+        const buttonsDiv = document.createElement('div');
+        buttonsDiv.className = 'filter-buttons';
+        
+        // Get available colors for this model from database
+        const availableColors = arModelsData[model].bodyColors;
+        
+        for (const color in availableColors) {
+            const button = document.createElement('div');
+            button.className = 'filter-button';
+            
+            // Check if effect exists for this color, otherwise skip
+            if (!effectMap[model] || !effectMap[model][color]) {
+                console.warn(`⚠️ No effect found for ${model} ${color}, skipping`);
+                continue;
+            }
+            
+            button.dataset.path = `./effects/filters/${effectMap[model][color]}`;
+            button.setAttribute('role', 'button');
+            button.setAttribute('tabindex', '0');
+            button.setAttribute('aria-label', `${model} ${color}`);
+
+            const img = document.createElement('img');
+            
+            // Get the image URL from the database
+            const colorData = availableColors[color];
+            const imageUrl = getColorImageUrl(colorData);
+            
+            img.src = imageUrl;
+            img.className = 'filter-image';
+            img.alt = `${model} ${color} shoe`;
+            img.onerror = function() {
+                // If image fails to load, use a placeholder
+                this.src = '/images/shoe3.png';
+            };
+
+            const name = document.createElement('span');
+            name.className = 'filter-name';
+            name.textContent = color.charAt(0).toUpperCase() + color.slice(1);
+
+            button.appendChild(img);
+            button.appendChild(name);
+
+            button.onclick = async () => {
+                loader.classList.add('active');
+                await switchEffect(button.dataset.path);
+                document.querySelectorAll('.filter-button').forEach(btn => btn.classList.remove('selected'));
+                button.classList.add('selected');
+                loader.classList.remove('active');
+            };
+
+            button.onkeydown = (e) => {
+                if (e.key === 'Enter') button.click();
+            };
+
+            buttonsDiv.appendChild(button);
+        }
+        
+        group.appendChild(buttonsDiv);
+        container.appendChild(group);
+
+        if (catIndex < categories.length - 1) {
+            const divider = document.createElement('div');
+            divider.classList = 'category-divider';
+            container.appendChild(divider);
+        }
+    });
+}
+
 (async function () {
     loader.classList.add('active');
     try {
+        // Initialize DeepAR first
         deepAR = await deepar.initialize({
             licenseKey: 'f0eafd99d224758bdc2c7271acd80bc7642fdb178ba74faf1c61c1ec7d25221057493e7b9b73c58d',
             previewElement: preview,
         });
         console.log("✅ DeepAR initialized ");
+
+        // Fetch AR models from database
+        const arModelsData = await fetchARModels();
+        
+        if (!arModelsData) {
+            throw new Error('Failed to load AR models from database');
+        }
+
+        console.log('📊 Available models and colors:', arModelsData);
 
         // Start with back camera
         await switchCamera('environment');
@@ -131,86 +184,21 @@ const exitBtnExpanded = document.getElementById('exit-btn-expanded');
             console.log(visible ? '👟 Feet detected!' : 'No feet visible.');
         };
 
-        const container = document.getElementById('filter-container');
-        const categories = Object.keys(arCustomizationModels);
-        
-        categories.forEach((model, catIndex) => {
-            const group = document.createElement('div');
-            group.className = 'category-group';
-            const title = document.createElement('div');
-            title.className = 'category-title';
-            title.textContent = model.charAt(0).toUpperCase() + model.slice(1);
-            group.appendChild(title);
+        // Create filter buttons based on database data
+        createFilterButtons(arModelsData);
 
-            const buttonsDiv = document.createElement('div');
-            buttonsDiv.className = 'filter-buttons';
-            
-            for (const color in arCustomizationModels[model].bodyColors) {
-                const button = document.createElement('div');
-                button.className = 'filter-button';
-                button.dataset.path = `./effects/filters/${effectMap[model][color]}`;
-                button.setAttribute('role', 'button');
-                button.setAttribute('tabindex', '0');
-                button.setAttribute('aria-label', `${model} ${color}`);
-
-                const img = document.createElement('img');
-                
-                // Get the image URL from the database structure
-                const colorData = arCustomizationModels[model].bodyColors[color];
-                let imageUrl = '';
-                
-                if (colorData.images && colorData.images.main) {
-                    // For classic model with images object
-                    imageUrl = colorData.images.main;
-                } else if (colorData.image) {
-                    // For running and basketball models with direct image property
-                    imageUrl = colorData.image;
-                } else {
-                    // Fallback image if no image is found
-                    imageUrl = '/images/shoe3.png';
-                }
-                
-                img.src = imageUrl;
-                img.className = 'filter-image';
-                img.alt = `${model} ${color} shoe`;
-                img.onerror = function() {
-                    // If image fails to load, use a placeholder
-                    this.src = '/images/shoe3.png';
-                };
-
-                const name = document.createElement('span');
-                name.className = 'filter-name';
-                name.textContent = color.charAt(0).toUpperCase() + color.slice(1);
-
-                button.appendChild(img);
-                button.appendChild(name);
-
-                button.onclick = async () => {
-                    loader.classList.add('active');
-                    await switchEffect(button.dataset.path);
-                    document.querySelectorAll('.filter-button').forEach(btn => btn.classList.remove('selected'));
-                    button.classList.add('selected');
-                    loader.classList.remove('active');
-                };
-
-                button.onkeydown = (e) => {
-                    if (e.key === 'Enter') button.click();
-                };
-
-                buttonsDiv.appendChild(button);
-            }
-            group.appendChild(buttonsDiv);
-            container.appendChild(group);
-
-            if (catIndex < categories.length - 1) {
-                const divider = document.createElement('div');
-                divider.classList = 'category-divider';
-                container.appendChild(divider);
-            }
-        });
-
+        // Select initial button if available
         const initialButton = Array.from(document.querySelectorAll('.filter-button')).find(btn => btn.dataset.path === currentEffectPath);
-        if (initialButton) initialButton.classList.add('selected');
+        if (initialButton) {
+            initialButton.classList.add('selected');
+        } else {
+            // If initial effect not found, select first available button
+            const firstButton = document.querySelector('.filter-button');
+            if (firstButton) {
+                firstButton.classList.add('selected');
+                await switchEffect(firstButton.dataset.path);
+            }
+        }
 
         loader.classList.remove('active');
     } catch (err) {
@@ -220,27 +208,24 @@ const exitBtnExpanded = document.getElementById('exit-btn-expanded');
     }
 })();
 
+// The rest of your functions remain the same...
 async function switchCamera(facingMode) {
     try {
-        // Stop the current stream if it exists
         if (currentStream) {
             currentStream.getTracks().forEach(track => track.stop());
         }
 
-        // Request new stream
         const stream = await navigator.mediaDevices.getUserMedia({
             video: { facingMode: facingMode }
         });
         currentStream = stream;
 
-        // Create a new video element
         const video = document.createElement('video');
         video.srcObject = stream;
         video.playsInline = true;
         video.muted = true;
         video.play();
 
-        // Update DeepAR with the new video stream
         deepAR.setVideoElement(video, isMirrored);
         console.log(`✅ Switched to ${facingMode} camera.`);
     } catch (err) {
@@ -276,6 +261,7 @@ async function switchEffect(effectPath) {
     }
 }
 
+// Event listeners remain the same...
 toggleButton.addEventListener('click', () => {
     filterSection.classList.toggle('minimized');
     if (filterSection.classList.contains('minimized')) {
@@ -313,7 +299,7 @@ buyNowButton.addEventListener('click', handleBuyNow);
 function enterExpanded() {
     preview.classList.add('expanded');
     filterSection.classList.add('expanded');
-    filterSection.classList.remove('minimized'); // Ensure filters are visible when entering expanded mode
+    filterSection.classList.remove('minimized');
     buyNowButton.style.display = 'none';
     backButton.style.display = 'none';
     expandBtn.style.display = 'none';
@@ -327,7 +313,6 @@ function enterExpanded() {
     screenshotBtnExpanded.style.display = 'flex';
     switchCameraBtnExpanded.style.display = 'flex';
     document.body.style.overflow = 'hidden';
-    // Handle mirroring transition
     if (isMirrored) {
         preview.classList.remove('mirroredwithout80');
         preview.classList.add('mirrored');
@@ -354,7 +339,6 @@ function exitExpanded() {
     screenshotBtnExpanded.style.display = 'none';
     switchCameraBtnExpanded.style.display = 'none';
     document.body.style.overflow = 'auto';
-    // Handle mirroring transition
     if (isMirrored) {
         preview.classList.remove('mirrored');
         preview.classList.add('mirroredwithout80');
