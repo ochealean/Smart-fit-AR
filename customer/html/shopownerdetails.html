@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shop Details - SmartFit AR</title>
+    <link rel="stylesheet" href="/customer/css/shopownerdetails.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <!-- Google Maps API -->
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBiw-3TrRkU1hSU0_dEsn3fjUxXAZWcLrg&libraries=places"></script>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <a href="/customer/html/customer_dashboard.html" class="back-btn">
+                    <i class="fas fa-arrow-left"></i> Back to Shops
+                </a>
+                <h1 class="logo">SmartFit AR</h1>
+                <div class="user-menu" id="userMenu">
+                    <!-- User menu will be populated by JavaScript -->
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="loading-overlay">
+        <div class="loading-content">
+            <div class="spinner"></div>
+            <p>Loading shop details...</p>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="container">
+            <!-- Shop Header Section -->
+            <section class="shop-header" id="shopHeader">
+                <div class="shop-banner">
+                    <img id="shopBanner" src="" alt="Shop Banner" class="banner-image">
+                    <div class="shop-overlay">
+                        <div class="shop-basic-info">
+                            <img id="shopLogo" src="" alt="Shop Logo" class="shop-logo">
+                            <div class="shop-details">
+                                <h1 id="shopName">Shop Name</h1>
+                                <div class="shop-meta">
+                                    <span class="verified-badge" id="verifiedBadge">
+                                        <i class="fas fa-check-circle"></i> Verified
+                                    </span>
+                                    <span class="rating" id="shopRating">
+                                        <i class="fas fa-star"></i> 4.5
+                                    </span>
+                                    <span class="location" id="shopLocation">
+                                        <i class="fas fa-map-marker-alt"></i> Location
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Navigation Tabs -->
+            <nav class="shop-tabs">
+                <button class="tab-btn active" data-tab="products">Products</button>
+                <button class="tab-btn" data-tab="about">About Shop</button>
+                <button class="tab-btn" data-tab="documents">Business Documents</button>
+                <button class="tab-btn" data-tab="location">Location</button>
+                <button class="tab-btn" data-tab="reviews">Reviews</button>
+            </nav>
+
+            <!-- Tab Content -->
+            <div class="tab-content">
+                <!-- Products Tab -->
+                <div id="products-tab" class="tab-pane active">
+                    <div class="products-header">
+                        <h2>Available Shoes</h2>
+                        <div class="filter-controls">
+                            <select id="categoryFilter" class="filter-select">
+                                <option value="all">All Categories</option>
+                                <option value="running">Running</option>
+                                <option value="basketball">Basketball</option>
+                                <option value="casual">Casual</option>
+                                <option value="sneakers">Sneakers</option>
+                            </select>
+                            <select id="sortFilter" class="filter-select">
+                                <option value="newest">Newest First</option>
+                                <option value="price-low">Price: Low to High</option>
+                                <option value="price-high">Price: High to Low</option>
+                                <option value="name">Name: A to Z</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="products-grid" id="productsGrid">
+                        <!-- Products will be populated by JavaScript -->
+                    </div>
+                    <div class="load-more" id="loadMore">
+                        <button id="loadMoreBtn" class="load-more-btn">Load More Products</button>
+                    </div>
+                </div>
+
+                <!-- About Shop Tab -->
+                <div id="about-tab" class="tab-pane">
+                    <div class="about-section">
+                        <h2>About Our Shop</h2>
+                        <div class="about-content">
+                            <div class="about-text" id="shopDescription">
+                                <!-- Shop description will be populated -->
+                            </div>
+                            <div class="shop-stats">
+                                <div class="stat-card">
+                                    <i class="fas fa-shoe-prints"></i>
+                                    <h3 id="totalProducts">0</h3>
+                                    <p>Products Available</p>
+                                </div>
+                                <div class="stat-card">
+                                    <i class="fas fa-calendar-alt"></i>
+                                    <h3 id="yearsOperating">0</h3>
+                                    <p>Years Operating</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="contact-info">
+                        <h3>Contact Information</h3>
+                        <div class="contact-grid">
+                            <div class="contact-item">
+                                <i class="fas fa-phone"></i>
+                                <span id="shopPhone">Not provided</span>
+                            </div>
+                            <div class="contact-item">
+                                <i class="fas fa-envelope"></i>
+                                <span id="shopEmail">Not provided</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Business Documents Tab -->
+                <div id="documents-tab" class="tab-pane">
+                    <div class="documents-section">
+                        <h2>Business Documents</h2>
+                        <p class="documents-subtitle">Verified business documents for your peace of mind</p>
+                        
+                        <div class="documents-grid" id="documentsGrid">
+                            <!-- Documents will be populated by JavaScript -->
+                        </div>
+                        
+                        <div class="verification-status">
+                            <div class="status-card verified">
+                                <i class="fas fa-check-circle"></i>
+                                <div>
+                                    <h4>Business Verified</h4>
+                                    <p>This shop has provided valid business documents</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Location Tab -->
+                <div id="location-tab" class="tab-pane">
+                    <div class="location-section">
+                        <h2>Shop Location</h2>
+                        <div class="location-content">
+                            <div class="address-info">
+                                <h3 id="shopAddress">Address</h3>
+                                <div class="location-details">
+                                    <p><strong>City:</strong> <span id="shopCity">-</span></p>
+                                    <p><strong>Province:</strong> <span id="shopProvince">-</span></p>
+                                    <p><strong>ZIP Code:</strong> <span id="shopZip">-</span></p>
+                                </div>
+                                <button id="getDirections" class="directions-btn">
+                                    <i class="fas fa-route"></i> Get Directions
+                                </button>
+                            </div>
+                            <div class="map-container">
+                                <div id="shopMap"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Reviews Tab -->
+                <div id="reviews-tab" class="tab-pane">
+                    <div class="reviews-section">
+                        <h2>Customer Reviews</h2>
+                        <div class="reviews-summary">
+                            <div class="rating-overview">
+                                <div class="average-rating">
+                                    <span class="rating-number" id="averageRating">4.5</span>
+                                    <div class="stars">
+                                        <i class="fas fa-star"></i>
+                                        <i class="fas fa-star"></i>
+                                        <i class="fas fa-star"></i>
+                                        <i class="fas fa-star"></i>
+                                        <i class="fas fa-star-half-alt"></i>
+                                    </div>
+                                    <p id="totalReviews">0 Reviews</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="reviews-list" id="reviewsList">
+                            <!-- Reviews will be populated by JavaScript -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Product Quick View Modal -->
+    <div id="productModal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <div class="modal-body" id="modalBody">
+                <!-- Product details will be populated by JavaScript -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2024 SmartFit AR. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script type="module" src="/customer/js/shopownerdetails.js"></script>
+</body>
+</html>

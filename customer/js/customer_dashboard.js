@@ -172,6 +172,10 @@ async function displayAllShoes(allShops, shoeContainer) {
             return; // Skip this shop if no products
         }
 
+        // Get shop name from the first product (assuming all products from same shop have same shop name)
+        const firstProduct = Object.values(products)[0];
+        const shopName = firstProduct.shopName || 'Unknown Shop';
+
         Object.entries(products).forEach(([productID, shoe]) => {
             // Get first variant for display
             const firstVariantKey = Object.keys(shoe.variants || {})[0];
@@ -197,7 +201,9 @@ async function displayAllShoes(allShops, shoeContainer) {
                 <div class="shoe-details">
                     <h3>${shoe.shoeName || 'Unnamed Shoe'}</h3>
                     <p class="shoe-code">Code: ${shoe.shoeCode || 'N/A'}</p>
-                    <h4>Shop Name: ${shoe.shopName || 'Unknown Shop'}</h4>
+                    <h4 class="shop-name-link" data-shop-id="${shopID}" data-shop-name="${shopName}">
+                        Shop: ${shopName}
+                    </h4>
                     <div class="product-meta">
                         <span class="product-brand">${shoe.shoeBrand || 'No Brand'}</span>
                         <span class="product-type">${shoe.shoeType || 'No Type'}</span>
@@ -217,6 +223,62 @@ async function displayAllShoes(allShops, shoeContainer) {
     });
 
     shoeContainer.innerHTML = html || '<p class="no-shoes">No shoes available at the moment.</p>';
+    
+    // Add click event listeners to shop names
+    setupShopNameClickEvents();
+}
+
+// Setup click events for shop names
+function setupShopNameClickEvents() {
+    const shopNameLinks = document.querySelectorAll('.shop-name-link');
+    
+    shopNameLinks.forEach(link => {
+        link.addEventListener('click', function(e) {
+            e.preventDefault();
+            const shopId = this.getAttribute('data-shop-id');
+            const shopName = this.getAttribute('data-shop-name');
+            
+            if (shopId) {
+                redirectToShopDetails(shopId, shopName);
+            }
+        });
+        
+        // Add hover effects
+        link.style.cursor = 'pointer';
+        link.style.color = '#667eea';
+        link.style.textDecoration = 'underline';
+        link.style.transition = 'color 0.3s ease';
+        
+        link.addEventListener('mouseenter', function() {
+            this.style.color = '#764ba2';
+        });
+        
+        link.addEventListener('mouseleave', function() {
+            this.style.color = '#667eea';
+        });
+    });
+}
+
+// Enhanced redirect to shop details with data verification
+async function redirectToShopDetails(shopId, shopName) {
+    try {
+        // Optional: Verify shop exists before redirecting
+        const shopResult = await readData(`smartfit_AR_Database/shop/${shopId}`);
+        
+        if (shopResult.success && shopResult.data) {
+            // Shop exists, proceed with redirect
+            const encodedShopName = encodeURIComponent(shopName);
+            window.location.href = `/customer/html/shopownerdetails.html?shopId=${shopId}&shopName=${encodedShopName}`;
+        } else {
+            // Shop doesn't exist or error
+            alert('Shop information is not available at the moment.');
+        }
+    } catch (error) {
+        console.error('Error verifying shop:', error);
+        // Still redirect but show error on details page if needed
+        const encodedShopName = encodeURIComponent(shopName);
+        window.location.href = `/customer/html/shopownerdetails.html?shopId=${shopId}&shopName=${encodedShopName}`;
+    }
 }
 
 // Helper function to truncate description
