@@ -16,11 +16,19 @@ const userSession = {
     shopName: ''
 };
 
-// Global variables for sorting
+// Global variables for sorting and filtering
 let currentSort = {
     column: null,
-    direction: 'asc' // 'asc' or 'desc'
+    direction: 'asc'
 };
+
+let currentFilters = {
+    type: '',
+    brand: '',
+    gender: ''
+};
+
+let allProducts = {}; // Store all products for filtering
 
 // Expose functions globally
 window.showShoeDetails = showShoeDetails;
@@ -31,6 +39,7 @@ window.addNewShoe = addNewShoe;
 window.showReviews = showReviews;
 window.testFeedback = testFeedback;
 window.filterReviewsModal = filterReviewsModal;
+window.clearFilters = clearFilters;
 
 // Helper function to get DOM elements
 function getElement(id) {
@@ -89,12 +98,177 @@ async function initializeInventory() {
         }
     }
 
+    // Setup event listeners for sorting and filtering
+    setupSortingAndFiltering();
+    
     // Load inventory
     loadInventory('inventoryTableBody');
 }
 
-function addNewShoe() {
-    window.location.href = "/shopowner/html/shopowner_addshoe.html";
+function setupSortingAndFiltering() {
+    // Sort by dropdown
+    getElement('sortBy').addEventListener('change', function(e) {
+        applySortingAndFiltering();
+    });
+
+    // Filter dropdowns
+    getElement('filterType').addEventListener('change', function(e) {
+        currentFilters.type = e.target.value;
+        applySortingAndFiltering();
+    });
+
+    getElement('filterBrand').addEventListener('change', function(e) {
+        currentFilters.brand = e.target.value;
+        applySortingAndFiltering();
+    });
+
+    getElement('filterGender').addEventListener('change', function(e) {
+        currentFilters.gender = e.target.value;
+        applySortingAndFiltering();
+    });
+}
+
+function clearFilters() {
+    // Reset all filter dropdowns
+    getElement('filterType').value = '';
+    getElement('filterBrand').value = '';
+    getElement('filterGender').value = '';
+    getElement('sortBy').value = '';
+    
+    // Reset filter state
+    currentFilters = {
+        type: '',
+        brand: '',
+        gender: ''
+    };
+    
+    currentSort = {
+        column: null,
+        direction: 'asc'
+    };
+    
+    // Reapply (which will show all products)
+    applySortingAndFiltering();
+}
+
+function applySortingAndFiltering() {
+    const tbody = getElement('inventoryTableBody');
+    if (!tbody || Object.keys(allProducts).length === 0) return;
+
+    // Filter products
+    let filteredProducts = Object.entries(allProducts);
+    
+    // Apply type filter
+    if (currentFilters.type) {
+        filteredProducts = filteredProducts.filter(([shoeId, shoe]) => 
+            shoe.shoeType === currentFilters.type
+        );
+    }
+    
+    // Apply brand filter
+    if (currentFilters.brand) {
+        filteredProducts = filteredProducts.filter(([shoeId, shoe]) => 
+            shoe.shoeBrand === currentFilters.brand
+        );
+    }
+    
+    // Apply gender filter
+    if (currentFilters.gender) {
+        filteredProducts = filteredProducts.filter(([shoeId, shoe]) => 
+            shoe.shoeGender === currentFilters.gender
+        );
+    }
+
+    // Apply sorting
+    const sortBy = getElement('sortBy').value;
+    if (sortBy) {
+        filteredProducts.sort((a, b) => {
+            const shoeA = a[1];
+            const shoeB = b[1];
+            
+            let comparison = 0;
+            
+            switch (sortBy) {
+                case 'name':
+                    comparison = (shoeA.shoeName || '').localeCompare(shoeB.shoeName || '');
+                    break;
+                case 'code':
+                    comparison = (shoeA.shoeCode || '').localeCompare(shoeB.shoeCode || '');
+                    break;
+                case 'price':
+                    const priceA = getShoePrice(shoeA);
+                    const priceB = getShoePrice(shoeB);
+                    comparison = priceA - priceB;
+                    break;
+                case 'stock':
+                    const stockA = getTotalStock(shoeA);
+                    const stockB = getTotalStock(shoeB);
+                    comparison = stockA - stockB;
+                    break;
+                case 'date':
+                    const dateA = shoeA.dateAdded ? new Date(shoeA.dateAdded).getTime() : 0;
+                    const dateB = shoeB.dateAdded ? new Date(shoeB.dateAdded).getTime() : 0;
+                    comparison = dateA - dateB;
+                    break;
+            }
+            
+            return comparison;
+        });
+    }
+
+    // Display filtered and sorted products
+    displayProducts(filteredProducts);
+}
+
+function getShoePrice(shoe) {
+    if (shoe.variants) {
+        const variantKeys = Object.keys(shoe.variants);
+        if (variantKeys.length > 0) {
+            const firstVariant = shoe.variants[variantKeys[0]];
+            return firstVariant.price ? parseFloat(firstVariant.price) : 0;
+        }
+    }
+    return 0;
+}
+
+function getTotalStock(shoe) {
+    let totalStock = 0;
+    if (shoe.variants) {
+        Object.values(shoe.variants).forEach(variant => {
+            if (variant.sizes) {
+                Object.values(variant.sizes).forEach(sizeObj => {
+                    const sizeKey = Object.keys(sizeObj)[0];
+                    totalStock += sizeObj[sizeKey].stock || 0;
+                });
+            }
+        });
+    }
+    return totalStock;
+}
+
+function displayProducts(productsArray) {
+    const tbody = getElement('inventoryTableBody');
+    tbody.innerHTML = '';
+
+    if (productsArray.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="7" class="empty-state">
+                    <div class="empty-state-content">
+                        <i class="fas fa-search"></i>
+                        <h3>No Products Found</h3>
+                        <p>No shoes match your current filters. Try adjusting your criteria.</p>
+                    </div>
+                </td>
+            </tr>
+        `;
+        return;
+    }
+
+    productsArray.forEach(([shoeId, shoe]) => {
+        const row = createInventoryRow(shoeId, shoe);
+        tbody.appendChild(row);
+    });
 }
 
 function loadInventory(tableBodyId) {
@@ -103,24 +277,19 @@ function loadInventory(tableBodyId) {
     if (!tbody) return;
 
     const unsubscribe = readDataRealtime(productsPath, (result) => {
-        tbody.innerHTML = '';
         if (!result.success || !result.data) {
             tbody.innerHTML = `<tr><td colspan="7">No shoes found in inventory</td></tr>`;
+            allProducts = {};
             return;
         }
 
-        const products = result.data;
-        Object.keys(products).forEach(shoeId => {
-            const shoe = products[shoeId];
-            const row = createInventoryRow(shoeId, shoe);
-            tbody.appendChild(row);
-        });
-
-        // Setup sorting after inventory is loaded
-        setTimeout(() => setupTableSorting(), 100);
+        // Store all products for filtering
+        allProducts = result.data;
+        
+        // Apply current filters and sorting
+        applySortingAndFiltering();
     });
 
-    // Return unsubscribe function for cleanup if needed
     return unsubscribe;
 }
 
@@ -279,7 +448,10 @@ function formatGender(gender) {
     const genderMap = {
         'male': 'Male',
         'female': 'Female',
-        'unisex': 'Unisex (Both)'
+        'unisex': 'Unisex (Both)',
+        'men': 'Men',
+        'women': 'Women',
+        'kids': 'Kids'
     };
     
     return genderMap[gender] || gender;
@@ -317,105 +489,8 @@ function editShoe(shoeId) {
     window.location.href = `/shopowner/html/shopowner_editshoe.html?edit=${shoeId}`;
 }
 
-// Sorting functionality
-function setupTableSorting() {
-    const headers = document.querySelectorAll('#inventoryTable th');
-    headers.forEach((header, index) => {
-        header.style.cursor = 'pointer';
-        header.addEventListener('click', () => {
-            sortTable(index);
-        });
-    });
-}
-
-function sortTable(columnIndex) {
-    const tbody = getElement('inventoryTableBody');
-    const rows = Array.from(tbody.querySelectorAll('tr:not([style*="display: none"])'));
-    
-    // Determine sort direction
-    if (currentSort.column === columnIndex) {
-        currentSort.direction = currentSort.direction === 'asc' ? 'desc' : 'asc';
-    } else {
-        currentSort.column = columnIndex;
-        currentSort.direction = 'asc';
-    }
-    
-    // Sort rows
-    rows.sort((a, b) => {
-        const aValue = getCellValue(a, columnIndex);
-        const bValue = getCellValue(b, columnIndex);
-        
-        let comparison = 0;
-        
-        // Handle different data types
-        if (typeof aValue === 'string' && typeof bValue === 'string') {
-            comparison = aValue.localeCompare(bValue);
-        } else if (typeof aValue === 'number' && typeof bValue === 'number') {
-            comparison = aValue - bValue;
-        } else {
-            // Fallback: convert to string
-            comparison = String(aValue).localeCompare(String(bValue));
-        }
-        
-        return currentSort.direction === 'desc' ? -comparison : comparison;
-    });
-    
-    // Remove existing rows
-    while (tbody.firstChild) {
-        tbody.removeChild(tbody.firstChild);
-    }
-    
-    // Add sorted rows
-    rows.forEach(row => tbody.appendChild(row));
-    
-    // Update header indicators
-    updateSortIndicators(columnIndex);
-}
-
-function getCellValue(row, columnIndex) {
-    const cell = row.cells[columnIndex];
-    if (!cell) return '';
-    
-    const text = cell.textContent.trim();
-    
-    // Handle specific column types
-    switch (columnIndex) {
-        case 3: // Price column
-            const priceMatch = text.match(/₱([\d,]+(\.\d{2})?)/);
-            return priceMatch ? parseFloat(priceMatch[1].replace(',', '')) : 0;
-            
-        case 4: // Stock column
-            return parseInt(text) || 0;
-            
-        case 5: // Date column
-            const date = new Date(text);
-            return isNaN(date.getTime()) ? text : date.getTime();
-            
-        default:
-            return text;
-    }
-}
-
-function updateSortIndicators(columnIndex) {
-    const headers = document.querySelectorAll('#inventoryTable th');
-    
-    // Remove all indicators
-    headers.forEach(header => {
-        header.querySelector('.sort-indicator')?.remove();
-        header.style.fontWeight = 'normal';
-    });
-    
-    // Add indicator to current sort column
-    if (headers[columnIndex]) {
-        const indicator = document.createElement('span');
-        indicator.className = 'sort-indicator';
-        indicator.innerHTML = currentSort.direction === 'asc' ? 
-            ' <i class="fas fa-arrow-up"></i>' : 
-            ' <i class="fas fa-arrow-down"></i>';
-        
-        headers[columnIndex].appendChild(indicator);
-        headers[columnIndex].style.fontWeight = 'bold';
-    }
+function addNewShoe() {
+    window.location.href = "/shopowner/html/shopowner_addshoe.html";
 }
 
 // Reviews functionality
