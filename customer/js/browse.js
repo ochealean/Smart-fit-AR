@@ -203,6 +203,9 @@ function displayShoes(shoes) {
     });
 
     productsGrid.innerHTML = html;
+    
+    // Setup shop name click events after rendering
+    setupShopNameClickEvents();
 }
 
 // Create product card HTML
@@ -215,7 +218,9 @@ function createProductCard(shoeData) {
         <img src="${shoeData.imageUrl || 'https://cdn-icons-png.flaticon.com/512/11542/11542598.png'}" alt="${shoeData.name}" class="product-image">
         <div class="product-info">
             <div class="product-shop">
-                <h4>Shop Name: ${shoeData.shopName}</h4>
+                <h4 class="shop-name-link" data-shop-id="${shoeData.shopID}" data-shop-name="${shoeData.shopName}">
+                    Shop: ${shoeData.shopName}
+                </h4>
             </div>
             <h3 class="product-name">${shoeData.name}</h3>
             <p class="product-code">Code: ${shoeData.code}</p>
@@ -234,6 +239,52 @@ function createProductCard(shoeData) {
         </div>
     </div>
     `;
+}
+
+// Make functions available globally
+window.setupShopNameClickEvents = setupShopNameClickEvents;
+window.redirectToShopDetails = redirectToShopDetails;
+
+// Setup click events for shop names
+function setupShopNameClickEvents() {
+    const shopNameLinks = document.querySelectorAll('.shop-name-link');
+    
+    shopNameLinks.forEach(link => {
+        link.addEventListener('click', function(e) {
+            e.preventDefault();
+            const shopId = this.getAttribute('data-shop-id');
+            const shopName = this.getAttribute('data-shop-name');
+            
+            if (shopId) {
+                redirectToShopDetails(shopId, shopName);
+            }
+        });
+        
+        // Add hover effects programmatically
+        link.style.cursor = 'pointer';
+    });
+}
+
+// Enhanced redirect to shop details with data verification
+async function redirectToShopDetails(shopId, shopName) {
+    try {
+        // Optional: Verify shop exists before redirecting
+        const shopResult = await readData(`smartfit_AR_Database/shop/${shopId}`);
+        
+        if (shopResult.success && shopResult.data) {
+            // Shop exists, proceed with redirect
+            const encodedShopName = encodeURIComponent(shopName);
+            window.location.href = `/customer/html/shopownerdetails.html?shopId=${shopId}&shopName=${encodedShopName}`;
+        } else {
+            // Shop doesn't exist or error
+            alert('Shop information is not available at the moment.');
+        }
+    } catch (error) {
+        console.error('Error verifying shop:', error);
+        // Still redirect but show error on details page if needed
+        const encodedShopName = encodeURIComponent(shopName);
+        window.location.href = `/customer/html/shopownerdetails.html?shopId=${shopId}&shopName=${encodedShopName}`;
+    }
 }
 
 // Show no shoes message

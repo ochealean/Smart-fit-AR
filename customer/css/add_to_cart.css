@@ -349,6 +349,7 @@
             font-size: 14px;
             display: flex;
             align-items: center;
+            justify-content: center;
             gap: 5px;
             padding: 5px 10px;
             border-radius: var(--radius-sm);
@@ -360,10 +361,6 @@
             color: white;
         }
 
-        .delete-btn i {
-            margin-top: 5px;
-        }
-
         .feedback-btn {
             color: var(--primary);
             background: none;
@@ -372,6 +369,7 @@
             font-size: 14px;
             display: flex;
             align-items: center;
+            justify-content: center;
             gap: 5px;
             padding: 5px 10px;
             border-radius: var(--radius-sm);
@@ -381,10 +379,6 @@
         .feedback-btn:hover {
             background-color: var(--primary);
             color: white;
-        }
-
-        .feedback-btn i {
-            margin-top: 5px;
         }
 
         .cart-summary {
