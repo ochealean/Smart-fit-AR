@@ -43,7 +43,7 @@ async function initializeCheckout() {
     
     // Load user profile
     loadUserProfile();
-    
+
     // Load order summary
     await loadOrderSummary();
     
@@ -113,15 +113,23 @@ async function loadShopLocation() {
         const shopsResult = await readData('smartfit_AR_Database/shop');
         
         if (shopsResult.success && shopsResult.data) {
-            const shops = Object.values(shopsResult.data);
+            const shops = shopsResult.data;
             console.log('Found shops:', shops);
             
             // Find the first shop with valid coordinates
-            const shopWithCoords = shops.find(shop => {
-                const lat = parseFloat(shop.latitude);
-                const lng = parseFloat(shop.longitude);
-                return !isNaN(lat) && !isNaN(lng) && lat !== 0 && lng !== 0;
-            });
+            let shopWithCoords = null;
+            let shopId = null;
+            
+            // Iterate through shop IDs to find the first valid shop
+            for (const [id, shopData] of Object.entries(shops)) {
+                const lat = parseFloat(shopData.latitude);
+                const lng = parseFloat(shopData.longitude);
+                if (!isNaN(lat) && !isNaN(lng) && lat !== 0 && lng !== 0) {
+                    shopWithCoords = shopData;
+                    shopId = id;
+                    break;
+                }
+            }
             
             if (shopWithCoords) {
                 const lat = parseFloat(shopWithCoords.latitude);
@@ -131,7 +139,7 @@ async function loadShopLocation() {
                     latitude: lat,
                     longitude: lng,
                     shopName: shopWithCoords.shopName || 'Main Shop',
-                    shopId: shopWithCoords.shopId || Object.keys(shopsResult.data)[0]
+                    shopId: shopId
                 };
                 console.log('Shop location loaded:', shippingConfig.shopLocation);
             } else {
@@ -619,6 +627,7 @@ async function calculateMultiShopShipping(orderItems) {
         // Get shop locations for all shops in the order
         const shopLocations = [];
         for (const shopId of shopIds) {
+            // Read from the correct path: smartfit_AR_Database/shop/{shopId}
             const shopResult = await readData(`smartfit_AR_Database/shop/${shopId}`);
             if (shopResult.success && shopResult.data) {
                 const shopData = shopResult.data;
@@ -632,7 +641,11 @@ async function calculateMultiShopShipping(orderItems) {
                         latitude: lat,
                         longitude: lng
                     });
+                } else {
+                    console.warn(`Invalid coordinates for shop ${shopId}:`, lat, lng);
                 }
+            } else {
+                console.warn(`Shop ${shopId} not found in database`);
             }
         }
 
@@ -754,7 +767,10 @@ function displayMultiShopShippingBreakdown(shippingResult) {
                             <p><strong>Shops beyond delivery range:</strong></p>
                             <ul>
                                 ${shippingResult.outOfRangeShops.map(shop => `
-                                    <li>${shop.shopName} (${shop.distance.toFixed(1)}km - max ${shop.maxDistance}km)</li>
+                                    <li>
+                                        html += \`<h4 class="shop-name-link" data-shop-id="${shop.shopId}" data-shop-name="${shop.shopName}">\`;
+                                        (${shop.distance.toFixed(1)}km - max ${shop.maxDistance}km)
+                                    </li>
                                 `).join('')}
                             </ul>
                         </div>
@@ -786,7 +802,9 @@ function displayMultiShopShippingBreakdown(shippingResult) {
         if (shopShipping.success) {
             html += `
                 <div class="shop-shipping-breakdown">
-                    <h4>${shopShipping.shopName}</h4>
+                    <h4 class="shop-name-link" onclick="redirectToShopDetails('${shopShipping.shopId}', '${shopShipping.shopName}')">
+                        <i class="fas fa-store"></i> ${shopShipping.shopName}
+                    </h4>
                     <div class="breakdown-item">
                         <span>Distance:</span>
                         <span>${shopShipping.distance.toFixed(1)} km</span>
@@ -808,7 +826,9 @@ function displayMultiShopShippingBreakdown(shippingResult) {
         } else {
             html += `
                 <div class="shop-shipping-error">
-                    <h4>${shopShipping.shopName}</h4>
+                    <h4 class="shop-name-link" onclick="redirectToShopDetails('${shopShipping.shopId}', '${shopShipping.shopName}')">
+                        <i class="fas fa-store"></i> ${shopShipping.shopName}
+                    </h4>
                     <p class="error-text">${shopShipping.error}</p>
                 </div>
             `;
@@ -841,6 +861,28 @@ function displayMultiShopShippingBreakdown(shippingResult) {
     shippingBreakdown.innerHTML = html;
     shippingBreakdown.style.display = 'block';
     if (shippingLoading) shippingLoading.style.display = 'none';
+}
+
+// Redirect to shop details page
+async function redirectToShopDetails(shopId, shopName) {
+    try {
+        // Verify shop exists before redirecting
+        const shopResult = await readData(`smartfit_AR_Database/shop/${shopId}`);
+        
+        if (shopResult.success && shopResult.data) {
+            // Shop exists, proceed with redirect
+            const encodedShopName = encodeURIComponent(shopName);
+            window.location.href = `/customer/html/shopownerdetails.html?shopId=${shopId}&shopName=${encodedShopName}`;
+        } else {
+            // Shop doesn't exist or error
+            alert('Shop information is not available at the moment.');
+        }
+    } catch (error) {
+        console.error('Error verifying shop:', error);
+        // Still redirect but show error on details page if needed
+        const encodedShopName = encodeURIComponent(shopName);
+        window.location.href = `/customer/html/shopownerdetails.html?shopId=${shopId}&shopName=${encodedShopName}`;
+    }
 }
 
 // Load user profile
@@ -883,6 +925,18 @@ function setupEventListeners() {
             }
         });
     }
+
+    // Add event delegation for shop name links
+    document.addEventListener('click', function(event) {
+        const shopLink = event.target.closest('.shop-name-link');
+        if (shopLink) {
+            const shopId = shopLink.getAttribute('data-shop-id');
+            const shopName = shopLink.getAttribute('data-shop-name');
+            if (shopId && shopName) {
+                redirectToShopDetails(shopId, shopName);
+            }
+        }
+    });
 
     // Payment method selection
     const paymentMethods = document.querySelectorAll('.payment-method');
@@ -1368,6 +1422,9 @@ async function displaySingleItemOrder(item) {
         <img src="${item.imageUrl}" alt="${item.name}" class="cart-item-image">
         <div class="cart-item-details">
             <h4>${item.name}</h4>
+            <p class="shop-name-link" data-shop-id="${item.shopId}" data-shop-name="${item.shopName || 'Unknown Shop'}">
+                <i class="fas fa-store"></i> ${item.shopName || 'Unknown Shop'}
+            </p>
             <p>${item.variantName} (${item.color})</p>
             <p>Size: ${item.size}</p>
             <p>Quantity: ${item.quantity}</p>
@@ -1435,7 +1492,8 @@ async function displayMultipleItemOrder(cartIDs) {
                 brand: shoeData.shoeBrand || 'Unknown',
                 type: shoeData.shoeType || 'Unknown',
                 gender: shoeData.shoeGender || 'Unisex',
-                availableStock: stock
+                availableStock: stock,
+                shopName: item.shopName || 'Unknown Shop'
             };
         } catch (error) {
             console.error("Error processing item:", item, error);
@@ -1462,6 +1520,9 @@ async function displayMultipleItemOrder(cartIDs) {
                 onerror="this.src='https://via.placeholder.com/150'">
             <div class="cart-item-details">
                 <h4>${item.name}</h4>
+                <p class="shop-name-link" data-shop-id="${item.shopId}" data-shop-name="${item.shopName}">
+                    <i class="fas fa-store"></i> ${item.shopName}
+                </p>
                 <p>${item.variantName} (${item.color})</p>
                 <p>Size: ${item.size}</p>
                 <p>Quantity: ${item.quantity}</p>
@@ -1593,3 +1654,5 @@ document.addEventListener('DOMContentLoaded', function() {
         alert('Error loading checkout page. Please try refreshing.');
     });
 });
+
+window.redirectToShopDetails = redirectToShopDetails;

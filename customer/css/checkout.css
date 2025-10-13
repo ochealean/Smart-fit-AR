@@ -196,6 +196,56 @@ body {
     margin: 0;
 }
 
+/* Shop Name Link Styles */
+.shop-name-link {
+    color: var(--primary);
+    cursor: pointer;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    transition: var(--transition);
+    margin-bottom: 8px;
+    padding: 5px 0;
+}
+
+.shop-name-link:hover {
+    color: var(--primary-dark);
+    transform: translateX(3px);
+}
+
+.shop-name-link i {
+    font-size: 0.9em;
+    color: var(--primary);
+}
+
+/* Specific styles for shipping breakdown shop names */
+.shop-shipping-breakdown h4.shop-name-link,
+.shop-shipping-error h4.shop-name-link {
+    color: var(--dark);
+    margin-bottom: 15px;
+    padding: 10px;
+    background: rgba(167, 119, 227, 0.1);
+    border-radius: var(--radius-sm);
+    border-left: 3px solid var(--primary);
+}
+
+.shop-shipping-breakdown h4.shop-name-link:hover,
+.shop-shipping-error h4.shop-name-link:hover {
+    background: rgba(167, 119, 227, 0.15);
+    transform: translateX(5px);
+}
+
+/* Out of range shops list */
+.out-of-range-shops .shop-name-link {
+    color: var(--error);
+    font-weight: 600;
+}
+
+.out-of-range-shops .shop-name-link:hover {
+    color: #dc3545;
+}
+
 /* Checkout Container */
 .container {
     max-width: 1200px;
