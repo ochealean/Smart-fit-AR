@@ -6,7 +6,9 @@ import {
     readDataRealtime
 } from "../../firebaseMethods.js";
 
-let cursedWords = []; // This will store our censored words from Firebase
+let cursedWords = [];
+let currentShopId = null;
+let currentShopName = null;
 
 document.addEventListener("DOMContentLoaded", async () => {
     try {
@@ -24,6 +26,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         const existingStars = existingStarRating.querySelectorAll('.fa-star');
         const existingComment = document.getElementById('existingComment');
         const editReviewBtn = document.getElementById('editReviewBtn');
+        const shopNameLink = document.getElementById('shopNameLink');
 
         const urlParams = new URLSearchParams(window.location.search);
         const orderID = urlParams.get("orderId");
@@ -81,7 +84,18 @@ document.addEventListener("DOMContentLoaded", async () => {
         document.getElementById('shoeImage').src = firstItem.imageUrl || "https://via.placeholder.com/150";
         document.getElementById('shoeName').textContent = firstItem.name || "Unknown Shoe";
         document.getElementById('shoeId').textContent = `Product ID: ${firstItem.shoeId || 'N/A'}`;
-        document.getElementById('shopName').textContent = `From: ${firstItem.shopName || 'Unknown Shop'}`;
+        
+        // Set shop information and make it clickable
+        currentShopId = firstItem.shopId;
+        currentShopName = firstItem.shopName || 'Unknown Shop';
+        shopNameLink.textContent = currentShopName;
+        
+        // Add shop redirect functionality
+        if (currentShopId) {
+            shopNameLink.setAttribute('data-shop-id', currentShopId);
+            shopNameLink.setAttribute('data-shop-name', currentShopName);
+            setupShopNameClickEvents();
+        }
 
         // Check for existing feedback
         const feedbackPath = `smartfit_AR_Database/feedbacks/${userID}/${orderID}`;
@@ -92,7 +106,13 @@ document.addEventListener("DOMContentLoaded", async () => {
         // Function to update rating display
         const updateRatingDisplay = (stars, rating) => {
             stars.forEach((star, index) => {
-                star.style.color = index < rating ? 'gold' : '#ccc';
+                if (index < rating) {
+                    star.classList.add('active');
+                    star.style.color = 'var(--star-color)';
+                } else {
+                    star.classList.remove('active');
+                    star.style.color = '#ccc';
+                }
             });
         };
 
@@ -102,21 +122,30 @@ document.addEventListener("DOMContentLoaded", async () => {
                 star.style.cursor = 'pointer';
 
                 star.addEventListener('click', (e) => {
-                    if (isExisting) e.stopPropagation();
-                    ratingVar = index + 1;
-                    updateRatingDisplay(stars, ratingVar);
-                    if (!isExisting) ratingValue.value = ratingVar;
-                    else saveUpdatedFeedback(ratingVar, existingComment.textContent);
+                    if (isExisting) {
+                        e.stopPropagation();
+                        const newRating = index + 1;
+                        updateRatingDisplay(stars, newRating);
+                        saveUpdatedFeedback(newRating, existingComment.textContent);
+                    } else {
+                        ratingVar = index + 1;
+                        ratingValue.value = ratingVar;
+                        updateRatingDisplay(stars, ratingVar);
+                    }
                 });
 
                 star.addEventListener('mouseover', () => {
-                    stars.forEach((s, i) => {
-                        s.style.color = i <= index ? 'lightgray' : '#ccc';
-                    });
+                    if (!isExisting) {
+                        stars.forEach((s, i) => {
+                            s.style.color = i <= index ? 'var(--star-color)' : '#ccc';
+                        });
+                    }
                 });
 
                 star.addEventListener('mouseout', () => {
-                    updateRatingDisplay(stars, ratingVar);
+                    if (!isExisting) {
+                        updateRatingDisplay(stars, ratingVar);
+                    }
                 });
             });
         };
@@ -128,7 +157,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                     orderID,
                     shoeID: firstItem.shoeId,
                     rating,
-                    comment: censorText(comment), // Censor the comment before saving
+                    comment: censorText(comment),
                     timestamp: Date.now()
                 };
 
@@ -141,7 +170,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
                 if (feedbackResult.success && transactionResult.success) {
                     successMessage.style.display = 'block';
-                    successMessage.textContent = "Rating updated!";
+                    successMessage.textContent = "Rating updated successfully!";
                     setTimeout(() => {
                         successMessage.style.display = 'none';
                     }, 2000);
@@ -157,7 +186,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
         if (existingFeedback) {
             // Existing feedback handling
-            let currentRating = existingFeedback.rating;
+            let currentRating = existingFeedback.rating || 0;
             let currentComment = existingFeedback.comment || 'No comment provided';
 
             existingFeedbackSection.style.display = 'block';
@@ -166,20 +195,28 @@ document.addEventListener("DOMContentLoaded", async () => {
             updateRatingDisplay(existingStars, currentRating);
             existingComment.textContent = currentComment;
 
-            // Make existing stars interactive
+            // Make existing stars interactive for real-time editing
             makeStarsInteractive(existingStars, currentRating, true);
 
-            // Set up edit button
+            // Set up edit button - FIXED: No refresh needed
             editReviewBtn.onclick = () => {
                 existingFeedbackSection.style.display = 'none';
                 feedbackForm.style.display = 'block';
 
+                // Pre-fill the form with existing data
                 ratingValue.value = currentRating;
                 document.getElementById('comment').value = currentComment;
                 updateRatingDisplay(stars, currentRating);
 
                 // Make form stars interactive
-                makeStarsInteractive(stars, currentRating);
+                let formRating = currentRating;
+                makeStarsInteractive(stars, formRating);
+                
+                // Update form submission to handle edit mode
+                feedbackForm.onsubmit = async function(e) {
+                    e.preventDefault();
+                    await handleFeedbackSubmission(formRating, true);
+                };
             };
         } else {
             // New feedback handling
@@ -187,21 +224,24 @@ document.addEventListener("DOMContentLoaded", async () => {
             feedbackForm.style.display = 'block';
 
             // Make form stars interactive
-            makeStarsInteractive(stars, 0);
+            let formRating = 0;
+            makeStarsInteractive(stars, formRating);
         }
 
-        // Feedback submission
+        // Original feedback submission handler
         feedbackForm.addEventListener('submit', async function (e) {
             e.preventDefault();
+            await handleFeedbackSubmission(parseInt(ratingValue.value), false);
+        });
 
+        // Separate function for feedback submission
+        async function handleFeedbackSubmission(rating, isEdit = false) {
             const comment = document.getElementById('comment').value;
             
             if (checkForCursedWords(comment)) {
                 alert("Your comment contains inappropriate language. Please revise it.");
                 return;
             }
-
-            const rating = parseInt(ratingValue.value);
 
             if (rating === 0) {
                 alert("Please select a rating.");
@@ -217,39 +257,41 @@ document.addEventListener("DOMContentLoaded", async () => {
                     orderID,
                     shoeID: firstItem.shoeId,
                     rating,
-                    comment: censorText(comment), // Censor the comment before saving
+                    comment: censorText(comment),
                     timestamp: Date.now()
                 };
 
                 const feedbackPath = `smartfit_AR_Database/feedbacks/${userID}/${orderID}`;
                 const transactionFeedbackPath = `smartfit_AR_Database/transactions/${userID}/${orderID}/feedback`;
 
-                // Create feedback in both locations
+                // Create/update feedback in both locations
                 const feedbackResult = await updateData(feedbackPath, feedbackData);
                 const transactionResult = await updateData(transactionFeedbackPath, feedbackData);
 
                 if (feedbackResult.success && transactionResult.success) {
                     loader.style.display = 'none';
                     successMessage.style.display = 'block';
-                    successMessage.textContent = "Thank you for your feedback!";
+                    successMessage.textContent = isEdit ? 
+                        "Feedback updated successfully!" : 
+                        "Thank you for your feedback!";
 
                     // Update the displayed feedback
                     updateRatingDisplay(existingStars, rating);
-                    existingComment.textContent = feedbackData.comment; // Show censored version
+                    existingComment.textContent = feedbackData.comment;
 
                     // Switch to feedback display view
-                    feedbackForm.style.display = 'none';
-                    existingFeedbackSection.style.display = 'block';
-
-                    // Make existing stars interactive
-                    makeStarsInteractive(existingStars, rating, true);
-
-                    // Reset form state
                     setTimeout(() => {
+                        feedbackForm.style.display = 'none';
+                        existingFeedbackSection.style.display = 'block';
+                        successMessage.style.display = 'none';
+
+                        // Make existing stars interactive for future edits
+                        makeStarsInteractive(existingStars, rating, true);
+
+                        // Reset form state
                         submitBtn.disabled = false;
                         submitBtn.querySelector('span').textContent = 'Submit Feedback';
-                        successMessage.style.display = 'none';
-                    }, 3000);
+                    }, 1500);
 
                 } else {
                     throw new Error("Failed to submit feedback");
@@ -262,12 +304,65 @@ document.addEventListener("DOMContentLoaded", async () => {
                 loader.style.display = 'none';
                 submitBtn.querySelector('span').textContent = 'Submit Feedback';
             }
-        });
+        }
+
     } catch (error) {
         console.error("Error initializing feedback form:", error);
         alert("An error occurred while loading the page.");
     }
 });
+
+// Shop redirect functionality
+function setupShopNameClickEvents() {
+    const shopNameLinks = document.querySelectorAll('.shop-name-link');
+    
+    shopNameLinks.forEach(link => {
+        link.addEventListener('click', function(e) {
+            e.preventDefault();
+            const shopId = this.getAttribute('data-shop-id');
+            const shopName = this.getAttribute('data-shop-name');
+            
+            if (shopId) {
+                redirectToShopDetails(shopId, shopName);
+            }
+        });
+        
+        // Add hover effects
+        link.style.cursor = 'pointer';
+        link.style.color = '#667eea';
+        link.style.textDecoration = 'underline';
+        link.style.transition = 'color 0.3s ease';
+        
+        link.addEventListener('mouseenter', function() {
+            this.style.color = '#764ba2';
+        });
+        
+        link.addEventListener('mouseleave', function() {
+            this.style.color = '#667eea';
+        });
+    });
+}
+
+async function redirectToShopDetails(shopId, shopName) {
+    try {
+        // Verify shop exists before redirecting
+        const shopResult = await readData(`smartfit_AR_Database/shop/${shopId}`);
+        
+        if (shopResult.success && shopResult.data) {
+            // Shop exists, proceed with redirect
+            const encodedShopName = encodeURIComponent(shopName);
+            window.location.href = `/customer/html/shopownerdetails.html?shopId=${shopId}&shopName=${encodedShopName}`;
+        } else {
+            // Shop doesn't exist or error
+            alert('Shop information is not available at the moment.');
+        }
+    } catch (error) {
+        console.error('Error verifying shop:', error);
+        // Still redirect but show error on details page if needed
+        const encodedShopName = encodeURIComponent(shopName);
+        window.location.href = `/customer/html/shopownerdetails.html?shopId=${shopId}&shopName=${encodedShopName}`;
+    }
+}
 
 function loadCensoredWords() {
     const curseWordsPath = 'smartfit_AR_Database/curseWords';
@@ -281,7 +376,7 @@ function loadCensoredWords() {
                 console.log("Loaded censored words:", cursedWords);
             } else {
                 console.log("No censored words found in database");
-                cursedWords = []; // Reset to empty array if no words exist
+                cursedWords = [];
             }
             resolve();
         });
@@ -339,3 +434,30 @@ function cleanup() {
 
 // Export for potential cleanup
 window.cleanupFeedback = cleanup;
+
+// Initialize the page display
+document.addEventListener('DOMContentLoaded', function() {
+    // Add mobile menu functionality
+    const mobileToggle = document.querySelector('.mobile-menu-toggle');
+    const sidebar = document.querySelector('.sidebar');
+    const overlay = document.querySelector('.sidebar-overlay');
+
+    // Create mobile menu toggle if it doesn't exist in HTML
+    if (!mobileToggle && window.innerWidth <= 768) {
+        const header = document.querySelector('.header');
+        const toggleBtn = document.createElement('div');
+        toggleBtn.className = 'mobile-menu-toggle';
+        toggleBtn.innerHTML = '<i class="fas fa-bars"></i>';
+        header.insertBefore(toggleBtn, header.firstChild);
+        
+        toggleBtn.addEventListener('click', () => {
+            sidebar.classList.toggle('active');
+            overlay.classList.toggle('active');
+        });
+
+        overlay.addEventListener('click', () => {
+            sidebar.classList.remove('active');
+            overlay.classList.remove('active');
+        });
+    }
+});
