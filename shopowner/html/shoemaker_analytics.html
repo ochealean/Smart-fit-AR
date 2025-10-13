@@ -378,92 +378,6 @@
             margin-bottom: 2rem;
         }
 
-        /* Top Products */
-        .top-products {
-            background: white;
-            border-radius: var(--radius-xl);
-            padding: 1.5rem;
-            box-shadow: var(--shadow-md);
-            border: 1px solid var(--gray-200);
-            margin-bottom: 2rem;
-        }
-
-        .product-list {
-            display: flex;
-            flex-direction: column;
-            gap: 1rem;
-        }
-
-        .product-item {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-            padding: 1rem;
-            border-radius: var(--radius-lg);
-            background: var(--gray-50);
-            transition: var(--transition);
-        }
-
-        .product-item:hover {
-            background: var(--gray-100);
-        }
-
-        .product-icon {
-            width: 50px;
-            height: 50px;
-            border-radius: var(--radius-md);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.25rem;
-            background: rgba(124, 58, 237, 0.1);
-            color: var(--primary);
-        }
-
-        .product-info {
-            flex: 1;
-        }
-
-        .product-name {
-            font-weight: 600;
-            margin-bottom: 0.25rem;
-        }
-
-        .product-stats {
-            display: flex;
-            justify-content: space-between;
-            color: var(--gray-600);
-            font-size: 0.9rem;
-        }
-
-        /* Performance Metrics */
-        .performance-metrics {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 1.5rem;
-            margin-bottom: 2rem;
-        }
-
-        .metric-card {
-            background: white;
-            border-radius: var(--radius-xl);
-            padding: 1.5rem;
-            box-shadow: var(--shadow-md);
-            border: 1px solid var(--gray-200);
-            text-align: center;
-        }
-
-        .metric-value {
-            font-size: 2.5rem;
-            font-weight: 700;
-            margin-bottom: 0.5rem;
-        }
-
-        .metric-label {
-            color: var(--gray-600);
-            font-size: 0.9rem;
-        }
-
         /* Export Section */
         .export-section {
             background: white;
@@ -791,41 +705,6 @@
                 </div>
             </div>
 
-            <!-- Performance Metrics -->
-            <div class="performance-metrics">
-                <div class="metric-card">
-                    <div class="metric-value" id="completionRate">0%</div>
-                    <div class="metric-label">Order Completion Rate</div>
-                </div>
-                
-                <div class="metric-card">
-                    <div class="metric-value" id="avgProcessingTime">0d</div>
-                    <div class="metric-label">Avg. Processing Time</div>
-                </div>
-                
-                <div class="metric-card">
-                    <div class="metric-value" id="customerSatisfaction">0%</div>
-                    <div class="metric-label">Customer Satisfaction</div>
-                </div>
-                
-                <div class="metric-card">
-                    <div class="metric-value" id="repeatCustomers">0%</div>
-                    <div class="metric-label">Repeat Customers</div>
-                </div>
-            </div>
-
-            <!-- Top Products -->
-            <div class="top-products">
-                <h2 class="section-title">
-                    <i class="fas fa-star"></i>
-                    Top Customized Products
-                </h2>
-                
-                <div class="product-list" id="topProductsList">
-                    <div class="loading">Loading products...</div>
-                </div>
-            </div>
-
             <!-- Export Section -->
             <div class="export-section">
                 <h2 class="section-title">
@@ -873,11 +752,6 @@
         const totalOrders = document.getElementById('totalOrders');
         const totalCustomers = document.getElementById('totalCustomers');
         const averageOrderValue = document.getElementById('averageOrderValue');
-        const completionRate = document.getElementById('completionRate');
-        const avgProcessingTime = document.getElementById('avgProcessingTime');
-        const customerSatisfaction = document.getElementById('customerSatisfaction');
-        const repeatCustomers = document.getElementById('repeatCustomers');
-        const topProductsList = document.getElementById('topProductsList');
         const logoutBtn = document.getElementById('logout_btn');
 
         // Chart control elements
@@ -946,7 +820,6 @@
                         processRealtimeOrders(result.data);
                         updateAnalyticsCards();
                         updateCharts();
-                        updateTopProducts();
                     }
                 } else {
                     console.error("Real-time listener error:", result.error);
@@ -1011,11 +884,9 @@
 
                 updateAnalyticsCards();
                 updateCharts();
-                updateTopProducts();
                 
             } catch (error) {
                 console.error('Error loading analytics data:', error);
-                showErrorState();
             }
         }
 
@@ -1043,55 +914,6 @@
             document.getElementById('ordersChange').innerHTML = `<i class="fas fa-arrow-up"></i><span>${ordersChange}% from last month</span>`;
             document.getElementById('customersChange').innerHTML = `<i class="fas fa-arrow-up"></i><span>${customersChange}% from last month</span>`;
             document.getElementById('averageOrderChange').innerHTML = `<i class="fas fa-arrow-up"></i><span>${averageOrderChange}% from last month</span>`;
-
-            // Update performance metrics
-            const completionRateValue = allOrders.length > 0 ? Math.round((completedOrders.length / allOrders.length) * 100) : 0;
-            const avgProcessingDays = calculateAverageProcessingTime();
-            const satisfactionRate = calculateCustomerSatisfaction();
-            const repeatRate = calculateRepeatCustomerRate();
-
-            completionRate.textContent = `${completionRateValue}%`;
-            avgProcessingTime.textContent = `${avgProcessingDays}d`;
-            customerSatisfaction.textContent = `${satisfactionRate}%`;
-            repeatCustomers.textContent = `${repeatRate}%`;
-        }
-
-        // Calculate average processing time
-        function calculateAverageProcessingTime() {
-            const completedOrders = allOrders.filter(order => order.status === 'completed');
-            if (completedOrders.length === 0) return 0;
-            
-            let totalDays = 0;
-            completedOrders.forEach(order => {
-                const orderDate = new Date(order.orderDate || order.date || order.addedAt);
-                const completionDate = order.completionDate ? new Date(order.completionDate) : new Date();
-                const days = Math.ceil((completionDate - orderDate) / (1000 * 60 * 60 * 24));
-                totalDays += days > 0 ? days : 1;
-            });
-            
-            return Math.round(totalDays / completedOrders.length);
-        }
-
-        // Calculate customer satisfaction (placeholder)
-        function calculateCustomerSatisfaction() {
-            // In a real app, this would come from customer feedback
-            return Math.min(95, Math.max(70, Math.floor(Math.random() * 25) + 70));
-        }
-
-        // Calculate repeat customer rate
-        function calculateRepeatCustomerRate() {
-            const customerOrderCounts = {};
-            
-            allOrders.forEach(order => {
-                if (order.userId) {
-                    customerOrderCounts[order.userId] = (customerOrderCounts[order.userId] || 0) + 1;
-                }
-            });
-            
-            const repeatCustomers = Object.values(customerOrderCounts).filter(count => count > 1).length;
-            const totalCustomers = Object.keys(customerOrderCounts).length;
-            
-            return totalCustomers > 0 ? Math.round((repeatCustomers / totalCustomers) * 100) : 0;
         }
 
         // Update charts
@@ -1572,43 +1394,6 @@
             });
         }
 
-        // Update top products list
-        function updateTopProducts() {
-            // In a real app, this would come from product data
-            // For now, we'll simulate some popular products
-            const topProducts = [
-                { name: "Custom Running Shoes", orders: 24, revenue: 72000 },
-                { name: "Leather Dress Shoes", orders: 18, revenue: 54000 },
-                { name: "Casual Sneakers", orders: 15, revenue: 45000 },
-                { name: "Basketball Shoes", orders: 12, revenue: 36000 },
-                { name: "Hiking Boots", orders: 8, revenue: 24000 }
-            ];
-
-            if (topProducts.length === 0) {
-                topProductsList.innerHTML = `
-                    <div style="text-align: center; padding: 2rem;">
-                        <i class="fas fa-box-open"></i> No product data available
-                    </div>
-                `;
-                return;
-            }
-
-            topProductsList.innerHTML = topProducts.map(product => `
-                <div class="product-item">
-                    <div class="product-icon">
-                        <i class="fas fa-shoe-prints"></i>
-                    </div>
-                    <div class="product-info">
-                        <div class="product-name">${product.name}</div>
-                        <div class="product-stats">
-                            <span>${product.orders} orders</span>
-                            <span>₱${product.revenue.toFixed(2)}</span>
-                        </div>
-                    </div>
-                </div>
-            `).join('');
-        }
-
         // Update chart sort buttons UI
         function updateChartSortButtons(activePeriod) {
             // Reset all chart sort buttons
@@ -1621,15 +1406,6 @@
             if (activeBtn) {
                 activeBtn.classList.add('active');
             }
-        }
-
-        // Show error state
-        function showErrorState() {
-            topProductsList.innerHTML = `
-                <div style="text-align: center; padding: 2rem; color: var(--error);">
-                    <i class="fas fa-exclamation-circle"></i> Failed to load data. Please try again.
-                </div>
-            `;
         }
 
         // Export data as CSV
