@@ -1,0 +1,1729 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shoemaker Settings - SmartFit AR</title>
+    <link rel="icon" href="../../images/smartfitImages/smartfitAR-logo.png" type="image/x-icon">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #7c3aed;
+            --primary-dark: #6d28d9;
+            --primary-light: #8b5cf6;
+            --secondary: #06b6d4;
+            --secondary-dark: #0891b2;
+            --accent: #f59e0b;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --error: #ef4444;
+            --light: #f8fafc;
+            --dark: #1e293b;
+            --gray-50: #f8fafc;
+            --gray-100: #f1f5f9;
+            --gray-200: #e2e8f0;
+            --gray-300: #cbd5e1;
+            --gray-400: #94a3b8;
+            --gray-500: #64748b;
+            --gray-600: #475569;
+            --gray-700: #334155;
+            --gray-800: #1e293b;
+            --gray-900: #0f172a;
+            --text-primary: #1e293b;
+            --text-secondary: #475569;
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            --transition-slow: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            --radius-sm: 6px;
+            --radius-md: 8px;
+            --radius-lg: 12px;
+            --radius-xl: 16px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            background: var(--gray-50);
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+
+        .dashboard-container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* Sidebar Navigation */
+        .sidebar {
+            width: 260px;
+            background: white;
+            box-shadow: var(--shadow-md);
+            padding: 1.5rem 1rem;
+            display: flex;
+            flex-direction: column;
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+            z-index: 100;
+        }
+
+        .logo-container {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 2rem;
+            padding: 0 0.5rem;
+        }
+
+        .logo {
+            width: 40px;
+            height: 40px;
+            border-radius: var(--radius-md);
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+        }
+
+        .logo-text {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--gray-900);
+        }
+
+        .nav-items {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 1rem 1.25rem;
+            color: var(--gray-700);
+            text-decoration: none;
+            border-radius: var(--radius-md);
+            transition: var(--transition);
+        }
+
+        .nav-item:hover {
+            background: var(--gray-100);
+            color: var(--gray-900);
+        }
+
+        .nav-item.active {
+            background: var(--primary);
+            color: white;
+        }
+
+        .nav-item i {
+            font-size: 1.2rem;
+            width: 24px;
+            text-align: center;
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            margin-left: 260px;
+            padding: 2rem;
+        }
+
+        .dashboard-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+
+        .dashboard-title {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--gray-900);
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+        }
+
+        /* Profile Container */
+        .profile-container {
+            background: white;
+            border-radius: var(--radius-xl);
+            box-shadow: var(--shadow-md);
+            padding: 2rem;
+            margin-bottom: 2rem;
+            transition: var(--transition);
+        }
+
+        .profile-container:hover {
+            box-shadow: var(--shadow-lg);
+        }
+
+        /* Profile Header */
+        .profile-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+            gap: 2rem;
+            padding-bottom: 2rem;
+            border-bottom: 1px solid var(--gray-200);
+        }
+
+        .profile-avatar {
+            position: relative;
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            overflow: hidden;
+            border: 3px solid var(--primary);
+            background-color: var(--gray-100);
+        }
+
+        .profile-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .avatar-upload {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background-color: rgba(0, 0, 0, 0.7);
+            color: white;
+            text-align: center;
+            padding: 0.5rem;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .avatar-upload:hover {
+            background-color: rgba(0, 0, 0, 0.8);
+        }
+
+        .avatar-upload input {
+            display: none;
+        }
+
+        .profile-info {
+            flex: 1;
+            min-width: 300px;
+        }
+
+        .profile-name {
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+            color: var(--primary);
+            font-weight: 600;
+        }
+
+        .profile-email {
+            color: var(--gray-600);
+            margin-bottom: 1rem;
+        }
+
+        .profile-stats {
+            display: flex;
+            gap: 1.5rem;
+        }
+
+        .stat-item {
+            text-align: center;
+            padding: 0.75rem 1rem;
+            background: var(--gray-100);
+            border-radius: var(--radius-sm);
+            min-width: 80px;
+        }
+
+        .stat-value {
+            font-weight: 700;
+            font-size: 1.2rem;
+            color: var(--primary);
+        }
+
+        .stat-label {
+            font-size: 0.8rem;
+            color: var(--gray-600);
+        }
+
+        /* Form Styles */
+        .profile-form {
+            margin-top: 1rem;
+        }
+
+        .form-section {
+            margin-bottom: 2rem;
+            padding-bottom: 2rem;
+            border-bottom: 1px solid var(--gray-200);
+        }
+
+        .form-section:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+
+        .section-title {
+            font-size: 1.25rem;
+            margin-bottom: 1.5rem;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: var(--gray-700);
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 1rem 1rem;
+            border: 1px solid var(--gray-300);
+            border-radius: var(--radius-md);
+            font-size: 0.95rem;
+            transition: var(--transition);
+            background-color: white;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.2);
+        }
+
+        textarea.form-control {
+            min-height: 120px;
+            resize: vertical;
+        }
+
+        .form-select {
+            width: 100%;
+            padding: 1rem 1rem;
+            border: 1px solid var(--gray-300);
+            border-radius: var(--radius-md);
+            font-size: 0.95rem;
+            background-color: white;
+            appearance: none;
+            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-position: right 1rem center;
+            background-size: 1rem;
+            transition: var(--transition);
+        }
+
+        .form-select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.2);
+        }
+
+        /* Password Toggle */
+        .password-toggle {
+            position: relative;
+        }
+
+        .password-toggle-icon {
+            position: absolute;
+            right: 1rem;
+            top: 70%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            color: var(--gray-500);
+            transition: var(--transition);
+        }
+
+        .password-toggle-icon:hover {
+            color: var(--gray-700);
+        }
+
+        /* Button Styles */
+        .btn {
+            padding: 0.8rem 1.5rem;
+            border-radius: var(--radius-md);
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.95rem;
+            border: none;
+        }
+
+        .btn-save {
+            background-color: var(--primary);
+            color: white;
+        }
+
+        .btn-save:hover {
+            background-color: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .btn-cancel {
+            background-color: var(--gray-200);
+            color: var(--gray-700);
+        }
+
+        .btn-cancel:hover {
+            background-color: var(--gray-300);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-sm);
+        }
+
+        /* Form Actions */
+        .form-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        /* Notification Settings */
+        .notification-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            background: var(--gray-50);
+            border-radius: var(--radius-md);
+            margin-bottom: 1rem;
+            transition: var(--transition);
+        }
+
+        .notification-item:hover {
+            background: var(--gray-100);
+        }
+
+        .notification-info h4 {
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+
+        .notification-info p {
+            color: var(--gray-600);
+            font-size: 0.9rem;
+        }
+
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 24px;
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: var(--gray-300);
+            transition: var(--transition);
+            border-radius: 24px;
+        }
+
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 16px;
+            width: 16px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: var(--transition);
+            border-radius: 50%;
+        }
+
+        input:checked + .toggle-slider {
+            background-color: var(--primary);
+        }
+
+        input:checked + .toggle-slider:before {
+            transform: translateX(26px);
+        }
+
+        /* Loading State */
+        .loading {
+            opacity: 0.7;
+            pointer-events: none;
+            position: relative;
+        }
+
+        .loading::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 20px;
+            height: 20px;
+            margin: -10px 0 0 -10px;
+            border: 2px solid var(--gray-300);
+            border-top: 2px solid var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Alert Styles */
+        .alert {
+            padding: 1rem 1.5rem;
+            border-radius: var(--radius-md);
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .alert-success {
+            background-color: rgba(16, 185, 129, 0.1);
+            color: var(--success);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+        }
+
+        .alert-error {
+            background-color: rgba(239, 68, 68, 0.1);
+            color: var(--error);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 70px;
+                padding: 1rem 0.5rem;
+            }
+            
+            .logo-text, .nav-item span {
+                display: none;
+            }
+            
+            .nav-item {
+                justify-content: center;
+                padding: 1rem 0.5rem;
+            }
+            
+            .main-content {
+                margin-left: 70px;
+                padding: 1.5rem;
+            }
+            
+            .profile-header {
+                flex-direction: column;
+                text-align: center;
+            }
+            
+            .profile-stats {
+                justify-content: center;
+            }
+            
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+            
+            .form-actions {
+                flex-direction: column;
+            }
+            
+            .btn-save, .btn-cancel {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .dashboard-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 1rem;
+            }
+            
+            .user-info {
+                align-self: flex-end;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <!-- Sidebar Navigation -->
+        <div class="sidebar">
+            <div class="logo-container">
+                <div class="logo">SF</div>
+                <div class="logo-text">SmartFit AR</div>
+            </div>
+            
+            <div class="nav-items">
+                <a href="/shopowner/html/shoemaker_dashboard.html" class="nav-item">
+                    <i class="fas fa-home"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="/shopowner/html/customizeShoeInventory.html" class="nav-item">
+                    <i class="fas fa-palette"></i>
+                    <span>AR Customization</span>
+                </a>
+                <a href="/shopowner/html/shoemaker_orders.html" class="nav-item">
+                    <i class="fas fa-shopping-cart"></i>
+                    <span>Custom Orders</span>
+                </a>
+                <a href="/shopowner/html/shoemaker_analytics.html" class="nav-item">
+                    <i class="fas fa-chart-line"></i>
+                    <span>Analytics</span>
+                </a>
+                <a href="/shopowner/html/shoemaker_profile.html" class="nav-item active">
+                    <i class="fas fa-cog"></i>
+                    <span>Settings</span>
+                </a>
+                <a id="logout_btn" class="nav-item">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span>Logout</span>
+                </a>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <div class="dashboard-header">
+                <h1 class="dashboard-title">Shoemaker Settings</h1>
+                <div class="user-info">
+                    <div class="user-avatar">SM</div>
+                    <div>
+                        <div class="user-name">Shoemaker Admin</div>
+                        <div class="user-role">Shoemaker</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Profile Container -->
+            <div class="profile-container">
+                <!-- Profile Header -->
+                <div class="profile-header">
+                    <div class="profile-avatar">
+                        <img src="" alt="Shoemaker Logo" id="shoemakerLogoImg">
+                        <label class="avatar-upload">
+                            <i class="fas fa-camera"></i> Change
+                            <input type="file" accept="image/*" id="shoemakerLogoUpload">
+                        </label>
+                    </div>
+
+                    <div class="profile-info">
+                        <h2 class="profile-name">Shoemaker Name</h2>
+                        <div class="profile-email">shoemaker@example.com</div>
+                        <div class="profile-stats">
+                            <div class="stat-item">
+                                <div class="stat-value">0</div>
+                                <div class="stat-label">Orders</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-value">0</div>
+                                <div class="stat-label">Products</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-value">0</div>
+                                <div class="stat-label">Rating</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Shoemaker Profile Form -->
+                <form class="profile-form" id="profileForm">
+                    <!-- Shoemaker Information Section -->
+                    <div class="form-section">
+                        <h3 class="section-title"><i class="fas fa-user"></i> Shoemaker Information</h3>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="shoemakerName" class="form-label">Shoemaker Name</label>
+                                <input type="text" id="shoemakerName" class="form-control" value="">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="shoemakerSpecialty" class="form-label">Specialty</label>
+                                <select id="shoemakerSpecialty" class="form-select">
+                                    <option value="custom">Custom Shoes</option>
+                                    <option value="repair">Shoe Repair</option>
+                                    <option value="orthopedic">Orthopedic Shoes</option>
+                                    <option value="athletic">Athletic Shoes</option>
+                                    <option value="formal">Formal Shoes</option>
+                                    <option value="other">Other</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="shoemakerDescription" class="form-label">Description</label>
+                            <textarea id="shoemakerDescription" class="form-control" rows="4">Shoemaker Description</textarea>
+                        </div>
+                    </div>
+
+                    <!-- Contact Information Section -->
+                    <div class="form-section">
+                        <h3 class="section-title"><i class="fas fa-address-card"></i> Contact Information</h3>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="ownerName" class="form-label">Owner Name</label>
+                                <input type="text" id="ownerName" class="form-control" value="">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="ownerEmail" class="form-label">Email</label>
+                                <input type="email" id="ownerEmail" class="form-control" value="">
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="ownerPhone" class="form-label">Phone Number</label>
+                                <div style="display: flex; align-items: center;">
+                                    <span style="padding: 1rem 0.5rem; background: var(--gray-100); border-radius: var(--radius-md) 0 0 var(--radius-md); border: 1px solid var(--gray-300);">+63</span>
+                                    <input type="tel" id="ownerPhone" class="form-control" value="" maxlength="10" style="border-radius: 0 var(--radius-md) var(--radius-md) 0; margin-left: -1px;">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Location Information Section -->
+                    <div class="form-section">
+                        <h3 class="section-title"><i class="fas fa-map-marker-alt"></i> Location Information</h3>
+
+                        <div class="form-group">
+                            <label for="workshopAddress" class="form-label">Workshop Address</label>
+                            <input type="text" id="workshopAddress" class="form-control" value="">
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="workshopCity" class="form-label">City</label>
+                                <select id="workshopCity" class="form-select">
+                                    <option value="" disabled selected>Select . . .</option>
+                                    <option value="Abucay">Abucay</option>
+                                    <option value="Bagac">Bagac</option>
+                                    <option value="Balanga City">Balanga City</option>
+                                    <option value="Dinalupihan">Dinalupihan</option>
+                                    <option value="Hermosa">Hermosa</option>
+                                    <option value="Limay">Limay</option>
+                                    <option value="Mariveles">Mariveles</option>
+                                    <option value="Morong">Morong</option>
+                                    <option value="Orani">Orani</option>
+                                    <option value="Orion">Orion</option>
+                                    <option value="Pilar">Pilar</option>
+                                    <option value="Samal">Samal</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="workshopState" class="form-label">State/Province</label>
+                                <select id="workshopState" class="form-select">
+                                    <option value="Central Luzon" selected>Central Luzon</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="workshopZip" class="form-label">ZIP/Postal Code</label>
+                                <input type="number" id="workshopZip" class="form-control" value="" maxlength="4">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="workshopCountry" class="form-label">Country</label>
+                                <select id="workshopCountry" class="form-select">
+                                    <option value="Philippines" selected>Philippines</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Business Information Section -->
+                    <div class="form-section">
+                        <h3 class="section-title"><i class="fas fa-briefcase"></i> Business Information</h3>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="yearsExperience" class="form-label">Years of Experience</label>
+                                <input type="number" id="yearsExperience" class="form-control" value="">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="averageCompletionTime" class="form-label">Average Completion Time (Days)</label>
+                                <input type="number" id="averageCompletionTime" class="form-control" value="">
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="hourlyRate" class="form-label">Hourly Rate (₱)</label>
+                                <input type="number" id="hourlyRate" class="form-control" value="">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="businessHours" class="form-label">Business Hours</label>
+                                <select id="businessHours" class="form-select">
+                                    <option value="9-5">9:00 AM - 5:00 PM</option>
+                                    <option value="8-6">8:00 AM - 6:00 PM</option>
+                                    <option value="10-7">10:00 AM - 7:00 PM</option>
+                                    <option value="flexible">Flexible Hours</option>
+                                    <option value="custom">Custom Hours</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Notification Settings Section -->
+                    <div class="form-section">
+                        <h3 class="section-title"><i class="fas fa-bell"></i> Notification Settings</h3>
+
+                        <div class="notification-item">
+                            <div class="notification-info">
+                                <h4>New Order Notifications</h4>
+                                <p>Receive notifications when new custom orders are placed</p>
+                            </div>
+                            <label class="toggle-switch">
+                                <input type="checkbox" checked>
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
+
+                        <div class="notification-item">
+                            <div class="notification-info">
+                                <h4>Order Status Updates</h4>
+                                <p>Get notified when customers update their order status</p>
+                            </div>
+                            <label class="toggle-switch">
+                                <input type="checkbox" checked>
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
+
+                        <div class="notification-item">
+                            <div class="notification-info">
+                                <h4>Payment Notifications</h4>
+                                <p>Receive alerts for new payments and payment issues</p>
+                            </div>
+                            <label class="toggle-switch">
+                                <input type="checkbox" checked>
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
+
+                        <div class="notification-item">
+                            <div class="notification-info">
+                                <h4>Inventory Alerts</h4>
+                                <p>Get notified when inventory is running low</p>
+                            </div>
+                            <label class="toggle-switch">
+                                <input type="checkbox">
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
+
+                        <div class="notification-item">
+                            <div class="notification-info">
+                                <h4>Marketing Emails</h4>
+                                <p>Receive updates about new features and promotions</p>
+                            </div>
+                            <label class="toggle-switch">
+                                <input type="checkbox">
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Password Change Section -->
+                    <div class="form-section">
+                        <h3 class="section-title"><i class="fas fa-lock"></i> Change Password</h3>
+
+                        <div class="form-row">
+                            <div class="form-group password-toggle">
+                                <label for="currentPassword" class="form-label">Current Password</label>
+                                <input type="password" id="currentPassword" class="form-control">
+                                <i class="fas fa-eye password-toggle-icon" data-field-id="currentPassword" aria-label="Show password"></i>
+                            </div>
+
+                            <div class="form-group password-toggle">
+                                <label for="newPassword" class="form-label">New Password</label>
+                                <input type="password" id="newPassword" class="form-control">
+                                <i class="fas fa-eye password-toggle-icon" data-field-id="newPassword" aria-label="Show password"></i>
+                            </div>
+                        </div>
+
+                        <div class="form-group password-toggle">
+                            <label for="confirmPassword" class="form-label">Confirm New Password</label>
+                            <input type="password" id="confirmPassword" class="form-control">
+                            <i class="fas fa-eye password-toggle-icon" data-field-id="confirmPassword" aria-label="Show password"></i>
+                        </div>
+                    </div>
+
+                    <!-- Form Actions -->
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-cancel">Cancel</button>
+                        <button type="submit" class="btn btn-save"><i class="fas fa-save"></i> Save Changes</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import {
+            checkUserAuth,
+            logoutUser,
+            readDataRealtime,
+            createImageToFirebase,
+            deleteImageFromFirebase,
+            updateProfileMethod,
+            changeUserPassword,
+            signInWithEmailAndPasswordWrapper,
+            updateData
+        } from "../../firebaseMethods.js";
+
+        // State variables
+        let avatarFile = null;
+        let shoemakerData = {};
+        let originalEmail = '';
+        let userSession = {
+            userId: null,
+            userData: null,
+            role: null
+        };
+
+        // DOM Elements
+        const elements = {
+            // Header
+            userNameDisplay: document.querySelector('.user-name'),
+            userRoleDisplay: document.querySelector('.user-role'),
+            userAvatar: document.querySelector('.user-avatar'),
+
+            // Profile Header
+            profileName: document.querySelector('.profile-name'),
+            profileEmail: document.querySelector('.profile-email'),
+            profileAvatar: document.getElementById('shoemakerLogoImg'),
+            orderCount: document.querySelector('.stat-item:nth-child(1) .stat-value'),
+            productCount: document.querySelector('.stat-item:nth-child(2) .stat-value'),
+            ratingValue: document.querySelector('.stat-item:nth-child(3) .stat-value'),
+
+            // Form Fields
+            shoemakerName: document.getElementById('shoemakerName'),
+            shoemakerSpecialty: document.getElementById('shoemakerSpecialty'),
+            shoemakerDescription: document.getElementById('shoemakerDescription'),
+            ownerName: document.getElementById('ownerName'),
+            ownerEmail: document.getElementById('ownerEmail'),
+            ownerPhone: document.getElementById('ownerPhone'),
+            workshopAddress: document.getElementById('workshopAddress'),
+            workshopCity: document.getElementById('workshopCity'),
+            workshopState: document.getElementById('workshopState'),
+            workshopZip: document.getElementById('workshopZip'),
+            workshopCountry: document.getElementById('workshopCountry'),
+            yearsExperience: document.getElementById('yearsExperience'),
+            averageCompletionTime: document.getElementById('averageCompletionTime'),
+            hourlyRate: document.getElementById('hourlyRate'),
+            businessHours: document.getElementById('businessHours'),
+
+            // Password Fields
+            currentPassword: document.getElementById('currentPassword'),
+            newPassword: document.getElementById('newPassword'),
+            confirmPassword: document.getElementById('confirmPassword'),
+
+            // Buttons
+            logoutBtn: document.getElementById('logout_btn'),
+            cancelBtn: document.querySelector('.btn-cancel'),
+            saveBtn: document.querySelector('.btn-save'),
+            avatarUpload: document.getElementById('shoemakerLogoUpload'),
+            form: document.getElementById('profileForm')
+        };
+
+        // Helper function to get DOM elements
+        function getElement(id) {
+            return document.getElementById(id);
+        }
+
+        // Initialize the page
+        document.addEventListener('DOMContentLoaded', async function () {
+            await initializePage();
+        });
+
+        async function initializePage() {
+            console.log('🚀 Initializing Shoemaker Settings Page...');
+
+            const user = await checkUserAuth();
+            console.log('🔐 Authentication Result:', {
+                authenticated: user.authenticated,
+                role: user.role,
+                userId: user.userId,
+                hasUserData: !!user.userData
+            });
+
+            if (!user.authenticated) {
+                console.log('❌ User not authenticated, redirecting to login');
+                window.location.href = "/login.html";
+                return;
+            }
+
+            userSession.userId = user.userId;
+            userSession.userData = user.userData;
+            userSession.role = user.role;
+
+            console.log('👤 User Session Established:', userSession);
+
+            loadShoemakerProfile();
+            setupEventListeners();
+            setupPasswordToggleListeners();
+
+            console.log('✅ Page initialization complete');
+        }
+
+        function loadShoemakerProfile() {
+            console.log('=== STARTING SHOEMAKER PROFILE LOAD ===');
+            console.log('User Session Data:', {
+                userId: userSession.userId,
+                role: userSession.role,
+                userData: userSession.userData
+            });
+
+            const shoemakerPath = `smartfit_AR_Database/shop/${userSession.userId}`;
+            console.log('📁 Database Path:', shoemakerPath);
+
+            const unsubscribe = readDataRealtime(shoemakerPath, (result) => {
+                console.log('📥 Database Response Received:', {
+                    success: result.success,
+                    hasData: !!result.data,
+                    dataKeys: result.data ? Object.keys(result.data) : 'No data'
+                });
+
+                if (result.success && result.data) {
+                    shoemakerData = result.data;
+                    console.log('👞 FULL SHOEMAKER DATA FROM DATABASE:', shoemakerData);
+                    
+                    originalEmail = shoemakerData.email || '';
+
+                    // Update Header
+                    updateHeader(shoemakerData);
+
+                    // Update Profile Section
+                    updateProfileSection(shoemakerData);
+
+                    // Update Form Fields
+                    updateFormFields(shoemakerData);
+
+                    // Load statistics
+                    loadShoemakerStatistics();
+                } else {
+                    console.error('❌ Shoemaker data not found or error:', result);
+                    // Initialize with default values for new shoemakers
+                    initializeNewShoemaker();
+                }
+            });
+
+            // Store unsubscribe for cleanup if needed
+            window.shoemakerProfileUnsubscribe = unsubscribe;
+            
+            console.log('=== SHOEMAKER PROFILE LOAD COMPLETE ===');
+        }
+
+        function initializeNewShoemaker() {
+            console.log('🆕 Initializing new shoemaker profile');
+            
+            // Set default values
+            shoemakerData = {
+                shoemakerName: 'New Shoemaker',
+                email: userSession.userData?.email || '',
+                ownerName: userSession.userData?.name || '',
+                specialty: 'custom',
+                description: 'Professional shoemaker specializing in custom footwear',
+                workshopAddress: '',
+                workshopCity: '',
+                workshopState: 'Central Luzon',
+                workshopZip: '',
+                workshopCountry: 'Philippines',
+                yearsExperience: 0,
+                averageCompletionTime: 7,
+                hourlyRate: 500,
+                businessHours: '9-5'
+            };
+            
+            // Update UI with default values
+            updateHeader(shoemakerData);
+            updateProfileSection(shoemakerData);
+            updateFormFields(shoemakerData);
+        }
+
+        function updateHeader(shoemakerData) {
+            console.log('👤 Updating header with shoemaker data...');
+
+            // Shoemaker Name
+            if (shoemakerData.shoemakerName) {
+                elements.userNameDisplay.textContent = shoemakerData.shoemakerName;
+                console.log('👞 Header Shoemaker Name set to:', shoemakerData.shoemakerName);
+            }
+
+            // Role
+            if (userSession.role) {
+                elements.userRoleDisplay.textContent = userSession.role.charAt(0).toUpperCase() + userSession.role.slice(1);
+            }
+
+            // Profile Image
+            if (shoemakerData.uploads?.shoemakerLogo?.url) {
+                elements.userAvatar.style.backgroundImage = `url(${shoemakerData.uploads.shoemakerLogo.url})`;
+                elements.userAvatar.style.backgroundSize = 'cover';
+                elements.userAvatar.textContent = '';
+                console.log('🖼️ Header Avatar set to shoemaker logo');
+            } else {
+                elements.userAvatar.textContent = shoemakerData.shoemakerName ? shoemakerData.shoemakerName.charAt(0).toUpperCase() : 'S';
+                elements.userAvatar.style.backgroundImage = 'none';
+                console.log('🖼️ Header Avatar set to default (no shoemaker logo found)');
+            }
+        }
+
+        function updateProfileSection(shoemakerData) {
+            console.log('📊 Updating profile section with shoemaker data...');
+
+            // Shoemaker Name
+            if (shoemakerData.shoemakerName) {
+                elements.profileName.textContent = shoemakerData.shoemakerName;
+                console.log('👞 Profile Name set to:', shoemakerData.shoemakerName);
+            }
+
+            // Email
+            if (shoemakerData.email) {
+                elements.profileEmail.textContent = shoemakerData.email;
+                console.log('📧 Profile Email set to:', shoemakerData.email);
+            }
+
+            // Avatar
+            if (shoemakerData.uploads?.shoemakerLogo?.url) {
+                elements.profileAvatar.src = shoemakerData.uploads.shoemakerLogo.url;
+                console.log('🖼️ Profile Avatar set to shoemaker logo URL');
+            } else {
+                setDefaultAvatar(elements.profileAvatar);
+                console.log('🖼️ Profile Avatar set to default (no shoemaker logo found)');
+            }
+        }
+
+        function updateFormFields(shoemakerData) {
+            console.log('📝 Updating form fields with shoemaker data...');
+
+            // Shoemaker Info
+            if (shoemakerData.shoemakerName) {
+                elements.shoemakerName.value = shoemakerData.shoemakerName;
+                console.log('👞 Shoemaker Name set to:', shoemakerData.shoemakerName);
+            }
+            if (shoemakerData.specialty) {
+                elements.shoemakerSpecialty.value = shoemakerData.specialty;
+                console.log('🎯 Specialty set to:', shoemakerData.specialty);
+            }
+            if (shoemakerData.description) {
+                elements.shoemakerDescription.value = shoemakerData.description;
+                console.log('📋 Description set (length):', shoemakerData.description.length);
+            }
+
+            // Contact Info
+            if (shoemakerData.ownerName) {
+                elements.ownerName.value = shoemakerData.ownerName;
+                console.log('👤 Owner Name set to:', shoemakerData.ownerName);
+            }
+            if (shoemakerData.email) {
+                elements.ownerEmail.value = shoemakerData.email;
+                console.log('📧 Email set to:', shoemakerData.email);
+            }
+            if (shoemakerData.ownerPhone) {
+                elements.ownerPhone.value = shoemakerData.ownerPhone;
+                console.log('📞 Phone set to:', shoemakerData.ownerPhone);
+            }
+
+            // Location Info
+            if (shoemakerData.workshopAddress) {
+                elements.workshopAddress.value = shoemakerData.workshopAddress;
+                console.log('📍 Address set to:', shoemakerData.workshopAddress);
+            }
+            if (shoemakerData.workshopCity) {
+                elements.workshopCity.value = shoemakerData.workshopCity;
+                console.log('🏙️ City set to:', shoemakerData.workshopCity);
+            }
+            if (shoemakerData.workshopState) {
+                elements.workshopState.value = shoemakerData.workshopState;
+                console.log('🗺️ State set to:', shoemakerData.workshopState);
+            }
+            if (shoemakerData.workshopZip) {
+                elements.workshopZip.value = shoemakerData.workshopZip;
+                console.log('📮 ZIP set to:', shoemakerData.workshopZip);
+            }
+            if (shoemakerData.workshopCountry) {
+                elements.workshopCountry.value = shoemakerData.workshopCountry;
+                console.log('🌍 Country set to:', shoemakerData.workshopCountry);
+            }
+
+            // Business Info
+            if (shoemakerData.yearsExperience !== undefined) {
+                elements.yearsExperience.value = shoemakerData.yearsExperience;
+                console.log('📅 Years Experience set to:', shoemakerData.yearsExperience);
+            }
+            if (shoemakerData.averageCompletionTime !== undefined) {
+                elements.averageCompletionTime.value = shoemakerData.averageCompletionTime;
+                console.log('⏱️ Average Completion Time set to:', shoemakerData.averageCompletionTime);
+            }
+            if (shoemakerData.hourlyRate !== undefined) {
+                elements.hourlyRate.value = shoemakerData.hourlyRate;
+                console.log('💰 Hourly Rate set to:', shoemakerData.hourlyRate);
+            }
+            if (shoemakerData.businessHours) {
+                elements.businessHours.value = shoemakerData.businessHours;
+                console.log('🕒 Business Hours set to:', shoemakerData.businessHours);
+            }
+
+            console.log('✅ Form fields update complete');
+        }
+
+        function loadShoemakerStatistics() {
+            // Order Count
+            const ordersPath = 'smartfit_AR_Database/customizedtransactions';
+
+            const ordersUnsubscribe = readDataRealtime(ordersPath, (result) => {
+                if (result.success && result.data) {
+                    let orderCount = 0;
+                    let totalRating = 0;
+                    let ratingCount = 0;
+
+                    const transactions = result.data;
+                    Object.values(transactions).forEach(userOrders => {
+                        Object.values(userOrders).forEach(order => {
+                            if (order.shoemakerId === userSession.userId) {
+                                orderCount++;
+
+                                // Check for feedback
+                                if (order.feedback) {
+                                    totalRating += order.feedback.rating;
+                                    ratingCount++;
+                                }
+                            }
+                        });
+                    });
+
+                    if (elements.orderCount) {
+                        elements.orderCount.textContent = orderCount;
+                    }
+
+                    // Calculate average rating
+                    const avgRating = ratingCount > 0 ? (totalRating / ratingCount).toFixed(1) : 'N/A';
+                    if (elements.ratingValue) {
+                        elements.ratingValue.textContent = avgRating;
+                    }
+                }
+            });
+
+            // Product Count (custom shoe designs)
+            const productsPath = `smartfit_AR_Database/shoemaker_designs/${userSession.userId}`;
+
+            const productsUnsubscribe = readDataRealtime(productsPath, (result) => {
+                if (result.success && result.data) {
+                    const productCount = Object.keys(result.data).length;
+                    if (elements.productCount) {
+                        elements.productCount.textContent = productCount;
+                    }
+                } else {
+                    if (elements.productCount) {
+                        elements.productCount.textContent = '0';
+                    }
+                }
+            });
+
+            // Store unsubscribes for cleanup
+            window.ordersUnsubscribe = ordersUnsubscribe;
+            window.productsUnsubscribe = productsUnsubscribe;
+        }
+
+        function setupEventListeners() {
+            // Avatar upload
+            if (elements.avatarUpload) {
+                elements.avatarUpload.addEventListener('change', function (e) {
+                    const file = e.target.files[0];
+                    if (file) {
+                        avatarFile = file;
+                        const reader = new FileReader();
+                        reader.onload = function (e) {
+                            if (elements.profileAvatar) elements.profileAvatar.src = e.target.result;
+                            // Update header avatar as well
+                            if (elements.userAvatar) {
+                                elements.userAvatar.style.backgroundImage = `url(${e.target.result})`;
+                                elements.userAvatar.textContent = '';
+                            }
+                        };
+                        reader.readAsDataURL(file);
+                    }
+                });
+            }
+
+            // Form submission
+            if (elements.form) {
+                elements.form.addEventListener('submit', async function (e) {
+                    e.preventDefault();
+
+                    try {
+                        // Validate required fields first
+                        const missingFields = validateRequiredFields();
+                        if (missingFields.length > 0) {
+                            const errorMessage = showFieldValidationError(missingFields);
+                            throw new Error(`Please fill in all required fields: ${errorMessage}`);
+                        }
+
+                        showLoading(true);
+                        const updates = {};
+                        let emailChanged = false;
+                        let passwordChanged = false;
+
+                        // Check if email changed
+                        if (elements.ownerEmail.value !== originalEmail) {
+                            if (!elements.currentPassword.value) {
+                                throw new Error('Please enter your current password to change email');
+                            }
+                            throw new Error('Email changes require additional verification. Please contact support.');
+                        }
+
+                        // Check if password changed
+                        if (elements.newPassword.value) {
+                            passwordChanged = await changePassword(
+                                elements.currentPassword.value,
+                                elements.newPassword.value,
+                                elements.confirmPassword.value
+                            );
+                        }
+
+                        // Update shoemaker data
+                        updates.shoemakerName = elements.shoemakerName.value.trim();
+                        updates.specialty = elements.shoemakerSpecialty.value;
+                        updates.description = elements.shoemakerDescription.value.trim();
+                        updates.ownerName = elements.ownerName.value.trim();
+                        updates.ownerPhone = elements.ownerPhone.value.trim();
+                        updates.workshopAddress = elements.workshopAddress.value.trim();
+                        updates.workshopCity = elements.workshopCity.value;
+                        updates.workshopState = elements.workshopState.value;
+                        updates.workshopZip = elements.workshopZip.value.trim();
+                        updates.workshopCountry = elements.workshopCountry.value;
+                        updates.yearsExperience = parseInt(elements.yearsExperience.value) || 0;
+                        updates.averageCompletionTime = parseInt(elements.averageCompletionTime.value) || 7;
+                        updates.hourlyRate = parseInt(elements.hourlyRate.value) || 500;
+                        updates.businessHours = elements.businessHours.value;
+
+                        // Upload avatar if changed
+                        if (avatarFile) {
+                            const oldUrl = shoemakerData.uploads?.shoemakerLogo?.url || null;
+                            const avatarUrl = await uploadFile(userSession.userId, avatarFile, 'shoemakerLogo', oldUrl);
+                            updates.uploads = {
+                                ...(shoemakerData.uploads || {}),
+                                shoemakerLogo: {
+                                    name: avatarFile.name,
+                                    url: avatarUrl,
+                                    uploadedAt: new Date().toISOString()
+                                }
+                            };
+                        }
+
+                        const shoemakerPath = `smartfit_AR_Database/shoemaker/${userSession.userId}`;
+                        const result = await updateProfileMethod(userSession.userId, updates, shoemakerPath);
+
+                        if (!result.success) {
+                            throw new Error(result.error);
+                        }
+
+                        // Update UI
+                        if (elements.profileName) {
+                            elements.profileName.textContent = elements.shoemakerName.value;
+                        }
+                        if (elements.profileEmail) {
+                            elements.profileEmail.textContent = elements.ownerEmail.value;
+                        }
+                        if (elements.userNameDisplay) {
+                            elements.userNameDisplay.textContent = elements.shoemakerName.value;
+                        }
+
+                        if (passwordChanged) {
+                            if (elements.currentPassword) elements.currentPassword.value = '';
+                            if (elements.newPassword) elements.newPassword.value = '';
+                            if (elements.confirmPassword) elements.confirmPassword.value = '';
+                        }
+
+                        showAlert('Profile updated successfully!', 'success');
+
+                    } catch (error) {
+                        console.error('Error updating profile:', error);
+                        showAlert(error.message, 'error');
+                    } finally {
+                        showLoading(false);
+                    }
+                });
+            }
+
+            // Cancel button
+            if (elements.cancelBtn) {
+                elements.cancelBtn.addEventListener('click', function () {
+                    if (confirm('Are you sure you want to discard your changes?')) {
+                        window.location.reload();
+                    }
+                });
+            }
+
+            // Logout functionality
+            if (elements.logoutBtn) {
+                elements.logoutBtn.addEventListener('click', handleLogout);
+            }
+
+            // ZIP code input restriction
+            document.getElementById("workshopZip").addEventListener("input", function () {
+                if (this.value.length > 4) {
+                    this.value = this.value.slice(0, 4);
+                }
+            });
+        }
+
+        // Add this function to validate required fields
+        function validateRequiredFields() {
+            const requiredFields = [
+                'shoemakerName',
+                'shoemakerSpecialty',
+                'ownerName',
+                'ownerEmail',
+                'ownerPhone',
+                'workshopAddress',
+                'workshopCity',
+                'workshopZip'
+            ];
+
+            const missingFields = [];
+
+            requiredFields.forEach(fieldId => {
+                const field = getElement(fieldId);
+                if (field && !field.value.trim()) {
+                    missingFields.push(fieldId);
+
+                    // Add visual indication for missing fields
+                    field.style.borderColor = '#ef4444';
+                    field.addEventListener('input', function () {
+                        if (this.value.trim()) {
+                            this.style.borderColor = '';
+                        }
+                    });
+                } else if (field) {
+                    field.style.borderColor = '';
+                }
+            });
+
+            // Special validation for phone field
+            const phoneField = getElement('ownerPhone');
+            if (phoneField && phoneField.value.trim() && phoneField.value.trim().length < 10) {
+                missingFields.push('ownerPhone');
+                phoneField.style.borderColor = '#ef4444';
+            }
+
+            return missingFields;
+        }
+
+        // Add this function to get field labels for error messages
+        function getFieldLabel(fieldId) {
+            const labels = {
+                'shoemakerName': 'Shoemaker Name',
+                'shoemakerSpecialty': 'Specialty',
+                'ownerName': 'Owner Name',
+                'ownerEmail': 'Email',
+                'ownerPhone': 'Phone Number',
+                'workshopAddress': 'Workshop Address',
+                'workshopCity': 'City',
+                'workshopZip': 'ZIP/Postal Code'
+            };
+
+            return labels[fieldId] || fieldId;
+        }
+
+        // Add this function to show field validation errors
+        function showFieldValidationError(missingFields) {
+            const errorMessages = missingFields.map(fieldId => {
+                const label = getFieldLabel(fieldId);
+                const field = getElement(fieldId);
+
+                if (fieldId === 'ownerPhone' && field && field.value.trim()) {
+                    return `${label} must be 10 digits`;
+                } else {
+                    return `${label} is required`;
+                }
+            });
+
+            return errorMessages.join(', ');
+        }
+
+        function setDefaultAvatar(imgElement) {
+            if (!imgElement) return;
+            imgElement.src = "https://cdn-icons-png.flaticon.com/512/11542/11542598.png";
+        }
+
+        function showLoading(show) {
+            const saveBtn = elements.saveBtn;
+            if (!saveBtn) return;
+
+            if (show) {
+                saveBtn.classList.add('loading');
+                saveBtn.disabled = true;
+            } else {
+                saveBtn.classList.remove('loading');
+                saveBtn.disabled = false;
+            }
+        }
+
+        function showAlert(message, type) {
+            // Remove any existing alerts first
+            const existingAlert = document.querySelector('.alert');
+            if (existingAlert) {
+                existingAlert.remove();
+            }
+
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${type}`;
+            alertDiv.innerHTML = `
+                <i class="fas ${type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'}"></i>
+                <span>${message}</span>
+            `;
+            
+            // Insert at the top of the form
+            const form = elements.form;
+            if (form) {
+                form.insertBefore(alertDiv, form.firstChild);
+            }
+
+            // Auto remove after 5 seconds
+            setTimeout(() => {
+                if (alertDiv.parentNode) {
+                    alertDiv.remove();
+                }
+            }, 5000);
+        }
+
+        // Helper function for file uploads
+        async function uploadFile(userId, file, type, oldUrl = null) {
+            try {
+                // Delete old file if it exists
+                if (oldUrl) {
+                    try {
+                        const oldImagePath = getPathFromUrl(oldUrl);
+                        if (oldImagePath) {
+                            const deleteResult = await deleteImageFromFirebase(oldImagePath);
+                            if (deleteResult.success) {
+                                console.log('Old file deleted successfully');
+                            } else {
+                                console.log('Could not delete old file:', deleteResult.error);
+                            }
+                        }
+                    } catch (error) {
+                        console.log('No old file to delete or error deleting:', error);
+                    }
+                }
+
+                // Upload new file
+                const filePath = `uploads/shoemaker/${userId}/${type}_${Date.now()}_${file.name}`;
+                const uploadResult = await createImageToFirebase(file, filePath);
+
+                if (uploadResult.success) {
+                    console.log(`File uploaded successfully: ${filePath}`);
+                    return uploadResult.url;
+                } else {
+                    throw new Error(uploadResult.error);
+                }
+            } catch (error) {
+                console.error('Error in uploadFile:', error);
+                throw error;
+            }
+        }
+
+        // Helper function to extract path from URL
+        function getPathFromUrl(url) {
+            if (!url) return null;
+            try {
+                const base = "https://firebasestorage.googleapis.com/v0/b/opportunity-9d3bf.firebasestorage.app/o/";
+                if (url.startsWith(base)) {
+                    return decodeURIComponent(url.split(base)[1].split("?")[0]);
+                }
+                return null;
+            } catch (error) {
+                console.error("Error parsing URL:", error);
+                return null;
+            }
+        }
+
+        // WORKING PASSWORD CHANGE FUNCTION
+        async function changePassword(currentPassword, newPassword, confirmPassword) {
+            try {
+                // Validate inputs
+                if (!currentPassword) {
+                    throw new Error('Current password is required');
+                }
+
+                if (!newPassword) {
+                    throw new Error('New password is required');
+                }
+
+                if (newPassword !== confirmPassword) {
+                    throw new Error('New passwords do not match');
+                }
+
+                if (newPassword.length < 6) {
+                    throw new Error('New password must be at least 6 characters long');
+                }
+
+                // Get current user email
+                const currentEmail = shoemakerData.email || userSession.userData?.email;
+
+                if (!currentEmail) {
+                    throw new Error('Unable to determine user email');
+                }
+
+                console.log('Attempting to change password for:', currentEmail);
+
+                // First, reauthenticate the user by signing in again
+                console.log('Reauthenticating user...');
+                const reauthResult = await signInWithEmailAndPasswordWrapper(currentEmail, currentPassword);
+
+                if (!reauthResult.success) {
+                    throw new Error('Current password is incorrect. Please try again.');
+                }
+
+                console.log('Reauthentication successful, changing password...');
+
+                // Now change the password using the Firebase method
+                const changeResult = await changeUserPassword(newPassword);
+
+                if (!changeResult.success) {
+                    throw new Error(changeResult.error || 'Failed to change password');
+                }
+
+                console.log('Password changed successfully');
+                showAlert('Password changed successfully!', 'success');
+                return true;
+
+            } catch (error) {
+                console.error('Error changing password:', error);
+
+                // Provide more specific error messages
+                if (error.message.includes('auth/wrong-password')) {
+                    throw new Error('Current password is incorrect. Please try again.');
+                } else if (error.message.includes('auth/requires-recent-login')) {
+                    throw new Error('For security reasons, please log out and log back in before changing your password.');
+                } else if (error.message.includes('auth/weak-password')) {
+                    throw new Error('New password is too weak. Please choose a stronger password.');
+                } else {
+                    throw new Error(error.message || 'Failed to change password. Please try again.');
+                }
+            }
+        }
+
+        // Handle logout
+        async function handleLogout() {
+            if (confirm('Are you sure you want to logout?')) {
+                const result = await logoutUser();
+                if (result.success) {
+                    window.location.href = "/login.html";
+                } else {
+                    alert('Logout failed: ' + result.error);
+                }
+            }
+        }
+
+        // Toggle password visibility
+        function togglePassword(fieldId) {
+            const field = document.getElementById(fieldId);
+            const icon = field ? field.nextElementSibling : null;
+
+            if (field && icon && icon.classList.contains('password-toggle-icon')) {
+                if (field.type === 'password') {
+                    field.type = 'text';
+                    icon.classList.remove('fa-eye');
+                    icon.classList.add('fa-eye-slash');
+                    icon.setAttribute('aria-label', 'Hide password');
+                } else {
+                    field.type = 'password';
+                    icon.classList.remove('fa-eye-slash');
+                    icon.classList.add('fa-eye');
+                    icon.setAttribute('aria-label', 'Show password');
+                }
+            } else {
+                console.warn(`Password toggle failed: field or icon not found for ID ${fieldId}`);
+            }
+        }
+
+        // Set up password toggle event listeners
+        function setupPasswordToggleListeners() {
+            const toggleIcons = document.querySelectorAll('.password-toggle-icon');
+            toggleIcons.forEach(icon => {
+                const fieldId = icon.getAttribute('data-field-id');
+                if (fieldId) {
+                    icon.addEventListener('click', () => togglePassword(fieldId));
+                }
+            });
+        }
+
+        // Cleanup function if needed
+        function cleanup() {
+            if (window.shoemakerProfileUnsubscribe) window.shoemakerProfileUnsubscribe();
+            if (window.ordersUnsubscribe) window.ordersUnsubscribe();
+            if (window.productsUnsubscribe) window.productsUnsubscribe();
+        }
+
+        // Export for potential cleanup
+        window.cleanupShoemakerProfile = cleanup;
+    </script>
+</body>
+</html>
