@@ -3,6 +3,8 @@ import {
     logoutUser,
     readData,
     updateData,
+    createData,
+    generate18CharID,
     readDataRealtime
 } from "../../firebaseMethods.js";
 
@@ -145,7 +147,7 @@ function loadOrders() {
 // Check if order should be displayed
 async function shouldDisplayOrder(order) {
     const status = order.status?.toLowerCase() || 'pending';
-    
+
     // Always hide completed orders
     if (status === 'completed') {
         return false;
@@ -199,7 +201,7 @@ async function displayOrders(orders, ordersContainer) {
 
     for (const order of orders) {
         const shouldDisplay = await shouldDisplayOrder(order);
-        
+
         if (shouldDisplay) {
             ordersToDisplay.push(order);
             ordersToRemove.delete(order.orderId);
@@ -218,7 +220,7 @@ async function displayOrders(orders, ordersContainer) {
     // Update or create cards for orders that should be displayed
     for (const order of ordersToDisplay) {
         const existingCard = existingCards.get(order.orderId);
-        
+
         if (existingCard) {
             // Update existing card
             await updateOrderCard(existingCard, order);
@@ -268,7 +270,7 @@ async function updateOrderCard(card, order) {
         if (serialNumberData) {
             serialNumber = serialNumberData.serialNumber;
             card.dataset.serialNumber = serialNumber;
-            
+
             // Update the serial number display
             const serialElement = card.querySelector('.item-serial');
             if (serialElement) {
@@ -311,9 +313,9 @@ async function updateOrderCard(card, order) {
 // Create order card element
 async function createOrderCard(order) {
     if (!order) return null;
-    
+
     const status = order.status?.toLowerCase() || 'pending';
-    
+
     // Double-check if order should be displayed (in case of race conditions)
     const shouldDisplay = await shouldDisplayOrder(order);
     if (!shouldDisplay) {
@@ -630,9 +632,10 @@ window.validateShoe = function (serialNumber) {
 
 // Mark order as received
 window.markAsReceived = async function (orderId) {
-    // Check for unresolved issues
     let hasUnresolvedIssue = false;
+    
     try {
+        // Check for unresolved issues
         const userIssuesResult = await readData(`smartfit_AR_Database/issueReports/${userID}`);
         
         if (userIssuesResult.success && userIssuesResult.data) {
@@ -645,29 +648,61 @@ window.markAsReceived = async function (orderId) {
                 }
             }
         }
-    } catch (error) {
-        console.log("Error checking issue report:", error);
-    }
-
-    let message = 'Confirm you have received this order in good condition?';
-    if (hasUnresolvedIssue) {
-        message = 'You have an ongoing issue report for this order. Are you sure you want to mark it as received?';
-    }
-
-    if (!confirm(message)) return;
-
-    try {
+        
+        let message = 'Confirm you have received this order in good condition?';
+        if (hasUnresolvedIssue) {
+            message = 'You have an ongoing issue report for this order. Are you sure you want to mark it as received?';
+        }
+        
+        if (!confirm(message)) return;
+        
+        // Update the main order status first
+        console.log("Updating main order status to 'completed'");
         const updateResult = await updateData(
             `smartfit_AR_Database/transactions/${userID}/${orderId}`,
             { status: 'completed' }
         );
-
-        if (updateResult.success) {
-            alert('Order marked as received successfully!');
-            // The order will automatically hide due to real-time updates
-        } else {
-            alert('Failed to update order status: ' + updateResult.error);
+        
+        console.log("Main order status update result:", updateResult);
+        
+        if (!updateResult.success) {
+            alert("Failed to update order status: " + updateResult.error);
+            return;
         }
+        
+        // Add status update entry using updateData to avoid the shopLoggedin wrapper
+        console.log("Adding status update entry");
+        const updateId = generate18CharID();
+        const statusUpdatePath = `smartfit_AR_Database/transactions/${userID}/${orderId}/statusUpdates/${updateId}`;
+        
+        // Use updateData instead of createData to avoid the automatic shopLoggedin wrapper
+        const statusUpdateData = {
+            addedBy: `${userData.firstName || ''} ${userData.lastName || ''}`.trim() || "customer",
+            addedById: userID,
+            createdAt: new Date().toISOString(),
+            dateAdded: new Date().toISOString(),
+            id: updateId,
+            lastUpdated: new Date().toISOString(),
+            location: "",
+            message: "Order marked as received by customer",
+            status: "completed",
+            timestamp: new Date().getTime()
+        };
+        
+        const statusUpdateResult = await updateData(statusUpdatePath, statusUpdateData);
+        
+        console.log("Status update creation result:", statusUpdateResult);
+        
+        if (statusUpdateResult.success) {
+            alert('Order marked as received successfully!');
+            // Redirect to feedback page
+            window.location.href = `/customer/html/feedback.html?orderId=${orderId}&userId=${userID}`;
+        } else {
+            alert('Order status updated but failed to create status update: ' + statusUpdateResult.error);
+            // Still redirect even if status update fails
+            window.location.href = `/customer/html/feedback.html?orderId=${orderId}&userId=${userID}`;
+        }
+        
     } catch (error) {
         console.error('Error marking order as received:', error);
         alert('Failed to update order status. Please try again.');
