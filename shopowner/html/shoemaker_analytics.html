@@ -8,6 +8,8 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Add Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Add html2pdf.js for PDF generation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
         :root {
             --primary: #7c3aed;
@@ -1410,20 +1412,135 @@
 
         // Export data as CSV
         function exportDataAsCSV() {
-            // In a real app, this would generate a proper CSV file
-            alert('CSV export functionality would be implemented here');
+            if (allOrders.length === 0) {
+                alert('No data to export.');
+                return;
+            }
+
+            const headers = ['Order ID', 'User ID', 'Date', 'Total Amount (₱)', 'Status', 'Custom Order'];
+            const rows = allOrders.map(order => [
+                order.orderId || '',
+                order.userId || '',
+                new Date(order.orderDate || order.date || order.addedAt).toLocaleDateString(),
+                order.totalAmount || 0,
+                order.status || 'N/A',
+                order.isCustom ? 'Yes' : 'No'
+            ]);
+
+            const csvContent = [headers, ...rows].map(row => row.join(',')).join('\n');
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.setAttribute('href', url);
+            link.setAttribute('download', `shoemaker_analytics_${new Date().toISOString().slice(0, 10)}.csv`);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
         }
 
-        // Export data as PDF
-        function exportDataAsPDF() {
-            // In a real app, this would generate a proper PDF report
-            alert('PDF export functionality would be implemented here');
+        // Export data as PDF (using html2pdf)
+        async function exportDataAsPDF() {
+            const btn = exportPDFBtn;
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating...';
+            btn.disabled = true;
+
+            try {
+                // Create container for PDF content
+                const pdfContainer = document.createElement('div');
+                pdfContainer.style.padding = '20px';
+                pdfContainer.style.fontFamily = 'Arial, sans-serif';
+                pdfContainer.style.background = 'white';
+                pdfContainer.style.color = 'black';
+
+                // Header
+                pdfContainer.innerHTML = `
+                    <div style="text-align: center; margin-bottom: 30px; border-bottom: 2px solid #7c3aed; padding-bottom: 15px;">
+                        <h1 style="color: #7c3aed; margin: 0;">SmartFit AR Shoemaker Analytics Report</h1>
+                        <p style="margin: 10px 0 0; color: #475569;">
+                            Date Range: ${currentDateRange.startDate.toLocaleDateString()} - ${currentDateRange.endDate.toLocaleDateString()} 
+                            | Generated on: ${new Date().toLocaleString()}
+                        </p>
+                    </div>
+                `;
+
+                // Summary Cards
+                const summaryDiv = document.createElement('div');
+                summaryDiv.style.display = 'grid';
+                summaryDiv.style.gridTemplateColumns = 'repeat(2, 1fr)';
+                summaryDiv.style.gap = '20px';
+                summaryDiv.style.marginBottom = '30px';
+
+                const metrics = [
+                    { label: 'Total Revenue', value: totalRevenue.textContent },
+                    { label: 'Total Orders', value: totalOrders.textContent },
+                    { label: 'Unique Customers', value: totalCustomers.textContent },
+                    { label: 'Avg Order Value', value: averageOrderValue.textContent }
+                ];
+
+                metrics.forEach(metric => {
+                    const card = document.createElement('div');
+                    card.style.border = '1px solid #e2e8f0';
+                    card.style.borderRadius = '12px';
+                    card.style.padding = '15px';
+                    card.style.background = '#f8fafc';
+                    card.innerHTML = `
+                        <div style="font-weight: bold; color: #475569;">${metric.label}</div>
+                        <div style="font-size: 24px; font-weight: 700; color: #1e293b;">${metric.value}</div>
+                    `;
+                    summaryDiv.appendChild(card);
+                });
+                pdfContainer.appendChild(summaryDiv);
+
+                // Add Charts as Images
+                const chartIds = ['revenueTrendsChart', 'statusDistributionChart', 'monthlyOrdersChart', 'monthlyRevenueChart'];
+                const chartTitles = ['Revenue Trends', 'Order Status Distribution', 'Orders by Month', 'Revenue by Month'];
+
+                for (let i = 0; i < chartIds.length; i++) {
+                    const canvas = document.getElementById(chartIds[i]);
+                    if (canvas) {
+                        const title = document.createElement('h3');
+                        title.textContent = chartTitles[i];
+                        title.style.textAlign = 'center';
+                        title.style.color = '#7c3aed';
+                        title.style.margin = '30px 0 15px';
+                        pdfContainer.appendChild(title);
+
+                        const img = document.createElement('img');
+                        img.src = canvas.toDataURL('image/png');
+                        img.style.maxWidth = '100%';
+                        img.style.height = 'auto';
+                        img.style.marginBottom = '20px';
+                        img.style.border = '1px solid #e2e8f0';
+                        img.style.borderRadius = '8px';
+                        pdfContainer.appendChild(img);
+                    }
+                }
+
+                // Options for html2pdf
+                const opt = {
+                    margin: [10, 10, 10, 10],
+                    filename: `shoemaker_analytics_report_${new Date().toISOString().slice(0, 10)}.pdf`,
+                    image: { type: 'jpeg', quality: 0.98 },
+                    html2canvas: { scale: 2, useCORS: true },
+                    jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' },
+                    pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+                };
+
+                await html2pdf().set(opt).from(pdfContainer).save();
+            } catch (error) {
+                console.error('Error generating PDF:', error);
+                alert('Failed to generate PDF. Please try again.');
+            } finally {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }
         }
 
-        // Generate full report
+        // Generate Full Report (same as PDF export for now)
         function generateFullReport() {
-            // In a real app, this would generate a comprehensive report
-            alert('Full report generation would be implemented here');
+            exportDataAsPDF();
         }
 
         // Set up event listeners
