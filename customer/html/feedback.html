@@ -98,6 +98,44 @@
                         <input type="hidden" id="ratingValue" name="rating" value="0">
                     </div>
 
+                    <!-- Media Upload Section -->
+                    <div class="media-section">
+                        <div class="rating-title">Add Photos & Videos (Optional)</div>
+                        <div class="media-upload-container">
+                            <!-- Photos Section -->
+                            <div class="photos-section">
+                                <label class="media-label">
+                                    <i class="fas fa-images"></i>
+                                    Add Photos (Max 3)
+                                    <input type="file" id="photoUpload" accept="image/*" multiple style="display: none;">
+                                </label>
+                                <div class="photos-preview" id="photosPreview">
+                                    <div class="upload-placeholder" onclick="document.getElementById('photoUpload').click()">
+                                        <i class="fas fa-plus"></i>
+                                        <span>Add Photos</span>
+                                    </div>
+                                </div>
+                                <div class="media-info">Supported: JPG, PNG, JPEG, HEIC</div>
+                            </div>
+
+                            <!-- Video Section -->
+                            <div class="video-section">
+                                <label class="media-label">
+                                    <i class="fas fa-video"></i>
+                                    Add Video (Max 1)
+                                    <input type="file" id="videoUpload" accept="video/*" style="display: none;">
+                                </label>
+                                <div class="video-preview" id="videoPreview">
+                                    <div class="upload-placeholder" onclick="document.getElementById('videoUpload').click()">
+                                        <i class="fas fa-plus"></i>
+                                        <span>Add Video</span>
+                                    </div>
+                                </div>
+                                <div class="media-info">Supported: MP4, MOV, AVI (Max 50MB)</div>
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="comment-section">
                         <label for="comment" class="rating-title">Share your thoughts (optional)</label>
                         <textarea id="comment" name="comment"
@@ -125,6 +163,15 @@
                             <i class="fas fa-star"></i>
                         </div>
                     </div>
+
+                    <!-- Existing Media Display -->
+                    <div class="existing-media-section" id="existingMediaSection" style="display: none;">
+                        <div class="rating-title">Your Photos & Videos:</div>
+                        <div class="existing-media-preview" id="existingMediaPreview">
+                            <!-- Media will be dynamically added here -->
+                        </div>
+                    </div>
+
                     <div class="comment-section">
                         <div class="rating-title">Your Review:</div>
                         <div id="existingComment"
@@ -136,6 +183,15 @@
                     </button>
                 </div>
             </div>
+        </div>
+    </div>
+
+    <!-- Media Modal -->
+    <div id="mediaModal" class="media-modal">
+        <div class="media-modal-content">
+            <button class="media-modal-close" onclick="closeMediaModal()">
+                <i class="fas fa-times"></i>
+            </button>
         </div>
     </div>
 
