@@ -26,6 +26,11 @@ let statusDistributionChart = null;
 let monthlyOrdersChart = null;
 let monthlyRevenueChart = null;
 
+// Pagination variables
+let currentPage = 1;
+let itemsPerPage = 10; // You can change this value
+let filteredTransactions = [];
+
 // DOM Elements
 const totalRevenue = document.getElementById('totalRevenue');
 const totalOrders = document.getElementById('totalOrders');
@@ -55,6 +60,12 @@ const recentSalesStartDateInput = document.getElementById('recentSalesStartDate'
 const recentSalesEndDateInput = document.getElementById('recentSalesEndDate');
 const applyRecentSalesDateRangeBtn = document.getElementById('applyRecentSalesDateRange');
 const recentSalesDateRange = document.getElementById('recentSalesDateRange');
+
+// Pagination elements
+const prevPageBtn = document.getElementById('prevPageBtn');
+const nextPageBtn = document.getElementById('nextPageBtn');
+const pageNumbers = document.getElementById('pageNumbers');
+const paginationInfo = document.getElementById('paginationInfo');
 
 // Export buttons
 const exportCSVBtn = document.getElementById('exportCSVBtn');
@@ -160,10 +171,11 @@ function setupRealtimeListeners() {
         realtimeListener();
     }
     
-    const transactionsPath = `smartfit_AR_Database/transactions/${userSession.shopId}`;
+    const transactionsPath = `smartfit_AR_Database/transactions`;
     realtimeListener = readDataRealtime(transactionsPath, (result) => {
+        console.log(result);
         if (result.success) {
-            console.log("Real-time update detected in transactions");
+            console.log("Real-time update detected in transactions"+result);
             if (result.data) {
                 processRealtimeOrders(result.data);
                 updateAnalyticsCards();
@@ -281,6 +293,9 @@ function displayTransactions(transactions, filter) {
     
     recentSalesTable.innerHTML = '';
 
+    // Reset to first page when filter changes
+    currentPage = 1;
+
     let validTransactions = transactions;
 
     // Apply date range filter if set
@@ -304,32 +319,65 @@ function displayTransactions(transactions, filter) {
     } else {
         const now = new Date();
         if (filter.toLowerCase() === 'day') {
+            // ✅ FIXED: Get today's date (start of day) correctly
+            const today = new Date();
+            today.setHours(0, 0, 0, 0); // Start of today
+            
+            const tomorrow = new Date(today);
+            tomorrow.setDate(tomorrow.getDate() + 1); // Start of tomorrow
+            
             validTransactions = validTransactions.filter(t => {
                 const transactionDate = new Date(t.orderDate || t.date);
-                const today = new Date();
-                today.setDate(now.getDate() - 1);
-                return transactionDate >= today;
+                return transactionDate >= today && transactionDate < tomorrow;
             });
         } else if (filter.toLowerCase() === 'week') {
+            // ✅ FIXED: Get start of week correctly
+            const weekAgo = new Date();
+            weekAgo.setDate(now.getDate() - 7);
+            weekAgo.setHours(0, 0, 0, 0);
+            
             validTransactions = validTransactions.filter(t => {
                 const transactionDate = new Date(t.orderDate || t.date);
-                const weekAgo = new Date();
-                weekAgo.setDate(now.getDate() - 7);
                 return transactionDate >= weekAgo;
             });
         } else if (filter.toLowerCase() === 'month') {
+            // ✅ FIXED: Get start of month correctly
+            const monthAgo = new Date();
+            monthAgo.setMonth(now.getMonth() - 1);
+            monthAgo.setHours(0, 0, 0, 0);
+            
             validTransactions = validTransactions.filter(t => {
                 const transactionDate = new Date(t.orderDate || t.date);
-                const monthAgo = new Date();
-                monthAgo.setMonth(now.getMonth() - 1);
                 return transactionDate >= monthAgo;
             });
         }
     }
 
-    // Sort by date descending and limit to 9
+    // Sort by date descending
     validTransactions.sort((a, b) => new Date(b.orderDate || b.date) - new Date(a.orderDate || a.date));
-    validTransactions.slice(0, 9).forEach(transaction => {
+    
+    // Store filtered transactions for pagination
+    filteredTransactions = validTransactions;
+    
+    // Update pagination
+    updatePagination();
+    
+    // Display current page
+    displayCurrentPage();
+}
+
+function displayCurrentPage() {
+    const recentSalesTable = getElement('recentSales');
+    if (!recentSalesTable) return;
+    
+    recentSalesTable.innerHTML = '';
+    
+    // Calculate start and end index for current page
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = Math.min(startIndex + itemsPerPage, filteredTransactions.length);
+    
+    // Display transactions for current page
+    filteredTransactions.slice(startIndex, endIndex).forEach(transaction => {
         const row = document.createElement('tr');
 
         const date = new Date(new Date(transaction.orderDate || transaction.date).toLocaleString("en-US", { timeZone: "Asia/Manila" }));
@@ -352,6 +400,53 @@ function displayTransactions(transactions, filter) {
         `;
         recentSalesTable.appendChild(row);
     });
+}
+
+function updatePagination() {
+    const totalPages = Math.ceil(filteredTransactions.length / itemsPerPage);
+    
+    // Update pagination info
+    const startIndex = (currentPage - 1) * itemsPerPage + 1;
+    const endIndex = Math.min(currentPage * itemsPerPage, filteredTransactions.length);
+    
+    if (paginationInfo) {
+        paginationInfo.textContent = `Showing ${startIndex}-${endIndex} of ${filteredTransactions.length} items`;
+    }
+    
+    // Update previous/next buttons
+    if (prevPageBtn) {
+        prevPageBtn.disabled = currentPage === 1;
+    }
+    
+    if (nextPageBtn) {
+        nextPageBtn.disabled = currentPage === totalPages || totalPages === 0;
+    }
+    
+    // Update page numbers
+    if (pageNumbers) {
+        pageNumbers.innerHTML = '';
+        
+        // Show up to 5 page numbers
+        let startPage = Math.max(1, currentPage - 2);
+        let endPage = Math.min(totalPages, startPage + 4);
+        
+        // Adjust if we're near the end
+        if (endPage - startPage < 4) {
+            startPage = Math.max(1, endPage - 4);
+        }
+        
+        for (let i = startPage; i <= endPage; i++) {
+            const pageBtn = document.createElement('button');
+            pageBtn.className = `page-number ${i === currentPage ? 'active' : ''}`;
+            pageBtn.textContent = i;
+            pageBtn.addEventListener('click', () => {
+                currentPage = i;
+                displayCurrentPage();
+                updatePagination();
+            });
+            pageNumbers.appendChild(pageBtn);
+        }
+    }
 }
 
 function displayInventoryChanges(changes) {
@@ -1262,6 +1357,28 @@ function setupEventListeners() {
         });
     }
 
+    // Pagination buttons
+    if (prevPageBtn) {
+        prevPageBtn.addEventListener('click', () => {
+            if (currentPage > 1) {
+                currentPage--;
+                displayCurrentPage();
+                updatePagination();
+            }
+        });
+    }
+
+    if (nextPageBtn) {
+        nextPageBtn.addEventListener('click', () => {
+            const totalPages = Math.ceil(filteredTransactions.length / itemsPerPage);
+            if (currentPage < totalPages) {
+                currentPage++;
+                displayCurrentPage();
+                updatePagination();
+            }
+        });
+    }
+
     // Export buttons
     if (exportCSVBtn) exportCSVBtn.addEventListener('click', exportDataAsCSV);
     if (exportPDFBtn) exportPDFBtn.addEventListener('click', exportDataAsPDF);
@@ -1302,8 +1419,170 @@ async function handlePrint() {
     btn.classList.add('loading');
 
     try {
-        // ... (keep your existing print code here)
-        alert('Print functionality remains as implemented');
+        // Create a container for all the content
+        const printContainer = document.createElement('div');
+        printContainer.style.padding = '20px';
+        printContainer.style.fontFamily = 'Arial, sans-serif';
+
+        // Add header with shop name and logo
+        const header = document.createElement('div');
+        header.style.display = 'flex';
+        header.style.justifyContent = 'space-between';
+        header.style.alignItems = 'center';
+        header.style.marginBottom = '20px';
+        header.style.borderBottom = '1px solid #ddd';
+        header.style.paddingBottom = '20px';
+
+        const shopTitle = document.createElement('h1');
+        shopTitle.textContent = `${userSession.shopName || 'Shop'} Analytics Report`;
+        shopTitle.style.margin = '0';
+        shopTitle.style.fontSize = '24px';
+        shopTitle.style.color = '#333';
+
+        const reportDate = document.createElement('div');
+        reportDate.textContent = `Report Date: ${new Date().toLocaleDateString()}`;
+        reportDate.style.fontSize = '14px';
+        reportDate.style.color = '#666';
+
+        header.appendChild(shopTitle);
+        header.appendChild(reportDate);
+        printContainer.appendChild(header);
+
+        // Convert charts to images first
+        const charts = [
+            getElement('salesChart'),
+            getElement('inventoryStatusChart')
+        ];
+
+        // Replace each chart with its image representation
+        for (const chart of charts) {
+            if (chart) {
+                const img = document.createElement('img');
+                img.src = chart.toDataURL('image/png');
+                img.style.maxWidth = '100%';
+                img.style.height = 'auto';
+                img.style.display = 'block';
+                img.style.margin = '0 auto';
+
+                // Create a container for the chart
+                const chartContainer = document.createElement('div');
+                chartContainer.style.marginBottom = '30px';
+                chartContainer.style.pageBreakInside = 'avoid';
+                chartContainer.appendChild(img);
+
+                // Add the chart title
+                const chartTitle = chart.closest('.analytics-card')?.querySelector('.card-title');
+                if (chartTitle) {
+                    const titleClone = chartTitle.cloneNode(true);
+                    titleClone.style.marginBottom = '15px';
+                    titleClone.style.textAlign = 'center';
+                    titleClone.style.fontSize = '18px';
+                    chartContainer.insertBefore(titleClone, img);
+                }
+
+                printContainer.appendChild(chartContainer);
+            }
+        }
+
+        // Clone all analytics cards
+        const analyticsCards = document.querySelectorAll('.analytics-card');
+
+        for (const card of analyticsCards) {
+            if (card.querySelector('canvas')) continue;
+
+            const clone = card.cloneNode(true);
+            clone.style.boxShadow = 'none';
+            clone.style.border = '1px solid #ddd';
+            clone.style.borderRadius = '5px';
+            clone.style.padding = '15px';
+            clone.style.marginBottom = '20px';
+            clone.style.pageBreakInside = 'avoid';
+
+            const cardTitle = clone.querySelector('.card-title');
+            if (cardTitle) {
+                cardTitle.style.fontSize = '18px';
+                cardTitle.style.marginBottom = '15px';
+            }
+
+            const tables = clone.querySelectorAll('table');
+            tables.forEach(table => {
+                table.style.width = '100%';
+                table.style.fontSize = '10pt';
+                table.style.borderCollapse = 'collapse';
+
+                const ths = table.querySelectorAll('th');
+                ths.forEach(th => {
+                    th.style.backgroundColor = '#f5f5f5';
+                    th.style.padding = '8px';
+                    th.style.textAlign = 'left';
+                });
+
+                const tds = table.querySelectorAll('td');
+                tds.forEach(td => {
+                    td.style.padding = '8px';
+                    td.style.borderBottom = '1px solid #ddd';
+                });
+            });
+
+            printContainer.appendChild(clone);
+        }
+
+        // PDF options - now with landscape orientation and visible footer
+        const opt = {
+            margin: [20, 40, 30, 40], // Increased bottom margin for footer
+            filename: `${userSession.shopName || 'Shop'}_Analytics_${new Date().toISOString().slice(0, 10)}.pdf`,
+            image: { type: 'jpeg', quality: 1.0 },
+            html2canvas: {
+                scale: 2,
+                logging: false,
+                useCORS: true,
+                allowTaint: true,
+                letterRendering: true,
+                // Ensure footer is rendered
+                onclone: function (clonedDoc) {
+                    const footer = clonedDoc.createElement('div');
+                    footer.style.position = 'fixed';
+                    footer.style.bottom = '0';
+                    footer.style.width = '100%';
+                    footer.style.textAlign = 'center';
+                    footer.style.fontSize = '10px';
+                    footer.style.color = '#666';
+                    footer.style.padding = '5px';
+                    footer.style.borderTop = '1px solid #eee';
+                    footer.innerHTML = `Page <span class="pageNumber"></span> of <span class="totalPages"></span>`;
+                    clonedDoc.body.appendChild(footer);
+                }
+            },
+            jsPDF: {
+                unit: 'mm',
+                format: 'a4',
+                orientation: 'landscape' // Changed to landscape
+            },
+            pagebreak: { mode: ['avoid-all', 'css', 'legacy'] },
+            // Header configuration
+            header: {
+                height: '15mm',
+                contents: `<div style="text-align: center; font-size: 12px; color: #333; border-bottom: 1px solid #eee; padding-bottom: 5px;">
+                    ${userSession.shopName || 'Shop'} Analytics Report - ${new Date().toLocaleDateString()}
+                </div>`
+            },
+            // Footer configuration - now properly visible
+            footer: {
+                height: '15mm',
+                contents: {
+                    first: '',
+                    default: function (pageNum, numPages) {
+                        return `<div style="text-align: center; font-size: 10px; color: #666; border-top: 1px solid #eee; padding-top: 5px; margin-top: 10px;">
+                            Page ${pageNum} of ${numPages}
+                        </div>`;
+                    },
+                    last: ''
+                }
+            }
+        };
+
+        await new Promise(resolve => setTimeout(resolve, 300));
+        await html2pdf().set(opt).from(printContainer).save();
     } catch (error) {
         console.error('Error generating PDF:', error);
     } finally {
