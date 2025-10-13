@@ -39,7 +39,7 @@ const backButton = document.getElementById('back-button');
 const expandedControls = document.getElementById('expanded-controls');
 const exitBtnExpanded = document.getElementById('exit-btn-expanded');
 
-const API_BASE_URL = 'https://deepareffecapi.onrender.com';
+const API_BASE_URL = 'https://apideepareffect.onrender.com';
 
 // Function to build effect map directly from Firebase (primary method)
 async function buildEffectMapFromFirebase() {
