@@ -66,7 +66,7 @@ async function initializeDashboard() {
         }
     } 
     else if (user.role.toLowerCase() === "shoemaker") {
-        getElement("shoeVerificationbtn").style.display = "none";
+        window.location.href = `/shopowner/html/shoemaker_dashboard.html`;
     }
 
     // Load dashboard data
