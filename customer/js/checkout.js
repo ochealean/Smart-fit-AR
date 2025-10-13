@@ -15,6 +15,8 @@ function getElement(id) {
 // Global variables
 let userData = null;
 let userId = null;
+let shippingConfig = null;
+let currentShippingFee = 0;
 
 // Initialize the page
 async function initializeCheckout() {
@@ -33,11 +35,20 @@ async function initializeCheckout() {
         return;
     }
 
+    // Load shipping configuration
+    await loadShippingConfig();
+
+    // Debug coordinates
+    await debugCoordinates();
+    
     // Load user profile
     loadUserProfile();
-    
+
     // Load order summary
     await loadOrderSummary();
+    
+    // Calculate and display shipping fee
+    await calculateAndDisplayShippingFee();
     
     // Set up event listeners
     setupEventListeners();
@@ -45,24 +56,837 @@ async function initializeCheckout() {
     document.body.style.display = '';
 }
 
-// Load user profile
-function loadUserProfile() {
-    const userNameDisplay1 = getElement('userName_display1');
-    const userNameDisplay2 = getElement('userName_display2');
-    const imageProfile = getElement('imageProfile');
-    
-    if (userNameDisplay1) {
-        userNameDisplay1.textContent = userData.firstName || 'Customer';
+// Load shipping configuration and shop location from Firebase
+async function loadShippingConfig() {
+    try {
+        // First, get the shipping configuration
+        const configResult = await readData('smartfit_AR_Database/shipping_config/default');
+        
+        if (configResult.success && configResult.data) {
+            shippingConfig = configResult.data;
+            console.log('Shipping config loaded:', shippingConfig);
+        } else {
+            // Fallback configuration if not found in database
+            shippingConfig = {
+                baseFee: 50,
+                perKmRate: 2,
+                weightConfig: {
+                    shoeWeight: 0.5,
+                    perKgRate: 10,
+                    maxStandardWeight: 5
+                },
+                serviceFee: 20,
+                maxDistance: 100,
+                multiShopConfig: {
+                    additionalShopFee: 30,
+                    maxAdditionalShops: 10
+                }
+            };
+            console.warn('Using fallback shipping configuration');
+        }
+
+        // Now get the shop location from the shop owner's data
+        await loadShopLocation();
+        
+    } catch (error) {
+        console.error('Error loading shipping config:', error);
+        // Use fallback configuration
+        shippingConfig = {
+            baseFee: 50,
+            perKmRate: 2,
+            weightConfig: {
+                shoeWeight: 0.5,
+                perKgRate: 10,
+                maxStandardWeight: 5
+            },
+            serviceFee: 20,
+            maxDistance: 100
+        };
+        await loadShopLocation(); // Still try to load shop location
+    }
+}
+
+// Load shop location from shop owner data
+async function loadShopLocation() {
+    try {
+        // Get all shops and use the first one found as the main shop location
+        const shopsResult = await readData('smartfit_AR_Database/shop');
+        
+        if (shopsResult.success && shopsResult.data) {
+            const shops = shopsResult.data;
+            console.log('Found shops:', shops);
+            
+            // Find the first shop with valid coordinates
+            let shopWithCoords = null;
+            let shopId = null;
+            
+            // Iterate through shop IDs to find the first valid shop
+            for (const [id, shopData] of Object.entries(shops)) {
+                const lat = parseFloat(shopData.latitude);
+                const lng = parseFloat(shopData.longitude);
+                if (!isNaN(lat) && !isNaN(lng) && lat !== 0 && lng !== 0) {
+                    shopWithCoords = shopData;
+                    shopId = id;
+                    break;
+                }
+            }
+            
+            if (shopWithCoords) {
+                const lat = parseFloat(shopWithCoords.latitude);
+                const lng = parseFloat(shopWithCoords.longitude);
+                
+                shippingConfig.shopLocation = {
+                    latitude: lat,
+                    longitude: lng,
+                    shopName: shopWithCoords.shopName || 'Main Shop',
+                    shopId: shopId
+                };
+                console.log('Shop location loaded:', shippingConfig.shopLocation);
+            } else {
+                // Fallback to default Bataan coordinates
+                shippingConfig.shopLocation = {
+                    latitude: 14.677350,
+                    longitude: 120.530303,
+                    shopName: 'Default Bataan Location',
+                    shopId: 'default'
+                };
+                console.warn('No shop with valid coordinates found, using default location');
+            }
+        } else {
+            // Fallback to default Bataan coordinates
+            shippingConfig.shopLocation = {
+                latitude: 14.677350,
+                longitude: 120.530303,
+                shopName: 'Default Bataan Location',
+                shopId: 'default'
+            };
+            console.warn('No shops found in database, using default location');
+        }
+    } catch (error) {
+        console.error('Error loading shop location:', error);
+        // Fallback to default Bataan coordinates
+        shippingConfig.shopLocation = {
+            latitude: 14.677350,
+            longitude: 120.530303,
+            shopName: 'Default Bataan Location',
+            shopId: 'default'
+        };
+    }
+}
+
+async function debugCoordinates() {
+    try {
+        // Check customer coordinates
+        const customerResult = await readData(`smartfit_AR_Database/customers/${userId}`);
+        if (customerResult.success && customerResult.data) {
+            const customerData = customerResult.data;
+            console.log('Customer coordinates debug:', {
+                rawLatitude: customerData.latitude,
+                rawLongitude: customerData.longitude,
+                parsedLat: parseFloat(customerData.latitude),
+                parsedLng: parseFloat(customerData.longitude),
+                isLatNaN: isNaN(parseFloat(customerData.latitude)),
+                isLngNaN: isNaN(parseFloat(customerData.longitude))
+            });
+        }
+        
+        // Check shop coordinates
+        const shopsResult = await readData('smartfit_AR_Database/shop');
+        if (shopsResult.success && shopsResult.data) {
+            const shops = Object.values(shopsResult.data);
+            shops.forEach((shop, index) => {
+                console.log(`Shop ${index} coordinates:`, {
+                    shopName: shop.shopName,
+                    rawLatitude: shop.latitude,
+                    rawLongitude: shop.longitude,
+                    parsedLat: parseFloat(shop.latitude),
+                    parsedLng: parseFloat(shop.longitude),
+                    isLatNaN: isNaN(parseFloat(shop.latitude)),
+                    isLngNaN: isNaN(parseFloat(shop.longitude))
+                });
+            });
+        }
+    } catch (error) {
+        console.error('Debug coordinates error:', error);
+    }
+}
+
+// Calculate distance using Google Maps Distance Matrix API
+async function calculateDistance(customerCoords, shopCoords) {
+    return new Promise((resolve, reject) => {
+        if (!window.google || !window.google.maps) {
+            reject(new Error('Google Maps API not loaded'));
+            return;
+        }
+
+        // Validate coordinates before making API call
+        if (isNaN(customerCoords.lat) || isNaN(customerCoords.lng) || 
+            isNaN(shopCoords.latitude) || isNaN(shopCoords.longitude)) {
+            reject(new Error('Invalid coordinates provided'));
+            return;
+        }
+
+        const service = new google.maps.DistanceMatrixService();
+        
+        const origin = new google.maps.LatLng(shopCoords.latitude, shopCoords.longitude);
+        const destination = new google.maps.LatLng(customerCoords.lat, customerCoords.lng);
+        
+        console.log('Distance Matrix API call:', {
+            origin: { lat: shopCoords.latitude, lng: shopCoords.longitude },
+            destination: { lat: customerCoords.lat, lng: customerCoords.lng }
+        });
+        
+        service.getDistanceMatrix({
+            origins: [origin],
+            destinations: [destination],
+            travelMode: google.maps.TravelMode.DRIVING,
+            unitSystem: google.maps.UnitSystem.METRIC
+        }, (response, status) => {
+            console.log('Distance Matrix API response:', { status, response });
+            
+            if (status === 'OK') {
+                const element = response.rows[0].elements[0];
+                if (element.status === 'OK') {
+                    const distanceInKm = element.distance.value / 1000; // Convert meters to kilometers
+                    resolve(distanceInKm);
+                } else {
+                    reject(new Error('Distance calculation failed: ' + element.status));
+                }
+            } else {
+                reject(new Error('Distance Matrix API error: ' + status));
+            }
+        });
+    });
+}
+
+// Calculate order weight
+function calculateOrderWeight(orderItems) {
+    const shoeWeight = shippingConfig.weightConfig.shoeWeight;
+    return orderItems.reduce((total, item) => {
+        return total + (item.quantity * shoeWeight);
+    }, 0);
+}
+
+// Calculate shipping fee
+function calculateShippingFee(distance, weight) {
+    // Validate maximum distance
+    if (distance > shippingConfig.maxDistance) {
+        return {
+            success: false,
+            error: `Delivery beyond ${shippingConfig.maxDistance}km is not available. Your distance: ${distance.toFixed(1)}km. Please contact us for special arrangements.`,
+            total: 0,
+            breakdown: null
+        };
     }
     
-    if (userNameDisplay2) {
-        userNameDisplay2.textContent = `${userData.firstName || ''} ${userData.lastName || ''}`.trim() || 'Customer';
+    // Distance cost
+    const distanceFee = distance * shippingConfig.perKmRate;
+    
+    // Weight surcharge (only for weight above base shoe weight)
+    const baseWeight = shippingConfig.weightConfig.shoeWeight;
+    const weightFee = weight > baseWeight ? 
+        (weight - baseWeight) * shippingConfig.weightConfig.perKgRate : 0;
+    
+    const total = shippingConfig.baseFee + distanceFee + weightFee + shippingConfig.serviceFee;
+    
+    return {
+        success: true,
+        total: Math.round(total),
+        distance: distance,
+        weight: weight,
+        breakdown: {
+            baseFee: shippingConfig.baseFee,
+            distanceFee: Math.round(distanceFee),
+            weightFee: Math.round(weightFee),
+            serviceFee: shippingConfig.serviceFee
+        }
+    };
+}
+
+// Calculate and display shipping fee
+async function calculateAndDisplayShippingFee() {
+    const shippingContainer = getElement('shippingCalculation');
+    const shippingBreakdown = getElement('shippingBreakdown');
+    const shippingError = getElement('shippingError');
+    const shippingLoading = document.querySelector('.shipping-loading');
+    
+    if (!shippingContainer) return;
+    
+    try {
+        // Show loading state, hide other states
+        if (shippingLoading) shippingLoading.style.display = 'flex';
+        if (shippingBreakdown) shippingBreakdown.style.display = 'none';
+        if (shippingError) shippingError.style.display = 'none';
+        
+        // Get order items to calculate weight
+        const orderItems = await getCurrentOrderItems();
+        if (orderItems.length === 0) {
+            if (shippingLoading) shippingLoading.style.display = 'none';
+            if (shippingBreakdown) {
+                shippingBreakdown.innerHTML = '<p>No items in order</p>';
+                shippingBreakdown.style.display = 'block';
+            }
+            currentShippingFee = 0;
+            return;
+        }
+
+        // Use the multi-shop shipping calculation
+        const shippingResult = await calculateMultiShopShipping(orderItems);
+        
+        if (shippingResult.success) {
+            currentShippingFee = shippingResult.totalShipping;
+            // Hide loading and show breakdown
+            if (shippingLoading) shippingLoading.style.display = 'none';
+            displayMultiShopShippingBreakdown(shippingResult);
+        } else {
+            throw new Error(shippingResult.error || 'Shipping calculation failed');
+        }
+        
+    } catch (error) {
+        console.error('Shipping calculation error:', error);
+        // Hide loading and show error
+        if (shippingLoading) shippingLoading.style.display = 'none';
+        if (shippingError) {
+            shippingError.innerHTML = `
+                <p><strong>Shipping Calculation Failed</strong></p>
+                <p>${error.message}</p>
+                <p>Using standard shipping fee calculation</p>
+            `;
+            shippingError.style.display = 'block';
+        }
+        // Fallback: calculate simple shipping
+        const orderItems = await getCurrentOrderItems();
+        currentShippingFee = 100 * orderItems.reduce((sum, item) => sum + item.quantity, 0);
     }
     
-    if (imageProfile) {
-        imageProfile.src = userData.profilePhoto || "https://cdn-icons-png.flaticon.com/512/11542/11542598.png";
+    // Update order summary with new shipping fee
+    await updateOrderSummaryWithShipping();
+}
+
+// Batch Distance Calculation Function
+async function calculateBatchDistances(customerCoords, shopLocations) {
+    return new Promise((resolve, reject) => {
+        if (!window.google || !window.google.maps) {
+            reject(new Error('Google Maps API not loaded'));
+            return;
+        }
+
+        const service = new google.maps.DistanceMatrixService();
+        
+        const origins = shopLocations.map(shop => 
+            new google.maps.LatLng(shop.latitude, shop.longitude)
+        );
+        const destination = new google.maps.LatLng(customerCoords.lat, customerCoords.lng);
+        
+        console.log('Batch Distance Matrix API call:', {
+            origins: shopLocations,
+            destination: customerCoords
+        });
+        
+        service.getDistanceMatrix({
+            origins: origins,
+            destinations: [destination],
+            travelMode: google.maps.TravelMode.DRIVING,
+            unitSystem: google.maps.UnitSystem.METRIC
+        }, (response, status) => {
+            console.log('Batch Distance Matrix API response:', { status, response });
+            
+            if (status === 'OK') {
+                const distances = {};
+                response.rows.forEach((row, index) => {
+                    const element = row.elements[0];
+                    if (element.status === 'OK') {
+                        const distanceInKm = element.distance.value / 1000;
+                        distances[shopLocations[index].shopId] = {
+                            distance: distanceInKm,
+                            duration: element.duration.text,
+                            shopName: shopLocations[index].shopName
+                        };
+                    } else {
+                        distances[shopLocations[index].shopId] = {
+                            error: `Distance calculation failed: ${element.status}`,
+                            shopName: shopLocations[index].shopName
+                        };
+                    }
+                });
+                resolve(distances);
+            } else {
+                reject(new Error('Batch Distance Matrix API error: ' + status));
+            }
+        });
+    });
+}
+
+// Display shipping breakdown
+function displayShippingBreakdown(shippingResult, distance, weight, customerCoords) {
+    const shippingBreakdown = getElement('shippingBreakdown');
+    const shippingLoading = document.querySelector('.shipping-loading');
+    
+    if (!shippingBreakdown) return;
+    
+    const { breakdown, total } = shippingResult;
+    
+    shippingBreakdown.innerHTML = `
+        <div class="coverage-info">
+            <i class="fas fa-truck"></i>
+            We deliver within ${shippingConfig.maxDistance}km of ${shippingConfig.shopLocation.shopName}
+        </div>
+        <div class="location-info">
+            <div class="location-row">
+                <strong><i class="fas fa-store"></i> Shop Location:</strong>
+                <span>${shippingConfig.shopLocation.shopName} (${shippingConfig.shopLocation.latitude.toFixed(6)}, ${shippingConfig.shopLocation.longitude.toFixed(6)})</span>
+            </div>
+            <div class="location-row">
+                <strong><i class="fas fa-home"></i> Your Location:</strong>
+                <span>${customerCoords.address}, ${customerCoords.city} (${customerCoords.lat.toFixed(6)}, ${customerCoords.lng.toFixed(6)})</span>
+            </div>
+        </div>
+        <div class="distance-info">
+            <i class="fas fa-route"></i>
+            Delivery distance: ${distance.toFixed(1)} km | Order weight: ${weight.toFixed(1)} kg
+        </div>
+        <div class="shipping-breakdown">
+            <h4>Shipping Fee Breakdown</h4>
+            <div class="breakdown-item">
+                <span>Base fee:</span>
+                <span>₱${breakdown.baseFee.toFixed(2)}</span>
+            </div>
+            <div class="breakdown-item">
+                <span>Distance (${distance.toFixed(1)} km × ₱${shippingConfig.perKmRate}/km):</span>
+                <span>₱${breakdown.distanceFee.toFixed(2)}</span>
+            </div>
+            <div class="breakdown-item">
+                <span>Weight surcharge (${weight.toFixed(1)} kg):</span>
+                <span>₱${breakdown.weightFee.toFixed(2)}</span>
+            </div>
+            <div class="breakdown-item">
+                <span>Service fee:</span>
+                <span>₱${breakdown.serviceFee.toFixed(2)}</span>
+            </div>
+            <div class="breakdown-total">
+                <span>Total Shipping:</span>
+                <span>₱${total.toFixed(2)}</span>
+            </div>
+        </div>
+    `;
+    
+    // Ensure loading is hidden and breakdown is shown
+    if (shippingLoading) shippingLoading.style.display = 'none';
+    shippingBreakdown.style.display = 'block';
+}
+
+// Get current order items for weight calculation
+async function getCurrentOrderItems() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const method = urlParams.get('method');
+    
+    if (method === "buyNow") {
+        return await prepareBuyNowOrder(urlParams);
+    } else if (method === "cartOrder") {
+        return await prepareCartOrder();
+    } else {
+        // Regular cart flow - return full cart items
+        const cartResult = await readData(`smartfit_AR_Database/carts/${userId}`);
+        if (!cartResult.success || !cartResult.data) return [];
+        
+        const cartData = cartResult.data;
+        const cartArray = Array.isArray(cartData) ? cartData : Object.values(cartData);
+        
+        // Return full cart items with shop information
+        const fullItems = [];
+        for (const cartItem of cartArray) {
+            if (cartItem) {
+                fullItems.push({
+                    shopId: cartItem.shopId,
+                    shopName: cartItem.shopName || '',
+                    shoeId: cartItem.shoeId,
+                    variantKey: cartItem.variantKey,
+                    sizeKey: cartItem.sizeKey,
+                    size: cartItem.size,
+                    quantity: parseInt(cartItem.quantity) || 1,
+                    price: parseFloat(cartItem.price) || 0,
+                    name: cartItem.shoeName || 'Unknown Shoe',
+                    variantName: cartItem.variantName || '',
+                    color: cartItem.color || '',
+                    imageUrl: cartItem.image || 'https://via.placeholder.com/150'
+                });
+            }
+        }
+        return fullItems;
+    }
+}
+
+// Prepare cart items for shipping calculation
+async function prepareCartItems(cartIds) {
+    const cartResult = await readData(`smartfit_AR_Database/carts/${userId}`);
+    if (!cartResult.success || !cartResult.data) return [];
+    
+    const cartData = cartResult.data;
+    const items = [];
+    
+    for (const cartId of cartIds) {
+        const cartItem = cartData[cartId];
+        if (cartItem) {
+            items.push({
+                shopId: cartItem.shopId,
+                shopName: cartItem.shopName || '',
+                quantity: parseInt(cartItem.quantity) || 1,
+                price: parseFloat(cartItem.price) || 0,
+                name: cartItem.shoeName || 'Unknown Shoe'
+            });
+        }
+    }
+    
+    return items;
+}
+
+// Update order summary with dynamic shipping fee
+async function updateOrderSummaryWithShipping() {
+    const items = await getCurrentOrderItems();
+    const orderSummary = getElement('orderSummary');
+    if (!orderSummary) return;
+    
+    const subtotal = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    const tax = subtotal * 0.12;
+    const total = subtotal + tax + currentShippingFee;
+
+    orderSummary.innerHTML = `
+        <div class="order-summary-item">
+            <span>Subtotal</span>
+            <span>₱${subtotal.toFixed(2)}</span>
+        </div>
+        <div class="order-summary-item">
+            <span>Tax (12% VAT)</span>
+            <span>₱${tax.toFixed(2)}</span>
+        </div>
+        <div class="order-summary-item">
+            <span>Shipping</span>
+            <span>₱${currentShippingFee.toFixed(2)}</span>
+        </div>
+        <div class="order-summary-item order-total">
+            <span>Total</span>
+            <span>₱${total.toFixed(2)}</span>
+        </div>
+    `;
+}
+
+async function calculateMultiShopShipping(orderItems) {
+    try {
+        // Group items by shop
+        const itemsByShop = {};
+        orderItems.forEach(item => {
+            if (!itemsByShop[item.shopId]) {
+                itemsByShop[item.shopId] = {
+                    shopId: item.shopId,
+                    shopName: item.shopName,
+                    items: [],
+                    totalWeight: 0
+                };
+            }
+            itemsByShop[item.shopId].items.push(item);
+            itemsByShop[item.shopId].totalWeight += (item.quantity * shippingConfig.weightConfig.shoeWeight);
+        });
+
+        const shopIds = Object.keys(itemsByShop);
+        
+        // Check if number of shops exceeds maximum
+        if (shopIds.length > shippingConfig.multiShopConfig.maxAdditionalShops + 1) {
+            return {
+                success: false,
+                error: `Maximum ${shippingConfig.multiShopConfig.maxAdditionalShops} shops allowed per order. Please reduce the number of shops.`,
+                shopCount: shopIds.length,
+                maxShops: shippingConfig.multiShopConfig.maxAdditionalShops
+            };
+        }
+
+        if (shopIds.length === 0) {
+            return { success: false, error: "No items in order" };
+        }
+
+        // Get customer coordinates
+        const customerResult = await readData(`smartfit_AR_Database/customers/${userId}`);
+        if (!customerResult.success || !customerResult.data) {
+            throw new Error('Customer data not found');
+        }
+
+        const customerData = customerResult.data;
+        const customerLat = parseFloat(customerData.latitude);
+        const customerLng = parseFloat(customerData.longitude);
+        
+        if (isNaN(customerLat) || isNaN(customerLng)) {
+            throw new Error('Invalid customer coordinates');
+        }
+
+        const customerCoords = {
+            lat: customerLat,
+            lng: customerLng,
+            address: customerData.address || 'Unknown address',
+            city: customerData.city || 'Unknown city'
+        };
+
+        // Get shop locations for all shops in the order
+        const shopLocations = [];
+        for (const shopId of shopIds) {
+            // Read from the correct path: smartfit_AR_Database/shop/{shopId}
+            const shopResult = await readData(`smartfit_AR_Database/shop/${shopId}`);
+            if (shopResult.success && shopResult.data) {
+                const shopData = shopResult.data;
+                const lat = parseFloat(shopData.latitude);
+                const lng = parseFloat(shopData.longitude);
+                
+                if (!isNaN(lat) && !isNaN(lng)) {
+                    shopLocations.push({
+                        shopId: shopId,
+                        shopName: shopData.shopName || 'Unknown Shop',
+                        latitude: lat,
+                        longitude: lng
+                    });
+                } else {
+                    console.warn(`Invalid coordinates for shop ${shopId}:`, lat, lng);
+                }
+            } else {
+                console.warn(`Shop ${shopId} not found in database`);
+            }
+        }
+
+        // Calculate distances for all shops
+        const distances = await calculateBatchDistances(customerCoords, shopLocations);
+
+        // Calculate shipping for each shop
+        const shopShipping = {};
+        let totalShipping = 0;
+        let hasOutOfRange = false;
+        const outOfRangeShops = [];
+
+        for (const shopLocation of shopLocations) {
+            const shopData = itemsByShop[shopLocation.shopId];
+            const distanceInfo = distances[shopLocation.shopId];
+            
+            if (distanceInfo.error) {
+                shopShipping[shopLocation.shopId] = {
+                    success: false,
+                    error: distanceInfo.error,
+                    shopName: shopLocation.shopName
+                };
+                continue;
+            }
+
+            const distance = distanceInfo.distance;
+            const weight = shopData.totalWeight;
+            
+            // Check if shop is within delivery range
+            if (distance > shippingConfig.maxDistance) {
+                hasOutOfRange = true;
+                outOfRangeShops.push({
+                    shopName: shopLocation.shopName,
+                    distance: distance,
+                    maxDistance: shippingConfig.maxDistance
+                });
+                shopShipping[shopLocation.shopId] = {
+                    success: false,
+                    error: `Delivery beyond ${shippingConfig.maxDistance}km not available`,
+                    distance: distance,
+                    shopName: shopLocation.shopName
+                };
+                continue;
+            }
+
+            // Calculate base shipping for this shop
+            const baseShipping = calculateShippingFee(distance, weight);
+            
+            if (baseShipping.success) {
+                shopShipping[shopLocation.shopId] = {
+                    success: true,
+                    baseFee: baseShipping.total,
+                    distance: distance,
+                    weight: weight,
+                    breakdown: baseShipping.breakdown,
+                    shopName: shopLocation.shopName,
+                    items: shopData.items
+                };
+                totalShipping += baseShipping.total;
+            } else {
+                shopShipping[shopLocation.shopId] = {
+                    success: false,
+                    error: baseShipping.error,
+                    shopName: shopLocation.shopName
+                };
+            }
+        }
+
+        // Apply multi-shop fees (no discounts)
+        if (shopIds.length > 1 && !hasOutOfRange) {
+            const additionalShops = shopIds.length - 1;
+            const additionalFees = additionalShops * shippingConfig.multiShopConfig.additionalShopFee;
+            totalShipping += additionalFees;
+        }
+
+        return {
+            success: !hasOutOfRange,
+            totalShipping: Math.round(totalShipping),
+            shopBreakdown: shopShipping,
+            outOfRangeShops: outOfRangeShops,
+            customerLocation: customerCoords,
+            shopCount: shopIds.length,
+            additionalFees: shopIds.length > 1 ? (shopIds.length - 1) * shippingConfig.multiShopConfig.additionalShopFee : 0
+        };
+
+    } catch (error) {
+        console.error('Multi-shop shipping calculation error:', error);
+        return {
+            success: false,
+            error: error.message,
+            totalShipping: 100 * orderItems.reduce((sum, item) => sum + item.quantity, 0) // Fallback
+        };
+    }
+}
+
+function displayMultiShopShippingBreakdown(shippingResult) {
+    const shippingBreakdown = getElement('shippingBreakdown');
+    const shippingLoading = document.querySelector('.shipping-loading');
+    
+    if (!shippingBreakdown) return;
+
+    if (!shippingResult.success) {
+        // Handle maximum shops exceeded error
+        if (shippingResult.maxShops) {
+            shippingBreakdown.innerHTML = `
+                <div class="shipping-error">
+                    <p><strong>Too Many Shops</strong></p>
+                    <p>Your order contains items from ${shippingResult.shopCount} shops, but we only support orders from up to ${shippingResult.maxShops} shops at once.</p>
+                    <p>Please split your order or remove items from some shops.</p>
+                </div>
+            `;
+        } else {
+            shippingBreakdown.innerHTML = `
+                <div class="shipping-error">
+                    <p><strong>Shipping Calculation Issues</strong></p>
+                    <p>${shippingResult.error || 'Some shops cannot be delivered to your location'}</p>
+                    ${shippingResult.outOfRangeShops && shippingResult.outOfRangeShops.length > 0 ? `
+                        <div class="out-of-range-shops">
+                            <p><strong>Shops beyond delivery range:</strong></p>
+                            <ul>
+                                ${shippingResult.outOfRangeShops.map(shop => `
+                                    <li>
+                                        html += \`<h4 class="shop-name-link" data-shop-id="${shop.shopId}" data-shop-name="${shop.shopName}">\`;
+                                        (${shop.distance.toFixed(1)}km - max ${shop.maxDistance}km)
+                                    </li>
+                                `).join('')}
+                            </ul>
+                        </div>
+                    ` : ''}
+                </div>
+            `;
+        }
+        shippingBreakdown.style.display = 'block';
+        if (shippingLoading) shippingLoading.style.display = 'none';
+        return;
     }
 
+    let html = `
+        <div class="coverage-info">
+            <i class="fas fa-truck"></i>
+            Order from ${shippingResult.shopCount} shop${shippingResult.shopCount > 1 ? 's' : ''} • 
+            We deliver within ${shippingConfig.maxDistance}km radius
+        </div>
+        <div class="location-info">
+            <div class="location-row">
+                <strong><i class="fas fa-home"></i> Your Location:</strong>
+                <span>${shippingResult.customerLocation.address}, ${shippingResult.customerLocation.city}</span>
+            </div>
+        </div>
+    `;
+
+    // Add breakdown for each shop
+    Object.values(shippingResult.shopBreakdown).forEach(shopShipping => {
+        if (shopShipping.success) {
+            html += `
+                <div class="shop-shipping-breakdown">
+                    <h4 class="shop-name-link" onclick="redirectToShopDetails('${shopShipping.shopId}', '${shopShipping.shopName}')">
+                        <i class="fas fa-store"></i> ${shopShipping.shopName}
+                    </h4>
+                    <div class="breakdown-item">
+                        <span>Distance:</span>
+                        <span>${shopShipping.distance.toFixed(1)} km</span>
+                    </div>
+                    <div class="breakdown-item">
+                        <span>Weight:</span>
+                        <span>${shopShipping.weight.toFixed(1)} kg</span>
+                    </div>
+                    <div class="breakdown-item">
+                        <span>Base shipping:</span>
+                        <span>₱${shopShipping.baseFee.toFixed(2)}</span>
+                    </div>
+                    <div class="breakdown-item small-text">
+                        <span>Items (${shopShipping.items.length}):</span>
+                        <span>${shopShipping.items.map(item => `${item.quantity}× ${item.name}`).join(', ')}</span>
+                    </div>
+                </div>
+            `;
+        } else {
+            html += `
+                <div class="shop-shipping-error">
+                    <h4 class="shop-name-link" onclick="redirectToShopDetails('${shopShipping.shopId}', '${shopShipping.shopName}')">
+                        <i class="fas fa-store"></i> ${shopShipping.shopName}
+                    </h4>
+                    <p class="error-text">${shopShipping.error}</p>
+                </div>
+            `;
+        }
+    });
+
+    // Add multi-shop fees if applicable (simplified without discount)
+    if (shippingResult.shopCount > 1) {
+        const additionalShops = shippingResult.shopCount - 1;
+        const additionalFees = additionalShops * shippingConfig.multiShopConfig.additionalShopFee;
+        
+        html += `
+            <div class="multi-shop-fees">
+                <h4>Multi-Shop Fees</h4>
+                <div class="breakdown-item">
+                    <span>Additional shops fee (${additionalShops} shop${additionalShops > 1 ? 's' : ''} × ₱${shippingConfig.multiShopConfig.additionalShopFee}):</span>
+                    <span>₱${additionalFees.toFixed(2)}</span>
+                </div>
+            </div>
+        `;
+    }
+
+    html += `
+        <div class="breakdown-total">
+            <span>Total Shipping Fee:</span>
+            <span>₱${shippingResult.totalShipping.toFixed(2)}</span>
+        </div>
+    `;
+
+    shippingBreakdown.innerHTML = html;
+    shippingBreakdown.style.display = 'block';
+    if (shippingLoading) shippingLoading.style.display = 'none';
+}
+
+// Redirect to shop details page
+async function redirectToShopDetails(shopId, shopName) {
+    try {
+        // Verify shop exists before redirecting
+        const shopResult = await readData(`smartfit_AR_Database/shop/${shopId}`);
+        
+        if (shopResult.success && shopResult.data) {
+            // Shop exists, proceed with redirect
+            const encodedShopName = encodeURIComponent(shopName);
+            window.location.href = `/customer/html/shopownerdetails.html?shopId=${shopId}&shopName=${encodedShopName}`;
+        } else {
+            // Shop doesn't exist or error
+            alert('Shop information is not available at the moment.');
+        }
+    } catch (error) {
+        console.error('Error verifying shop:', error);
+        // Still redirect but show error on details page if needed
+        const encodedShopName = encodeURIComponent(shopName);
+        window.location.href = `/customer/html/shopownerdetails.html?shopId=${shopId}&shopName=${encodedShopName}`;
+    }
+}
+
+// Load user profile
+function loadUserProfile() {
     // Autofill checkout form fields with user data
     getElement('firstName').value = userData.firstName || '';
     getElement('lastName').value = userData.lastName || '';
@@ -101,6 +925,18 @@ function setupEventListeners() {
             }
         });
     }
+
+    // Add event delegation for shop name links
+    document.addEventListener('click', function(event) {
+        const shopLink = event.target.closest('.shop-name-link');
+        if (shopLink) {
+            const shopId = shopLink.getAttribute('data-shop-id');
+            const shopName = shopLink.getAttribute('data-shop-name');
+            if (shopId && shopName) {
+                redirectToShopDetails(shopId, shopName);
+            }
+        }
+    });
 
     // Payment method selection
     const paymentMethods = document.querySelectorAll('.payment-method');
@@ -293,11 +1129,15 @@ async function placeOrder() {
         }
 
         // Show confirmation for the last order
-        const totalAmount = orderItems.reduce((sum, item) => sum + (item.price * item.quantity * 1.12) + 5, 0);
+        const items = await getCurrentOrderItems();
+        const subtotal = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+        const tax = subtotal * 0.12;
+        const total = subtotal + tax + currentShippingFee;
+
         showOrderConfirmationModal({
             orderId: generateOrderId(),
             shippingInfo: shippingInfo,
-            totalAmount: totalAmount
+            totalAmount: total
         });
 
     } catch (error) {
@@ -408,13 +1248,12 @@ async function prepareCartOrder() {
 async function processOrderItem(item, shippingInfo, method) {
     const orderId = generateOrderId();
     
-    // Calculate totals
+    // Calculate totals with dynamic shipping fee
     const subtotal = item.price * item.quantity;
     const tax = subtotal * 0.12;
-    const shipping = 5.00;
-    const total = subtotal + tax + shipping;
-
-    // Create order object
+    const total = subtotal + tax + (currentShippingFee / (await getCurrentOrderItems()).length); // Distribute shipping fee
+    
+    // Create order object with shipping info
     const order = {
         orderId: orderId,
         userId: userId,
@@ -422,6 +1261,7 @@ async function processOrderItem(item, shippingInfo, method) {
         date: new Date().toISOString(),
         status: 'pending',
         totalAmount: total,
+        shippingFee: currentShippingFee / (await getCurrentOrderItems()).length,
         item: {
             shopId: item.shopId,
             shoeId: item.shoeId,
@@ -582,6 +1422,9 @@ async function displaySingleItemOrder(item) {
         <img src="${item.imageUrl}" alt="${item.name}" class="cart-item-image">
         <div class="cart-item-details">
             <h4>${item.name}</h4>
+            <p class="shop-name-link" data-shop-id="${item.shopId}" data-shop-name="${item.shopName || 'Unknown Shop'}">
+                <i class="fas fa-store"></i> ${item.shopName || 'Unknown Shop'}
+            </p>
             <p>${item.variantName} (${item.color})</p>
             <p>Size: ${item.size}</p>
             <p>Quantity: ${item.quantity}</p>
@@ -649,7 +1492,8 @@ async function displayMultipleItemOrder(cartIDs) {
                 brand: shoeData.shoeBrand || 'Unknown',
                 type: shoeData.shoeType || 'Unknown',
                 gender: shoeData.shoeGender || 'Unisex',
-                availableStock: stock
+                availableStock: stock,
+                shopName: item.shopName || 'Unknown Shop'
             };
         } catch (error) {
             console.error("Error processing item:", item, error);
@@ -673,9 +1517,12 @@ async function displayMultipleItemOrder(cartIDs) {
         div.className = 'cart-item';
         div.innerHTML = `
             <img src="${item.imageUrl}" alt="${item.name}" class="cart-item-image" 
-                 onerror="this.src='https://via.placeholder.com/150'">
+                onerror="this.src='https://via.placeholder.com/150'">
             <div class="cart-item-details">
                 <h4>${item.name}</h4>
+                <p class="shop-name-link" data-shop-id="${item.shopId}" data-shop-name="${item.shopName}">
+                    <i class="fas fa-store"></i> ${item.shopName}
+                </p>
                 <p>${item.variantName} (${item.color})</p>
                 <p>Size: ${item.size}</p>
                 <p>Quantity: ${item.quantity}</p>
@@ -700,8 +1547,7 @@ function updateOrderSummary(items) {
     
     const subtotal = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
     const tax = subtotal * 0.12;
-    const shipping = items.length > 0 ? 5.00 : 0;
-    const total = subtotal + tax + shipping;
+    const total = subtotal + tax + currentShippingFee;
 
     orderSummary.innerHTML = `
         <div class="order-summary-item">
@@ -714,7 +1560,7 @@ function updateOrderSummary(items) {
         </div>
         <div class="order-summary-item">
             <span>Shipping</span>
-            <span>₱${shipping.toFixed(2)}</span>
+            <span>₱${currentShippingFee.toFixed(2)}</span>
         </div>
         <div class="order-summary-item order-total">
             <span>Total</span>
@@ -738,7 +1584,7 @@ function getCartOrderIds() {
 }
 
 // Show order confirmation modal
-function showOrderConfirmationModal(order) {
+async function showOrderConfirmationModal(order) {
     const modal = getElement('orderConfirmationModal');
     const orderIdDisplay = getElement('orderIdDisplay');
     const modalOrderSummary = getElement('modalOrderSummary');
@@ -747,8 +1593,8 @@ function showOrderConfirmationModal(order) {
 
     orderIdDisplay.textContent = order.orderId;
 
-    const shipping = 5.00;
-    const subtotal = (order.totalAmount - shipping) / 1.12;
+    const items = await getCurrentOrderItems();
+    const subtotal = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
     const tax = subtotal * 0.12;
 
     modalOrderSummary.innerHTML = `
@@ -762,7 +1608,7 @@ function showOrderConfirmationModal(order) {
         </div>
         <div class="order-summary-item">
             <span>Shipping</span>
-            <span>₱${shipping.toFixed(2)}</span>
+            <span>₱${currentShippingFee.toFixed(2)}</span>
         </div>
         <div class="order-summary-item order-total">
             <span>Total</span>
@@ -808,3 +1654,5 @@ document.addEventListener('DOMContentLoaded', function() {
         alert('Error loading checkout page. Please try refreshing.');
     });
 });
+
+window.redirectToShopDetails = redirectToShopDetails;
