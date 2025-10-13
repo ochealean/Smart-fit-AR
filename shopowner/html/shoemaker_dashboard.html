@@ -1,0 +1,1684 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shoemaker Dashboard - Order Management</title>
+    <link rel="icon" href="../../images/smartfitImages/smartfitAR-logo.png" type="image/x-icon">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Add Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --primary: #7c3aed;
+            --primary-dark: #6d28d9;
+            --primary-light: #8b5cf6;
+            --secondary: #06b6d4;
+            --secondary-dark: #0891b2;
+            --accent: #f59e0b;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --error: #ef4444;
+            --light: #f8fafc;
+            --dark: #1e293b;
+            --gray-50: #f8fafc;
+            --gray-100: #f1f5f9;
+            --gray-200: #e2e8f0;
+            --gray-300: #cbd5e1;
+            --gray-400: #94a3b8;
+            --gray-500: #64748b;
+            --gray-600: #475569;
+            --gray-700: #334155;
+            --gray-800: #1e293b;
+            --gray-900: #0f172a;
+            --text-primary: #1e293b;
+            --text-secondary: #475569;
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            --transition-slow: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            --radius-sm: 6px;
+            --radius-md: 8px;
+            --radius-lg: 12px;
+            --radius-xl: 16px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            background: var(--gray-50);
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+
+        .dashboard-container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* Sidebar Navigation */
+        .sidebar {
+            width: 260px;
+            background: white;
+            box-shadow: var(--shadow-md);
+            padding: 1.5rem 1rem;
+            display: flex;
+            flex-direction: column;
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+            z-index: 100;
+        }
+
+        .logo-container {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 2rem;
+            padding: 0 0.5rem;
+        }
+
+        .logo {
+            width: 40px;
+            height: 40px;
+            border-radius: var(--radius-md);
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+        }
+
+        .logo-text {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--gray-900);
+        }
+
+        .nav-items {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 1rem 1.25rem;
+            color: var(--gray-700);
+            text-decoration: none;
+            border-radius: var(--radius-md);
+            transition: var(--transition);
+        }
+
+        .nav-item:hover {
+            background: var(--gray-100);
+            color: var(--gray-900);
+        }
+
+        .nav-item.active {
+            background: var(--primary);
+            color: white;
+        }
+
+        .nav-item i {
+            font-size: 1.2rem;
+            width: 24px;
+            text-align: center;
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            margin-left: 260px;
+            padding: 2rem;
+        }
+
+        .dashboard-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+
+        .dashboard-title {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--gray-900);
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+        }
+
+        /* Stats Cards */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: var(--radius-xl);
+            padding: 1.5rem;
+            box-shadow: var(--shadow-md);
+            border: 1px solid var(--gray-200);
+            transition: var(--transition);
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .stat-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .stat-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: var(--radius-lg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
+
+        .stat-icon.pending {
+            background: rgba(245, 158, 11, 0.1);
+            color: var(--warning);
+        }
+
+        .stat-icon.processing {
+            background: rgba(6, 182, 212, 0.1);
+            color: var(--secondary);
+        }
+
+        .stat-icon.completed {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--success);
+        }
+
+        .stat-icon.revenue {
+            background: rgba(124, 58, 237, 0.1);
+            color: var(--primary);
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 0.25rem;
+        }
+
+        .stat-label {
+            color: var(--gray-600);
+            font-size: 0.9rem;
+        }
+
+        .stat-change {
+            font-size: 0.85rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        .stat-change.positive {
+            color: var(--success);
+        }
+
+        .stat-change.negative {
+            color: var(--error);
+        }
+
+        /* Quick Actions */
+        .quick-actions {
+            background: white;
+            border-radius: var(--radius-xl);
+            padding: 1.5rem;
+            box-shadow: var(--shadow-md);
+            border: 1px solid var(--gray-200);
+            margin-bottom: 2rem;
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            color: var(--gray-900);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .section-title i {
+            color: var(--primary);
+        }
+
+        .actions-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+
+        .action-card {
+            background: var(--gray-50);
+            border-radius: var(--radius-lg);
+            padding: 1.5rem;
+            text-align: center;
+            transition: var(--transition);
+            cursor: pointer;
+            border: 1px solid var(--gray-200);
+        }
+
+        .action-card:hover {
+            background: white;
+            transform: translateY(-3px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .action-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: var(--radius-lg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1rem;
+            font-size: 1.5rem;
+        }
+
+        .action-icon.process {
+            background: rgba(6, 182, 212, 0.1);
+            color: var(--secondary);
+        }
+
+        .action-icon.update {
+            background: rgba(124, 58, 237, 0.1);
+            color: var(--primary);
+        }
+
+        .action-icon.inventory {
+            background: rgba(245, 158, 11, 0.1);
+            color: var(--warning);
+        }
+
+        .action-icon.shipping {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--success);
+        }
+
+        .action-title {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--gray-800);
+        }
+
+        .action-desc {
+            color: var(--gray-600);
+            font-size: 0.9rem;
+        }
+
+        /* Recent Orders */
+        .recent-orders {
+            background: white;
+            border-radius: var(--radius-xl);
+            padding: 1.5rem;
+            box-shadow: var(--shadow-md);
+            border: 1px solid var(--gray-200);
+            margin-bottom: 2rem;
+        }
+
+        .table-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .sort-controls {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
+
+        .sort-btn {
+            background: var(--gray-100);
+            color: var(--gray-700);
+            border: 1px solid var(--gray-300);
+            padding: 0.5rem 1rem;
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            transition: var(--transition);
+            font-size: 0.85rem;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.375rem;
+        }
+
+        .sort-btn:hover {
+            background: var(--gray-200);
+        }
+
+        .sort-btn.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .table-container {
+            overflow-x: auto;
+        }
+
+        .orders-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .orders-table th {
+            text-align: left;
+            padding: 1rem;
+            border-bottom: 2px solid var(--gray-200);
+            color: var(--gray-700);
+            font-weight: 600;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .orders-table td {
+            padding: 1rem;
+            border-bottom: 1px solid var(--gray-200);
+            color: var(--gray-700);
+        }
+
+        .orders-table tr:hover {
+            background: var(--gray-50);
+        }
+
+        .status-badge {
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .status-pending {
+            background: rgba(245, 158, 11, 0.1);
+            color: var(--warning);
+            border: 1px solid rgba(245, 158, 11, 0.2);
+        }
+
+        .status-processing {
+            background: rgba(6, 182, 212, 0.1);
+            color: var(--secondary);
+            border: 1px solid rgba(6, 182, 212, 0.2);
+        }
+
+        .status-completed {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--success);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+        }
+
+        .view-btn {
+            background: var(--gray-100);
+            color: var(--gray-700);
+            border: 1px solid var(--gray-300);
+            padding: 0.5rem 1rem;
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            transition: var(--transition);
+            font-size: 0.85rem;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.375rem;
+        }
+
+        .view-btn:hover {
+            background: var(--gray-200);
+        }
+
+        /* Charts Section */
+        .charts-section {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .chart-card {
+            background: white;
+            border-radius: var(--radius-xl);
+            padding: 1.5rem;
+            box-shadow: var(--shadow-md);
+            border: 1px solid var(--gray-200);
+        }
+
+        .chart-container {
+            position: relative;
+            height: 300px;
+            width: 100%;
+        }
+
+        .chart-placeholder {
+            height: 300px;
+            background: var(--gray-100);
+            border-radius: var(--radius-lg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--gray-500);
+            font-weight: 600;
+        }
+
+        /* Chart Controls */
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .chart-controls {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
+
+        .chart-sort-btn {
+            background: var(--gray-100);
+            color: var(--gray-700);
+            border: 1px solid var(--gray-300);
+            padding: 0.5rem 1rem;
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            transition: var(--transition);
+            font-size: 0.85rem;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.375rem;
+        }
+
+        .chart-sort-btn:hover {
+            background: var(--gray-200);
+        }
+
+        .chart-sort-btn.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        /* Date Range Filter */
+        .date-range-filter {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
+
+        .date-input {
+            padding: 0.5rem;
+            border: 1px solid var(--gray-300);
+            border-radius: var(--radius-md);
+            font-size: 0.85rem;
+            background: white;
+            color: var(--gray-700);
+        }
+
+        .date-range-btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            transition: var(--transition);
+            font-size: 0.85rem;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.375rem;
+        }
+
+        .date-range-btn:hover {
+            background: var(--primary-dark);
+        }
+
+        /* Loading State */
+        .loading {
+            opacity: 0.7;
+            pointer-events: none;
+            position: relative;
+        }
+
+        .loading::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 20px;
+            height: 20px;
+            margin: -10px 0 0 -10px;
+            border: 2px solid var(--gray-300);
+            border-top: 2px solid var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Responsive Design */
+        @media (max-width: 1024px) {
+            .charts-section {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 70px;
+                padding: 1rem 0.5rem;
+            }
+            
+            .logo-text, .nav-item span {
+                display: none;
+            }
+            
+            .nav-item {
+                justify-content: center;
+                padding: 1rem 0.5rem;
+            }
+            
+            .main-content {
+                margin-left: 70px;
+                padding: 1.5rem;
+            }
+            
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .actions-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .table-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 1rem;
+            }
+            
+            .sort-controls {
+                align-self: flex-end;
+            }
+
+            .chart-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 1rem;
+            }
+            
+            .chart-controls {
+                align-self: flex-end;
+                flex-wrap: wrap;
+            }
+            
+            .date-range-filter {
+                flex-direction: column;
+                width: 100%;
+            }
+            
+            .date-input {
+                width: 100%;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .actions-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .dashboard-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 1rem;
+            }
+            
+            .user-info {
+                align-self: flex-end;
+            }
+            
+            .sort-controls {
+                flex-wrap: wrap;
+                justify-content: flex-end;
+            }
+
+            .chart-controls {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 0.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <!-- Sidebar Navigation -->
+        <div class="sidebar">
+            <div class="logo-container">
+                <div class="logo">SF</div>
+                <div class="logo-text">SmartFit AR</div>
+            </div>
+            
+            <div class="nav-items">
+                <a href="/shopowner/html/shoemaker_dashboard.html" class="nav-item active">
+                    <i class="fas fa-home"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="/shopowner/html/customizeShoeInventory.html" class="nav-item">
+                    <i class="fas fa-palette"></i>
+                    <span>AR Customization</span>
+                </a>
+                <a href="/shopowner/html/shoemaker_orders.html" class="nav-item">
+                    <i class="fas fa-shopping-cart"></i>
+                    <span>Custom Orders</span>
+                </a>
+                <a href="/shopowner/html/shoemaker_analytics.html" class="nav-item">
+                    <i class="fas fa-chart-line"></i>
+                    <span>Analytics</span>
+                </a>
+                <a href="/shopowner/html/shoemaker_profile.html" class="nav-item">
+                    <i class="fas fa-cog"></i>
+                    <span>Settings</span>
+                </a>
+                <a id="logout_btn" class="nav-item">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span>Logout</span>
+                </a>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <div class="dashboard-header">
+                <h1 class="dashboard-title">Shoemaker Dashboard</h1>
+                <div class="user-info">
+                    <div class="user-avatar">SM</div>
+                    <div>
+                        <div class="user-name">Shoemaker Admin</div>
+                        <div class="user-role">Shoemaker</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Stats Cards -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <div class="stat-icon pending">
+                            <i class="fas fa-clock"></i>
+                        </div>
+                    </div>
+                    <div class="stat-value" id="pendingOrdersCount">0</div>
+                    <div class="stat-label">Pending Orders</div>
+                    <div class="stat-change positive" id="pendingOrdersChange">
+                        <i class="fas fa-arrow-up"></i>
+                        <span>0% from last week</span>
+                    </div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <div class="stat-icon processing">
+                            <i class="fas fa-cog"></i>
+                        </div>
+                    </div>
+                    <div class="stat-value" id="processingOrdersCount">0</div>
+                    <div class="stat-label">In Process</div>
+                    <div class="stat-change positive" id="processingOrdersChange">
+                        <i class="fas fa-arrow-up"></i>
+                        <span>0% from last week</span>
+                    </div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <div class="stat-icon completed">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                    </div>
+                    <div class="stat-value" id="completedOrdersCount">0</div>
+                    <div class="stat-label">Completed This Week</div>
+                    <div class="stat-change positive" id="completedOrdersChange">
+                        <i class="fas fa-arrow-up"></i>
+                        <span>0% from last week</span>
+                    </div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <div class="stat-icon revenue">
+                            <i class="fas fa-peso-sign"></i>
+                        </div>
+                    </div>
+                    <div class="stat-value" id="totalRevenue">₱0</div>
+                    <div class="stat-label">Total Revenue</div>
+                    <div class="stat-change positive" id="revenueChange">
+                        <i class="fas fa-arrow-up"></i>
+                        <span>0% from last week</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="quick-actions">
+                <h2 class="section-title">
+                    <i class="fas fa-bolt"></i>
+                    Quick Actions
+                </h2>
+                
+                <div class="actions-grid">
+                    <div class="action-card" onclick="window.location.href='/shopowner/html/shoemaker_orders.html'">
+                        <div class="action-icon process">
+                            <i class="fas fa-cog"></i>
+                        </div>
+                        <h3 class="action-title">Process Orders</h3>
+                        <p class="action-desc">Review and process pending orders</p>
+                    </div>
+                    
+                    <div class="action-card" onclick="window.location.href='/shopowner/html/shoemaker_orders.html'">
+                        <div class="action-icon update">
+                            <i class="fas fa-sync"></i>
+                        </div>
+                        <h3 class="action-title">Update Status</h3>
+                        <p class="action-desc">Update order processing status</p>
+                    </div>
+                    
+                    <div class="action-card" onclick="window.location.href='/shopowner/html/customizeShoeInventory.html'">
+                        <div class="action-icon inventory">
+                            <i class="fas fa-boxes"></i>
+                        </div>
+                        <h3 class="action-title">Manage Inventory</h3>
+                        <p class="action-desc">Update shoe models and customization options</p>
+                    </div>
+                    
+                    <div class="action-card" onclick="window.location.href='/shopowner/html/shoemaker_orders.html'">
+                        <div class="action-icon shipping">
+                            <i class="fas fa-truck"></i>
+                        </div>
+                        <h3 class="action-title">Shipping Info</h3>
+                        <p class="action-desc">Add tracking and shipping details</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Orders -->
+            <div class="recent-orders">
+                <div class="table-header">
+                    <h2 class="section-title">
+                        <i class="fas fa-history"></i>
+                        Recent Orders
+                    </h2>
+                    <div class="sort-controls">
+                        <button class="sort-btn" id="sortDateBtn" data-sort="date" data-order="desc">
+                            <i class="fas fa-calendar"></i> Date <i class="fas fa-arrow-down"></i>
+                        </button>
+                        <button class="sort-btn" id="sortStatusBtn" data-sort="status" data-order="asc">
+                            <i class="fas fa-filter"></i> Status
+                        </button>
+                        <button class="sort-btn" id="sortAmountBtn" data-sort="amount" data-order="desc">
+                            <i class="fas fa-peso-sign"></i> Amount
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="table-container">
+                    <table class="orders-table" id="recentOrdersTable">
+                        <thead>
+                            <tr>
+                                <th>Order ID</th>
+                                <th>Customer</th>
+                                <th>Date</th>
+                                <th>Type</th>
+                                <th>Status</th>
+                                <th>Total</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="recentOrdersBody">
+                            <tr>
+                                <td colspan="7" style="text-align: center; padding: 2rem;">
+                                    <div class="loading">Loading orders...</div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Charts Section -->
+            <div class="charts-section">
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <h2 class="section-title">
+                            <i class="fas fa-chart-bar"></i>
+                            Order Trends
+                        </h2>
+                        <div class="chart-controls">
+                            <div class="date-range-filter">
+                                <input type="date" id="startDate" class="date-input">
+                                <span>to</span>
+                                <input type="date" id="endDate" class="date-input">
+                                <button class="date-range-btn" id="applyDateRange">
+                                    <i class="fas fa-filter"></i> Apply
+                                </button>
+                            </div>
+                            <div class="sort-controls">
+                                <button class="chart-sort-btn active" id="sortTrendsDateBtn" data-sort="date">
+                                    <i class="fas fa-calendar"></i> Date
+                                </button>
+                                <button class="chart-sort-btn" id="sortTrendsQuantityBtn" data-sort="quantity">
+                                    <i class="fas fa-sort-amount-down"></i> Quantity
+                                </button>
+                                <button class="chart-sort-btn" id="sortTrendsRevenueBtn" data-sort="revenue">
+                                    <i class="fas fa-peso-sign"></i> Revenue
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="orderTrendsChart"></canvas>
+                    </div>
+                </div>
+                
+                <div class="chart-card">
+                    <h2 class="section-title">
+                        <i class="fas fa-chart-pie"></i>
+                        Order Status Distribution
+                    </h2>
+                    <div class="chart-container">
+                        <canvas id="statusDistributionChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import {
+            checkUserAuth,
+            logoutUser,
+            readDataRealtime,
+            readData,
+            generate18CharID
+        } from "../../firebaseMethods.js";
+
+        // Global variables
+        let allOrders = [];
+        let realtimeListener = null;
+        let currentUser = null;
+        let orderTrendsChart = null;
+        let statusDistributionChart = null;
+        let currentSort = { field: 'date', order: 'desc' };
+        let currentTrendsSort = { field: 'date', order: 'asc' };
+        let currentDateRange = { startDate: null, endDate: null };
+
+        // DOM Elements
+        const pendingOrdersCount = document.getElementById('pendingOrdersCount');
+        const processingOrdersCount = document.getElementById('processingOrdersCount');
+        const completedOrdersCount = document.getElementById('completedOrdersCount');
+        const totalRevenue = document.getElementById('totalRevenue');
+        const recentOrdersBody = document.getElementById('recentOrdersBody');
+        const logoutBtn = document.getElementById('logout_btn');
+        const sortDateBtn = document.getElementById('sortDateBtn');
+        const sortStatusBtn = document.getElementById('sortStatusBtn');
+        const sortAmountBtn = document.getElementById('sortAmountBtn');
+
+        // Chart control elements
+        const sortTrendsDateBtn = document.getElementById('sortTrendsDateBtn');
+        const sortTrendsQuantityBtn = document.getElementById('sortTrendsQuantityBtn');
+        const sortTrendsRevenueBtn = document.getElementById('sortTrendsRevenueBtn');
+        const startDateInput = document.getElementById('startDate');
+        const endDateInput = document.getElementById('endDate');
+        const applyDateRangeBtn = document.getElementById('applyDateRange');
+
+        // Initialize the dashboard
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeShoemakerDashboard();
+        });
+
+        // Authentication and initialization
+        async function initializeShoemakerDashboard() {
+            const user = await checkUserAuth();
+
+            if (!user.authenticated) {
+                window.location.href = "/login.html";
+                return;
+            }
+
+            // Check if user is shoemaker
+            if (user.role !== 'shoemaker') {
+                alert('Access denied. ShoeMaker privileges required.');
+                window.location.href = "/dashboard.html";
+                return;
+            }
+
+            currentUser = user;
+            console.log('Shoemaker user authenticated:', user);
+            
+            // Set default date range (last 30 days)
+            const endDate = new Date();
+            const startDate = new Date();
+            startDate.setDate(startDate.getDate() - 30);
+            
+            startDateInput.valueAsDate = startDate;
+            endDateInput.valueAsDate = endDate;
+            currentDateRange = { startDate, endDate };
+            
+            // Load dashboard data
+            loadDashboardData();
+            setupRealtimeListeners();
+            setupEventListeners();
+        }
+
+        // Set up real-time listeners for database changes
+        function setupRealtimeListeners() {
+            if (realtimeListener) {
+                realtimeListener();
+            }
+            
+            const customizedTransactionsPath = 'smartfit_AR_Database/customizedtransactions';
+            realtimeListener = readDataRealtime(customizedTransactionsPath, (result) => {
+                if (result.success) {
+                    console.log("Real-time update detected in customizedtransactions");
+                    if (result.data) {
+                        processRealtimeOrders(result.data);
+                        updateDashboardStats();
+                        updateRecentOrdersTable();
+                        updateCharts();
+                    }
+                } else {
+                    console.error("Real-time listener error:", result.error);
+                }
+            });
+        }
+
+        // Process real-time orders data
+        function processRealtimeOrders(customizedTransactions) {
+            const newOrders = [];
+
+            if (customizedTransactions) {
+                Object.keys(customizedTransactions).forEach(userId => {
+                    const userOrders = customizedTransactions[userId];
+                    Object.keys(userOrders).forEach(orderId => {
+                        const orderData = userOrders[orderId];
+                        newOrders.push({
+                            ...orderData,
+                            orderId: orderId,
+                            userId: userId,
+                            source: 'customizedtransactions',
+                            isCustom: true
+                        });
+                    });
+                });
+            }
+
+            newOrders.sort((a, b) => {
+                const dateA = a.orderDate || a.date || a.addedAt;
+                const dateB = b.orderDate || b.date || b.addedAt;
+                return new Date(dateB) - new Date(dateA);
+            });
+
+            allOrders = newOrders;
+        }
+
+        // Load dashboard data
+        async function loadDashboardData() {
+            try {
+                const customizedTransactionsPath = 'smartfit_AR_Database/customizedtransactions';
+                const result = await readData(customizedTransactionsPath);
+                
+                allOrders = [];
+
+                if (result.success && result.data) {
+                    const customizedTransactions = result.data;
+                    
+                    Object.keys(customizedTransactions).forEach(userId => {
+                        const userOrders = customizedTransactions[userId];
+                        Object.keys(userOrders).forEach(orderId => {
+                            const orderData = userOrders[orderId];
+                            allOrders.push({
+                                ...orderData,
+                                orderId: orderId,
+                                userId: userId,
+                                source: 'customizedtransactions',
+                                isCustom: true
+                            });
+                        });
+                    });
+                }
+
+                // Sort orders by current sort settings
+                sortOrders(currentSort.field, currentSort.order);
+                updateDashboardStats();
+                updateRecentOrdersTable();
+                updateCharts();
+                
+            } catch (error) {
+                console.error('Error loading dashboard data:', error);
+                showErrorState();
+            }
+        }
+
+        // Sort orders function
+        function sortOrders(field, order) {
+            const sortedOrders = [...allOrders];
+            
+            sortedOrders.sort((a, b) => {
+                let aValue, bValue;
+                
+                switch(field) {
+                    case 'date':
+                        aValue = new Date(a.orderDate || a.date || a.addedAt);
+                        bValue = new Date(b.orderDate || b.date || b.addedAt);
+                        break;
+                    case 'status':
+                        aValue = a.status || 'pending';
+                        bValue = b.status || 'pending';
+                        break;
+                    case 'amount':
+                        aValue = a.totalAmount || 0;
+                        bValue = b.totalAmount || 0;
+                        break;
+                    default:
+                        aValue = a.orderId;
+                        bValue = b.orderId;
+                }
+                
+                // Handle different data types
+                if (field === 'date') {
+                    return order === 'asc' ? aValue - bValue : bValue - aValue;
+                } else if (field === 'amount') {
+                    return order === 'asc' ? aValue - bValue : bValue - aValue;
+                } else {
+                    // For string fields (status, etc.)
+                    if (aValue < bValue) return order === 'asc' ? -1 : 1;
+                    if (aValue > bValue) return order === 'asc' ? 1 : -1;
+                    return 0;
+                }
+            });
+            
+            allOrders = sortedOrders;
+        }
+
+        // Update sort button UI
+        function updateSortButtons(activeField, activeOrder) {
+            // Reset all buttons
+            [sortDateBtn, sortStatusBtn, sortAmountBtn].forEach(btn => {
+                btn.classList.remove('active');
+                const icon = btn.querySelector('.fa-arrow-up, .fa-arrow-down');
+                if (icon) {
+                    icon.className = 'fas';
+                }
+            });
+            
+            // Update active button
+            const activeBtn = document.getElementById(`sort${activeField.charAt(0).toUpperCase() + activeField.slice(1)}Btn`);
+            if (activeBtn) {
+                activeBtn.classList.add('active');
+                
+                // Update arrow icon
+                const icon = activeBtn.querySelector('.fas:last-child');
+                if (icon) {
+                    icon.className = activeOrder === 'asc' ? 'fas fa-arrow-up' : 'fas fa-arrow-down';
+                }
+            }
+        }
+
+        // Update chart sort buttons UI
+        function updateChartSortButtons(activeField) {
+            // Reset all chart sort buttons
+            [sortTrendsDateBtn, sortTrendsQuantityBtn, sortTrendsRevenueBtn].forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            // Update active chart sort button
+            const activeBtn = document.getElementById(`sortTrends${activeField.charAt(0).toUpperCase() + activeField.slice(1)}Btn`);
+            if (activeBtn) {
+                activeBtn.classList.add('active');
+            }
+        }
+
+        // Update dashboard statistics
+        function updateDashboardStats() {
+            // Count orders by status
+            const pendingOrders = allOrders.filter(order => order.status === 'pending');
+            const processingOrders = allOrders.filter(order => 
+                order.status === 'processing' || 
+                ['Order Processed', 'Shipped', 'In Transit', 'Arrived at Facility', 'Out for Delivery'].includes(order.status)
+            );
+            
+            // Calculate completed orders this week
+            const oneWeekAgo = new Date();
+            oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+            const completedThisWeek = allOrders.filter(order => 
+                order.status === 'completed' && 
+                new Date(order.orderDate || order.date || order.addedAt) >= oneWeekAgo
+            );
+
+            // Calculate total revenue
+            const totalRevenueAmount = allOrders
+                .filter(order => order.status === 'completed')
+                .reduce((sum, order) => sum + (order.totalAmount || 0), 0);
+
+            // Update DOM elements
+            pendingOrdersCount.textContent = pendingOrders.length;
+            processingOrdersCount.textContent = processingOrders.length;
+            completedOrdersCount.textContent = completedThisWeek.length;
+            totalRevenue.textContent = `₱${totalRevenueAmount.toFixed(2)}`;
+
+            // Calculate changes (in a real app, you'd compare with previous period)
+            const pendingChange = pendingOrders.length > 0 ? '+' + Math.round((pendingOrders.length / allOrders.length) * 100) : '0';
+            const processingChange = processingOrders.length > 0 ? '+' + Math.round((processingOrders.length / allOrders.length) * 100) : '0';
+            const completedChange = completedThisWeek.length > 0 ? '+' + Math.round((completedThisWeek.length / allOrders.length) * 100) : '0';
+            const revenueChange = totalRevenueAmount > 0 ? '+' + Math.round((totalRevenueAmount / (allOrders.length * 3000)) * 100) : '0';
+
+            document.getElementById('pendingOrdersChange').innerHTML = `<i class="fas fa-arrow-up"></i><span>${pendingChange}% from last week</span>`;
+            document.getElementById('processingOrdersChange').innerHTML = `<i class="fas fa-arrow-up"></i><span>${processingChange}% from last week</span>`;
+            document.getElementById('completedOrdersChange').innerHTML = `<i class="fas fa-arrow-up"></i><span>${completedChange}% from last week</span>`;
+            document.getElementById('revenueChange').innerHTML = `<i class="fas fa-arrow-up"></i><span>${revenueChange}% from last week</span>`;
+        }
+
+        // Update recent orders table
+        function updateRecentOrdersTable() {
+            if (allOrders.length === 0) {
+                recentOrdersBody.innerHTML = `
+                    <tr>
+                        <td colspan="7" style="text-align: center; padding: 2rem;">
+                            <i class="fas fa-box-open"></i> No orders found
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            // Get the 5 most recent orders (after sorting)
+            const recentOrders = allOrders.slice(0, 5);
+            
+            recentOrdersBody.innerHTML = recentOrders.map(order => {
+                const orderDate = order.orderDate || order.date || order.addedAt;
+                const formattedDate = new Date(orderDate).toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'short',
+                    day: 'numeric'
+                });
+                
+                const customerName = order.shippingInfo ? 
+                    `${order.shippingInfo.firstName || ''} ${order.shippingInfo.lastName || ''}`.trim() : 
+                    'Unknown Customer';
+                
+                const orderType = 'Custom Shoe';
+                
+                let statusBadge = '';
+                if (order.status === 'pending') {
+                    statusBadge = '<span class="status-badge status-pending">Pending</span>';
+                } else if (order.status === 'processing' || 
+                          ['Order Processed', 'Shipped', 'In Transit', 'Arrived at Facility', 'Out for Delivery'].includes(order.status)) {
+                    statusBadge = `<span class="status-badge status-processing">${order.status}</span>`;
+                } else if (order.status === 'completed') {
+                    statusBadge = '<span class="status-badge status-completed">Completed</span>';
+                } else if (order.status === 'cancelled' || order.status === 'rejected') {
+                    statusBadge = '<span class="status-badge status-cancelled">Cancelled</span>';
+                }
+                
+                return `
+                    <tr>
+                        <td>#${order.orderId}</td>
+                        <td>${customerName}</td>
+                        <td>${formattedDate}</td>
+                        <td>${orderType}</td>
+                        <td>${statusBadge}</td>
+                        <td>₱${order.totalAmount?.toFixed(2) || '0.00'}</td>
+                        <td>
+                            <button class="view-btn" onclick="viewOrderDetails('${order.orderId}', '${order.userId}')">
+                                <i class="fas fa-eye"></i> View
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        // Update charts
+        function updateCharts() {
+            updateOrderTrendsChart();
+            updateStatusDistributionChart();
+        }
+
+        // Update order trends chart with date range filtering
+        function updateOrderTrendsChart() {
+            const ctx = document.getElementById('orderTrendsChart').getContext('2d');
+            
+            // Filter orders by date range
+            const filteredOrders = allOrders.filter(order => {
+                const orderDate = new Date(order.orderDate || order.date || order.addedAt);
+                return orderDate >= currentDateRange.startDate && orderDate <= currentDateRange.endDate;
+            });
+
+            // Generate date labels for the selected range
+            const dateLabels = [];
+            const dateData = {};
+            
+            // Create a date for each day in the range
+            const currentDate = new Date(currentDateRange.startDate);
+            const endDate = new Date(currentDateRange.endDate);
+            
+            while (currentDate <= endDate) {
+                const dateStr = currentDate.toLocaleDateString('en-US', { 
+                    month: 'short', 
+                    day: 'numeric',
+                    year: (endDate - currentDateRange.startDate) > (30 * 24 * 60 * 60 * 1000) ? '2-digit' : undefined
+                });
+                dateLabels.push(dateStr);
+                dateData[dateStr] = { count: 0, revenue: 0 };
+                currentDate.setDate(currentDate.getDate() + 1);
+            }
+
+            // Count orders and revenue per day
+            filteredOrders.forEach(order => {
+                const orderDate = new Date(order.orderDate || order.date || order.addedAt);
+                const dateStr = orderDate.toLocaleDateString('en-US', { 
+                    month: 'short', 
+                    day: 'numeric',
+                    year: (endDate - currentDateRange.startDate) > (30 * 24 * 60 * 60 * 1000) ? '2-digit' : undefined
+                });
+                
+                if (dateData[dateStr]) {
+                    dateData[dateStr].count += 1;
+                    dateData[dateStr].revenue += order.totalAmount || 0;
+                }
+            });
+
+            // Prepare data based on sort type
+            let chartData = [];
+            let chartLabel = '';
+            let backgroundColor = '';
+            let borderColor = '';
+
+            switch(currentTrendsSort.field) {
+                case 'quantity':
+                    chartData = dateLabels.map(date => dateData[date]?.count || 0);
+                    chartLabel = 'Orders per Day';
+                    backgroundColor = 'rgba(6, 182, 212, 0.1)';
+                    borderColor = '#06b6d4';
+                    break;
+
+                case 'revenue':
+                    chartData = dateLabels.map(date => dateData[date]?.revenue || 0);
+                    chartLabel = 'Revenue per Day (₱)';
+                    backgroundColor = 'rgba(16, 185, 129, 0.1)';
+                    borderColor = '#10b981';
+                    break;
+
+                case 'date':
+                default:
+                    chartData = dateLabels.map(date => dateData[date]?.count || 0);
+                    chartLabel = 'Orders per Day';
+                    backgroundColor = 'rgba(124, 58, 237, 0.1)';
+                    borderColor = '#7c3aed';
+                    break;
+            }
+
+            // Apply sorting if needed
+            if (currentTrendsSort.order === 'desc') {
+                chartData.reverse();
+                dateLabels.reverse();
+            }
+
+            // Destroy existing chart if it exists
+            if (orderTrendsChart) {
+                orderTrendsChart.destroy();
+            }
+
+            // Determine chart type based on sort field
+            const chartType = currentTrendsSort.field === 'date' ? 'line' : 'bar';
+
+            // Create new chart
+            orderTrendsChart = new Chart(ctx, {
+                type: chartType,
+                data: {
+                    labels: dateLabels,
+                    datasets: [{
+                        label: chartLabel,
+                        data: chartData,
+                        borderColor: borderColor,
+                        backgroundColor: backgroundColor,
+                        borderWidth: 2,
+                        fill: chartType === 'line',
+                        tension: 0.4,
+                        pointBackgroundColor: borderColor,
+                        pointBorderColor: '#ffffff',
+                        pointBorderWidth: 2,
+                        pointRadius: chartType === 'line' ? 4 : 0,
+                        pointHoverRadius: chartType === 'line' ? 6 : 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top',
+                        },
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false,
+                            backgroundColor: 'rgba(30, 41, 59, 0.9)',
+                            titleColor: '#f8fafc',
+                            bodyColor: '#f8fafc',
+                            borderColor: '#475569',
+                            borderWidth: 1,
+                            cornerRadius: 8,
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.dataset.label || '';
+                                    if (label) {
+                                        label += ': ';
+                                    }
+                                    if (currentTrendsSort.field === 'revenue') {
+                                        label += '₱' + context.parsed.y.toFixed(2);
+                                    } else {
+                                        label += context.parsed.y;
+                                    }
+                                    return label;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: {
+                                display: false
+                            },
+                            ticks: {
+                                color: '#64748b',
+                                maxRotation: dateLabels.length > 30 ? 45 : 0
+                            }
+                        },
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                color: 'rgba(226, 232, 240, 0.5)'
+                            },
+                            ticks: {
+                                color: '#64748b',
+                                precision: 0,
+                                callback: function(value) {
+                                    if (currentTrendsSort.field === 'revenue') {
+                                        return '₱' + value;
+                                    }
+                                    return value;
+                                }
+                            }
+                        }
+                    },
+                    interaction: {
+                        mode: 'nearest',
+                        axis: 'x',
+                        intersect: false
+                    }
+                }
+            });
+        }
+
+        // Update status distribution chart
+        function updateStatusDistributionChart() {
+            const ctx = document.getElementById('statusDistributionChart').getContext('2d');
+            
+            // Count orders by status
+            const statusCounts = {
+                'Pending': allOrders.filter(order => order.status === 'pending').length,
+                'Processing': allOrders.filter(order => 
+                    order.status === 'processing' || 
+                    ['Order Processed', 'Shipped', 'In Transit', 'Arrived at Facility', 'Out for Delivery'].includes(order.status)
+                ).length,
+                'Completed': allOrders.filter(order => order.status === 'completed').length,
+                'Cancelled': allOrders.filter(order => order.status === 'cancelled' || order.status === 'rejected').length
+            };
+
+            const statusLabels = Object.keys(statusCounts);
+            const statusData = Object.values(statusCounts);
+
+            // Colors for the pie chart
+            const backgroundColors = [
+                'rgba(245, 158, 11, 0.8)',  // Pending - amber
+                'rgba(6, 182, 212, 0.8)',   // Processing - cyan
+                'rgba(16, 185, 129, 0.8)',  // Completed - emerald
+                'rgba(239, 68, 68, 0.8)'    // Cancelled - red
+            ];
+
+            const borderColors = [
+                'rgb(245, 158, 11)',
+                'rgb(6, 182, 212)',
+                'rgb(16, 185, 129)',
+                'rgb(239, 68, 68)'
+            ];
+
+            // Destroy existing chart if it exists
+            if (statusDistributionChart) {
+                statusDistributionChart.destroy();
+            }
+
+            // Create new chart
+            statusDistributionChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: statusLabels,
+                    datasets: [{
+                        data: statusData,
+                        backgroundColor: backgroundColors,
+                        borderColor: borderColors,
+                        borderWidth: 2,
+                        hoverOffset: 8
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                padding: 20,
+                                color: '#475569',
+                                font: {
+                                    size: 12
+                                },
+                                usePointStyle: true
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(30, 41, 59, 0.9)',
+                            titleColor: '#f8fafc',
+                            bodyColor: '#f8fafc',
+                            borderColor: '#475569',
+                            borderWidth: 1,
+                            cornerRadius: 8,
+                            callbacks: {
+                                label: function(context) {
+                                    const label = context.label || '';
+                                    const value = context.raw || 0;
+                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                    const percentage = total > 0 ? Math.round((value / total) * 100) : 0;
+                                    return `${label}: ${value} (${percentage}%)`;
+                                }
+                            }
+                        }
+                    },
+                    cutout: '60%'
+                }
+            });
+        }
+
+        // View order details (redirect to orders page)
+        function viewOrderDetails(orderId, userId) {
+            window.location.href = `/shopowner/html/shoemaker_orders.html?orderId=${orderId}&userId=${userId}`;
+        }
+
+        // Show error state
+        function showErrorState() {
+            recentOrdersBody.innerHTML = `
+                <tr>
+                    <td colspan="7" style="text-align: center; padding: 2rem; color: var(--error);">
+                        <i class="fas fa-exclamation-circle"></i> Failed to load orders. Please try again.
+                    </td>
+                </tr>
+            `;
+        }
+
+        // Set up event listeners
+        function setupEventListeners() {
+            if (logoutBtn) {
+                logoutBtn.addEventListener('click', async () => {
+                    if (confirm('Are you sure you want to logout?')) {
+                        const result = await logoutUser();
+                        if (result.success) {
+                            window.location.href = '/login.html';
+                        } else {
+                            alert('Logout failed: ' + result.error);
+                        }
+                    }
+                });
+            }
+
+            // Sort button event listeners
+            if (sortDateBtn) {
+                sortDateBtn.addEventListener('click', () => {
+                    const newOrder = currentSort.field === 'date' && currentSort.order === 'desc' ? 'asc' : 'desc';
+                    currentSort = { field: 'date', order: newOrder };
+                    sortOrders('date', newOrder);
+                    updateSortButtons('date', newOrder);
+                    updateRecentOrdersTable();
+                });
+            }
+
+            if (sortStatusBtn) {
+                sortStatusBtn.addEventListener('click', () => {
+                    const newOrder = currentSort.field === 'status' && currentSort.order === 'asc' ? 'desc' : 'asc';
+                    currentSort = { field: 'status', order: newOrder };
+                    sortOrders('status', newOrder);
+                    updateSortButtons('status', newOrder);
+                    updateRecentOrdersTable();
+                });
+            }
+
+            if (sortAmountBtn) {
+                sortAmountBtn.addEventListener('click', () => {
+                    const newOrder = currentSort.field === 'amount' && currentSort.order === 'desc' ? 'asc' : 'desc';
+                    currentSort = { field: 'amount', order: newOrder };
+                    sortOrders('amount', newOrder);
+                    updateSortButtons('amount', newOrder);
+                    updateRecentOrdersTable();
+                });
+            }
+
+            // Chart sort button event listeners
+            if (sortTrendsDateBtn) {
+                sortTrendsDateBtn.addEventListener('click', () => {
+                    const newOrder = currentTrendsSort.field === 'date' && currentTrendsSort.order === 'asc' ? 'desc' : 'asc';
+                    currentTrendsSort = { field: 'date', order: newOrder };
+                    updateChartSortButtons('date');
+                    updateOrderTrendsChart();
+                });
+            }
+
+            if (sortTrendsQuantityBtn) {
+                sortTrendsQuantityBtn.addEventListener('click', () => {
+                    const newOrder = currentTrendsSort.field === 'quantity' && currentTrendsSort.order === 'asc' ? 'desc' : 'asc';
+                    currentTrendsSort = { field: 'quantity', order: newOrder };
+                    updateChartSortButtons('quantity');
+                    updateOrderTrendsChart();
+                });
+            }
+
+            if (sortTrendsRevenueBtn) {
+                sortTrendsRevenueBtn.addEventListener('click', () => {
+                    const newOrder = currentTrendsSort.field === 'revenue' && currentTrendsSort.order === 'asc' ? 'desc' : 'asc';
+                    currentTrendsSort = { field: 'revenue', order: newOrder };
+                    updateChartSortButtons('revenue');
+                    updateOrderTrendsChart();
+                });
+            }
+
+            // Date range filter event listener
+            if (applyDateRangeBtn) {
+                applyDateRangeBtn.addEventListener('click', () => {
+                    const startDate = new Date(startDateInput.value);
+                    const endDate = new Date(endDateInput.value);
+                    
+                    if (startDate && endDate && startDate <= endDate) {
+                        currentDateRange = { startDate, endDate };
+                        updateOrderTrendsChart();
+                    } else {
+                        alert('Please select a valid date range. Start date must be before or equal to end date.');
+                    }
+                });
+            }
+        }
+
+        // Clean up when page is unloaded
+        window.addEventListener('beforeunload', () => {
+            if (realtimeListener) {
+                realtimeListener();
+            }
+        });
+
+        // Expose functions globally for HTML onclick handlers
+        window.viewOrderDetails = viewOrderDetails;
+    </script>
+</body>
+</html>
