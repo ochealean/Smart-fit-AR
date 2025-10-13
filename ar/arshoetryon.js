@@ -434,7 +434,7 @@ async function switchCamera(facingMode) {
 
 function handleBuyNow() {
     if (window.userAuthStatus) window.location.href = deepARBuyNowLink;
-    else alert('Please login first to purchase');
+    else window.location.href = `/login.html#customer`;
 }
 
 async function toggleCamera() {
