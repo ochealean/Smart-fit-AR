@@ -115,6 +115,13 @@
                 });
             }
         });
+
+        // Global function for shop redirection
+        function redirectToShopDetails(shopId, shopName) {
+            const encodedShopName = encodeURIComponent(shopName);
+            window.location.href = `/customer/html/shopownerdetails.html?shopId=${shopId}&shopName=${encodedShopName}`;
+        }
+
     </script>
 
     <script src="/customer/js/add_to_cart.js" type="module"></script>

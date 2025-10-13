@@ -179,7 +179,7 @@ async function loadCartItems() {
                 return {
                     cartId,
                     shopId: item.shopId,
-                    shopName: item.shopName || 'Unknown Shop',
+                    shopName: item.shopName || 'View Shop',
                     shoeId: item.shoeId,
                     variantKey: item.variantKey,
                     sizeKey: item.sizeKey,
@@ -402,20 +402,22 @@ function renderCart() {
 
             <div class="cart-item-picture">
                 <img src="${item.imageUrl}" alt="${item.shoeName}" class="cart-item-image" 
-                     onerror="this.src='https://via.placeholder.com/150'">
+                    onerror="this.src='https://via.placeholder.com/150'">
             </div>
 
             <div class="cart-item-details">
                 <h3 class="cart-item-name">${item.shoeName}</h3>
                 <p class="cart-item-variant">${item.variantName} (${item.color}) - Size: ${item.size}</p>
-                <p class="cart-item-shop"><i class="fas fa-store"></i> ${item.shopName}</p>
+                <p class="cart-item-shop shop-name-link" data-shop-id="${item.shopId}" data-shop-name="${item.shopName}">
+                    <i class="fas fa-store"></i> ${item.shopName}
+                </p>
                 <p class="cart-item-price">₱${(item.price * item.quantity).toFixed(2)}</p>
                 <p class="cart-item-date"><i class="far fa-clock"></i> Added: ${formattedDate}</p>
 
                 <div class="quantity-controls">
                     <button class="quantity-btn" data-cartid="${item.cartId}" data-change="-1">-</button>
                     <input type="number" class="quantity-input" value="${item.quantity}" 
-                           min="1" max="${item.availableStock}" data-cartid="${item.cartId}">
+                        min="1" max="${item.availableStock}" data-cartid="${item.cartId}">
                     <button class="quantity-btn" data-cartid="${item.cartId}" data-change="1">+</button>
                 </div>
 
@@ -463,6 +465,28 @@ function formatDate(timestamp) {
             month: 'short',
             day: 'numeric'
         });
+    }
+}
+
+// Redirect to shop details page
+async function redirectToShopDetails(shopId, shopName) {
+    try {
+        // Verify shop exists before redirecting
+        const shopResult = await readData(`smartfit_AR_Database/shop/${shopId}`);
+        
+        if (shopResult.success && shopResult.data) {
+            // Shop exists, proceed with redirect
+            const encodedShopName = encodeURIComponent(shopName);
+            window.location.href = `/customer/html/shopownerdetails.html?shopId=${shopId}&shopName=${encodedShopName}`;
+        } else {
+            // Shop doesn't exist or error
+            alert('Shop information is not available at the moment.');
+        }
+    } catch (error) {
+        console.error('Error verifying shop:', error);
+        // Still redirect but show error on details page if needed
+        const encodedShopName = encodeURIComponent(shopName);
+        window.location.href = `/customer/html/shopownerdetails.html?shopId=${shopId}&shopName=${encodedShopName}`;
     }
 }
 
@@ -600,6 +624,18 @@ function setupCartEventListeners() {
                 e.target.value = item.quantity; // Reset to previous value
             }
         });
+    });
+
+    // Shop name link click handlers
+    document.addEventListener('click', function(event) {
+        const shopLink = event.target.closest('.shop-name-link');
+        if (shopLink) {
+            const shopId = shopLink.getAttribute('data-shop-id');
+            const shopName = shopLink.getAttribute('data-shop-name');
+            if (shopId && shopName) {
+                redirectToShopDetails(shopId, shopName);
+            }
+        }
     });
 
     // View Details button handlers
@@ -824,3 +860,5 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 });
+
+window.redirectToShopDetails = redirectToShopDetails;
