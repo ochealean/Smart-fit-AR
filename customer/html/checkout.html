@@ -8,6 +8,8 @@
     <link rel="icon" href="../../images/smartfitImages/smartfitAR-logo.png" type="image/x-icon">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="stylesheet" href="/customer/css/checkout.css">
+    <!-- Google Maps API for distance calculation -->
+    <script async src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBiw-3TrRkU1hSU0_dEsn3fjUxXAZWcLrg&libraries=geometry"></script>
 </head>
 
 <body>
@@ -97,7 +99,6 @@
                                 <label for="zip">ZIP Code</label>
                                 <input type="text" id="zip" class="form-control" required>
                             </div>
-
                         </div>
                         <div class="form-group">
                             <div class="form-group">
@@ -121,9 +122,24 @@
                     </form>
                 </div>
 
+                <!-- NEW: Shipping Fee Section -->
+                <div class="checkout-section">
+                    <h2 class="section-title">Shipping Fee</h2>
+                    <div id="shippingCalculation">
+                        <div class="shipping-loading">
+                            <i class="fas fa-spinner fa-spin"></i>
+                            <span>Calculating shipping fee...</span>
+                        </div>
+                        <div id="shippingBreakdown" style="display: none;">
+                            <!-- Shipping breakdown will be loaded here -->
+                        </div>
+                        <div id="shippingError" class="shipping-error" style="display: none;">
+                            <!-- Shipping errors will be shown here -->
+                        </div>
+                    </div>
+                </div>
 
                 <div class="checkout-section">
-
                     <h2 class="section-title">Order Summary</h2>
 
                     <div id="orderItems">
@@ -137,7 +153,6 @@
                     <h2 class="section-title">Payment Method</h2>
 
                     <div class="payment-methods">
-
                         <label class="payment-method" for="cod">
                             <input type="radio" id="cod" name="paymentMethod" value="cod" checked>
                             <div class="payment-method-icon">
@@ -151,7 +166,6 @@
                     </div>
 
                     <button class="btn btn-primary" id="placeOrderBtn">Place Order</button>
-
                 </div>
             </div>
         </div>
@@ -170,7 +184,6 @@
                 </div>
                 <h3>Thank you for your order!</h3>
                 <p>Your order <strong id="orderIdDisplay"></strong> has been placed successfully.</p>
-                <!-- <p>We've sent a confirmation email to <strong id="orderEmailDisplay"></strong>.</p> -->
                 <div class="order-details">
                     <h4>Order Summary</h4>
                     <div id="modalOrderSummary"></div>
@@ -214,25 +227,25 @@
 
             // Modal functionality
             const modal = document.getElementById('orderConfirmationModal');
-            const closeBtn = document.querySelector('.close-btn');
+            const closeBtn = document.querySelector('.close-modal');
             const continueBtn = document.getElementById('continueShoppingBtn');
 
-            function closeModal() {
-                modal.classList.remove('show');
+            if (closeBtn) {
+                closeBtn.addEventListener('click', function() {
+                    if (modal) modal.style.display = 'none';
+                });
             }
 
-            function openModal() {
-                modal.classList.add('show');
+            if (continueBtn) {
+                continueBtn.addEventListener('click', function() {
+                    if (modal) modal.style.display = 'none';
+                    window.location.href = '/customer/html/customer_dashboard.html';
+                });
             }
-
-            closeBtn.addEventListener('click', closeModal);
-            continueBtn.addEventListener('click', function () {
-                window.location.href = '/customer/html/customer_dashboard.html';
-            });
 
             window.onclick = function (event) {
                 if (event.target == modal) {
-                    closeModal();
+                    modal.style.display = 'none';
                 }
             }
         });
@@ -240,5 +253,4 @@
 
     <script src="/customer/js/checkout.js" type="module"></script>
 </body>
-
 </html>
