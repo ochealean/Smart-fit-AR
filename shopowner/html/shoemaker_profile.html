@@ -664,19 +664,19 @@
                     </div>
 
                     <div class="profile-info">
-                        <h2 class="profile-name">Shoemaker Name</h2>
-                        <div class="profile-email">shoemaker@example.com</div>
+                        <h2 class="profile-name" id="profileNameDisplay">Shoemaker Name</h2>
+                        <div class="profile-email" id="profileEmailDisplay">shoemaker@example.com</div>
                         <div class="profile-stats">
                             <div class="stat-item">
-                                <div class="stat-value">0</div>
+                                <div class="stat-value" id="orderCount">0</div>
                                 <div class="stat-label">Orders</div>
                             </div>
                             <div class="stat-item">
-                                <div class="stat-value">0</div>
+                                <div class="stat-value" id="productCount">0</div>
                                 <div class="stat-label">Products</div>
                             </div>
                             <div class="stat-item">
-                                <div class="stat-value">0</div>
+                                <div class="stat-value" id="ratingValue">0</div>
                                 <div class="stat-label">Rating</div>
                             </div>
                         </div>
@@ -726,7 +726,7 @@
 
                             <div class="form-group">
                                 <label for="ownerEmail" class="form-label">Email</label>
-                                <input type="email" id="ownerEmail" class="form-control" value="">
+                                <input type="email" id="ownerEmail" class="form-control" value="" disabled>
                             </div>
                         </div>
 
@@ -954,12 +954,12 @@
             userAvatar: document.querySelector('.user-avatar'),
 
             // Profile Header
-            profileName: document.querySelector('.profile-name'),
-            profileEmail: document.querySelector('.profile-email'),
+            profileName: document.getElementById('profileNameDisplay'),
+            profileEmail: document.getElementById('profileEmailDisplay'),
             profileAvatar: document.getElementById('shoemakerLogoImg'),
-            orderCount: document.querySelector('.stat-item:nth-child(1) .stat-value'),
-            productCount: document.querySelector('.stat-item:nth-child(2) .stat-value'),
-            ratingValue: document.querySelector('.stat-item:nth-child(3) .stat-value'),
+            orderCount: document.getElementById('orderCount'),
+            productCount: document.getElementById('productCount'),
+            ratingValue: document.getElementById('ratingValue'),
 
             // Form Fields
             shoemakerName: document.getElementById('shoemakerName'),
@@ -1084,20 +1084,23 @@
             
             // Set default values
             shoemakerData = {
-                shoemakerName: 'New Shoemaker',
+                shopName: 'New Shoemaker',
                 email: userSession.userData?.email || '',
                 ownerName: userSession.userData?.name || '',
-                specialty: 'custom',
-                description: 'Professional shoemaker specializing in custom footwear',
-                workshopAddress: '',
-                workshopCity: '',
-                workshopState: 'Central Luzon',
-                workshopZip: '',
-                workshopCountry: 'Philippines',
-                yearsExperience: 0,
-                averageCompletionTime: 7,
-                hourlyRate: 500,
-                businessHours: '9-5'
+                shopCategories: ['custom'],
+                shopDescription: 'Professional shoemaker specializing in custom footwear',
+                shopAddress: '',
+                shopCity: '',
+                shopState: 'Central Luzon',
+                shopZip: '',
+                shopCountry: 'Philippines',
+                yearsInBusiness: '1',
+                // New shoemaker-specific fields
+                shoemakerData: {
+                    hourlyRate: 500,
+                    averageCompletionTime: 7,
+                    businessHours: '9-5'
+                }
             };
             
             // Update UI with default values
@@ -1110,9 +1113,9 @@
             console.log('👤 Updating header with shoemaker data...');
 
             // Shoemaker Name
-            if (shoemakerData.shoemakerName) {
-                elements.userNameDisplay.textContent = shoemakerData.shoemakerName;
-                console.log('👞 Header Shoemaker Name set to:', shoemakerData.shoemakerName);
+            if (shoemakerData.shopName) {
+                elements.userNameDisplay.textContent = shoemakerData.shopName;
+                console.log('👞 Header Shoemaker Name set to:', shoemakerData.shopName);
             }
 
             // Role
@@ -1127,7 +1130,7 @@
                 elements.userAvatar.textContent = '';
                 console.log('🖼️ Header Avatar set to shoemaker logo');
             } else {
-                elements.userAvatar.textContent = shoemakerData.shoemakerName ? shoemakerData.shoemakerName.charAt(0).toUpperCase() : 'S';
+                elements.userAvatar.textContent = shoemakerData.shopName ? shoemakerData.shopName.charAt(0).toUpperCase() : 'S';
                 elements.userAvatar.style.backgroundImage = 'none';
                 console.log('🖼️ Header Avatar set to default (no shoemaker logo found)');
             }
@@ -1137,9 +1140,9 @@
             console.log('📊 Updating profile section with shoemaker data...');
 
             // Shoemaker Name
-            if (shoemakerData.shoemakerName) {
-                elements.profileName.textContent = shoemakerData.shoemakerName;
-                console.log('👞 Profile Name set to:', shoemakerData.shoemakerName);
+            if (shoemakerData.shopName) {
+                elements.profileName.textContent = shoemakerData.shopName;
+                console.log('👞 Profile Name set to:', shoemakerData.shopName);
             }
 
             // Email
@@ -1162,17 +1165,21 @@
             console.log('📝 Updating form fields with shoemaker data...');
 
             // Shoemaker Info
-            if (shoemakerData.shoemakerName) {
-                elements.shoemakerName.value = shoemakerData.shoemakerName;
-                console.log('👞 Shoemaker Name set to:', shoemakerData.shoemakerName);
+            if (shoemakerData.shopName) {
+                elements.shoemakerName.value = shoemakerData.shopName;
+                console.log('👞 Shoemaker Name set to:', shoemakerData.shopName);
             }
-            if (shoemakerData.specialty) {
-                elements.shoemakerSpecialty.value = shoemakerData.specialty;
-                console.log('🎯 Specialty set to:', shoemakerData.specialty);
+            
+            // Map shopCategories to specialty
+            if (shoemakerData.shopCategories && shoemakerData.shopCategories.length > 0) {
+                const specialty = shoemakerData.shopCategories[0];
+                elements.shoemakerSpecialty.value = specialty;
+                console.log('🎯 Specialty set to:', specialty);
             }
-            if (shoemakerData.description) {
-                elements.shoemakerDescription.value = shoemakerData.description;
-                console.log('📋 Description set (length):', shoemakerData.description.length);
+            
+            if (shoemakerData.shopDescription) {
+                elements.shoemakerDescription.value = shoemakerData.shopDescription;
+                console.log('📋 Description set (length):', shoemakerData.shopDescription.length);
             }
 
             // Contact Info
@@ -1190,53 +1197,64 @@
             }
 
             // Location Info
-            if (shoemakerData.workshopAddress) {
-                elements.workshopAddress.value = shoemakerData.workshopAddress;
-                console.log('📍 Address set to:', shoemakerData.workshopAddress);
+            if (shoemakerData.shopAddress) {
+                elements.workshopAddress.value = shoemakerData.shopAddress;
+                console.log('📍 Address set to:', shoemakerData.shopAddress);
             }
-            if (shoemakerData.workshopCity) {
-                elements.workshopCity.value = shoemakerData.workshopCity;
-                console.log('🏙️ City set to:', shoemakerData.workshopCity);
+            if (shoemakerData.shopCity) {
+                elements.workshopCity.value = shoemakerData.shopCity;
+                console.log('🏙️ City set to:', shoemakerData.shopCity);
             }
-            if (shoemakerData.workshopState) {
-                elements.workshopState.value = shoemakerData.workshopState;
-                console.log('🗺️ State set to:', shoemakerData.workshopState);
+            if (shoemakerData.shopState) {
+                elements.workshopState.value = shoemakerData.shopState;
+                console.log('🗺️ State set to:', shoemakerData.shopState);
             }
-            if (shoemakerData.workshopZip) {
-                elements.workshopZip.value = shoemakerData.workshopZip;
-                console.log('📮 ZIP set to:', shoemakerData.workshopZip);
+            if (shoemakerData.shopZip) {
+                elements.workshopZip.value = shoemakerData.shopZip;
+                console.log('📮 ZIP set to:', shoemakerData.shopZip);
             }
-            if (shoemakerData.workshopCountry) {
-                elements.workshopCountry.value = shoemakerData.workshopCountry;
-                console.log('🌍 Country set to:', shoemakerData.workshopCountry);
+            if (shoemakerData.shopCountry) {
+                elements.workshopCountry.value = shoemakerData.shopCountry;
+                console.log('🌍 Country set to:', shoemakerData.shopCountry);
             }
 
-            // Business Info
-            if (shoemakerData.yearsExperience !== undefined) {
-                elements.yearsExperience.value = shoemakerData.yearsExperience;
-                console.log('📅 Years Experience set to:', shoemakerData.yearsExperience);
+            // Business Info - Handle both old and new data structures
+            if (shoemakerData.yearsInBusiness) {
+                elements.yearsExperience.value = shoemakerData.yearsInBusiness;
+                console.log('📅 Years Experience set to:', shoemakerData.yearsInBusiness);
             }
-            if (shoemakerData.averageCompletionTime !== undefined) {
-                elements.averageCompletionTime.value = shoemakerData.averageCompletionTime;
-                console.log('⏱️ Average Completion Time set to:', shoemakerData.averageCompletionTime);
-            }
-            if (shoemakerData.hourlyRate !== undefined) {
-                elements.hourlyRate.value = shoemakerData.hourlyRate;
-                console.log('💰 Hourly Rate set to:', shoemakerData.hourlyRate);
-            }
-            if (shoemakerData.businessHours) {
-                elements.businessHours.value = shoemakerData.businessHours;
-                console.log('🕒 Business Hours set to:', shoemakerData.businessHours);
+
+            // Shoemaker-specific fields
+            if (shoemakerData.shoemakerData) {
+                // New structure with shoemakerData object
+                if (shoemakerData.shoemakerData.hourlyRate) {
+                    elements.hourlyRate.value = shoemakerData.shoemakerData.hourlyRate;
+                    console.log('💰 Hourly Rate set to:', shoemakerData.shoemakerData.hourlyRate);
+                }
+                if (shoemakerData.shoemakerData.averageCompletionTime) {
+                    elements.averageCompletionTime.value = shoemakerData.shoemakerData.averageCompletionTime;
+                    console.log('⏱️ Average Completion Time set to:', shoemakerData.shoemakerData.averageCompletionTime);
+                }
+                if (shoemakerData.shoemakerData.businessHours) {
+                    elements.businessHours.value = shoemakerData.shoemakerData.businessHours;
+                    console.log('🕒 Business Hours set to:', shoemakerData.shoemakerData.businessHours);
+                }
+            } else {
+                // Old structure or initialize defaults
+                console.log('📋 No shoemaker-specific data found, using defaults');
+                if (elements.hourlyRate && !elements.hourlyRate.value) elements.hourlyRate.value = 500;
+                if (elements.averageCompletionTime && !elements.averageCompletionTime.value) elements.averageCompletionTime.value = 7;
+                if (elements.businessHours && !elements.businessHours.value) elements.businessHours.value = '9-5';
             }
 
             console.log('✅ Form fields update complete');
         }
 
         function loadShoemakerStatistics() {
-            // Order Count
-            const ordersPath = 'smartfit_AR_Database/customizedtransactions';
+            // Order Count - Count custom orders for this shoemaker
+            const customOrdersPath = 'smartfit_AR_Database/customizedtransactions';
 
-            const ordersUnsubscribe = readDataRealtime(ordersPath, (result) => {
+            const ordersUnsubscribe = readDataRealtime(customOrdersPath, (result) => {
                 if (result.success && result.data) {
                     let orderCount = 0;
                     let totalRating = 0;
@@ -1245,10 +1263,11 @@
                     const transactions = result.data;
                     Object.values(transactions).forEach(userOrders => {
                         Object.values(userOrders).forEach(order => {
-                            if (order.shoemakerId === userSession.userId) {
+                            // Count orders for this shoemaker (identified by shopLoggedin field)
+                            if (order.shopLoggedin === userSession.userId) {
                                 orderCount++;
 
-                                // Check for feedback
+                                // Check for feedback (you might need to implement feedback for custom orders)
                                 if (order.feedback) {
                                     totalRating += order.feedback.rating;
                                     ratingCount++;
@@ -1266,18 +1285,30 @@
                     if (elements.ratingValue) {
                         elements.ratingValue.textContent = avgRating;
                     }
+
+                    console.log('📊 Shoemaker Statistics:', { orderCount, avgRating, ratingCount });
                 }
             });
 
-            // Product Count (custom shoe designs)
-            const productsPath = `smartfit_AR_Database/shoemaker_designs/${userSession.userId}`;
+            // Product Count - Count AR customization models
+            const productsPath = `smartfit_AR_Database/ar_customization_models`;
 
             const productsUnsubscribe = readDataRealtime(productsPath, (result) => {
                 if (result.success && result.data) {
-                    const productCount = Object.keys(result.data).length;
+                    let productCount = 0;
+                    
+                    // Count models that belong to this shoemaker
+                    Object.values(result.data).forEach(model => {
+                        if (model.shopLoggedin === userSession.userId) {
+                            productCount++;
+                        }
+                    });
+
                     if (elements.productCount) {
                         elements.productCount.textContent = productCount;
                     }
+
+                    console.log('👟 Shoemaker Products Count:', productCount);
                 } else {
                     if (elements.productCount) {
                         elements.productCount.textContent = '0';
@@ -1347,20 +1378,25 @@
                         }
 
                         // Update shoemaker data
-                        updates.shoemakerName = elements.shoemakerName.value.trim();
-                        updates.specialty = elements.shoemakerSpecialty.value;
-                        updates.description = elements.shoemakerDescription.value.trim();
+                        updates.shopName = elements.shoemakerName.value.trim();
+                        updates.shopCategories = [elements.shoemakerSpecialty.value];
+                        updates.shopDescription = elements.shoemakerDescription.value.trim();
                         updates.ownerName = elements.ownerName.value.trim();
                         updates.ownerPhone = elements.ownerPhone.value.trim();
-                        updates.workshopAddress = elements.workshopAddress.value.trim();
-                        updates.workshopCity = elements.workshopCity.value;
-                        updates.workshopState = elements.workshopState.value;
-                        updates.workshopZip = elements.workshopZip.value.trim();
-                        updates.workshopCountry = elements.workshopCountry.value;
-                        updates.yearsExperience = parseInt(elements.yearsExperience.value) || 0;
-                        updates.averageCompletionTime = parseInt(elements.averageCompletionTime.value) || 7;
-                        updates.hourlyRate = parseInt(elements.hourlyRate.value) || 500;
-                        updates.businessHours = elements.businessHours.value;
+                        updates.shopAddress = elements.workshopAddress.value.trim();
+                        updates.shopCity = elements.workshopCity.value;
+                        updates.shopState = elements.workshopState.value;
+                        updates.shopZip = elements.workshopZip.value.trim();
+                        updates.shopCountry = elements.workshopCountry.value;
+                        updates.yearsInBusiness = elements.yearsExperience.value;
+
+                        // Update shoemaker-specific data
+                        updates.shoemakerData = {
+                            hourlyRate: parseInt(elements.hourlyRate.value) || 500,
+                            averageCompletionTime: parseInt(elements.averageCompletionTime.value) || 7,
+                            businessHours: elements.businessHours.value || '9-5',
+                            lastUpdated: new Date().toISOString()
+                        };
 
                         // Upload avatar if changed
                         if (avatarFile) {
@@ -1376,8 +1412,10 @@
                             };
                         }
 
-                        const shoemakerPath = `smartfit_AR_Database/shoemaker/${userSession.userId}`;
-                        const result = await updateProfileMethod(userSession.userId, updates, shoemakerPath);
+                        const shoemakerPath = `smartfit_AR_Database/shop/${userSession.userId}`;
+                        console.log('💾 Saving shoemaker data:', updates);
+                        
+                        const result = await updateData(shoemakerPath, updates);
 
                         if (!result.success) {
                             throw new Error(result.error);
@@ -1426,11 +1464,34 @@
             }
 
             // ZIP code input restriction
-            document.getElementById("workshopZip").addEventListener("input", function () {
-                if (this.value.length > 4) {
-                    this.value = this.value.slice(0, 4);
-                }
-            });
+            if (elements.workshopZip) {
+                elements.workshopZip.addEventListener("input", function () {
+                    if (this.value.length > 4) {
+                        this.value = this.value.slice(0, 4);
+                    }
+                });
+            }
+
+            // Input validation for business fields
+            if (elements.hourlyRate) {
+                elements.hourlyRate.addEventListener("input", function () {
+                    if (this.value < 0) this.value = 0;
+                });
+            }
+
+            if (elements.averageCompletionTime) {
+                elements.averageCompletionTime.addEventListener("input", function () {
+                    if (this.value < 1) this.value = 1;
+                    if (this.value > 365) this.value = 365;
+                });
+            }
+
+            if (elements.yearsExperience) {
+                elements.yearsExperience.addEventListener("input", function () {
+                    if (this.value < 0) this.value = 0;
+                    if (this.value > 99) this.value = 99;
+                });
+            }
         }
 
         // Add this function to validate required fields
