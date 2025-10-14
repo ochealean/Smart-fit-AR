@@ -8,6 +8,8 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Add Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Add html2pdf.js for PDF generation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
         :root {
             --primary: #7c3aed;
@@ -378,92 +380,6 @@
             margin-bottom: 2rem;
         }
 
-        /* Top Products */
-        .top-products {
-            background: white;
-            border-radius: var(--radius-xl);
-            padding: 1.5rem;
-            box-shadow: var(--shadow-md);
-            border: 1px solid var(--gray-200);
-            margin-bottom: 2rem;
-        }
-
-        .product-list {
-            display: flex;
-            flex-direction: column;
-            gap: 1rem;
-        }
-
-        .product-item {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-            padding: 1rem;
-            border-radius: var(--radius-lg);
-            background: var(--gray-50);
-            transition: var(--transition);
-        }
-
-        .product-item:hover {
-            background: var(--gray-100);
-        }
-
-        .product-icon {
-            width: 50px;
-            height: 50px;
-            border-radius: var(--radius-md);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.25rem;
-            background: rgba(124, 58, 237, 0.1);
-            color: var(--primary);
-        }
-
-        .product-info {
-            flex: 1;
-        }
-
-        .product-name {
-            font-weight: 600;
-            margin-bottom: 0.25rem;
-        }
-
-        .product-stats {
-            display: flex;
-            justify-content: space-between;
-            color: var(--gray-600);
-            font-size: 0.9rem;
-        }
-
-        /* Performance Metrics */
-        .performance-metrics {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 1.5rem;
-            margin-bottom: 2rem;
-        }
-
-        .metric-card {
-            background: white;
-            border-radius: var(--radius-xl);
-            padding: 1.5rem;
-            box-shadow: var(--shadow-md);
-            border: 1px solid var(--gray-200);
-            text-align: center;
-        }
-
-        .metric-value {
-            font-size: 2.5rem;
-            font-weight: 700;
-            margin-bottom: 0.5rem;
-        }
-
-        .metric-label {
-            color: var(--gray-600);
-            font-size: 0.9rem;
-        }
-
         /* Export Section */
         .export-section {
             background: white;
@@ -791,41 +707,6 @@
                 </div>
             </div>
 
-            <!-- Performance Metrics -->
-            <div class="performance-metrics">
-                <div class="metric-card">
-                    <div class="metric-value" id="completionRate">0%</div>
-                    <div class="metric-label">Order Completion Rate</div>
-                </div>
-                
-                <div class="metric-card">
-                    <div class="metric-value" id="avgProcessingTime">0d</div>
-                    <div class="metric-label">Avg. Processing Time</div>
-                </div>
-                
-                <div class="metric-card">
-                    <div class="metric-value" id="customerSatisfaction">0%</div>
-                    <div class="metric-label">Customer Satisfaction</div>
-                </div>
-                
-                <div class="metric-card">
-                    <div class="metric-value" id="repeatCustomers">0%</div>
-                    <div class="metric-label">Repeat Customers</div>
-                </div>
-            </div>
-
-            <!-- Top Products -->
-            <div class="top-products">
-                <h2 class="section-title">
-                    <i class="fas fa-star"></i>
-                    Top Customized Products
-                </h2>
-                
-                <div class="product-list" id="topProductsList">
-                    <div class="loading">Loading products...</div>
-                </div>
-            </div>
-
             <!-- Export Section -->
             <div class="export-section">
                 <h2 class="section-title">
@@ -873,11 +754,6 @@
         const totalOrders = document.getElementById('totalOrders');
         const totalCustomers = document.getElementById('totalCustomers');
         const averageOrderValue = document.getElementById('averageOrderValue');
-        const completionRate = document.getElementById('completionRate');
-        const avgProcessingTime = document.getElementById('avgProcessingTime');
-        const customerSatisfaction = document.getElementById('customerSatisfaction');
-        const repeatCustomers = document.getElementById('repeatCustomers');
-        const topProductsList = document.getElementById('topProductsList');
         const logoutBtn = document.getElementById('logout_btn');
 
         // Chart control elements
@@ -946,7 +822,6 @@
                         processRealtimeOrders(result.data);
                         updateAnalyticsCards();
                         updateCharts();
-                        updateTopProducts();
                     }
                 } else {
                     console.error("Real-time listener error:", result.error);
@@ -1011,11 +886,9 @@
 
                 updateAnalyticsCards();
                 updateCharts();
-                updateTopProducts();
                 
             } catch (error) {
                 console.error('Error loading analytics data:', error);
-                showErrorState();
             }
         }
 
@@ -1043,55 +916,6 @@
             document.getElementById('ordersChange').innerHTML = `<i class="fas fa-arrow-up"></i><span>${ordersChange}% from last month</span>`;
             document.getElementById('customersChange').innerHTML = `<i class="fas fa-arrow-up"></i><span>${customersChange}% from last month</span>`;
             document.getElementById('averageOrderChange').innerHTML = `<i class="fas fa-arrow-up"></i><span>${averageOrderChange}% from last month</span>`;
-
-            // Update performance metrics
-            const completionRateValue = allOrders.length > 0 ? Math.round((completedOrders.length / allOrders.length) * 100) : 0;
-            const avgProcessingDays = calculateAverageProcessingTime();
-            const satisfactionRate = calculateCustomerSatisfaction();
-            const repeatRate = calculateRepeatCustomerRate();
-
-            completionRate.textContent = `${completionRateValue}%`;
-            avgProcessingTime.textContent = `${avgProcessingDays}d`;
-            customerSatisfaction.textContent = `${satisfactionRate}%`;
-            repeatCustomers.textContent = `${repeatRate}%`;
-        }
-
-        // Calculate average processing time
-        function calculateAverageProcessingTime() {
-            const completedOrders = allOrders.filter(order => order.status === 'completed');
-            if (completedOrders.length === 0) return 0;
-            
-            let totalDays = 0;
-            completedOrders.forEach(order => {
-                const orderDate = new Date(order.orderDate || order.date || order.addedAt);
-                const completionDate = order.completionDate ? new Date(order.completionDate) : new Date();
-                const days = Math.ceil((completionDate - orderDate) / (1000 * 60 * 60 * 24));
-                totalDays += days > 0 ? days : 1;
-            });
-            
-            return Math.round(totalDays / completedOrders.length);
-        }
-
-        // Calculate customer satisfaction (placeholder)
-        function calculateCustomerSatisfaction() {
-            // In a real app, this would come from customer feedback
-            return Math.min(95, Math.max(70, Math.floor(Math.random() * 25) + 70));
-        }
-
-        // Calculate repeat customer rate
-        function calculateRepeatCustomerRate() {
-            const customerOrderCounts = {};
-            
-            allOrders.forEach(order => {
-                if (order.userId) {
-                    customerOrderCounts[order.userId] = (customerOrderCounts[order.userId] || 0) + 1;
-                }
-            });
-            
-            const repeatCustomers = Object.values(customerOrderCounts).filter(count => count > 1).length;
-            const totalCustomers = Object.keys(customerOrderCounts).length;
-            
-            return totalCustomers > 0 ? Math.round((repeatCustomers / totalCustomers) * 100) : 0;
         }
 
         // Update charts
@@ -1572,43 +1396,6 @@
             });
         }
 
-        // Update top products list
-        function updateTopProducts() {
-            // In a real app, this would come from product data
-            // For now, we'll simulate some popular products
-            const topProducts = [
-                { name: "Custom Running Shoes", orders: 24, revenue: 72000 },
-                { name: "Leather Dress Shoes", orders: 18, revenue: 54000 },
-                { name: "Casual Sneakers", orders: 15, revenue: 45000 },
-                { name: "Basketball Shoes", orders: 12, revenue: 36000 },
-                { name: "Hiking Boots", orders: 8, revenue: 24000 }
-            ];
-
-            if (topProducts.length === 0) {
-                topProductsList.innerHTML = `
-                    <div style="text-align: center; padding: 2rem;">
-                        <i class="fas fa-box-open"></i> No product data available
-                    </div>
-                `;
-                return;
-            }
-
-            topProductsList.innerHTML = topProducts.map(product => `
-                <div class="product-item">
-                    <div class="product-icon">
-                        <i class="fas fa-shoe-prints"></i>
-                    </div>
-                    <div class="product-info">
-                        <div class="product-name">${product.name}</div>
-                        <div class="product-stats">
-                            <span>${product.orders} orders</span>
-                            <span>₱${product.revenue.toFixed(2)}</span>
-                        </div>
-                    </div>
-                </div>
-            `).join('');
-        }
-
         // Update chart sort buttons UI
         function updateChartSortButtons(activePeriod) {
             // Reset all chart sort buttons
@@ -1623,31 +1410,137 @@
             }
         }
 
-        // Show error state
-        function showErrorState() {
-            topProductsList.innerHTML = `
-                <div style="text-align: center; padding: 2rem; color: var(--error);">
-                    <i class="fas fa-exclamation-circle"></i> Failed to load data. Please try again.
-                </div>
-            `;
-        }
-
         // Export data as CSV
         function exportDataAsCSV() {
-            // In a real app, this would generate a proper CSV file
-            alert('CSV export functionality would be implemented here');
+            if (allOrders.length === 0) {
+                alert('No data to export.');
+                return;
+            }
+
+            const headers = ['Order ID', 'User ID', 'Date', 'Total Amount (₱)', 'Status', 'Custom Order'];
+            const rows = allOrders.map(order => [
+                order.orderId || '',
+                order.userId || '',
+                new Date(order.orderDate || order.date || order.addedAt).toLocaleDateString(),
+                order.totalAmount || 0,
+                order.status || 'N/A',
+                order.isCustom ? 'Yes' : 'No'
+            ]);
+
+            const csvContent = [headers, ...rows].map(row => row.join(',')).join('\n');
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.setAttribute('href', url);
+            link.setAttribute('download', `shoemaker_analytics_${new Date().toISOString().slice(0, 10)}.csv`);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
         }
 
-        // Export data as PDF
-        function exportDataAsPDF() {
-            // In a real app, this would generate a proper PDF report
-            alert('PDF export functionality would be implemented here');
+        // Export data as PDF (using html2pdf)
+        async function exportDataAsPDF() {
+            const btn = exportPDFBtn;
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating...';
+            btn.disabled = true;
+
+            try {
+                // Create container for PDF content
+                const pdfContainer = document.createElement('div');
+                pdfContainer.style.padding = '20px';
+                pdfContainer.style.fontFamily = 'Arial, sans-serif';
+                pdfContainer.style.background = 'white';
+                pdfContainer.style.color = 'black';
+
+                // Header
+                pdfContainer.innerHTML = `
+                    <div style="text-align: center; margin-bottom: 30px; border-bottom: 2px solid #7c3aed; padding-bottom: 15px;">
+                        <h1 style="color: #7c3aed; margin: 0;">SmartFit AR Shoemaker Analytics Report</h1>
+                        <p style="margin: 10px 0 0; color: #475569;">
+                            Date Range: ${currentDateRange.startDate.toLocaleDateString()} - ${currentDateRange.endDate.toLocaleDateString()} 
+                            | Generated on: ${new Date().toLocaleString()}
+                        </p>
+                    </div>
+                `;
+
+                // Summary Cards
+                const summaryDiv = document.createElement('div');
+                summaryDiv.style.display = 'grid';
+                summaryDiv.style.gridTemplateColumns = 'repeat(2, 1fr)';
+                summaryDiv.style.gap = '20px';
+                summaryDiv.style.marginBottom = '30px';
+
+                const metrics = [
+                    { label: 'Total Revenue', value: totalRevenue.textContent },
+                    { label: 'Total Orders', value: totalOrders.textContent },
+                    { label: 'Unique Customers', value: totalCustomers.textContent },
+                    { label: 'Avg Order Value', value: averageOrderValue.textContent }
+                ];
+
+                metrics.forEach(metric => {
+                    const card = document.createElement('div');
+                    card.style.border = '1px solid #e2e8f0';
+                    card.style.borderRadius = '12px';
+                    card.style.padding = '15px';
+                    card.style.background = '#f8fafc';
+                    card.innerHTML = `
+                        <div style="font-weight: bold; color: #475569;">${metric.label}</div>
+                        <div style="font-size: 24px; font-weight: 700; color: #1e293b;">${metric.value}</div>
+                    `;
+                    summaryDiv.appendChild(card);
+                });
+                pdfContainer.appendChild(summaryDiv);
+
+                // Add Charts as Images
+                const chartIds = ['revenueTrendsChart', 'statusDistributionChart', 'monthlyOrdersChart', 'monthlyRevenueChart'];
+                const chartTitles = ['Revenue Trends', 'Order Status Distribution', 'Orders by Month', 'Revenue by Month'];
+
+                for (let i = 0; i < chartIds.length; i++) {
+                    const canvas = document.getElementById(chartIds[i]);
+                    if (canvas) {
+                        const title = document.createElement('h3');
+                        title.textContent = chartTitles[i];
+                        title.style.textAlign = 'center';
+                        title.style.color = '#7c3aed';
+                        title.style.margin = '30px 0 15px';
+                        pdfContainer.appendChild(title);
+
+                        const img = document.createElement('img');
+                        img.src = canvas.toDataURL('image/png');
+                        img.style.maxWidth = '100%';
+                        img.style.height = 'auto';
+                        img.style.marginBottom = '20px';
+                        img.style.border = '1px solid #e2e8f0';
+                        img.style.borderRadius = '8px';
+                        pdfContainer.appendChild(img);
+                    }
+                }
+
+                // Options for html2pdf
+                const opt = {
+                    margin: [10, 10, 10, 10],
+                    filename: `shoemaker_analytics_report_${new Date().toISOString().slice(0, 10)}.pdf`,
+                    image: { type: 'jpeg', quality: 0.98 },
+                    html2canvas: { scale: 2, useCORS: true },
+                    jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' },
+                    pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+                };
+
+                await html2pdf().set(opt).from(pdfContainer).save();
+            } catch (error) {
+                console.error('Error generating PDF:', error);
+                alert('Failed to generate PDF. Please try again.');
+            } finally {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }
         }
 
-        // Generate full report
+        // Generate Full Report (same as PDF export for now)
         function generateFullReport() {
-            // In a real app, this would generate a comprehensive report
-            alert('Full report generation would be implemented here');
+            exportDataAsPDF();
         }
 
         // Set up event listeners
