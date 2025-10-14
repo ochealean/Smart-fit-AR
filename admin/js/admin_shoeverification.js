@@ -661,7 +661,7 @@ function makeImagesClickable() {
         const imgElement = document.getElementById(imgConfig.id);
         if (imgElement) {
             // Skip if it's still the error image
-            if (imgElement.src.includes('errorimage.jpg')) {
+            if (imgElement.src.includes('/images/unloadshoepic.png')) {
                 imgElement.style.cursor = 'default';
                 imgElement.title = 'Image not available';
                 return;
