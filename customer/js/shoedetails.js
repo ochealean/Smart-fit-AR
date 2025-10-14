@@ -22,6 +22,7 @@ let selectedVariantKey = null;
 let selectedSize = null;
 let maxAvailableQty = 1;
 let cursedWords = [];
+let customerMedia = [];
 
 // URL Params
 const urlParams = new URLSearchParams(window.location.search);
@@ -99,7 +100,8 @@ async function loadProductDetails() {
                 isWishlisted();
             }
             
-            loadCustomerReviews();
+            // Load customer reviews and media
+            await loadCustomerReviews();
         } else {
             console.log("Product not found:", result.error);
             showProductNotFound();
@@ -348,7 +350,26 @@ async function getCustomernameUsingID(userID) {
     }
 }
 
-// Display reviews on the page
+// Helper function to get user profile picture
+async function getUserProfilePic(userID) {
+    const userPath = `smartfit_AR_Database/customers/${userID}`;
+    
+    try {
+        const result = await readData(userPath);
+        
+        if (result.success) {
+            const userData = result.data;
+            return userData.profilePhoto || "https://cdn-icons-png.flaticon.com/512/11542/11542598.png";
+        } else {
+            return "https://cdn-icons-png.flaticon.com/512/11542/11542598.png";
+        }
+    } catch (error) {
+        console.error("Error fetching user profile picture:", error);
+        return "https://cdn-icons-png.flaticon.com/512/11542/11542598.png";
+    }
+}
+
+// Display reviews on the page with integrated media
 async function displayReviews(feedbacks) {
     const reviewsList = getElement('reviewsContainer');
     if (reviewsList) reviewsList.innerHTML = '<div class="loading">Loading reviews...</div>';
@@ -413,6 +434,7 @@ async function displayReviews(feedbacks) {
     for (const review of reviewsToDisplay) {
         try {
             const username = await getCustomernameUsingID(review.userId);
+            const userProfilePic = await getUserProfilePic(review.userId);
 
             const reviewDiv = document.createElement("div");
             reviewDiv.classList.add("review-item");
@@ -422,6 +444,18 @@ async function displayReviews(feedbacks) {
             const headerDiv = document.createElement("div");
             headerDiv.classList.add("review-header");
             
+            // Author info with avatar
+            const authorInfoDiv = document.createElement("div");
+            authorInfoDiv.classList.add("review-author-info");
+            
+            const avatarImg = document.createElement("img");
+            avatarImg.classList.add("review-avatar");
+            avatarImg.src = userProfilePic;
+            avatarImg.alt = username;
+            
+            const authorDetailsDiv = document.createElement("div");
+            authorDetailsDiv.classList.add("review-author-details");
+            
             const authorSpan = document.createElement("span");
             authorSpan.classList.add("review-author");
             authorSpan.textContent = username;
@@ -430,10 +464,16 @@ async function displayReviews(feedbacks) {
             dateSpan.classList.add("review-date");
             dateSpan.textContent = formatTimestamp(review.feedback.timestamp);
             
-            headerDiv.appendChild(authorSpan);
-            headerDiv.appendChild(dateSpan);
+            authorDetailsDiv.appendChild(authorSpan);
+            authorDetailsDiv.appendChild(dateSpan);
             
-            // Create stars
+            authorInfoDiv.appendChild(avatarImg);
+            authorInfoDiv.appendChild(authorDetailsDiv);
+            
+            // Rating stars
+            const ratingDiv = document.createElement("div");
+            ratingDiv.classList.add("review-rating");
+            
             const starsDiv = document.createElement("div");
             starsDiv.classList.add("review-stars");
             
@@ -444,14 +484,93 @@ async function displayReviews(feedbacks) {
                 starsDiv.appendChild(starIcon);
             }
             
+            ratingDiv.appendChild(starsDiv);
+            
+            headerDiv.appendChild(authorInfoDiv);
+            headerDiv.appendChild(ratingDiv);
+            
             // Create comment
             const commentP = document.createElement("p");
+            commentP.classList.add("review-comment");
             commentP.textContent = censoredText(review.feedback.comment) || "No comment provided.";
+            
+            // Create media section
+            const mediaSection = document.createElement("div");
+            mediaSection.classList.add("review-media-section");
+            
+            const mediaTitle = document.createElement("div");
+            mediaTitle.classList.add("review-media-title");
+            mediaTitle.textContent = "Photos & Videos";
+            
+            const mediaGrid = document.createElement("div");
+            mediaGrid.classList.add("review-media-grid");
+            
+            // Add photos and videos from this feedback
+            const mediaItems = [];
+            
+            // Add photos
+            if (review.feedback.media && review.feedback.media.photos && Array.isArray(review.feedback.media.photos)) {
+                review.feedback.media.photos.forEach(photo => {
+                    mediaItems.push({
+                        url: photo.url,
+                        type: 'image'
+                    });
+                });
+            }
+            
+            // Add video
+            if (review.feedback.media && review.feedback.media.video) {
+                mediaItems.push({
+                    url: review.feedback.media.video.url,
+                    type: 'video'
+                });
+            }
+            
+            // Display media items
+            if (mediaItems.length > 0) {
+                mediaItems.forEach((media, index) => {
+                    const mediaItem = document.createElement('div');
+                    mediaItem.className = 'review-media-item';
+                    mediaItem.onclick = () => openMediaModal(media.url, media.type);
+                    
+                    if (media.type === 'image') {
+                        mediaItem.innerHTML = `
+                            <img src="${media.url}" alt="Customer photo ${index + 1}" loading="lazy">
+                            <div class="review-media-badge">Photo</div>
+                        `;
+                    } else {
+                        mediaItem.innerHTML = `
+                            <div class="video-thumbnail">
+                                <video muted>
+                                    <source src="${media.url}" type="video/mp4">
+                                </video>
+                                <div class="video-play-overlay">
+                                    <i class="fas fa-play"></i>
+                                </div>
+                            </div>
+                            <div class="review-media-badge">Video</div>
+                        `;
+                    }
+                    
+                    mediaGrid.appendChild(mediaItem);
+                });
+            } else {
+                // No media for this review
+                mediaGrid.innerHTML = `
+                    <div class="no-review-media">
+                        <i class="fas fa-camera"></i>
+                        <p>No photos or videos for this review</p>
+                    </div>
+                `;
+            }
+            
+            mediaSection.appendChild(mediaTitle);
+            mediaSection.appendChild(mediaGrid);
             
             // Append all elements
             reviewDiv.appendChild(headerDiv);
-            reviewDiv.appendChild(starsDiv);
             reviewDiv.appendChild(commentP);
+            reviewDiv.appendChild(mediaSection);
             
             reviewsList.appendChild(reviewDiv);
 
@@ -513,6 +632,301 @@ window.filterReviews = function(rating) {
             ? 'block' 
             : 'none';
     });
+}
+
+// Media Modal Functions
+function openMediaModal(url, type) {
+    const modal = document.getElementById('mediaModal');
+    const content = modal.querySelector('.media-modal-content');
+    const videoUrl = `${url}${url.includes('?') ? '&' : '?'}t=${Date.now()}`;
+    
+    console.log('Opening media modal:', {
+        type: type,
+        url: url,
+        encodedUrl: videoUrl,
+        modal: modal
+    });
+
+    // Clear previous content
+    content.innerHTML = '';
+    
+    if (type === 'image') {
+        modal.classList.remove('video-mode');
+        content.innerHTML = `
+            <button class="media-modal-close" onclick="closeMediaModal()">
+                <i class="fas fa-times"></i>
+            </button>
+            <img src="${url}" alt="Enlarged view" onload="window.hideMediaLoading()" onerror="window.showMediaError('image')">
+            <div class="media-loading" id="mediaLoading">
+                <div class="loader"></div>
+                <p>Loading image...</p>
+            </div>
+        `;
+        window.showMediaLoading();
+    } else {
+        modal.classList.add('video-mode');
+        
+        // Create a properly encoded video URL for Firebase Storage
+        const videoUrl = encodeURI(url);
+        
+        content.innerHTML = `
+            <button class="media-modal-close" onclick="closeMediaModal()">
+                <i class="fas fa-times"></i>
+            </button>
+            <div class="video-container">
+                <video 
+                    controls 
+                    controlsList="nodownload"
+                    preload="metadata"
+                    onloadeddata="window.hideMediaLoading()" 
+                    onerror="window.showMediaError('video')"
+                    onloadstart="window.showMediaLoading()">
+                    <source src="${videoUrl}" type="video/mp4">
+                    Your browser does not support the video tag.
+                </video>
+                <div class="video-loading" id="videoLoading">
+                    <div class="loader"></div>
+                    <p>Loading video...</p>
+                </div>
+                <div class="video-error" id="videoError" style="display: none;">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <p>Failed to load video</p>
+                    <button class="submit-btn" onclick="window.retryVideoLoad('${videoUrl}')" style="margin-top: 1rem; padding: 0.5rem 1rem;">
+                        <i class="fas fa-redo"></i> Retry
+                    </button>
+                </div>
+            </div>
+            <div class="video-controls-info">
+                <p><small>Use the video controls to play, pause, and adjust volume</small></p>
+            </div>
+        `;
+        window.showMediaLoading();
+        
+        // Try to load the video programmatically after a short delay
+        setTimeout(() => {
+            const video = content.querySelector('video');
+            if (video) {
+                video.load();
+                
+                // Add event listeners for better error handling
+                video.addEventListener('error', function(e) {
+                    console.error('Video error:', e);
+                    window.showMediaError('video');
+                });
+                
+                video.addEventListener('canplay', function() {
+                    window.hideMediaLoading();
+                });
+            }
+        }, 100);
+    }
+
+    modal.style.display = 'flex';
+    
+    // Add escape key listener
+    document.addEventListener('keydown', handleEscapeKey);
+    
+    // Close modal when clicking outside content
+    modal.addEventListener('click', handleOutsideClick);
+}
+
+// Enhanced close modal function
+window.closeMediaModal = function() {
+    const modal = document.getElementById('mediaModal');
+    if (modal) {
+        // Pause any playing video
+        const video = modal.querySelector('video');
+        if (video) {
+            video.pause();
+            video.currentTime = 0;
+        }
+        
+        modal.style.display = 'none';
+        modal.classList.remove('video-mode');
+        
+        // Remove event listeners
+        document.removeEventListener('keydown', handleEscapeKey);
+        modal.removeEventListener('click', handleOutsideClick);
+    }
+};
+
+// Handle escape key to close modal
+function handleEscapeKey(e) {
+    if (e.key === 'Escape') {
+        closeMediaModal();
+    }
+}
+
+// Handle click outside modal content
+function handleOutsideClick(e) {
+    const modal = document.getElementById('mediaModal');
+    if (e.target === modal) {
+        closeMediaModal();
+    }
+}
+
+// Loading and error handling functions - MADE GLOBAL
+window.showMediaLoading = function() {
+    const videoLoading = document.getElementById('videoLoading');
+    const mediaLoading = document.getElementById('mediaLoading');
+    
+    if (videoLoading) videoLoading.style.display = 'block';
+    if (mediaLoading) mediaLoading.style.display = 'block';
+};
+
+window.hideMediaLoading = function() {
+    const videoLoading = document.getElementById('videoLoading');
+    const mediaLoading = document.getElementById('mediaLoading');
+    
+    if (videoLoading) videoLoading.style.display = 'none';
+    if (mediaLoading) mediaLoading.style.display = 'none';
+};
+
+// Error handling for media
+window.showMediaError = function(type) {
+    window.hideMediaLoading();
+    
+    if (type === 'video') {
+        const error = document.getElementById('videoError');
+        if (error) {
+            error.style.display = 'flex';
+            
+            // Add debug info
+            const video = document.querySelector('.media-modal-content video');
+            if (video) {
+                console.log('Video error details:', {
+                    error: video.error,
+                    networkState: video.networkState,
+                    readyState: video.readyState,
+                    src: video.currentSrc || video.src
+                });
+            }
+        }
+    } else {
+        alert('Failed to load image. Please try again.');
+        closeMediaModal();
+    }
+};
+
+// Retry function for video loading
+window.retryVideoLoad = function(url) {
+    const error = document.getElementById('videoError');
+    if (error) error.style.display = 'none';
+    
+    window.showMediaLoading();
+    
+    const video = document.querySelector('.media-modal-content video');
+    if (video) {
+        // Clear any existing sources
+        while (video.firstChild) {
+            video.removeChild(video.firstChild);
+        }
+        
+        // Add new source
+        const source = document.createElement('source');
+        source.src = url;
+        source.type = 'video/mp4';
+        video.appendChild(source);
+        
+        // Reload the video
+        video.load();
+        
+        // Add event listeners
+        video.addEventListener('error', function(e) {
+            console.error('Video error on retry:', e);
+            window.showMediaError('video');
+        });
+        
+        video.addEventListener('canplay', function() {
+            window.hideMediaLoading();
+        });
+    }
+};
+
+// Toast notification functions
+function showToast(message, type = 'success', duration = 5000) {
+    let container = document.getElementById('toastContainer');
+    if (!container) {
+        container = document.createElement('div');
+        container.id = 'toastContainer';
+        container.className = 'toast-container';
+        document.body.appendChild(container);
+    }
+
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+
+    const icon = getToastIcon(type);
+
+    toast.innerHTML = `
+        <i class="${icon}"></i>
+        <div class="toast-content">${message}</div>
+        <button class="toast-close" aria-label="Close toast">
+            <i class="fas fa-times"></i>
+        </button>
+        <div class="toast-progress"></div>
+    `;
+
+    container.appendChild(toast);
+
+    requestAnimationFrame(() => {
+        toast.classList.add('show');
+    });
+
+    const closeBtn = toast.querySelector('.toast-close');
+    closeBtn.addEventListener('click', () => hideToast(toast));
+
+    toast.addEventListener('click', (e) => {
+        if (e.target === toast || e.target.classList.contains('toast-content')) {
+            hideToast(toast);
+        }
+    });
+
+    if (duration > 0) {
+        setTimeout(() => {
+            hideToast(toast);
+        }, duration);
+    }
+
+    return toast;
+}
+
+function getToastIcon(type) {
+    const icons = {
+        success: 'fas fa-check-circle',
+        error: 'fas fa-times-circle',
+        warning: 'fas fa-exclamation-triangle',
+        info: 'fas fa-info-circle'
+    };
+    return icons[type] || icons.info;
+}
+
+function hideToast(toast) {
+    toast.classList.remove('show');
+    toast.classList.add('hiding');
+
+    setTimeout(() => {
+        if (toast.parentNode) {
+            toast.parentNode.removeChild(toast);
+        }
+    }, 300);
+}
+
+// Convenience toast functions
+function showSuccess(message, duration) {
+    return showToast(message, 'success', duration);
+}
+
+function showError(message, duration) {
+    return showToast(message, 'error', duration);
+}
+
+function showWarning(message, duration) {
+    return showToast(message, 'warning', duration);
+}
+
+function showInfo(message, duration) {
+    return showToast(message, 'info', duration);
 }
 
 async function isWishlisted() {
@@ -916,6 +1330,17 @@ function censoredText(text) {
     
     return censored;
 }
+
+// Make functions available globally
+window.openMediaModal = openMediaModal;
+window.closeMediaModal = closeMediaModal;
+window.retryVideoLoad = retryVideoLoad;
+window.showToast = showToast;
+window.showSuccess = showSuccess;
+window.showError = showError;
+window.showWarning = showWarning;
+window.showInfo = showInfo;
+window.filterReviews = filterReviews;
 
 // Initialize buttons as disabled
 document.addEventListener('DOMContentLoaded', function() {
