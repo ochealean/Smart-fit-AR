@@ -183,7 +183,7 @@ async function loadAllOrders() {
 function filterAndRenderOrders() {
     if (!searchInput) return;
     
-    const searchTerm = searchInput.value.toLowerCase();
+    const searchTerm = searchInput.value.toLowerCase().trim();
     
     filteredOrders = allOrders.filter(order => {
         let statusMatch = false;
@@ -195,18 +195,24 @@ function filterAndRenderOrders() {
             statusMatch = ['completed', 'cancelled', 'rejected'].includes(order.status);
         }
         
+        if (!statusMatch) return false;
+        
         if (searchTerm) {
-            const orderIdMatch = order.orderId.toLowerCase().includes(searchTerm);
-            const customerNameMatch = (
-                (order.shippingInfo?.firstName?.toLowerCase().includes(searchTerm)) ||
-                (order.shippingInfo?.lastName?.toLowerCase().includes(searchTerm)) ||
-                (order.userName?.toLowerCase().includes(searchTerm)));
-            const emailMatch = order.shippingInfo?.email?.toLowerCase().includes(searchTerm);
+            const orderIdMatch = order.orderId?.toLowerCase().includes(searchTerm) || false;
             
-            return statusMatch && (orderIdMatch || customerNameMatch || emailMatch);
+            // Improved customer name matching
+            const customerName = order.shippingInfo ? 
+                `${order.shippingInfo.firstName || ''} ${order.shippingInfo.lastName || ''}`.trim() : 
+                order.userName || '';
+            const customerNameMatch = customerName.toLowerCase().includes(searchTerm);
+            
+            // Improved email matching
+            const emailMatch = order.shippingInfo?.email?.toLowerCase().includes(searchTerm) || false;
+            
+            return orderIdMatch || customerNameMatch || emailMatch;
         }
         
-        return statusMatch;
+        return true;
     });
     
     renderOrders();
@@ -1176,6 +1182,7 @@ function setupEventListeners() {
         });
     });
     
+    // Search button
     if (searchBtn) {
         searchBtn.addEventListener('click', () => {
             currentPage = 1;
@@ -1183,6 +1190,7 @@ function setupEventListeners() {
         });
     }
     
+    // Clear search
     if (clearSearch) {
         clearSearch.addEventListener('click', () => {
             if (searchInput) {
@@ -1193,9 +1201,21 @@ function setupEventListeners() {
         });
     }
     
+    // Real-time search with debouncing
     if (searchInput) {
+        let searchTimeout;
+        searchInput.addEventListener('input', (e) => {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                currentPage = 1;
+                filterAndRenderOrders();
+            }, 300); // 300ms delay
+        });
+        
+        // Enter key search
         searchInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') {
+                clearTimeout(searchTimeout);
                 currentPage = 1;
                 filterAndRenderOrders();
             }
