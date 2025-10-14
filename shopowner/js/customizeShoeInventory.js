@@ -190,8 +190,8 @@ function createModelCard(modelId, model) {
             const uploadStatus = hasAllImages ? 'uploaded' : 'missing';
             colorBadgesHtml += `
                 <div class="color-badge ${uploadStatus}" 
-                     style="background-color: ${getColorValue(color)}" 
-                     title="${colorData.name} - ${hasAllImages ? 'All files uploaded' : 'Missing files'}">
+                        style="background-color: ${getColorValue(color)}" 
+                        title="${colorData.name} - ${hasAllImages ? 'All files uploaded' : 'Missing files'}">
                     ${!hasAllImages ? '<i class="fas fa-exclamation-triangle warning-icon"></i>' : ''}
                     ${colorData.deepARFile ? '<i class="fas fa-vr-cardboard ar-icon" title="AR Effect Available"></i>' : ''}
                 </div>
@@ -387,8 +387,8 @@ function openEditModal(modelId, model) {
 
     // Check if model has any customizations
     const hasCustomizations = Object.keys(model.bodyColors).length > 0 || 
-                             Object.keys(model.laces).length > 0 || 
-                             Object.keys(model.insoles).length > 0;
+                                Object.keys(model.laces).length > 0 || 
+                                Object.keys(model.insoles).length > 0;
 
     // Generate body colors HTML
     let bodyColorsHtml = '';
@@ -449,7 +449,7 @@ function openEditModal(modelId, model) {
         bodyColorsHtml = '<div class="empty-state-small">No colors added yet</div>';
     }
 
-    // Generate laces HTML (unchanged)
+    // Generate laces HTML
     let lacesHtml = '';
     if (model.laces && Object.keys(model.laces).length > 0) {
         Object.entries(model.laces).forEach(([laceKey, laceData]) => {
@@ -510,7 +510,7 @@ function openEditModal(modelId, model) {
         lacesHtml = '<div class="empty-state-small">No laces types added yet</div>';
     }
 
-    // Generate insoles HTML (unchanged)
+    // Generate insoles HTML
     let insolesHtml = '';
     if (model.insoles && Object.keys(model.insoles).length > 0) {
         Object.entries(model.insoles).forEach(([insoleKey, insoleData]) => {
@@ -640,7 +640,7 @@ function openEditModal(modelId, model) {
         </div>
     `;
 
-    modalElement.style.display = 'block';
+    modalElement.style.display = 'flex';
     document.body.classList.add('modal-open');
 
     // Add form submit handler
@@ -1744,23 +1744,6 @@ function removeInsoleOption(insoleId) {
 
 // Event listeners
 document.addEventListener('DOMContentLoaded', function () {
-    // Mobile sidebar toggle
-    const mobileToggle = document.querySelector('.mobile-menu-toggle');
-    const sidebar = document.querySelector('.sidebar');
-    const overlay = document.querySelector('.sidebar-overlay');
-
-    if (mobileToggle && sidebar && overlay) {
-        mobileToggle.addEventListener('click', () => {
-            sidebar.classList.toggle('active');
-            overlay.classList.toggle('active');
-        });
-
-        overlay.addEventListener('click', () => {
-            sidebar.classList.remove('active');
-            overlay.classList.remove('active');
-        });
-    }
-
     // Logout button
     getElement('logout_btn').addEventListener('click', async () => {
         if (confirm('Are you sure you want to logout?')) {
