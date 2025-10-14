@@ -76,6 +76,7 @@ async function initializeAddShoe() {
 
     // Generate and set random 6-digit code for shoe
     const random6DigitCode = generate6DigitCode();
+    console.log("Generated Shoe Code: ", random6DigitCode);
     getElement('shoeCode').value = random6DigitCode;
 
     // Add first color variant by default
@@ -384,27 +385,27 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Form submission
     getElement('addShoeForm').addEventListener('submit', handleAddShoe);
-    uploadBtn.addEventListener('click', async () => {
-      const file = fileInput.files[0];
-      if (!file) {
-        alert('Please select a file first.');
-        return;
-      }
+    // uploadBtn.addEventListener('click', async () => {
+    //     const file = fileInput.files[0];
+    //     if (!file) {
+    //         alert('Please select a file first.');
+    //         return;
+    //     }
 
-      const result = await addFile(file, `deeparShoeModelFiles/${file.name}`, {
-        onProgress: (progress) => {
-          progressText.textContent = `Progress: ${progress.toFixed(2)}%`;
-        }
-      });
+    //     const result = await addFile(file, `deeparShoeModelFiles/${file.name}`, {
+    //         onProgress: (progress) => {
+    //         progressText.textContent = `Progress: ${progress.toFixed(2)}%`;
+    //         }
+    //     });
 
-      if (result.success) {
-        console.log('File uploaded:', result.url);
-        alert(`Upload complete! File URL:\n${result.url}`);
-      } else {
-        console.error('Upload failed:', result.error);
-        alert(`Upload failed: ${result.error}`);
-      }
-    });
+    //     if (result.success) {
+    //         console.log('File uploaded:', result.url);
+    //         alert(`Upload complete! File URL:\n${result.url}`);
+    //     } else {
+    //         console.error('Upload failed:', result.error);
+    //         alert(`Upload failed: ${result.error}`);
+    //     }
+    // });
 
     // Initialize the page
     initializeAddShoe();
