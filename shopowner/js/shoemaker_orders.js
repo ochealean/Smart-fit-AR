@@ -31,7 +31,7 @@ const statusOrder = [
 ];
 
 // DOM Elements
-const ordersTable = document.getElementById('ordersTable');
+const ordersTableBody = document.getElementById('ordersTableBody');
 const orderTabs = document.querySelectorAll('.order-tab');
 const searchInput = document.getElementById('orderSearch');
 const searchBtn = document.getElementById('searchBtn');
@@ -167,8 +167,8 @@ async function loadAllOrders() {
         
     } catch (error) {
         console.error('Error loading orders:', error);
-        if (ordersTable && ordersTable.querySelector('tbody')) {
-            ordersTable.querySelector('tbody').innerHTML = `
+        if (ordersTableBody) {
+            ordersTableBody.innerHTML = `
                 <tr>
                     <td colspan="7" style="text-align: center; padding: 30px; color: var(--error);">
                         <i class="fas fa-exclamation-circle"></i> Failed to load orders. Please try again.
@@ -215,11 +215,10 @@ function filterAndRenderOrders() {
 
 // Render orders to the table
 function renderOrders() {
-    const tbody = ordersTable?.querySelector('tbody');
-    if (!tbody) return;
+    if (!ordersTableBody) return;
     
     if (filteredOrders.length === 0) {
-        tbody.innerHTML = `
+        ordersTableBody.innerHTML = `
             <tr>
                 <td colspan="7" style="text-align: center; padding: 30px;">
                     <i class="fas fa-box-open"></i> No orders found
@@ -233,7 +232,7 @@ function renderOrders() {
     const endIndex = Math.min(startIndex + ordersPerPage, filteredOrders.length);
     const paginatedOrders = filteredOrders.slice(startIndex, endIndex);
     
-    tbody.innerHTML = paginatedOrders.map(order => {
+    ordersTableBody.innerHTML = paginatedOrders.map(order => {
         const orderDate = order.orderDate || order.date || order.addedAt;
         const formattedDate = new Date(orderDate).toLocaleDateString('en-US', {
             year: 'numeric',
@@ -943,7 +942,7 @@ async function viewOrderDetails(orderId, userId) {
                                 <label for="shippingNotes" class="form-label">Shipping Notes (Optional)</label>
                                 <textarea id="shippingNotes" class="form-control" rows="3">${order.shipping?.notes || ''}</textarea>
                             </div>
-                            <button type="submit" class="btn btn-success">
+                            <button type="submit" class="search-btn">
                                 <i class="fas fa-save"></i> Save Shipping Info
                             </button>
                         </form>
