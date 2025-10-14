@@ -634,92 +634,35 @@ window.filterReviews = function(rating) {
     });
 }
 
-// Media Modal Functions
+// Enhanced openMediaModal function with auto-fullscreen for videos
 function openMediaModal(url, type) {
+    console.log('Opening media modal:', { type, url });
+
+    // For videos, go directly to fullscreen
+    if (type === 'video') {
+        openVideoFullscreen(url);
+        return;
+    }
+
+    // For images, use the existing modal
     const modal = document.getElementById('mediaModal');
     const content = modal.querySelector('.media-modal-content');
-    const videoUrl = `${url}${url.includes('?') ? '&' : '?'}t=${Date.now()}`;
     
-    console.log('Opening media modal:', {
-        type: type,
-        url: url,
-        encodedUrl: videoUrl,
-        modal: modal
-    });
-
     // Clear previous content
     content.innerHTML = '';
     
-    if (type === 'image') {
-        modal.classList.remove('video-mode');
-        content.innerHTML = `
-            <button class="media-modal-close" onclick="closeMediaModal()">
-                <i class="fas fa-times"></i>
-            </button>
-            <img src="${url}" alt="Enlarged view" onload="window.hideMediaLoading()" onerror="window.showMediaError('image')">
-            <div class="media-loading" id="mediaLoading">
-                <div class="loader"></div>
-                <p>Loading image...</p>
-            </div>
-        `;
-        window.showMediaLoading();
-    } else {
-        modal.classList.add('video-mode');
-        
-        // Create a properly encoded video URL for Firebase Storage
-        const videoUrl = encodeURI(url);
-        
-        content.innerHTML = `
-            <button class="media-modal-close" onclick="closeMediaModal()">
-                <i class="fas fa-times"></i>
-            </button>
-            <div class="video-container">
-                <video 
-                    controls 
-                    controlsList="nodownload"
-                    preload="metadata"
-                    onloadeddata="window.hideMediaLoading()" 
-                    onerror="window.showMediaError('video')"
-                    onloadstart="window.showMediaLoading()">
-                    <source src="${videoUrl}" type="video/mp4">
-                    Your browser does not support the video tag.
-                </video>
-                <div class="video-loading" id="videoLoading">
-                    <div class="loader"></div>
-                    <p>Loading video...</p>
-                </div>
-                <div class="video-error" id="videoError" style="display: none;">
-                    <i class="fas fa-exclamation-triangle"></i>
-                    <p>Failed to load video</p>
-                    <button class="submit-btn" onclick="window.retryVideoLoad('${videoUrl}')" style="margin-top: 1rem; padding: 0.5rem 1rem;">
-                        <i class="fas fa-redo"></i> Retry
-                    </button>
-                </div>
-            </div>
-            <div class="video-controls-info">
-                <p><small>Use the video controls to play, pause, and adjust volume</small></p>
-            </div>
-        `;
-        window.showMediaLoading();
-        
-        // Try to load the video programmatically after a short delay
-        setTimeout(() => {
-            const video = content.querySelector('video');
-            if (video) {
-                video.load();
-                
-                // Add event listeners for better error handling
-                video.addEventListener('error', function(e) {
-                    console.error('Video error:', e);
-                    window.showMediaError('video');
-                });
-                
-                video.addEventListener('canplay', function() {
-                    window.hideMediaLoading();
-                });
-            }
-        }, 100);
-    }
+    modal.classList.remove('video-mode');
+    content.innerHTML = `
+        <button class="media-modal-close" onclick="closeMediaModal()">
+            <i class="fas fa-times"></i>
+        </button>
+        <img src="${url}" alt="Enlarged view" onload="window.hideMediaLoading()" onerror="window.showMediaError('image')">
+        <div class="media-loading" id="mediaLoading">
+            <div class="loader"></div>
+            <p>Loading image...</p>
+        </div>
+    `;
+    window.showMediaLoading();
 
     modal.style.display = 'flex';
     
@@ -728,6 +671,191 @@ function openMediaModal(url, type) {
     
     // Close modal when clicking outside content
     modal.addEventListener('click', handleOutsideClick);
+}
+
+// New function to open video in fullscreen
+function openVideoFullscreen(url) {
+    console.log('Opening video in fullscreen:', url);
+    
+    // Create fullscreen container if it doesn't exist
+    let fullscreenContainer = document.getElementById('fullscreenVideoContainer');
+    if (!fullscreenContainer) {
+        fullscreenContainer = document.createElement('div');
+        fullscreenContainer.id = 'fullscreenVideoContainer';
+        fullscreenContainer.className = 'video-container fullscreen';
+        document.body.appendChild(fullscreenContainer);
+    }
+    
+    // Create close button if it doesn't exist
+    let closeBtn = document.getElementById('fullscreenCloseBtn');
+    if (!closeBtn) {
+        closeBtn = document.createElement('button');
+        closeBtn.id = 'fullscreenCloseBtn';
+        closeBtn.className = 'fullscreen-close';
+        closeBtn.innerHTML = '<i class="fas fa-times"></i>';
+        closeBtn.onclick = closeVideoFullscreen;
+        document.body.appendChild(closeBtn);
+    }
+    
+    // Create controls info if it doesn't exist
+    let controlsInfo = document.getElementById('fullscreenControlsInfo');
+    if (!controlsInfo) {
+        controlsInfo = document.createElement('div');
+        controlsInfo.id = 'fullscreenControlsInfo';
+        controlsInfo.className = 'fullscreen-controls-info';
+        controlsInfo.innerHTML = '<p><small>Press ESC or click the X button to exit fullscreen</small></p>';
+        document.body.appendChild(controlsInfo);
+    }
+    
+    // Create a fresh video URL with cache busting
+    const videoUrl = `${url}${url.includes('?') ? '&' : '?'}_=${Date.now()}`;
+    
+    // Set up the fullscreen container
+    fullscreenContainer.innerHTML = `
+        <video 
+            id="fullscreenVideo"
+            controls 
+            controlsList="nodownload"
+            preload="auto"
+            playsinline
+            autoplay
+            style="width: 100%; height: 100%;"
+            onloadeddata="window.hideFullscreenLoading()" 
+            onerror="window.showFullscreenError()"
+            onwaiting="window.showFullscreenLoading()"
+            oncanplay="window.hideFullscreenLoading()">
+            <source src="${videoUrl}" type="video/mp4">
+            Your browser does not support the video tag.
+        </video>
+        <div class="video-loading" id="fullscreenLoading">
+            <div class="loader"></div>
+            <p>Loading video...</p>
+        </div>
+        <div class="video-error" id="fullscreenError" style="display: none;">
+            <i class="fas fa-exclamation-triangle"></i>
+            <p>Failed to load video</p>
+            <button class="submit-btn" onclick="window.retryFullscreenVideo('${videoUrl}')" style="margin-top: 1rem; padding: 0.5rem 1rem;">
+                <i class="fas fa-redo"></i> Retry
+            </button>
+        </div>
+    `;
+    
+    // Show fullscreen elements
+    fullscreenContainer.style.display = 'flex';
+    closeBtn.classList.add('visible');
+    controlsInfo.classList.add('visible');
+    
+    window.showFullscreenLoading();
+    
+    // Load the video
+    const video = document.getElementById('fullscreenVideo');
+    if (video) {
+        console.log('Fullscreen video element found, loading video...');
+        
+        // Force controls to be visible
+        video.controls = true;
+        video.setAttribute('controls', 'true');
+        
+        // Add comprehensive event listeners
+        video.addEventListener('loadstart', function() {
+            console.log('Fullscreen video load started');
+            window.showFullscreenLoading();
+        });
+        
+        video.addEventListener('canplay', function() {
+            console.log('Fullscreen video can play');
+            window.hideFullscreenLoading();
+            
+            // Ensure controls are visible after video loads
+            setTimeout(() => {
+                video.controls = true;
+                video.style.visibility = 'visible';
+            }, 100);
+        });
+        
+        video.addEventListener('canplaythrough', function() {
+            console.log('Fullscreen video can play through');
+            window.hideFullscreenLoading();
+        });
+        
+        video.addEventListener('stalled', function() {
+            console.log('Fullscreen video stalled');
+            window.showFullscreenLoading();
+        });
+        
+        video.addEventListener('error', function(e) {
+            console.error('Fullscreen video error event:', e);
+            console.error('Fullscreen video error details:', {
+                error: video.error,
+                networkState: video.networkState,
+                readyState: video.readyState,
+                src: video.currentSrc || video.src
+            });
+            window.showFullscreenError();
+        });
+        
+        video.addEventListener('loadeddata', function() {
+            console.log('Fullscreen video data loaded');
+            window.hideFullscreenLoading();
+        });
+        
+        // Try to load the video
+        video.load();
+        
+        // If video doesn't load within 10 seconds, show error
+        setTimeout(() => {
+            if (video.readyState < 2) {
+                console.warn('Fullscreen video loading timeout');
+                window.showFullscreenError();
+            }
+        }, 10000);
+    }
+    
+    // Add escape key listener for fullscreen
+    document.addEventListener('keydown', handleFullscreenEscapeKey);
+    
+    // Prevent body scroll
+    document.body.style.overflow = 'hidden';
+}
+
+// Close fullscreen video
+function closeVideoFullscreen() {
+    console.log('Closing fullscreen video');
+    
+    const fullscreenContainer = document.getElementById('fullscreenVideoContainer');
+    const closeBtn = document.getElementById('fullscreenCloseBtn');
+    const controlsInfo = document.getElementById('fullscreenControlsInfo');
+    const video = document.getElementById('fullscreenVideo');
+    
+    // Pause and reset video
+    if (video) {
+        video.pause();
+        video.currentTime = 0;
+    }
+    
+    // Hide elements
+    if (fullscreenContainer) {
+        fullscreenContainer.style.display = 'none';
+    }
+    if (closeBtn) {
+        closeBtn.classList.remove('visible');
+    }
+    if (controlsInfo) {
+        controlsInfo.classList.remove('visible');
+    }
+    
+    // Remove event listeners
+    document.removeEventListener('keydown', handleFullscreenEscapeKey);
+    
+    // Restore body scroll
+    document.body.style.overflow = '';
+}
+
+// Handle escape key in fullscreen
+function handleFullscreenEscapeKey(e) {
+    if (e.key === 'Escape') {
+        closeVideoFullscreen();
+    }
 }
 
 // Enhanced close modal function
@@ -765,7 +893,9 @@ function handleOutsideClick(e) {
     }
 }
 
-// Loading and error handling functions - MADE GLOBAL
+// ===== VIDEO LOADING AND ERROR HANDLING FUNCTIONS =====
+
+// Modal video loading functions
 window.showMediaLoading = function() {
     const videoLoading = document.getElementById('videoLoading');
     const mediaLoading = document.getElementById('mediaLoading');
@@ -782,25 +912,15 @@ window.hideMediaLoading = function() {
     if (mediaLoading) mediaLoading.style.display = 'none';
 };
 
-// Error handling for media
+// Modal video error handling
 window.showMediaError = function(type) {
+    console.log('Showing media error for type:', type);
     window.hideMediaLoading();
     
     if (type === 'video') {
         const error = document.getElementById('videoError');
         if (error) {
             error.style.display = 'flex';
-            
-            // Add debug info
-            const video = document.querySelector('.media-modal-content video');
-            if (video) {
-                console.log('Video error details:', {
-                    error: video.error,
-                    networkState: video.networkState,
-                    readyState: video.readyState,
-                    src: video.currentSrc || video.src
-                });
-            }
         }
     } else {
         alert('Failed to load image. Please try again.');
@@ -808,38 +928,164 @@ window.showMediaError = function(type) {
     }
 };
 
-// Retry function for video loading
+// Modal video retry function - FIXED MISSING FUNCTION
 window.retryVideoLoad = function(url) {
+    console.log('Retrying modal video load:', url);
+    
     const error = document.getElementById('videoError');
     if (error) error.style.display = 'none';
     
     window.showMediaLoading();
     
-    const video = document.querySelector('.media-modal-content video');
+    const video = document.getElementById('modalVideo');
     if (video) {
-        // Clear any existing sources
-        while (video.firstChild) {
-            video.removeChild(video.firstChild);
-        }
+        // Clear all event listeners first
+        video.replaceWith(video.cloneNode(true));
+        const newVideo = document.getElementById('modalVideo');
         
-        // Add new source
-        const source = document.createElement('source');
-        source.src = url;
-        source.type = 'video/mp4';
-        video.appendChild(source);
+        // Create a new URL with fresh cache busting
+        const freshUrl = `${url.split('?_=')[0]}?_=${Date.now()}`;
         
-        // Reload the video
-        video.load();
+        // Set up the new video element
+        newVideo.innerHTML = `<source src="${freshUrl}" type="video/mp4">`;
         
-        // Add event listeners
-        video.addEventListener('error', function(e) {
-            console.error('Video error on retry:', e);
+        // Force controls to be visible
+        newVideo.controls = true;
+        newVideo.setAttribute('controls', 'true');
+        
+        // Add event listeners to the new video
+        newVideo.addEventListener('loadeddata', function() {
+            console.log('Modal video data loaded on retry');
+            window.hideMediaLoading();
+        });
+        
+        newVideo.addEventListener('canplay', function() {
+            console.log('Modal video can play on retry');
+            window.hideMediaLoading();
+        });
+        
+        newVideo.addEventListener('error', function(e) {
+            console.error('Modal video error on retry:', e);
             window.showMediaError('video');
         });
         
-        video.addEventListener('canplay', function() {
-            window.hideMediaLoading();
+        // Load the video
+        newVideo.load();
+        
+        // If video doesn't load within 10 seconds, show error
+        setTimeout(() => {
+            if (newVideo.readyState < 2) {
+                console.warn('Modal video loading timeout on retry');
+                window.showMediaError('video');
+            }
+        }, 10000);
+    }
+};
+
+// Fullscreen video loading functions
+window.showFullscreenLoading = function() {
+    const loading = document.getElementById('fullscreenLoading');
+    if (loading) loading.style.display = 'block';
+    
+    const error = document.getElementById('fullscreenError');
+    if (error) error.style.display = 'none';
+};
+
+window.hideFullscreenLoading = function() {
+    const loading = document.getElementById('fullscreenLoading');
+    if (loading) loading.style.display = 'none';
+};
+
+window.showFullscreenError = function() {
+    console.log('Showing fullscreen error');
+    window.hideFullscreenLoading();
+    
+    const error = document.getElementById('fullscreenError');
+    if (error) {
+        error.style.display = 'flex';
+        
+        // Add detailed debug info
+        const video = document.getElementById('fullscreenVideo');
+        if (video && video.error) {
+            const errorDetails = document.createElement('div');
+            errorDetails.style.marginTop = '1rem';
+            errorDetails.style.fontSize = '0.8rem';
+            errorDetails.style.color = '#ff6b6b';
+            
+            let errorMessage = 'Unknown error';
+            switch(video.error.code) {
+                case video.error.MEDIA_ERR_ABORTED:
+                    errorMessage = 'Video loading was aborted';
+                    break;
+                case video.error.MEDIA_ERR_NETWORK:
+                    errorMessage = 'Network error occurred';
+                    break;
+                case video.error.MEDIA_ERR_DECODE:
+                    errorMessage = 'Video decoding error';
+                    break;
+                case video.error.MEDIA_ERR_SRC_NOT_SUPPORTED:
+                    errorMessage = 'Video format not supported';
+                    break;
+            }
+            
+            errorDetails.textContent = `Error: ${errorMessage}`;
+            error.appendChild(errorDetails);
+        }
+    }
+};
+
+// Fullscreen video retry function
+window.retryFullscreenVideo = function(url) {
+    console.log('Retrying fullscreen video load:', url);
+    
+    const error = document.getElementById('fullscreenError');
+    if (error) error.style.display = 'none';
+    
+    window.showFullscreenLoading();
+    
+    const video = document.getElementById('fullscreenVideo');
+    if (video) {
+        // Clear all event listeners first
+        video.replaceWith(video.cloneNode(true));
+        const newVideo = document.getElementById('fullscreenVideo');
+        
+        // Create a new URL with fresh cache busting
+        const freshUrl = `${url.split('?_=')[0]}?_=${Date.now()}`;
+        
+        // Set up the new video element
+        newVideo.innerHTML = `<source src="${freshUrl}" type="video/mp4">`;
+        
+        // Force controls to be visible
+        newVideo.controls = true;
+        newVideo.setAttribute('controls', 'true');
+        newVideo.autoplay = true;
+        
+        // Add event listeners to the new video
+        newVideo.addEventListener('loadeddata', function() {
+            console.log('Fullscreen video data loaded on retry');
+            window.hideFullscreenLoading();
         });
+        
+        newVideo.addEventListener('canplay', function() {
+            console.log('Fullscreen video can play on retry');
+            window.hideFullscreenLoading();
+        });
+        
+        newVideo.addEventListener('error', function(e) {
+            console.error('Fullscreen video error on retry:', e);
+            window.showFullscreenError();
+        });
+        
+        // Load the video
+        newVideo.load();
+        
+        // If video doesn't load within 10 seconds, show error
+        setTimeout(() => {
+            if (newVideo.readyState < 2) {
+                console.warn('Fullscreen video loading timeout on retry');
+                window.showFullscreenError();
+            }
+        }, 10000);
     }
 };
 
@@ -1334,7 +1580,9 @@ function censoredText(text) {
 // Make functions available globally
 window.openMediaModal = openMediaModal;
 window.closeMediaModal = closeMediaModal;
+window.closeVideoFullscreen = closeVideoFullscreen;
 window.retryVideoLoad = retryVideoLoad;
+window.retryFullscreenVideo = retryFullscreenVideo;
 window.showToast = showToast;
 window.showSuccess = showSuccess;
 window.showError = showError;
