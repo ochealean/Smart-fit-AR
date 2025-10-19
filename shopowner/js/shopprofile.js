@@ -128,6 +128,10 @@ async function initializePage() {
 
     console.log('👤 User Session Established:', userSession);
 
+    if (userSession.userData.temporaryPassword) {
+        getElement('changepassWarn').style.display = 'flex';
+        console.log(userSession);
+    }else getElement('changepassWarn').style.display = 'none';
 
     loadShopProfile();
     setupEventListeners();
@@ -326,10 +330,6 @@ function loadShopProfile() {
         console.log('📁 Database Path:', shopPath);
 
         const unsubscribe = readDataRealtime(shopPath, (result) => {
-            if (userSession.userData.temporaryPassword) {
-                getElement('changepassWarn').style.display = 'flex';
-                console.log(userSession);
-            }
             console.log('📥 Database Response Received:', {
                 success: result.success,
                 hasData: !!result.data,
@@ -1507,6 +1507,10 @@ function setupEmployeeEventListeners() {
             }
 
             showAlert('Profile updated successfully!', 'success');
+
+            setTimeout(() => {
+                location.reload();
+            }, 1500); // waits 1.5 seconds before reloading
 
         } catch (error) {
             console.error('Error updating employee profile:', error);
