@@ -8,6 +8,7 @@ import {
     updateProfileMethod,
     changeUserPassword,
     signInWithEmailAndPasswordWrapper,
+    deleteData,
     updateData,
     updateImageInFirebase,
     sendPasswordResetEmailWrapper,
@@ -126,6 +127,12 @@ async function initializePage() {
     userSession.shopId = user.shopId || user.userId;
 
     console.log('👤 User Session Established:', userSession);
+
+    if(userSession.userData.temporaryPassword)
+    {
+        getElement('changepassWarn').style.display = 'flex';
+        console.log(userSession);
+    }
 
     loadShopProfile();
     setupEventListeners();
@@ -1370,6 +1377,8 @@ async function changePassword(currentPassword, newPassword, confirmPassword) {
         
         if (!changeResult.success) {
             throw new Error(changeResult.error || 'Failed to change password');
+        }else{
+            if(userSession.role === "employee") await deleteData(`smartfit_AR_Database/employees/${userSession.userId}/temporaryPassword`);
         }
 
         console.log('Password changed successfully');

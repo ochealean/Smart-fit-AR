@@ -57,6 +57,7 @@ async function initializeDashboard() {
         window.location.href = "../../customer/html/customer_dashboard.html";
     }
     else if (user.role === 'employee') {
+        if(user.userData.temporaryPassword) window.location.href = `/shopowner/html/shopprofile.html`;
         if (user.userData.role.toLowerCase() === "manager") {
             getElement("addemployeebtn").style.display = "none";
         } else if (user.userData.role.toLowerCase() === "salesperson") {
