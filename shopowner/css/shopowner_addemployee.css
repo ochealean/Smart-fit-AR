@@ -478,6 +478,47 @@ body {
     cursor: pointer;
 }
 
+.toggle-password-btn {
+    background: none;
+    border: none;
+    color: #666;
+    cursor: pointer;
+    padding: 4px 8px;
+    margin-left: 5px;
+    border-radius: 3px;
+    transition: all 0.2s ease;
+}
+
+.toggle-password-btn:hover {
+    background-color: #f0f0f0;
+    color: #333;
+}
+
+.password-field {
+    font-family: monospace;
+    letter-spacing: 1px;
+}
+
+.batch-account {
+    position: relative;
+    padding: 15px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    margin-bottom: 10px;
+    background-color: #f9f9f9;
+}
+
+.batch-account p {
+    margin: 8px 0;
+    display: flex;
+    align-items: center;
+}
+
+.batch-account strong {
+    min-width: 150px;
+    display: inline-block;
+}
+
 .account-creation-type {
     margin-bottom: 2rem;
 }

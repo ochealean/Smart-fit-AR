@@ -442,14 +442,20 @@ async function generateBatchEmployees() {
 function displayGeneratedEmployees(employees) {
     batchPreview.innerHTML = '';
 
-    employees.forEach(emp => {
+    employees.forEach((emp, index) => {
         const accountDiv = document.createElement('div');
         accountDiv.className = 'batch-account';
         accountDiv.innerHTML = `
             <div>
                 <p><strong>Employee ID:</strong> ${emp.employeeId}</p>
                 <p><strong>Email:</strong> ${emp.email}</p>
-                <p><strong>Temporary Password:</strong> ${emp.temporaryPassword}</p>
+                <p>
+                    <strong>Temporary Password:</strong> 
+                    <span class="password-field" id="password-${index}">${'•'.repeat(emp.temporaryPassword.length)}</span>
+                    <button type="button" class="toggle-password-btn" data-index="${index}" data-password="${emp.temporaryPassword}">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                </p>
                 <p><strong>Status:</strong> ${emp.status}</p>
             </div>
             <input type="hidden" name="batchEmail[]" value="${emp.email}">
@@ -458,6 +464,30 @@ function displayGeneratedEmployees(employees) {
         `;
 
         batchPreview.appendChild(accountDiv);
+    });
+
+    // Add event listeners to all toggle buttons
+    document.querySelectorAll('.toggle-password-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            const index = this.getAttribute('data-index');
+            const actualPassword = this.getAttribute('data-password');
+            const passwordField = document.getElementById(`password-${index}`);
+            const icon = this.querySelector('i');
+            
+            if (passwordField.textContent === actualPassword) {
+                // Hide password
+                passwordField.textContent = '•'.repeat(actualPassword.length);
+                icon.classList.remove('fa-eye-slash');
+                icon.classList.add('fa-eye');
+                this.setAttribute('aria-label', 'Show password');
+            } else {
+                // Show password
+                passwordField.textContent = actualPassword;
+                icon.classList.remove('fa-eye');
+                icon.classList.add('fa-eye-slash');
+                this.setAttribute('aria-label', 'Hide password');
+            }
+        });
     });
 }
 
