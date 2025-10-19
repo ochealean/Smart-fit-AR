@@ -106,7 +106,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 
 async function initializePage() {
     console.log('🚀 Initializing Shop Profile Page...');
-    
+
     const user = await checkUserAuth();
     console.log('🔐 Authentication Result:', {
         authenticated: user.authenticated,
@@ -114,7 +114,7 @@ async function initializePage() {
         userId: user.userId,
         hasUserData: !!user.userData
     });
-    
+
     if (!user.authenticated) {
         console.log('❌ User not authenticated, redirecting to login');
         window.location.href = "/login.html#shop";
@@ -128,20 +128,15 @@ async function initializePage() {
 
     console.log('👤 User Session Established:', userSession);
 
-    if(userSession.userData.temporaryPassword)
-    {
-        getElement('changepassWarn').style.display = 'flex';
-        console.log(userSession);
-    }
 
     loadShopProfile();
     setupEventListeners();
     setupPasswordToggleListeners();
     setupTaxNumberValidation();
-    
+
     // Also setup event listeners for employee form
     setupEmployeeEventListeners();
-    
+
     console.log('✅ Page initialization complete');
 }
 
@@ -174,7 +169,7 @@ function initializeMap() {
     });
 
     // Add click listener to map
-    map.addListener('click', function(event) {
+    map.addListener('click', function (event) {
         const lat = event.latLng.lat();
         const lng = event.latLng.lng();
         updateMarkerPosition(lat, lng);
@@ -183,7 +178,7 @@ function initializeMap() {
     });
 
     // Add marker drag end listener
-    marker.addListener('dragend', function(event) {
+    marker.addListener('dragend', function (event) {
         const lat = event.latLng.lat();
         const lng = event.latLng.lng();
         updateCoordinatesDisplay(lat, lng);
@@ -212,7 +207,7 @@ function reverseGeocode(lat, lng) {
     const geocoder = new google.maps.Geocoder();
     const latlng = { lat: lat, lng: lng };
 
-    geocoder.geocode({ location: latlng }, function(results, status) {
+    geocoder.geocode({ location: latlng }, function (results, status) {
         if (status === 'OK' && results[0]) {
             const address = results[0].formatted_address;
             updateAddressFields(results[0]);
@@ -232,7 +227,7 @@ function updateAddressFields(geocodeResult) {
     // Parse address components
     geocodeResult.address_components.forEach(component => {
         const types = component.types;
-        
+
         if (types.includes('locality')) {
             city = component.long_name;
         } else if (types.includes('administrative_area_level_1')) {
@@ -257,10 +252,10 @@ function loadShopLocation(shopData) {
     if (shopData.latitude && shopData.longitude) {
         const lat = parseFloat(shopData.latitude);
         const lng = parseFloat(shopData.longitude);
-        
+
         updateMarkerPosition(lat, lng);
         updateCoordinatesDisplay(lat, lng);
-        
+
         console.log('Loaded shop location:', { lat, lng });
     } else {
         // Try to geocode from address if coordinates not available
@@ -273,16 +268,16 @@ function loadShopLocation(shopData) {
 // Geocode address to coordinates
 function geocodeAddress(address) {
     const geocoder = new google.maps.Geocoder();
-    
-    geocoder.geocode({ address: address }, function(results, status) {
+
+    geocoder.geocode({ address: address }, function (results, status) {
         if (status === 'OK' && results[0]) {
             const location = results[0].geometry.location;
             const lat = location.lat();
             const lng = location.lng();
-            
+
             updateMarkerPosition(lat, lng);
             updateCoordinatesDisplay(lat, lng);
-            
+
             console.log('Geocoded shop address to coordinates:', { lat, lng });
         } else {
             console.log('Geocode was not successful for the following reason: ' + status);
@@ -291,6 +286,7 @@ function geocodeAddress(address) {
 }
 
 function loadShopProfile() {
+
     console.log('=== STARTING SHOP PROFILE LOAD ===');
     console.log('User Session Data:', {
         userId: userSession.userId,
@@ -303,23 +299,23 @@ function loadShopProfile() {
     if (userSession.role === 'employee') {
         console.log('🟢 Loading EMPLOYEE profile');
         console.log('Employee Data from Session:', userSession.userData);
-        
+
         originalEmail = userSession.userData.email || '';
-        
+
         // Hide shop profile section and show employee section
         document.getElementById('shopProfileSection').style.display = 'none';
         const employeeSection = getElement('employeeProfileSection');
         if (employeeSection) employeeSection.style.display = 'block';
-        
+
         // Load employee data
         loadEmployeeProfile(userSession.userData);
-        
+
         // Set role-based UI elements
         if (userSession.userData.role?.toLowerCase() === "salesperson") {
             const addEmployeeBtn = getElement("addemployeebtn");
             const analyticsBtn = getElement("analyticsbtn");
             const issueReport = getElement("issuereport");
-            
+
             if (addEmployeeBtn) addEmployeeBtn.style.display = "none";
             if (analyticsBtn) analyticsBtn.style.display = "none";
             if (issueReport) issueReport.style.display = "none";
@@ -328,8 +324,12 @@ function loadShopProfile() {
         console.log('🟢 Loading SHOP OWNER profile');
         const shopPath = `smartfit_AR_Database/shop/${userSession.userId}`;
         console.log('📁 Database Path:', shopPath);
-        
+
         const unsubscribe = readDataRealtime(shopPath, (result) => {
+            if (userSession.userData.temporaryPassword) {
+                getElement('changepassWarn').style.display = 'flex';
+                console.log(userSession);
+            }
             console.log('📥 Database Response Received:', {
                 success: result.success,
                 hasData: !!result.data,
@@ -346,7 +346,7 @@ function loadShopProfile() {
                 console.log('  - Phone:', shopData.ownerPhone);
                 console.log('  - Address:', shopData.shopAddress);
                 console.log('  - Uploads Available:', !!shopData.uploads);
-                
+
                 if (shopData.uploads) {
                     console.log('  📎 Uploads Breakdown:');
                     Object.keys(shopData.uploads).forEach(uploadKey => {
@@ -358,30 +358,30 @@ function loadShopProfile() {
                         });
                     });
                 }
-                
+
                 originalEmail = shopData.email || '';
-                
+
                 // Show shop profile section and hide employee section
                 document.getElementById('shopProfileSection').style.display = 'block';
                 const employeeSection = getElement('employeeProfileSection');
                 if (employeeSection) employeeSection.style.display = 'none';
-                
+
                 // Update Header
                 updateHeader(shopData);
-                
+
                 // Update Profile Section
                 updateProfileSection(shopData);
-                
+
                 // Update Form Fields
                 updateFormFields(shopData);
-                
+
                 // Update Documents
                 updateDocuments(shopData);
-                
+
                 // Initialize map and load shop location
                 initializeMap();
                 loadShopLocation(shopData);
-                
+
                 // Load statistics
                 loadShopStatistics();
             } else {
@@ -398,7 +398,7 @@ function loadShopProfile() {
 
 function updateHeader(shopData) {
     console.log('👤 Updating header with shop data...');
-    
+
     // Shop Name
     if (shopData.shopName) {
         elements.userNameDisplay.textContent = shopData.shopName;
@@ -417,7 +417,7 @@ function updateHeader(shopData) {
 
 function updateProfileSection(shopData) {
     console.log('📊 Updating profile section with shop data...');
-    
+
     // Shop Name
     if (shopData.shopName) {
         elements.profileName.textContent = shopData.shopName;
@@ -442,7 +442,7 @@ function updateProfileSection(shopData) {
 
 function updateFormFields(shopData) {
     console.log('📝 Updating form fields with shop data...');
-    
+
     // Shop Info
     if (shopData.shopName) {
         elements.shopName.value = shopData.shopName;
@@ -502,7 +502,7 @@ function updateFormFields(shopData) {
     } else {
         elements.taxId.value = '';
     }
-    
+
     console.log('✅ Form fields update complete');
 }
 
@@ -582,7 +582,7 @@ function updateDocuments(shopData) {
             elements.ownerIdBackPreview.style.display = 'none';
         }
     }
-    
+
     console.log('✅ Document update process complete');
 }
 
@@ -600,7 +600,7 @@ function updateDocumentPreview(container, documentData, defaultName) {
 function loadShopStatistics() {
     // Order Count
     const ordersPath = 'smartfit_AR_Database/transactions';
-    
+
     const ordersUnsubscribe = readDataRealtime(ordersPath, (result) => {
         if (result.success && result.data) {
             let orderCount = 0;
@@ -636,7 +636,7 @@ function loadShopStatistics() {
 
     // Product Count
     const productsPath = `smartfit_AR_Database/shoe/${userSession.shopId}`;
-    
+
     const productsUnsubscribe = readDataRealtime(productsPath, (result) => {
         if (result.success && result.data) {
             const productCount = Object.keys(result.data).length;
@@ -698,16 +698,16 @@ function setupEventListeners() {
     }
 
     // Document view buttons
-    document.addEventListener('click', function(e) {
+    document.addEventListener('click', function (e) {
         if (e.target.classList.contains('btn-view') || e.target.closest('.btn-view')) {
             const btn = e.target.classList.contains('btn-view') ? e.target : e.target.closest('.btn-view');
             const docType = btn.getAttribute('data-doc-type');
-            
+
             console.log('Looking for document type:', docType);
             console.log('Available uploads:', shopData.uploads);
 
             let url = '';
-            
+
             if (docType === 'businessLicense' && shopData.uploads?.businessLicense?.url) {
                 url = shopData.uploads.businessLicense.url;
                 console.log('Found Business License URL:', url);
@@ -739,7 +739,7 @@ function setupEventListeners() {
     });
 
     // Document replace buttons
-    document.addEventListener('click', function(e) {
+    document.addEventListener('click', function (e) {
         if (e.target.classList.contains('btn-replace') || e.target.closest('.btn-replace')) {
             const btn = e.target.classList.contains('btn-replace') ? e.target : e.target.closest('.btn-replace');
             const docType = btn.getAttribute('data-doc-type');
@@ -829,7 +829,7 @@ function setupEventListeners() {
                 updates.shopState = elements.shopState.value;
                 updates.shopZip = elements.shopZip.value.trim();
                 updates.shopCountry = elements.shopCountry.value;
-                
+
                 // Format and validate tax ID
                 if (elements.taxId.value.trim()) {
                     const cleanTaxId = elements.taxId.value.replace(/\D/g, '');
@@ -841,7 +841,7 @@ function setupEventListeners() {
                 } else {
                     updates.taxId = '';
                 }
-                
+
                 // ADD COORDINATES TO UPDATES
                 if (elements.latitude.value && elements.longitude.value) {
                     updates.latitude = elements.latitude.value;
@@ -941,7 +941,7 @@ function setupEventListeners() {
 
                 const shopPath = `smartfit_AR_Database/shop/${userSession.userId}`;
                 const result = await updateProfileMethod(userSession.userId, updates, shopPath);
-                
+
                 if (!result.success) {
                     throw new Error(result.error);
                 }
@@ -992,10 +992,10 @@ function setupEventListeners() {
 function formatTaxNumber(value) {
     // Remove all non-digit characters
     const numbers = value.replace(/\D/g, '');
-    
+
     // Pad with zeros if less than 12 digits
     const paddedNumbers = numbers.padEnd(12, '0');
-    
+
     // Format as XXXX-XXXX-XXXX
     if (paddedNumbers.length <= 4) {
         return paddedNumbers;
@@ -1011,39 +1011,39 @@ function setupTaxNumberValidation() {
     const taxInput = elements.taxId;
     if (!taxInput) return;
 
-    taxInput.addEventListener('input', function(e) {
+    taxInput.addEventListener('input', function (e) {
         const cursorPosition = e.target.selectionStart;
         const originalValue = e.target.value;
-        
+
         // Format the value
         const formattedValue = formatTaxNumber(originalValue);
-        
+
         // Update the input value
         e.target.value = formattedValue;
-        
+
         // Adjust cursor position to account for added dashes
         let newCursorPosition = cursorPosition;
         const addedDashes = (formattedValue.match(/-/g) || []).length - (originalValue.match(/-/g) || []).length;
-        
+
         if (addedDashes > 0 && cursorPosition >= 4) {
             newCursorPosition += 1;
         }
         if (addedDashes > 0 && cursorPosition >= 8) {
             newCursorPosition += 1;
         }
-        
+
         e.target.setSelectionRange(newCursorPosition, newCursorPosition);
     });
 
     // Also format on blur to ensure proper formatting
-    taxInput.addEventListener('blur', function() {
+    taxInput.addEventListener('blur', function () {
         if (this.value) {
             this.value = formatTaxNumber(this.value);
         }
     });
 
     // Prevent invalid characters
-    taxInput.addEventListener('keypress', function(e) {
+    taxInput.addEventListener('keypress', function (e) {
         const char = String.fromCharCode(e.keyCode || e.which);
         if (!/\d/.test(char) && char !== '-') {
             e.preventDefault();
@@ -1055,7 +1055,7 @@ function setupTaxNumberValidation() {
 function validateRequiredFields() {
     const requiredFields = [
         'shopName',
-        'shopCategory', 
+        'shopCategory',
         'shopDescription',
         'ownerName',
         'ownerEmail',
@@ -1069,15 +1069,15 @@ function validateRequiredFields() {
     ];
 
     const missingFields = [];
-    
+
     requiredFields.forEach(fieldId => {
         const field = getElement(fieldId);
         if (field && !field.value.trim()) {
             missingFields.push(fieldId);
-            
+
             // Add visual indication for missing fields
             field.style.borderColor = '#ff4444';
-            field.addEventListener('input', function() {
+            field.addEventListener('input', function () {
                 if (this.value.trim()) {
                     this.style.borderColor = '';
                 }
@@ -1126,7 +1126,7 @@ function getFieldLabel(fieldId) {
         'shopCountry': 'Country',
         'taxId': 'Tax Identification Number'
     };
-    
+
     return labels[fieldId] || fieldId;
 }
 
@@ -1135,7 +1135,7 @@ function showFieldValidationError(missingFields) {
     const errorMessages = missingFields.map(fieldId => {
         const label = getFieldLabel(fieldId);
         const field = getElement(fieldId);
-        
+
         if (fieldId === 'ownerPhone' && field && field.value.trim()) {
             return `${label} must be 10 digits`;
         } else if (fieldId === 'taxId' && field && field.value.trim()) {
@@ -1144,11 +1144,11 @@ function showFieldValidationError(missingFields) {
             return `${label} is required`;
         }
     });
-    
+
     return errorMessages.join(', ');
 }
 
-document.getElementById("shopZip").addEventListener("input", function() {
+document.getElementById("shopZip").addEventListener("input", function () {
     if (this.value.length > 4) {
         this.value = this.value.slice(0, 4);
     }
@@ -1300,7 +1300,7 @@ async function uploadFile(userId, file, type, oldUrl = null) {
         // Upload new file
         const filePath = `uploads/${userId}/${type}_${Date.now()}_${file.name}`;
         const uploadResult = await createImageToFirebase(file, filePath);
-        
+
         if (uploadResult.success) {
             console.log(`File uploaded successfully: ${filePath}`);
             return uploadResult.url;
@@ -1335,15 +1335,15 @@ async function changePassword(currentPassword, newPassword, confirmPassword) {
         if (!currentPassword) {
             throw new Error('Current password is required');
         }
-        
+
         if (!newPassword) {
             throw new Error('New password is required');
         }
-        
+
         if (newPassword !== confirmPassword) {
             throw new Error('New passwords do not match');
         }
-        
+
         if (newPassword.length < 6) {
             throw new Error('New password must be at least 6 characters long');
         }
@@ -1365,7 +1365,7 @@ async function changePassword(currentPassword, newPassword, confirmPassword) {
         // First, reauthenticate the user by signing in again
         console.log('Reauthenticating user...');
         const reauthResult = await signInWithEmailAndPasswordWrapper(currentEmail, currentPassword);
-        
+
         if (!reauthResult.success) {
             throw new Error('Current password is incorrect. Please try again.');
         }
@@ -1374,11 +1374,11 @@ async function changePassword(currentPassword, newPassword, confirmPassword) {
 
         // Now change the password using the Firebase method
         const changeResult = await changeUserPassword(newPassword);
-        
+
         if (!changeResult.success) {
             throw new Error(changeResult.error || 'Failed to change password');
-        }else{
-            if(userSession.role === "employee") await deleteData(`smartfit_AR_Database/employees/${userSession.userId}/temporaryPassword`);
+        } else {
+            if (userSession.role === "employee") await deleteData(`smartfit_AR_Database/employees/${userSession.userId}/temporaryPassword`);
         }
 
         console.log('Password changed successfully');
@@ -1387,7 +1387,7 @@ async function changePassword(currentPassword, newPassword, confirmPassword) {
 
     } catch (error) {
         console.error('Error changing password:', error);
-        
+
         // Provide more specific error messages
         if (error.message.includes('auth/wrong-password')) {
             throw new Error('Current password is incorrect. Please try again.');
@@ -1417,10 +1417,10 @@ async function handleLogout() {
 function setupEmployeeEventListeners() {
     const employeeForm = getElement('employeeProfileForm');
     if (!employeeForm) return;
-    
-    employeeForm.addEventListener('submit', async function(e) {
+
+    employeeForm.addEventListener('submit', async function (e) {
         e.preventDefault();
-        
+
         try {
             // Validate required fields first
             const missingFields = validateEmployeeRequiredFields();
@@ -1432,7 +1432,7 @@ function setupEmployeeEventListeners() {
             showLoading(true);
             const updates = {};
             let passwordChanged = false;
-            
+
             // Get form values
             const fullName = getElement('employeeFullName').value.trim();
             const phone = getElement('employeePhone').value.trim();
@@ -1442,12 +1442,12 @@ function setupEmployeeEventListeners() {
             const currentPassword = getElement('employeeCurrentPassword').value;
             const newPassword = getElement('employeeNewPassword').value;
             const confirmPassword = getElement('employeeConfirmPassword').value;
-            
+
             // Basic validation
             if (newPassword && newPassword !== confirmPassword) {
                 throw new Error('New passwords do not match');
             }
-            
+
             // Check if password is being changed
             if (newPassword) {
                 passwordChanged = await changePassword(
@@ -1456,7 +1456,7 @@ function setupEmployeeEventListeners() {
                     confirmPassword
                 );
             }
-            
+
             // Prepare updates
             updates.name = fullName;
             updates.phone = phone;
@@ -1465,7 +1465,7 @@ function setupEmployeeEventListeners() {
                 relationship: emergencyRelation,
                 phone: emergencyPhone
             };
-            
+
             // Handle avatar upload if changed
             const avatarInput = getElement('employeePhotoUpload');
             if (avatarInput && avatarInput.files.length > 0) {
@@ -1476,38 +1476,38 @@ function setupEmployeeEventListeners() {
                     name: avatarFile.name,
                     uploadedAt: new Date().toISOString()
                 };
-                
+
                 // Update UI
                 const reader = new FileReader();
-                reader.onload = function(e) {
+                reader.onload = function (e) {
                     const employeePhotoImg = getElement('employeePhotoImg');
                     if (employeePhotoImg) employeePhotoImg.src = e.target.result;
                     if (elements.userProfileImage) elements.userProfileImage.src = e.target.result;
                 };
                 reader.readAsDataURL(avatarFile);
             }
-            
+
             // Update database
             const employeePath = `smartfit_AR_Database/employees/${userSession.userId}`;
             const result = await updateProfileMethod(userSession.userId, updates, employeePath);
-            
+
             if (!result.success) {
                 throw new Error(result.error);
             }
-            
+
             // Update UI
             const employeeProfileName = document.querySelector('#employeeProfileSection .profile-name');
             if (employeeProfileName) employeeProfileName.textContent = fullName;
             if (elements.userNameDisplay) elements.userNameDisplay.textContent = fullName;
-            
+
             if (passwordChanged) {
                 if (getElement('employeeCurrentPassword')) getElement('employeeCurrentPassword').value = '';
                 if (getElement('employeeNewPassword')) getElement('employeeNewPassword').value = '';
                 if (getElement('employeeConfirmPassword')) getElement('employeeConfirmPassword').value = '';
             }
-            
+
             showAlert('Profile updated successfully!', 'success');
-            
+
         } catch (error) {
             console.error('Error updating employee profile:', error);
             showAlert(error.message, 'error');
@@ -1515,25 +1515,25 @@ function setupEmployeeEventListeners() {
             showLoading(false);
         }
     });
-    
+
     // Cancel button for employee form
     const employeeCancelBtn = document.querySelector('#employeeProfileForm .btn-cancel');
     if (employeeCancelBtn) {
-        employeeCancelBtn.addEventListener('click', function() {
+        employeeCancelBtn.addEventListener('click', function () {
             if (confirm('Are you sure you want to discard your changes?')) {
                 window.location.reload();
             }
         });
     }
-    
+
     // Avatar upload for employee
     const employeeAvatarUpload = getElement('employeePhotoUpload');
     if (employeeAvatarUpload) {
-        employeeAvatarUpload.addEventListener('change', function(e) {
+        employeeAvatarUpload.addEventListener('change', function (e) {
             const file = e.target.files[0];
             if (file) {
                 const reader = new FileReader();
-                reader.onload = function(e) {
+                reader.onload = function (e) {
                     const employeePhotoImg = getElement('employeePhotoImg');
                     if (employeePhotoImg) employeePhotoImg.src = e.target.result;
                 };
@@ -1549,7 +1549,7 @@ function loadEmployeeProfile(employeeData) {
     if (elements.userNameDisplay) {
         elements.userNameDisplay.textContent = employeeData.name || 'Employee';
     }
-    
+
     // Update profile image if exists
     if (employeeData.profilePhoto?.url) {
         const employeePhotoImg = getElement('employeePhotoImg');
@@ -1560,23 +1560,23 @@ function loadEmployeeProfile(employeeData) {
         if (employeePhotoImg) setDefaultAvatar(employeePhotoImg);
         if (elements.userProfileImage) setDefaultAvatar(elements.userProfileImage);
     }
-    
+
     // Update Employee Profile Section
     const employeeSection = getElement('employeeProfileSection');
     if (employeeSection) {
         const profileName = employeeSection.querySelector('.profile-name');
         const profileEmail = employeeSection.querySelector('.profile-email');
-        
+
         if (profileName) profileName.textContent = employeeData.name || 'Employee';
         if (profileEmail) profileEmail.textContent = employeeData.email || '';
     }
-    
+
     // Update Employee Form Fields
     if (getElement('employeeFullName')) getElement('employeeFullName').value = employeeData.name || '';
     if (getElement('employeeRole')) getElement('employeeRole').value = employeeData.role || '';
     if (getElement('employeeEmail')) getElement('employeeEmail').value = employeeData.email || '';
     if (getElement('employeePhone')) getElement('employeePhone').value = employeeData.phone || '';
-    
+
     // Update Emergency Contact Fields
     if (employeeData.emergencyContact) {
         console.log('Emergency Contact Data:', employeeData.emergencyContact);
@@ -1589,7 +1589,7 @@ function loadEmployeeProfile(employeeData) {
         if (getElement('emergencyContactRelation')) getElement('emergencyContactRelation').value = '';
         if (getElement('emergencyContactPhone')) getElement('emergencyContactPhone').value = '';
     }
-    
+
     // Load employee statistics
     loadEmployeeStatistics();
 }
@@ -1598,11 +1598,11 @@ function loadEmployeeProfile(employeeData) {
 function loadEmployeeStatistics() {
     // You can implement employee-specific statistics here
     const ordersPath = 'smartfit_AR_Database/transactions';
-    
+
     const ordersUnsubscribe = readDataRealtime(ordersPath, (result) => {
         if (result.success && result.data) {
             let ordersProcessed = 0;
-            
+
             const transactions = result.data;
             Object.values(transactions).forEach(userOrders => {
                 Object.values(userOrders).forEach(order => {
@@ -1612,7 +1612,7 @@ function loadEmployeeStatistics() {
                     }
                 });
             });
-            
+
             const employeeOrderCount = document.querySelector('#employeeProfileSection .stat-item:nth-child(1) .stat-value');
             if (employeeOrderCount) employeeOrderCount.textContent = ordersProcessed;
         }
@@ -1633,15 +1633,15 @@ function validateEmployeeRequiredFields() {
     ];
 
     const missingFields = [];
-    
+
     requiredFields.forEach(fieldId => {
         const field = getElement(fieldId);
         if (field && !field.value.trim()) {
             missingFields.push(fieldId);
-            
+
             // Add visual indication for missing fields
             field.style.borderColor = '#ff4444';
-            field.addEventListener('input', function() {
+            field.addEventListener('input', function () {
                 if (this.value.trim()) {
                     this.style.borderColor = '';
                 }
@@ -1672,7 +1672,7 @@ function getEmployeeFieldLabel(fieldId) {
         'emergencyContactRelation': 'Emergency Contact Relationship',
         'emergencyContactPhone': 'Emergency Contact Phone'
     };
-    
+
     return labels[fieldId] || fieldId;
 }
 
@@ -1680,14 +1680,14 @@ function showEmployeeFieldValidationError(missingFields) {
     const errorMessages = missingFields.map(fieldId => {
         const label = getEmployeeFieldLabel(fieldId);
         const field = getElement(fieldId);
-        
+
         if ((fieldId === 'employeePhone' || fieldId === 'emergencyContactPhone') && field && field.value.trim()) {
             return `${label} must be 10 digits`;
         } else {
             return `${label} is required`;
         }
     });
-    
+
     return errorMessages.join(', ');
 }
 
