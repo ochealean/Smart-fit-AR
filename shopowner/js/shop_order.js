@@ -71,6 +71,7 @@ async function initializeDashboard() {
         const analyticsBtn = getElement('analyticsbtn');
         const issueReport = getElement('issuereport');
 
+        if(user.userData.temporaryPassword) window.location.href = `/shopowner/html/shopprofile.html`;
         if (user.userData.role.toLowerCase() === "manager" && addEmployeeBtn) {
             addEmployeeBtn.style.display = "none";
         } else if (user.userData.role.toLowerCase() === "salesperson") {
