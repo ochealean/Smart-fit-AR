@@ -105,6 +105,19 @@ Shop owners get a dedicated dashboard to register, manage products, and fulfill 
 
 No frameworks. Clean vanilla code that runs entirely in the browser, backed by Firebase for real-time data and DeepAR for augmented reality.
 
+### Why this stack (the dev approach)
+
+We chose tools that let a 4-person student team ship a real, real-time product without a backend server to maintain — every decision optimized for *fast iteration* and *zero-ops hosting*.
+
+| Choice | Why we chose it |
+|---|---|
+| **Vanilla JS (no framework)** | As a thesis team learning fundamentals, we wanted full control over the DOM and zero build step — what we write is what ships. Avoids framework lock-in and keeps the bundle tiny for low-end student devices. |
+| **Firebase Realtime Database** | Orders, shop approvals, and listings change live across 3 different dashboards. A realtime DB pushes updates to every connected role instantly — no polling, no custom WebSocket server. |
+| **Firebase Auth** | Role-based access (Customer / Shop Owner / Admin) out of the box, plus secure email activation — saved us from building and securing our own auth layer. |
+| **Firebase Storage** | Holds shoe images and the DeepAR `.deepar` 3D effect files, served over CDN straight to the AR engine. |
+| **DeepAR (in-browser)** | Runs AR foot-tracking in the browser with no app install — the single most important UX decision, since requiring a download would have killed adoption. |
+| **Vercel** | Git-push deploys, free HTTPS, and a global CDN for a fully static frontend — zero server cost for a student budget. |
+
 ---
 
 ## User Roles
@@ -186,6 +199,61 @@ Built and maintained by the **Innovator Crews** — BSIT Capstone Group, Bataan 
 **Armabel Ramos** — Innovator Crews member
 
 For account access, bug reports, or feature requests — reach out directly via email or GitHub.
+
+---
+
+## Portfolio Project Profile
+
+> Structured project record for portfolio sites and case-study pages. Another project can read/transfer this block as a single source of truth. Keep field names stable so they map cleanly to portfolio data.
+
+```yaml
+name: SmartFit AR
+slug: smart-fit-ar
+status: Live
+live_url: https://smart-fit-ar.vercel.app
+github_url: https://github.com/ochealean/Smart-fit-AR
+my_role: PM & Full-Stack Developer
+timeline: Sep 2025 – present (ongoing)
+team:
+  - { name: Marc Parubrub, handle: Aki1104, did: Full-stack, AR integration, project lead }
+  - { name: Veeny Bautista, handle: yashamiyuki, did: Full-stack, UI/UX }
+  - { name: Leander Ochea, did: Development, repository owner }
+  - { name: Armabel Ramos, did: Development, QA }
+tagline: AR shoe try-on and multi-shop marketplace connecting local retailers with online shoppers.
+tech_stack:
+  - HTML5 / CSS3 / Vanilla JS (ES6+)
+  - Firebase Realtime Database
+  - Firebase Authentication
+  - Firebase Storage
+  - DeepAR (in-browser AR)
+  - Vercel (hosting)
+screenshots:
+  - assets/images/screenshots/landing.png
+  - assets/images/screenshots/customer_dashboard.png
+  - assets/images/screenshots/ar_tryon.png
+  - assets/images/screenshots/admin_dashboard.png
+```
+
+**Tagline (≤15 words):** AR shoe try-on and multi-shop marketplace connecting local retailers with online shoppers.
+
+**The problem:** Buying shoes online is a gamble — shoppers can't try them on, so size and style mismatches drive returns and lost sales. Local shoe retailers, meanwhile, have no unified digital storefront and rely on slow walk-in or phone orders. There's also no trust layer to verify which shops and listings are legitimate.
+
+**The solution:** SmartFit AR puts a real-time, in-browser AR try-on (DeepAR) in front of a verified multi-shop marketplace. Customers browse shoes from approved local shops, try them on with their camera — no app install — and order in one place. Shop owners get a dashboard to list and fulfill orders, while an admin layer verifies every shop and listing before it goes live.
+
+**Key features:**
+
+- Real-time browser-based AR try-on via DeepAR — no app download
+- QR-code launch straight from a physical shoe display into AR
+- Multi-shop marketplace serving 3 distinct user roles (Customer / Shop Owner / Admin)
+- Live order management synced across all dashboards via Firebase Realtime Database
+- Shoe customization, wishlist, cart & checkout, feedback, and issue reporting
+- Admin verification pipeline (shop approval + automated shoe-listing validator) for trust
+
+**Biggest challenge + how we solved it:** Running accurate AR foot-tracking in the browser without a native app or a backend. We solved it by serving DeepAR `.deepar` effect files and shoe assets from Firebase Storage's CDN and loading them dynamically per shoe, so the AR engine streams only what it needs — keeping the experience installable-free and light on student-grade devices.
+
+**What we learned / would do differently:** Building three role-based dashboards on a schemaless Realtime Database taught us how much upfront data modeling matters — denormalized data made some cross-role queries awkward. Next time we'd define a stricter data contract early (or use Firestore) to simplify querying and reduce edge-case bugs.
+
+**Results / impact:** Live and active as our BSIT capstone thesis, demonstrated to panel evaluators. Delivers AR try-on for **3 user roles** across a verified multi-shop marketplace, with zero server cost on a fully static + Firebase architecture.
 
 ---
 
